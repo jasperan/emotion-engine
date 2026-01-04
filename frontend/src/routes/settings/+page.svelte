@@ -34,7 +34,7 @@
                 <div class="space-y-2">
                     <label for="default-model" class="text-sm font-medium text-on-surface">Default Model</label>
                     <div class="flex gap-2">
-                        <input type="text" id="default-model" placeholder="qwen2.5:7b" class="input flex-1" value="qwen2.5:7b" />
+                        <input type="text" id="default-model" placeholder="gemma3" class="input flex-1" value="gemma3" />
                         <button class="btn btn-secondary">Save</button>
                     </div>
                     <p class="text-[10px] text-on-surface/50">The model to use for simulations by default.</p>

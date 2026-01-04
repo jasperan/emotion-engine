@@ -225,7 +225,7 @@ def create_mass_casualty_scenario(num_agents: int = 10) -> ScenarioCreate:
     agent_templates.append(AgentConfig(
         name="Collapse Environment",
         role="environment",
-        model_id="qwen2.5:7b",
+        model_id="gemma3",
         provider="ollama",
         goals=[
             "Simulate realistic building collapse conditions",
@@ -240,7 +240,7 @@ def create_mass_casualty_scenario(num_agents: int = 10) -> ScenarioCreate:
         agent_templates.append(AgentConfig(
             name=persona.name,
             role="human",
-            model_id="qwen2.5:7b",
+            model_id="gemma3",
             provider="ollama",
             persona=persona,
             goals=[
@@ -259,6 +259,9 @@ def create_mass_casualty_scenario(num_agents: int = 10) -> ScenarioCreate:
         initial_state={
             "hazard_level": 8,
             "time_of_day": "mid_morning",
+            "temperature": "65°F",
+            "city": "New York City",
+            "country": "USA",
             "weather": "overcast",
             "trapped_survivors": 15,
             "rescued_survivors": 0,
@@ -350,7 +353,7 @@ def create_mass_casualty_scenario(num_agents: int = 10) -> ScenarioCreate:
             "resource_arrival_rate": 0.15,
             "survivor_discovery_rate": 0.1,
         },
-        max_steps=80,
+        max_steps=100,
         tick_delay=1.0,
     )
     

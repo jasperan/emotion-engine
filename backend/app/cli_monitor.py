@@ -3,6 +3,7 @@ import json
 from datetime import datetime
 from typing import Any
 
+from rich.columns import Columns
 from rich.console import Console, Group
 from rich.layout import Layout
 from rich.live import Live
@@ -55,6 +56,9 @@ class EventRenderer:
         self.current_stream_agent: str | None = None
         self.current_stream_text: str = ""
         self.current_stream_token_count: int = 0
+        self._stream_cycler_index: int = 0
+        self._last_cycle_time: float = 0
+
         
     def add_event(self, event_type: str, data: dict[str, Any]) -> None:
         """Add an event to the log"""
@@ -108,6 +112,10 @@ class EventRenderer:
             self.agents = self.world_state.get("agents", self.agents)
         elif event_type == "initialized":
             self.run_status = "ready"
+            # Update world state and agents from initialization
+            self.world_state = data.get("world_state", self.world_state)
+            self.agents = self.world_state.get("agents", self.agents)
+            self.conversations = data.get("conversations", [])
         elif event_type == "run_started":
             self.run_status = "running"
             self.current_step = data.get("step", 0)
@@ -138,11 +146,11 @@ class EventRenderer:
         }
         status_color = status_colors.get(self.run_status, "white")
         
-        # Progress bar
+        # Progress bar - use Text.from_markup to ensure tags are parsed
         progress = self.current_step / max(self.max_steps, 1)
         bar_width = 20
         filled = int(progress * bar_width)
-        bar = f"[green]{'█' * filled}[/green][dim]{'░' * (bar_width - filled)}[/dim]"
+        bar_markup = f"[green]{'█' * filled}[/green][dim]{'░' * (bar_width - filled)}[/dim]"
         
         header_text = Text()
         header_text.append("EmotionSim Monitor", style="bold cyan")
@@ -151,7 +159,8 @@ class EventRenderer:
         header_text.append(f"{self.run_status.upper()}", style=status_color)
         header_text.append("  │  ", style="dim")
         header_text.append(f"Step: {self.current_step}/{self.max_steps}", style="white")
-        header_text.append(f"  {bar}", style="white")
+        header_text.append("  ", style="white")
+        header_text.append_text(Text.from_markup(bar_markup))
         
         return Panel(header_text, box=box.ROUNDED, style="cyan")
     
@@ -160,6 +169,9 @@ class EventRenderer:
         table = Table(show_header=False, box=None, padding=(0, 1))
         table.add_column("Key", style="dim")
         table.add_column("Value")
+        
+        # System Time
+        table.add_row("Sys Time", datetime.now().strftime("%H:%M:%S"))
         
         # Hazard level with bar
         hazard = int(self.world_state.get("hazard_level", 0))
@@ -175,6 +187,15 @@ class EventRenderer:
         time_of_day = self.world_state.get("time_of_day", "unknown")
         table.add_row("Time", time_of_day)
         
+        # New Fields: Temp, City, Country
+        temp = self.world_state.get("temperature", "?")
+        city = self.world_state.get("city", "?")
+        country = self.world_state.get("country", "?")
+        
+        if temp != "?": table.add_row("Temp", f"{temp}")
+        if city != "?": table.add_row("City", f"{city}")
+        if country != "?": table.add_row("Country", f"{country}")
+        
         # Agent count
         agent_count = len(self.agents)
         table.add_row("Agents", str(agent_count))
@@ -182,49 +203,104 @@ class EventRenderer:
         return Panel(table, title="[bold]World State[/bold]", box=box.ROUNDED)
     
     def render_conversations(self) -> Panel:
-        """Render active conversations panel"""
+        """Render active conversations panel with columns"""
         if not self.conversations:
             content = Text("No active conversations", style="dim italic")
         else:
-            table = Table(show_header=False, box=None, padding=(0, 1))
-            table.add_column("ID", style="cyan", width=3)
-            table.add_column("Stats", style="white")
+            # Create a card for each conversation
+            conv_panels = []
             
-            for idx, conv in enumerate(self.conversations, 1):  # Show all, enumerated
+            for idx, conv in enumerate(self.conversations, 1):
                 location = conv.get("location", "unknown")
                 participants = conv.get("participants", [])
                 count = len(participants) if isinstance(participants, list) else 0
                 
-                table.add_row(f"{idx}", f"{count} participants")
+                # Participants list (truncated)
+                p_list = ", ".join([str(p)[:10] for p in participants])
+                if len(p_list) > 30:
+                    p_list = p_list[:27] + "..."
+                
+                # Mini panel for this conversation
+                conv_text = Text()
+                conv_text.append(f"loc: {location}\n", style="cyan")
+                conv_text.append(f"👥 {count}: ", style="dim")
+                conv_text.append(p_list, style="white")
+                
+                conv_panels.append(
+                    Panel(conv_text, title=f"Conv #{idx}", style="dim", box=box.SQUARE)
+                )
             
-            content = table
+            # Use Columns to layout side-by-side
+            content = Columns(conv_panels, expand=True, equal=True)
         
         return Panel(content, title="[bold]Active Conversations[/bold]", box=box.ROUNDED)
     
     def render_agents(self) -> Panel:
-        """Render agents panel"""
+        """Render agents panel with status and intent"""
         if not self.agents:
             content = Text("No agents loaded", style="dim italic")
         else:
-            table = Table(show_header=True, box=box.SIMPLE, padding=(0, 1))
-            table.add_column("Agent", style="cyan")
-            table.add_column("Location", style="magenta")
-            table.add_column("Health", style="green")
-            table.add_column("Stress", style="yellow")
+            table = Table(
+                show_header=True, 
+                box=box.SIMPLE, 
+                padding=(0, 1),
+                header_style="bold cyan", 
+                expand=True
+            )
+            table.add_column("Agent", style="cyan", ratio=2)
+            table.add_column("Location", style="magenta", ratio=2)
+            table.add_column("State", style="green", ratio=1)
+            table.add_column("Last Action", style="dim white", ratio=3)
+            
+            # Find last action for each agent
+            last_actions = {}
+            for event in self.events:
+                evt_type = event.get("type")
+                data = event.get("data", {})
+                
+                # Check different event types for action info
+                agent_id = None
+                action_desc = None
+                
+                if evt_type == "agent_moved":
+                    agent_id = data.get("agent_id")
+                    if agent_id:
+                        to_loc = data.get("to", "?")
+                        action_desc = f"Moved to {to_loc}"
+                        
+                elif evt_type == "message":
+                    agent_id = data.get("from_agent_id", data.get("from_agent")) # from_agent is ID often
+                    # Need to verify if from_agent is ID or Name. Usually ID in backend data.
+                    # Looking at add_message, it takes message dict.
+                    if agent_id:
+                        msg_type = data.get("message_type", "direct")
+                        action_desc = f"Msg ({msg_type})"
+                    
+                # Store if found (overwriting older ones since we iterate forward? No events are appended, so last is newest? 
+                # events list is appended to. So iterating forward gives latest at end.
+                if agent_id and action_desc:
+                    last_actions[agent_id] = action_desc
             
             for agent_id, agent_data in list(self.agents.items())[:8]:
                 name = agent_data.get("name", agent_id)[:15]
-                location = agent_data.get("location", "?")[:10]
+                location = agent_data.get("location", "?")[:12]
                 health = agent_data.get("health", "?")
                 stress = agent_data.get("stress_level", "?")
                 
                 # Health bar
                 if isinstance(health, (int, float)):
-                    health_bar = f"{'●' * int(health // 2)}{'○' * (5 - int(health // 2))}"
+                    health_val = int(health)
+                    health_bar = f"{'●' * (health_val // 2)}{'○' * (5 - (health_val // 2))}"
                 else:
                     health_bar = str(health)
                 
-                table.add_row(name, location, health_bar, str(stress))
+                # Format state (Health + Stress)
+                state_str = f"{health_bar} S:{stress}"
+                
+                # Last action
+                last_act = last_actions.get(agent_id, "-")
+                
+                table.add_row(name, location, state_str, last_act)
             
             content = table
         
@@ -258,7 +334,12 @@ class EventRenderer:
             style, icon = self.MESSAGE_STYLES.get(msg_type, ("white", "?"))
             
             from_name = data.get("from_agent_name", data.get("from_agent", "?"))
-            content = data.get("content", "")[:200]  # Increased from 60 to show full messages
+            content = data.get("content", "")
+            
+            # Strip context metadata suffix like [ctx:1234]
+            import re
+            content = re.sub(r'\s*\[ctx:\d+\]\s*$', '', content)
+            content = content[:200]  # Limit length
             
             if msg_type == "conversation":
                 location = data.get("location", "?")
@@ -306,9 +387,14 @@ class EventRenderer:
                 agent_name = data.get("agent_name", data.get("agent_id", "?"))
                 agent_id = data.get("agent_id", "?")
                 from_loc = data.get("from", "?")
-                to_loc = data.get("to", "?")
-                reason = data.get("reason", "Unknown reason")
-                text.append(f" {agent_name} ({agent_id[:8]}): {from_loc} → {to_loc} failed: {reason}", style="red")
+                to_loc = data.get("to", u"?")
+                # reason = data.get("reason", "Unknown reason") # Unused in graceful mode
+                
+                # Graceful format
+                text.append(f" {agent_name} ({agent_id[:8]}): Checked path to {to_loc}", style="dim")
+                text.append(" → Unreachable. Staying at ", style="dim")
+                text.append(f"{from_loc}", style="dim underline")
+                text.append(".", style="dim")
             elif event_type == "location_created":
                 agent_name = data.get("agent_name", data.get("agent_id", "?"))
                 agent_id = data.get("agent_id", "?")
@@ -338,30 +424,93 @@ class EventRenderer:
         return text
     
     def render_active_stream(self) -> Panel:
-        """Render the active streaming agent response"""
-        if not self.current_stream_agent:
-            return Panel(
+        """Render the active streaming agent response in 3 columns"""
+        # We need to track the last 3 active agents
+        # This requires tracking state beyond just the single current stream
+        # Implementation:
+        # 1. Maintain a list of (agent_id, content, timestamp) tuples
+        # 2. When update_stream is called, update the entry for that agent or move to top
+        
+        # NOTE: This method assumes self._active_streams exists. 
+        # Since we can't easily add __init__ attributes in a patch without replacing the whole class,
+        # we'll initialize it safely here if missing.
+        if not hasattr(self, "_active_streams"):
+            self._active_streams = [] # List of dicts: {id, name, text, time}
+
+        # Sync current stream to _active_streams
+        if self.current_stream_agent:
+            agent_name = self.agents.get(self.current_stream_agent, {}).get("name", self.current_stream_agent)
+            
+            # Check if already in list
+            found = False
+            for s in self._active_streams:
+                if s["id"] == self.current_stream_agent:
+                    s["text"] = self.current_stream_text
+                    s["time"] = datetime.now()
+                    # Move to front
+                    self._active_streams.remove(s)
+                    self._active_streams.insert(0, s)
+                    found = True
+                    break
+            
+            if not found:
+                self._active_streams.insert(0, {
+                    "id": self.current_stream_agent,
+                    "name": agent_name,
+                    "text": self.current_stream_text,
+                    "time": datetime.now()
+                })
+                
+            # Keep only 3
+            self._active_streams = self._active_streams[:3]
+
+        # If no streams at all, show placeholdler
+        if not self._active_streams:
+             return Panel(
                 Text("Waiting for agent activity...", style="dim italic"),
                 title="[bold]Live Stream[/bold]",
                 box=box.ROUNDED,
                 height=10
             )
-            
-        agent_name = self.agents.get(self.current_stream_agent, {}).get("name", self.current_stream_agent)
-        
-        content = Text()
-        content.append(f"{agent_name}: ", style="bold cyan")
-        content.append(self.current_stream_text)
-        
-        # Add a flashing cursor effect
-        if int(datetime.now().timestamp() * 2) % 2 == 0:
-            content.append(" █", style="green")
-            
+
+        # Create panels for top 3 streams
+        panels = []
+        for i in range(3):
+            if i < len(self._active_streams):
+                stream = self._active_streams[i]
+                
+                # Format content
+                content = Text()
+                content.append(f"{stream['name']}\n", style="bold cyan")
+                
+                # Show raw text (full JSON)
+                text_preview = stream['text']
+                # show last N chars if too long
+                if len(text_preview) > 300:
+                    text_preview = "..." + text_preview[-297:]
+                    
+                content.append(text_preview, style="white")
+                
+                # Active indicator
+                if stream["id"] == self.current_stream_agent:
+                     if int(datetime.now().timestamp() * 2) % 2 == 0:
+                        content.append(" █", style="green")
+                
+                # Dim if old (> 10 seconds)
+                time_diff = (datetime.now() - stream["time"]).total_seconds()
+                border_style = "green" if time_diff < 5 else "dim"
+                
+                panels.append(
+                    Panel(content, style=border_style, height=8, box=box.ROUNDED)
+                )
+            else:
+                # Empty slot
+                panels.append(Panel("", box=box.ROUNDED, height=8, style="dim"))
+
         return Panel(
-            content,
-            title=f"[bold]Live Stream: {agent_name}[/bold]",
-            box=box.ROUNDED, 
-            height=10
+            Columns(panels, equal=True, expand=True),
+            title="[bold]Live Streams (Active & Recent)[/bold]",
+            box=box.ROUNDED
         )
 
     def render_layout(self) -> Layout:

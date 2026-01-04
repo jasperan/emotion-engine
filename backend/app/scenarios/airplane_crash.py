@@ -181,7 +181,7 @@ def create_airplane_crash_scenario(num_agents: int = 8) -> ScenarioCreate:
     agent_templates.append(AgentConfig(
         name="Crash Site Environment",
         role="environment",
-        model_id="qwen2.5:7b",
+        model_id="gemma3",
         provider="ollama",
         goals=[
             "Simulate realistic crash site conditions",
@@ -195,7 +195,7 @@ def create_airplane_crash_scenario(num_agents: int = 8) -> ScenarioCreate:
         agent_templates.append(AgentConfig(
             name=persona.name,
             role="human",
-            model_id="qwen2.5:7b",
+            model_id="gemma3",
             provider="ollama",
             persona=persona,
             goals=[
@@ -214,6 +214,9 @@ def create_airplane_crash_scenario(num_agents: int = 8) -> ScenarioCreate:
         initial_state={
             "hazard_level": 6,
             "time_of_day": "late_afternoon",
+            "temperature": "72°F",
+            "city": "Chicago",
+            "country": "USA",
             "weather": "clear_skies",
             "emergency_services": "en_route",
             "crash_time": "15_minutes_ago",
@@ -303,7 +306,7 @@ def create_airplane_crash_scenario(num_agents: int = 8) -> ScenarioCreate:
             "emergency_response_progress": 0.15,
             "hazard_decay": 0.1,
         },
-        max_steps=60,
+        max_steps=100,
         tick_delay=1.5,
     )
     

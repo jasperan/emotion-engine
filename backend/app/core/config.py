@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     # Ollama (default LLM provider)
     ollama_base_url: str = "http://localhost:11434/v1"
     ollama_api_key: str = "ollama"
-    ollama_default_model: str = "gemma3:270m"
+    ollama_default_model: str = "gemma3"
     
     # Claude (optional, for future use)
     anthropic_api_key: str = ""

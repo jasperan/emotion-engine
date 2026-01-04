@@ -2,6 +2,8 @@
 
 A local-first multi-agent simulation system inspired by Netflix's "The Great Flood" Emotion Engine concept. Run AI agent swarms in parallel disaster simulations with diverse human personas, and analyze their cooperation and decision-making.
 
+![CLI Monitor](img/cli.png)
+
 ## Features
 
 - **Agent Roleplay**: Agents have rich personas with demographics, Big Five personality traits, and behavioral modifiers
@@ -39,7 +41,7 @@ A local-first multi-agent simulation system inspired by Netflix's "The Great Flo
 
 - Python 3.11+
 - Node.js 20+
-- [Ollama](https://ollama.ai/) with a model installed (e.g., `ollama pull qwen2.5:7b`)
+- [Ollama](https://ollama.ai/) with a model installed (e.g., `ollama pull gemma3`)
 
 ### Development Setup
 
@@ -58,6 +60,21 @@ A local-first multi-agent simulation system inspired by Netflix's "The Great Flo
    # Run the server (database initializes automatically)
    python -m app.main
    ```
+
+### 🚀 Auto Mode (Recommended)
+
+Run the entire stack (Frontend + Backend) with a single command:
+
+```bash
+cd frontend
+npm run dev
+```
+
+This will:
+1. Start the Python backend (API + Simulation Engine)
+2. Start the SvelteKit frontend dashboard
+3. Launch the browser automatically
+
 
 3. **Frontend Setup**:
    ```bash
@@ -165,6 +182,34 @@ emotionsim status  # Check if backend is running
 - **Dual Modes**: Standalone (no server) or Client (WebSocket to backend)
 - **Real-time Monitoring**: See all agent conversations, movements, and events as they happen
 
+![CLI Monitor](img/cli.png)
+
+*Real-time CLI monitor showing agent interactions, world state, and event log*
+
+## Screenshots
+
+### CLI Monitor
+
+The CLI provides a rich terminal interface with live-updating panels:
+
+![CLI Monitor](img/cli.png)
+
+### Frontend Dashboard
+
+The web-based dashboard provides a visual interface for managing and monitoring simulations:
+
+![Frontend Dashboard](img/frontend_dashboard.png)
+*Main dashboard showing active simulations and scenarios*
+
+![Scenario View](img/frontend_scenarios.png)
+*Scenario management and configuration*
+
+![Run Details](img/frontend_run_details.png)
+*Detailed view of a running simulation with agent interactions*
+
+![Settings](img/frontend_settings.png)
+*Application settings and configuration*
+
 ## API Endpoints
 
 ### Scenarios
@@ -221,7 +266,7 @@ Copy `backend/.env.example` to `backend/.env` and configure:
 ```env
 # LLM Provider
 OLLAMA_BASE_URL=http://localhost:11434/v1
-OLLAMA_DEFAULT_MODEL=qwen2.5:7b
+OLLAMA_DEFAULT_MODEL=gemma3
 
 # Alternative models: phi3, llama3.2:3b, mistral:7b, qwen3:0.6b, etc.
 # For Claude (future)

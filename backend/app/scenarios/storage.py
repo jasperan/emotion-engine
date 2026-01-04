@@ -220,3 +220,51 @@ def update_scenario(
     
     return dict_to_scenario(data)
 
+
+def load_generated_scenarios() -> list[dict[str, Any]]:
+    """
+    Load all generated scenarios from the scenarios_generated directory.
+    
+    Returns:
+        List of dicts with scenario data ready for use in CLI/API
+    """
+    scenarios = []
+    
+    if not SCENARIOS_DIR.exists():
+        return scenarios
+    
+    for filepath in sorted(SCENARIOS_DIR.glob("*.json")):
+        # Skip .gitkeep and other non-scenario files
+        if filepath.name.startswith("."):
+            continue
+            
+        try:
+            with open(filepath, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            
+            # Validate it has required fields
+            if "name" not in data or "agent_templates" not in data:
+                continue
+            
+            scenarios.append({
+                "filename": filepath.name,
+                "filepath": str(filepath),
+                "name": data.get("name", "Unknown"),
+                "description": data.get("description", ""),
+                "generated_at": data.get("generated_at"),
+                "agent_count": len(data.get("agent_templates", [])),
+                "persona_count": len([
+                    t for t in data.get("agent_templates", [])
+                    if t.get("role") == "human"
+                ]),
+                "config": data.get("config", {}),
+                "agent_templates": data.get("agent_templates", []),
+            })
+        except (json.JSONDecodeError, KeyError, OSError):
+            # Skip invalid files
+            continue
+    
+    # Sort by generation time (newest first)
+    scenarios.sort(key=lambda x: x.get("generated_at", ""), reverse=True)
+    return scenarios
+

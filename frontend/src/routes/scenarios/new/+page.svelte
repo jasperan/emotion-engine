@@ -4,7 +4,7 @@
 
 	let name = '';
 	let description = '';
-	let maxSteps = 50;
+	let maxSteps = 10;
 	let tickDelay = 1.0;
 	let agentTemplates: AgentTemplate[] = [];
 	let saving = false;

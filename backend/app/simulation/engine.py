@@ -73,6 +73,9 @@ class SimulationEngine:
         # Real-time agent locations (updated during steps)
         self._agent_locations: dict[str, str] = {}
         
+        # Failed movement tracking (reset each step to prevent retry loops)
+        self._agent_failed_movements: dict[str, set[str]] = {}
+        
         # Control
         self._stop_requested = False
         self._pause_requested = False
@@ -236,8 +239,15 @@ class SimulationEngine:
         self.world_state["shared_goals"] = self.coordinator.shared_goals
         self.world_state["cooperation"] = self.coordinator.get_cooperation_context()
         
+        # Update agents in world state for initial display
+        self._update_agents_in_world_state()
+        
         self.state = SimulationState.IDLE
-        self.on_event("initialized", {"agent_count": len(self.agents)})
+        self.on_event("initialized", {
+            "agent_count": len(self.agents),
+            "world_state": self.world_state,
+            "conversations": [],
+        })
     
     def _create_agent(self, config: dict[str, Any]) -> Agent:
         """Create an agent from configuration"""
@@ -349,6 +359,9 @@ class SimulationEngine:
         step_messages = []
         step_events = []
         
+        # Reset failed movement cache for this step
+        self._agent_failed_movements.clear()
+        
         # Reset conversation counters for this step
         self.conversation_manager.reset_step_counters()
         
@@ -451,6 +464,16 @@ class SimulationEngine:
                     )
                     step_messages.append(stored_msg)
                     await self._persist_message(agent_id, msg)
+                    
+                    # Emit event immediately for real-time logs
+                    self.on_event("message", {
+                        "type": "message",
+                        "data": stored_msg,
+                        "timestamp": datetime.utcnow().strftime("%H:%M:%S")
+                    })
+                    
+                    # Yield to let UI update
+                    await asyncio.sleep(0)
                 
                 # Update world state after environment agent
                 self._update_agents_in_world_state()
@@ -547,96 +570,104 @@ class SimulationEngine:
                     "is_my_turn": True,
                 }
             
-            # Retry loop for agent actions (e.g. if movement fails)
-            # Default to 1 attempt (0 retries), but allow 1 retry for movement failure
-            max_attempts = 2
-            current_messages = messages
+            # Get messages for this agent
+            messages = self.message_bus.get_messages(agent_id)
             
-            for attempt in range(max_attempts):
-                try:
-                    # Create agent-specific callback
-                    agent_callback = None
-                    if stream_callback:
-                        async def _cb(token: str):
-                            await stream_callback(agent_id, token)
-                        agent_callback = _cb
+            # Build world state with conversation context if applicable
+            agent_world_state = self.world_state.copy()
+            
+            # Add cooperation context
+            cooperation_context = self.coordinator.get_cooperation_context()
+            agent_world_state["cooperation"] = cooperation_context
+            
+            # Add suggestions if agent is stuck
+            if self.coordinator.is_stuck_in_loop(agent_id):
+                suggestions = self.coordinator.get_suggestions_for_agent(agent_id)
+                agent_world_state["suggestions"] = suggestions
+            
+            # Add agent's assigned tasks
+            agent_tasks = self.coordinator.agent_tasks.get(agent_id, [])
+            agent_world_state["my_tasks"] = [
+                {
+                    "id": self.coordinator.tasks[tid].id,
+                    "description": self.coordinator.tasks[tid].description,
+                    "priority": self.coordinator.tasks[tid].priority,
+                    "status": self.coordinator.tasks[tid].status,
+                }
+                for tid in agent_tasks
+                if tid in self.coordinator.tasks
+            ]
+            
+            if in_conversation and conversation:
+                # Add conversation context
+                conversation_context = conversation.get_context_for_agent(agent_id)
+                messages = conversation_context + messages
+                
+                agent_world_state["active_conversation"] = {
+                    "id": conversation.id,
+                    "location": conversation.location,
+                    "participants": [
+                        self.agents[pid].name if pid in self.agents else pid
+                        for pid in conversation.participants
+                    ],
+                    "is_my_turn": True,
+                }
+            
+            # Process agent tick (no retry loop - movement failures are handled gracefully)
+            try:
+                # Create agent-specific callback
+                agent_callback = None
+                if stream_callback:
+                    async def _cb(token: str):
+                        await stream_callback(agent_id, token)
+                    agent_callback = _cb
 
-                    response = await agent.tick(
-                        agent_world_state,
-                        current_messages,
-                        step_actions,
-                        step_messages,
-                        step_events,
-                        stream_callback=agent_callback,
-                    )
-                    
-                    # Buffer for actions to commit only if we accept the response
-                    pending_actions = []
-                    retry_needed = False
-                    failure_reason = ""
-                    
-                    # Validate actions first
-                    for action in response.actions:
-                        if action.action_type == "move":
-                            # We need to dry-run or optimistically try the move
-                            # Since _handle_movement changes state on success but is safe on failure (returns False),
-                            # we can call it. If it fails, we undo/retry.
-                            success = await self._handle_movement(agent_id, action.target, action.parameters)
-                            if not success:
-                                retry_needed = True
-                                failure_reason = f"Movement to {action.target} failed. Location unknown or unreachable."
-                                # We shouldn't process other actions if move failed and we're retrying
-                                break
+                response = await agent.tick(
+                    agent_world_state,
+                    messages,
+                    step_actions,
+                    step_messages,
+                    step_events,
+                    stream_callback=agent_callback,
+                )
+                
+                # Process actions
+                for action in response.actions:
+                    if action.action_type == "move":
+                        # Attempt movement - if it fails, just skip it (no retry)
+                        success = await self._handle_movement(agent_id, action.target, action.parameters)
+                        if not success:
+                            # Movement failed - skip this action and continue with others
+                            continue
+                    elif action.action_type == "propose_task":
+                        self._handle_propose_task(agent_id, action.parameters)
+                    elif action.action_type == "accept_task":
+                        self._handle_accept_task(agent_id, action.target, action.parameters)
+                    elif action.action_type == "report_progress":
+                        self._handle_report_progress(agent_id, action.parameters)
+                    elif action.action_type == "call_for_vote":
+                        self._handle_call_for_vote(agent_id, action.parameters)
+                    elif action.action_type == "take":
+                        await self._handle_take(agent_id, action.target)
+                    elif action.action_type == "drop":
+                        await self._handle_drop(agent_id, action.target)
+                    elif action.action_type == "use":
+                        await self._handle_use(agent_id, action.target)
+                    elif action.action_type == "interact":
+                        await self._handle_interact(agent_id, action.target, action.parameters)
+                    elif action.action_type == "search":
+                        await self._handle_search(agent_id)
                         
-                        pending_actions.append(action)
+                    # Add to step actions log
+                    action_dict = {
+                        "agent_id": agent_id,
+                        "agent_name": agent.name,
+                        **action.model_dump(),
+                    }
+                    step_actions.append(action_dict)
                     
-                    if retry_needed and attempt < max_attempts - 1:
-                        # Prepare for retry
-                        # Add a system message to inform agent of failure
-                        current_messages = messages + [{
-                            "role": "user",  # Treat as environment feedback
-                            "content": f"[System]: {failure_reason} Please choose a different action."
-                        }]
-                        continue
-                    
-                    # If we're here, either success or out of retries. Commit actions (except the failed move if it was the last attempt)
-                    # Note: If move failed on last attempt, we effectively ignore it but keep other actions?
-                    # Or do we discard the whole response?
-                    # Let's commit valid pending_actions (if move failed, it wasn't added to pending_actions in the break)
-                    
-                    for action in pending_actions:
-                        # Skip re-execution of move, it was already done in validation loop if successful
-                        if action.action_type == "move":
-                            pass # Already handled
-                        elif action.action_type == "propose_task":
-                            self._handle_propose_task(agent_id, action.parameters)
-                        elif action.action_type == "accept_task":
-                            self._handle_accept_task(agent_id, action.target, action.parameters)
-                        elif action.action_type == "report_progress":
-                            self._handle_report_progress(agent_id, action.parameters)
-                        elif action.action_type == "call_for_vote":
-                            self._handle_call_for_vote(agent_id, action.parameters)
-                        elif action.action_type == "take":
-                            await self._handle_take(agent_id, action.target)
-                        elif action.action_type == "drop":
-                            await self._handle_drop(agent_id, action.target)
-                        elif action.action_type == "use":
-                            await self._handle_use(agent_id, action.target)
-                        elif action.action_type == "interact":
-                            await self._handle_interact(agent_id, action.target, action.parameters)
-                        elif action.action_type == "search":
-                            await self._handle_search(agent_id)
-                            
-                        # Add to step actions log
-                        action_dict = {
-                            "agent_id": agent_id,
-                            "agent_name": agent.name,
-                            **action.model_dump(),
-                        }
-                        step_actions.append(action_dict)
-                        
-                        # Track action for loop detection
-                        self.coordinator.track_action(agent_id, action.action_type, action.target)
+                    # Track action for loop detection
+                    self.coordinator.track_action(agent_id, action.action_type, action.target)
                     
                     # Track conversation topic for loop detection
                     if response.message and response.message.content.strip():
@@ -705,30 +736,35 @@ class SimulationEngine:
                         
                         step_messages.append(stored_msg)
                         await self._persist_message(agent_id, msg, conversation.id if in_conversation else None)
+                        
+                        # Emit event immediately for real-time logs
+                        self.on_event("message", {
+                            "type": "message",
+                            "data": stored_msg,
+                            "timestamp": datetime.utcnow().strftime("%H:%M:%S")
+                        })
+                        
+                        # Yield to let UI update
+                        await asyncio.sleep(0)
                     elif in_conversation and conversation:
                         # Agent chose not to speak in conversation
                         conversation.advance_turn(spoke=False)
-                    
-                    # Update world state after each agent
-                    self._update_agents_in_world_state()
-                    
-                    # Break the retry loop on success
-                    break
+                
+                # Update world state after each agent
+                self._update_agents_in_world_state()
                         
-                except Exception as e:
-                    agent = self.agents.get(agent_id)
-                    agent_name = agent.name if agent else agent_id
-                    self.on_event("agent_error", {
-                        "agent_id": agent_id,
-                        "agent_name": agent_name,
-                        "error": str(e),
-                        "step": self.current_step,
-                        "context": "human_agent_tick",
-                    })
-                    if in_conversation and conversation:
-                        conversation.advance_turn(spoke=False)
-                    # Break on error (don't retry exceptions)
-                    break
+            except Exception as e:
+                agent = self.agents.get(agent_id)
+                agent_name = agent.name if agent else agent_id
+                self.on_event("agent_error", {
+                    "agent_id": agent_id,
+                    "agent_name": agent_name,
+                    "error": str(e),
+                    "step": self.current_step,
+                    "context": "human_agent_tick",
+                })
+                if in_conversation and conversation:
+                    conversation.advance_turn(spoke=False)
                     
 
     
@@ -908,6 +944,29 @@ class SimulationEngine:
             conversation.advance_turn(spoke=False)
             return False
     
+    def _find_path(self, start_loc: str, target_loc: str, locations: dict[str, Any]) -> list[str] | None:
+        """Find the shortest path between locations using BFS"""
+        if start_loc == target_loc:
+            return [start_loc]
+            
+        queue = [(start_loc, [start_loc])]
+        visited = {start_loc}
+        
+        while queue:
+            current, path = queue.pop(0)
+            
+            # check neighbors
+            nearby = locations.get(current, {}).get("nearby", [])
+            for neighbor in nearby:
+                if neighbor == target_loc:
+                    return path + [neighbor]
+                
+                if neighbor not in visited and neighbor in locations:
+                    visited.add(neighbor)
+                    queue.append((neighbor, path + [neighbor]))
+                    
+        return None
+
     async def _handle_movement(
         self,
         agent_id: str,
@@ -918,12 +977,35 @@ class SimulationEngine:
         if not target_location:
             return False
             
+        # Ensure target_location is a string
+        if isinstance(target_location, list):
+            # This handles the "unhashable type: list" bug where LLM returns a list
+            if len(target_location) > 0:
+                target_location = str(target_location[0])
+            else:
+                return False
+        elif not isinstance(target_location, str):
+            target_location = str(target_location)
+        
+        # Check if this agent already failed to move to this location in this step
+        if agent_id not in self._agent_failed_movements:
+            self._agent_failed_movements[agent_id] = set()
+        
+        if target_location in self._agent_failed_movements[agent_id]:
+            # Already tried and failed this step - silently skip to prevent duplicate errors
+            return False
+            
         # Get agent
         agent = self.agents.get(agent_id)
         if not agent:
             return False
         
         current_location = self._agent_locations.get(agent_id, "unknown")
+        
+        # Prevent redundant moves
+        if current_location == target_location:
+            return True # Successfully "stayed" at location, no event emitted
+
         
         # Check if already travelling
         travel_state = agent.dynamic_state.get("travel", None)
@@ -997,20 +1079,47 @@ class SimulationEngine:
             nearby = current_loc_data.get("nearby", [])
         
         if target_location not in nearby and target_location != current_location:
-            # Invalid movement - location not reachable
-            agent = self.agents.get(agent_id)
-            agent_name = agent.name if agent else agent_id
-            reason = "Location not reachable from current location"
-            self.on_event("movement_failed", {
-                "agent_id": agent_id,
-                "agent_name": agent_name,
-                "from": current_location,
-                "to": target_location,
-                "reason": reason,
-                "available_locations": list(locations.keys()),
-                "nearby_locations": nearby,
-            })
-            return False
+            # Try to find a path for multi-step movement
+            path = self._find_path(current_location, target_location, locations)
+            
+            if path and len(path) > 1:
+                # Path found! Route via the next stop
+                next_stop = path[1]
+                
+                agent = self.agents.get(agent_id)
+                agent_name = agent.name if agent else agent_id
+                
+                self.on_event("agent_rerouted", {
+                    "agent_id": agent_id,
+                    "agent_name": agent_name,
+                    "original_target": target_location,
+                    "next_stop": next_stop,
+                    "full_path": path,
+                    "step": self.current_step,
+                })
+                
+                # Update target to the next stop for this specific move action
+                target_location = next_stop
+                # Current location's nearby list already contains next_stop by definition of path
+            else:
+                # Invalid movement - location not reachable
+                agent = self.agents.get(agent_id)
+                agent_name = agent.name if agent else agent_id
+                reason = "Location not reachable from current location"
+                
+                # Track this failed movement to prevent retries in this step
+                self._agent_failed_movements[agent_id].add(target_location)
+                
+                self.on_event("movement_failed", {
+                    "agent_id": agent_id,
+                    "agent_name": agent_name,
+                    "from": current_location,
+                    "to": target_location,
+                    "reason": reason,
+                    "available_locations": list(locations.keys()),
+                    "nearby_locations": nearby,
+                })
+                return False
             
         # Check distance for new travel
         target_info = locations.get(target_location, {})

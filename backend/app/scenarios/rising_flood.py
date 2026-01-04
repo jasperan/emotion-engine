@@ -178,7 +178,7 @@ def create_rising_flood_scenario(num_agents: int = 50) -> ScenarioCreate:
     agent_templates.append(AgentConfig(
         name="Flood System",
         role="environment",
-        model_id="qwen2.5:7b",
+        model_id="gemma3",
         provider="ollama",
         goals=[
             "Simulate realistic flood progression",
@@ -192,7 +192,7 @@ def create_rising_flood_scenario(num_agents: int = 50) -> ScenarioCreate:
         agent_templates.append(AgentConfig(
             name=persona.name,
             role="human",
-            model_id="qwen2.5:7b",
+            model_id="gemma3",
             provider="ollama",
             persona=persona,
             goals=[
@@ -212,6 +212,9 @@ def create_rising_flood_scenario(num_agents: int = 50) -> ScenarioCreate:
             "hazard_level": 2,
             "weather": "heavy_rain",
             "time_of_day": "evening",
+            "temperature": "55°F",
+            "city": "London",
+            "country": "UK",
             "survivors_at_risk": 3,
             "survivors_rescued": 0,
             "locations": {
@@ -312,7 +315,7 @@ def create_rising_flood_scenario(num_agents: int = 50) -> ScenarioCreate:
             "water_rise_per_tick": 0.3,
             "bridge_deterioration": 0.05,
         },
-        max_steps=50,
+        max_steps=100,
         tick_delay=1.0,
     )
     

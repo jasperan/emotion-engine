@@ -71,7 +71,7 @@ class TestSimulationEngine:
         config = {
             "name": "Dr. Test",
             "role": "human",
-            "model_id": "llama3.2",
+            "model_id": "gemma3:270m",
             "provider": "ollama",
             "persona": {
                 "name": "Dr. Test",

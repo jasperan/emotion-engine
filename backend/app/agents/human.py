@@ -17,7 +17,7 @@ class HumanAgent(Agent):
         self,
         agent_id: str | None = None,
         name: str = "Human",
-        model_id: str = "llama3.2",
+        model_id: str = "gemma3:270m",
         provider: str = "ollama",
         persona: Persona | None = None,
         goals: list[str] | None = None,
@@ -99,8 +99,11 @@ Available Actions:
 - move: Move to a different location (target = location name)
 - speak: Say something to others at your location
 - help: Help another person
-- take: Pick up an item
-- use: Use an item from inventory
+- take: Pick up an item (target = item name)
+- drop: Drop an item from inventory (target = item name)
+- use: Use an item from inventory (target = item name)
+- interact: Interact with an object (target = object name, parameters: {action: "open"|"search"|etc})
+- search: Search the area for hidden items
 - wait: Do nothing this turn
 - join_conversation: Join a conversation with specific people
 - leave_conversation: Leave the current conversation
@@ -113,7 +116,7 @@ Output your response as JSON:
 {{
     "actions": [
         {{
-            "action_type": "move|speak|help|take|use|wait|join_conversation|leave_conversation",
+            "action_type": "move|speak|help|take|drop|use|interact|search|wait|join_conversation|leave_conversation",
             "target": "<target location/person/item>",
             "parameters": {{}}
         }}
@@ -136,9 +139,13 @@ IMPORTANT:
 - If you have nothing to say, you can choose not to include a message.
 - Movement takes you to a new location where you'll meet different people.
 - Cooperate with others! Use propose_task and accept_task to coordinate efforts.
+- BE DECISIVE. Do not waste time with idle chatter if there is a crisis.
+- Make clear decisions and take action. Avoid passive language like "maybe we should" or "I wonder if".
 - If you notice you're repeating the same actions, check the "suggestions" in world_state.
 - Work toward shared goals. Report progress when you make headway.
-- If you think the situation is resolved, you can call_for_vote to suggest ending."""
+- If you think the situation is resolved, you can call_for_vote to suggest ending.
+- Use items if they can help you or others (e.g. medical kits for health).
+- Search the room if you need resources."""
     
     def build_context(
         self,
@@ -154,6 +161,7 @@ IMPORTANT:
         current_step = world_state.get("current_step", 0)
         locations = world_state.get("locations", {})
         agents_state = world_state.get("agents", {})
+        objects = world_state.get("objects", {}) # Get object definitions
         
         # Get location info
         current_loc = self.dynamic_state.get("location", "unknown")
@@ -165,6 +173,30 @@ IMPORTANT:
             if agent_info.get("location") == current_loc and agent_id != self.id:
                 agents_here.append(agent_info.get("name", agent_id))
         
+        # Process items and interactables
+        visible_items = []
+        loc_items = loc_info.get("items", [])
+        for item_ref in loc_items:
+            # item_ref can be a string ID or a dict (legacy)
+            if isinstance(item_ref, str):
+                item_def = objects.get(item_ref, {"name": item_ref})
+                if isinstance(item_def, dict):
+                    name = item_def.get("name", item_ref)
+                    if item_def.get("is_visible", True):
+                        visible_items.append(name)
+            elif isinstance(item_ref, dict):
+                 if item_ref.get("is_visible", True):
+                    visible_items.append(item_ref.get("name", "Unknown Item"))
+        
+        # Process inventory
+        inventory_list = []
+        for item in self.inventory:
+            # Item object or dict
+            if hasattr(item, "name"):
+                inventory_list.append(item.name)
+            elif isinstance(item, dict):
+                inventory_list.append(item.get("name", "Unknown Item"))
+
         # Build context string
         context = f"""Current Situation (Step {current_step}):
 
@@ -174,12 +206,12 @@ Environment:
 - Location Status: {loc_info.get('description', 'Unknown area')}
 - People Here: {', '.join(agents_here) if agents_here else 'No one else'}
 - Nearby Locations: {loc_info.get('nearby', [])}
-- Available Items: {loc_info.get('items', [])}
+- Visible Items/Objects: {', '.join(visible_items) if visible_items else 'None visible'}
 
 Your Current State:
 - Stress: {self.dynamic_state.get('stress_level', 5)}/10
 - Health: {self.dynamic_state.get('health', 10)}/10
-- Inventory: {self.dynamic_state.get('inventory', [])}
+- Inventory: {', '.join(inventory_list) if inventory_list else 'Empty'}
 
 """
         

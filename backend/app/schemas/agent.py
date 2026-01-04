@@ -5,9 +5,16 @@ from pydantic import BaseModel, Field
 from app.schemas.persona import Persona
 
 
+
+from app.schemas.item import Item
+
 class AgentAction(BaseModel):
     """An action taken by an agent"""
-    action_type: str = Field(..., description="Type of action (move, speak, help, etc.)")
+    action_type: Literal[
+        "move", "speak", "wait", "reflect", 
+        "search", "take", "drop", "use", "interact",
+        "propose_task", "accept_task", "report_progress", "call_for_vote"
+    ] = Field(..., description="Type of action")
     target: str | None = Field(None, description="Target of the action (agent, location, item)")
     parameters: dict[str, Any] = Field(default_factory=dict, description="Action-specific parameters")
 
@@ -17,6 +24,7 @@ class AgentMessage(BaseModel):
     content: str = Field(..., description="Message content")
     to_target: str = Field(..., description="Target agent ID, room name, or 'broadcast'")
     message_type: Literal["direct", "room", "broadcast"] = Field("direct")
+    metadata: dict[str, Any] = Field(default_factory=dict, description="Optional metadata (e.g. context size)")
 
 
 class AgentResponse(BaseModel):
@@ -29,6 +37,7 @@ class AgentResponse(BaseModel):
 
 class AgentConfig(BaseModel):
     """Configuration for creating an agent"""
+    model_config = {'protected_namespaces': ()}
     name: str
     role: Literal["environment", "human", "designer", "evaluator"]
     model_id: str = "phi3"
@@ -37,6 +46,7 @@ class AgentConfig(BaseModel):
     goals: list[str] = Field(default_factory=list)
     tools: list[str] = Field(default_factory=list)
     initial_state: dict[str, Any] = Field(default_factory=dict)
+    inventory: list[Item] = Field(default_factory=list, description="Initial inventory")
 
 
 class AgentStatus(BaseModel):
@@ -47,4 +57,6 @@ class AgentStatus(BaseModel):
     is_active: bool
     persona: Persona | None = None
     dynamic_state: dict[str, Any] = Field(default_factory=dict)
+    inventory: list[Item] = Field(default_factory=list)
+
 

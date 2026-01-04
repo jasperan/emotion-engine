@@ -68,7 +68,7 @@ async def _run_standalone(
     from app.models.scenario import Scenario
     from app.models.run import Run, RunStatus
     from app.simulation.engine import SimulationEngine
-    from app.scenarios.rising_flood import create_rising_flood_scenario
+
     
     settings = get_settings()
     
@@ -90,10 +90,21 @@ async def _run_standalone(
         scenario = result.scalar_one_or_none()
         
         if not scenario:
-            # Try to create built-in scenario
-            if "flood" in scenario_name.lower() or scenario_name.lower() == "rising flood":
-                console.print(f"[yellow]Creating built-in scenario: Rising Flood[/yellow]")
-                scenario_create = create_rising_flood_scenario()
+            # Try to create a built-in scenario
+            from app.scenarios.defaults import DEFAULT_SCENARIOS
+            
+            creator = next(
+                (
+                    func
+                    for name, func in DEFAULT_SCENARIOS.items()
+                    if scenario_name.lower() in name.lower()
+                ),
+                None,
+            )
+            
+            if creator:
+                scenario_create = creator()
+                console.print(f"[yellow]Creating built-in scenario: {scenario_create.name}[/yellow]")
                 scenario = Scenario(
                     name=scenario_create.name,
                     description=scenario_create.description,
@@ -105,7 +116,7 @@ async def _run_standalone(
                 await db.refresh(scenario)
             else:
                 console.print(f"[red]Scenario '{scenario_name}' not found.[/red]")
-                console.print("Use 'emotionsim scenarios' to list available scenarios.")
+                console.print("Use 'emotionsim scenarios --create-builtin' to see available scenarios.")
                 return
         
         console.print(f"[green]✓[/green] Loaded scenario: [bold]{scenario.name}[/bold]")
@@ -339,7 +350,7 @@ async def _list_scenarios(create_builtin: bool):
     from app.core.config import get_settings
     from app.core.database import Base
     from app.models.scenario import Scenario
-    from app.scenarios.rising_flood import create_rising_flood_scenario
+    from app.scenarios.defaults import DEFAULT_SCENARIOS
     
     settings = get_settings()
     engine = create_async_engine(settings.database_url, echo=False)
@@ -350,27 +361,22 @@ async def _list_scenarios(create_builtin: bool):
     
     async with async_session() as db:
         if create_builtin:
-            # Create built-in scenarios
             console.print("[cyan]Creating built-in scenarios...[/cyan]")
-            
-            # Check if Rising Flood exists
-            result = await db.execute(
-                select(Scenario).where(Scenario.name == "Rising Flood")
-            )
-            if not result.scalar_one_or_none():
-                scenario_create = create_rising_flood_scenario()
-                scenario = Scenario(
-                    name=scenario_create.name,
-                    description=scenario_create.description,
-                    config=scenario_create.config.model_dump(),
-                    agent_templates=[t.model_dump() for t in scenario_create.agent_templates],
-                )
-                db.add(scenario)
-                await db.commit()
-                console.print(f"  [green]✓[/green] Created: Rising Flood")
-            else:
-                console.print(f"  [dim]Already exists: Rising Flood[/dim]")
-            
+            for name, creator in DEFAULT_SCENARIOS.items():
+                result = await db.execute(select(Scenario).where(Scenario.name == name))
+                if not result.scalar_one_or_none():
+                    scenario_create = creator()
+                    scenario = Scenario(
+                        name=scenario_create.name,
+                        description=scenario_create.description,
+                        config=scenario_create.config.model_dump(),
+                        agent_templates=[t.model_dump() for t in scenario_create.agent_templates],
+                    )
+                    db.add(scenario)
+                    await db.commit()
+                    console.print(f"  [green]✓[/green] Created: {name}")
+                else:
+                    console.print(f"  [dim]Already exists: {name}[/dim]")
             console.print()
         
         # List scenarios
@@ -432,7 +438,7 @@ async def _interactive_wizard():
     from app.core.config import get_settings
     from app.core.database import Base
     from app.models.scenario import Scenario
-    from app.scenarios.rising_flood import create_rising_flood_scenario
+    from app.scenarios.defaults import DEFAULT_SCENARIOS
     
     console.print()
     console.print("[bold cyan]╔══════════════════════════════════════╗[/bold cyan]")
@@ -455,18 +461,20 @@ async def _interactive_wizard():
         # Create built-in if none exist
         if not scenarios_list:
             console.print("[yellow]No scenarios found. Creating built-in scenarios...[/yellow]")
-            scenario_create = create_rising_flood_scenario()
-            scenario = Scenario(
-                name=scenario_create.name,
-                description=scenario_create.description,
-                config=scenario_create.config.model_dump(),
-                agent_templates=[t.model_dump() for t in scenario_create.agent_templates],
-            )
-            db.add(scenario)
+            for name, creator in DEFAULT_SCENARIOS.items():
+                scenario_create = creator()
+                scenario = Scenario(
+                    name=scenario_create.name,
+                    description=scenario_create.description,
+                    config=scenario_create.config.model_dump(),
+                    agent_templates=[t.model_dump() for t in scenario_create.agent_templates],
+                )
+                db.add(scenario)
             await db.commit()
-            await db.refresh(scenario)
-            scenarios_list = [scenario]
-            console.print(f"[green]✓[/green] Created: {scenario.name}\n")
+            
+            result = await db.execute(select(Scenario).order_by(Scenario.name))
+            scenarios_list = list(result.scalars().all())
+            console.print(f"[green]✓[/green] Created {len(scenarios_list)} scenarios.\n")
         
         # Display scenarios
         console.print("[bold]Available Scenarios:[/bold]")
@@ -595,6 +603,286 @@ async def _check_status(base_url: str):
         console.print(f"[red]✗[/red] Error: {e}")
 
 
+# ============================================================================
+# Best Runs Command
+# ============================================================================
+
+@cli.command()
+@click.option("--limit", "-n", default=10, help="Number of runs to show")
+def best(limit: int):
+    """Show the best simulations based on agent health and stress.
+    
+    Example:
+        emotionsim best
+    """
+    asyncio.run(_show_best_runs(limit))
+
+
+async def _show_best_runs(limit: int):
+    """Show best runs analysis"""
+    from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+    from sqlalchemy import select, desc
+    from sqlalchemy.orm import selectinload
+    
+    from app.core.config import get_settings
+    from app.core.database import Base
+    from app.models.run import Run, RunStatus
+    
+    settings = get_settings()
+    engine = create_async_engine(settings.database_url, echo=False)
+    async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    
+    console.print(f"\n[bold cyan]EmotionSim[/bold cyan] - Best Simulations")
+    
+    async with async_session() as db:
+        # Get completed runs logic
+        # Since JSON metrics querying depends on DB type (SQLite vs PG), we'll fetch completed runs 
+        # and sort in Python for simplicity and compatibility
+        result = await db.execute(
+            select(Run)
+            .where(Run.status == RunStatus.COMPLETED)
+            .order_by(desc(Run.completed_at))
+            .options(selectinload(Run.scenario))
+        )
+        runs = result.scalars().all()
+        
+        if not runs:
+            console.print("[yellow]No completed runs found.[/yellow]")
+            return
+            
+        # Calculate scores and sort
+        scored_runs = []
+        for run in runs:
+            metrics = run.metrics or {}
+            avg_health = float(metrics.get("avg_health", 0))
+            avg_stress = float(metrics.get("avg_stress", 10))
+            
+            # Simple score: Health - Stress (higher is better)
+            # Normalize stress (lower is better, so negate)
+            score = avg_health - avg_stress
+            
+            scored_runs.append({
+                "run": run,
+                "score": score,
+                "health": avg_health,
+                "stress": avg_stress,
+                "steps": run.current_step
+            })
+            
+        # Sort by score descending
+        scored_runs.sort(key=lambda x: x["score"], reverse=True)
+        
+        # Display
+        table = Table(title=f"Top {limit} Simulations", box=box.ROUNDED)
+        table.add_column("Rank", style="dim")
+        table.add_column("ID", style="dim")
+        table.add_column("Scenario", style="cyan")
+        table.add_column("Score", style="bold green")
+        table.add_column("Avg Health", style="green")
+        table.add_column("Avg Stress", style="red")
+        table.add_column("Steps", style="yellow")
+        
+        for i, item in enumerate(scored_runs[:limit], 1):
+            run = item["run"]
+            table.add_row(
+                str(i),
+                str(run.id)[:8] + "...",
+                run.scenario.name if run.scenario else "Unknown",
+                f"{item['score']:.2f}",
+                f"{item['health']:.1f}",
+                f"{item['stress']:.1f}",
+                str(item['steps'])
+            )
+            
+        console.print(table)
+        console.print()
+
+
+# ============================================================================
+# Auto Run Command
+# ============================================================================
+
+@cli.command()
+@click.option("--count", "-n", default=None, type=int, help="Number of simulations to run (default: infinite)")
+def auto(count: int | None):
+    """Automatically run simulations sequentially.
+    
+    Checks for pending runs first, then generates new ones from presets.
+    """
+    asyncio.run(_run_auto_loop(count))
+
+
+async def _run_auto_loop(count: int | None):
+    """Run simulations sequentially"""
+    from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+    from sqlalchemy import select, asc
+    import random
+    
+    from app.core.config import get_settings
+    from app.core.database import Base
+    from app.models.scenario import Scenario
+    from app.models.run import Run, RunStatus
+    from app.scenarios.defaults import DEFAULT_SCENARIOS
+    
+    settings = get_settings()
+    
+    console.print("\n[bold cyan]EmotionSim[/bold cyan] - Auto Runner")
+    console.print(f"Model: [bold green]{settings.ollama_default_model}[/bold green]")
+    console.print(f"Max Context: [bold yellow]8192 tokens[/bold yellow]")
+    console.print()
+    
+    # Display available presets
+    console.print("[bold]Available Presets:[/bold]")
+    for name in DEFAULT_SCENARIOS.keys():
+        console.print(f"  - {name}")
+    console.print()
+    
+    # Setup DB
+    engine = create_async_engine(settings.database_url, echo=False)
+    async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    
+    # Ensure DB exists
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+        
+    runs_completed = 0
+    
+    while count is None or runs_completed < count:
+        console.print(f"[bold]>>> Starting cycle {runs_completed + 1}[/bold]")
+        
+        # Check for pending runs
+        target_run_id = None
+        scenario_name = None
+        
+        async with async_session() as db:
+            # Check for PENDING runs
+            result = await db.execute(
+                select(Run)
+                .where(Run.status == RunStatus.PENDING)
+                .order_by(asc(Run.created_at))
+                .limit(1)
+            )
+            pending_run = result.scalar_one_or_none()
+            
+            if pending_run:
+                target_run_id = pending_run.id
+                # Eager load scenario to get name
+                result = await db.execute(select(Scenario).where(Scenario.id == pending_run.scenario_id))
+                scenario = result.scalar_one_or_none()
+                scenario_name = scenario.name if scenario else "Unknown"
+                console.print(f"[yellow]Found pending run:[/yellow] {scenario_name} ({target_run_id[:8]}...)")
+            else:
+                # Create a new run from random preset
+                preset_name = random.choice(list(DEFAULT_SCENARIOS.keys()))
+                console.print(f"[cyan]No pending runs. Creating new run:[/cyan] {preset_name}")
+                
+                # Check if scenario exists
+                result = await db.execute(select(Scenario).where(Scenario.name.ilike(f"%{preset_name}%")))
+                scenario = result.scalar_one_or_none()
+                
+                if not scenario:
+                    # Create it
+                    creator = DEFAULT_SCENARIOS[preset_name]
+                    scenario_create = creator()
+                    scenario = Scenario(
+                        name=scenario_create.name,
+                        description=scenario_create.description,
+                        config=scenario_create.config.model_dump(),
+                        agent_templates=[t.model_dump() for t in scenario_create.agent_templates],
+                    )
+                    db.add(scenario)
+                    await db.commit()
+                    await db.refresh(scenario)
+                
+                # Create Run
+                new_run = Run(
+                    scenario_id=scenario.id,
+                    status=RunStatus.PENDING,
+                    max_steps=scenario.config.get("max_steps", 50),
+                    seed=random.randint(1, 10000)
+                )
+                db.add(new_run)
+                await db.commit()
+                await db.refresh(new_run)
+                
+                target_run_id = new_run.id
+                scenario_name = scenario.name
+        
+        if target_run_id:
+            # Run it using existing standalone runner
+            # We use simple mode for auto runner to keep logs clean
+            console.print(f"[green]Executing run {target_run_id} ({scenario_name})...[/green]")
+            try:
+                # We need to run this function. 
+                # Note: passing specific run_id isn't supported by _run_standalone directly
+                # _run_standalone takes scenario name and creates a NEW run.
+                # We need to refactor _run_standalone or create a variant that takes a run_id.
+                # But wait, looking at _run_standalone, it creates a run.
+                
+                # Let's modify _run_standalone to accept an optional run_id!
+                # Or simply implement the execution logic here reusing the engine?
+                
+                # Reusing internal logic is better to avoid "creating" a run when we already have one.
+                
+                # Reuse logic from _run_standalone but for an existing run
+                await _execute_existing_run(target_run_id, simple=True)
+                
+            except Exception as e:
+                console.print(f"[red]Error executing run:[/red] {e}")
+                import traceback
+                traceback.print_exc()
+            
+            runs_completed += 1
+            console.print(f"[bold green]✓ Cycle completed.[/bold green]")
+            console.print("-" * 50)
+            
+            # Small delay between runs
+            await asyncio.sleep(2)
+
+
+async def _execute_existing_run(run_id: str, simple: bool = True):
+    """Execute an existing PENDING run"""
+    from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+    from app.core.config import get_settings
+    from app.simulation.engine import SimulationEngine
+    from app.cli_monitor import SimpleEventLogger
+    
+    settings = get_settings()
+    engine = create_async_engine(settings.database_url, echo=False)
+    async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    
+    async with async_session() as db:
+        # Setup logging
+        logger = SimpleEventLogger(console)
+        
+        def on_event(event_type: str, data: dict[str, Any]):
+            logger.log_event(event_type, data)
+            if event_type == "step_completed":
+                for msg in data.get("messages", []):
+                    logger.log_message(msg)
+        
+        # Initialize Engine with existing run
+        sim_engine = SimulationEngine(
+            run_id=run_id,
+            db_session=db,
+            on_event=on_event
+        )
+        
+        # Load from DB (this method needs to exist on engine or we initialize manually)
+        # The engine has load_from_db()!
+        await sim_engine.load_from_db()
+        
+        console.print(f"[green]✓[/green] Loaded run {run_id}")
+        
+        # Start
+        await sim_engine.start()
+        
+        console.print(f"[green]✓[/green] Simulation finished.")
+
+
+
+# ============================================================================
+# Status Command
 # ============================================================================
 # Entry Point
 # ============================================================================

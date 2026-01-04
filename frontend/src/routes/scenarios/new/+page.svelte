@@ -226,7 +226,6 @@
 						<div class="flex items-center gap-4 p-3 bg-storm-800/50 rounded-lg">
 							<div class="flex-1">
 								<div class="font-medium">{agent.name}</div>
-								<div class="text-sm text-storm-400 capitalize">{agent.role}</div>
 							</div>
 							{#if agent.persona}
 								<div class="text-sm text-storm-300">

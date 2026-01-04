@@ -4,11 +4,11 @@ from app.schemas.agent import AgentConfig
 from app.schemas.scenario import WorldConfig, ScenarioCreate
 
 
-def create_mass_casualty_scenario() -> ScenarioCreate:
-    """Create the Mass Casualty Event scenario with 10 diverse personas"""
+def create_mass_casualty_scenario(num_agents: int = 10) -> ScenarioCreate:
+    """Create the Mass Casualty Event scenario with a specified number of diverse personas"""
     
     # Define diverse personas - mix of first responders and civilians
-    personas = [
+    base_personas = [
         # First Responders
         Persona(
             name="Lieutenant Maria Santos",
@@ -215,6 +215,9 @@ def create_mass_casualty_scenario() -> ScenarioCreate:
         ),
     ]
     
+    from app.scenarios.generator import PersonaGenerator
+    personas = PersonaGenerator.generate_personas(base_personas, num_agents)
+    
     # Create agent templates
     agent_templates = []
     
@@ -352,8 +355,8 @@ def create_mass_casualty_scenario() -> ScenarioCreate:
     )
     
     return ScenarioCreate(
-        name="Mass Casualty: Building Collapse",
-        description="A six-story office building has partially collapsed during business hours. First responders and civilians must coordinate rescue efforts, perform triage, and save as many lives as possible. The scenario tests crisis leadership, medical triage decisions, resource allocation, and coordination under extreme pressure.",
+        name=f"Mass Casualty: Building Collapse ({num_agents} agents)",
+        description=f"A six-story office building has partially collapsed during business hours. {num_agents} first responders and civilians must coordinate rescue efforts, perform triage, and save as many lives as possible. The scenario tests crisis leadership, medical triage decisions, resource allocation, and coordination under extreme pressure.",
         config=world_config,
         agent_templates=agent_templates,
     )

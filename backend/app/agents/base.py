@@ -2,7 +2,7 @@
 import json
 import uuid
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Callable, Awaitable
 
 from app.llm.base import LLMMessage, LLMResponse
 from app.llm.router import LLMRouter
@@ -18,7 +18,7 @@ class Agent(ABC):
         agent_id: str | None = None,
         name: str = "Agent",
         role: str = "base",
-        model_id: str = "qwen2.5:7b",
+        model_id: str = "gemma3:270m",
         provider: str = "ollama",
         goals: list[str] | None = None,
         tools: list[str] | None = None,
@@ -43,8 +43,12 @@ class Agent(ABC):
         self.memory: list[dict[str, Any]] = []
         self.memory_limit = memory_limit
         
+        self.memory_limit = memory_limit
+        
         # Dynamic state
         self.dynamic_state: dict[str, Any] = {}
+        self.inventory = [] # Initialize empty inventory
+
         
         # LLM client
         self._llm_client = LLMRouter.get_client(provider)  # type: ignore
@@ -251,6 +255,7 @@ class Agent(ABC):
         step_actions: list[dict[str, Any]] | None = None,
         step_messages: list[dict[str, Any]] | None = None,
         step_events: list[str] | None = None,
+        stream_callback: Callable[[str], Awaitable[None]] | None = None,
     ) -> AgentResponse:
         """
         Execute one simulation tick.
@@ -261,6 +266,7 @@ class Agent(ABC):
             step_actions: Actions taken by other agents in current step
             step_messages: Messages sent by other agents in current step
             step_events: Events that occurred in current step
+            stream_callback: Async callback for streaming tokens
             
         Returns:
             AgentResponse with actions and optional message
@@ -275,18 +281,26 @@ class Agent(ABC):
         
         # Call LLM with increased token limit for complete responses
         llm_messages = [LLMMessage(role="user", content=context)]
+        context_size = len(context)
         
         response = await self._llm_client.generate(
             messages=llm_messages,
             model=self.model_id,
             system=system_prompt,
             temperature=0.8,  # Increased for more creative responses
-            max_tokens=4096,  # Increased to prevent truncated sentences
+            max_tokens=8192,  # Increased to prevent truncated sentences
             json_mode=True,
+            stream_callback=stream_callback,
         )
         
         # Parse and return response
         agent_response = self.parse_llm_response(response)
+        
+        # Add context size to message metadata if message exists
+        if agent_response.message:
+            if not agent_response.message.metadata:
+                agent_response.message.metadata = {}
+            agent_response.message.metadata["context_size"] = context_size
         
         # Apply state changes
         self.dynamic_state.update(agent_response.state_changes)
@@ -296,6 +310,7 @@ class Agent(ABC):
             "type": "action",
             "actions": [a.model_dump() for a in agent_response.actions],
             "message": agent_response.message.model_dump() if agent_response.message else None,
+            "context_size": context_size,
         })
         
         return agent_response
@@ -311,6 +326,7 @@ class Agent(ABC):
             "goals": self.goals,
             "tools": self.tools,
             "dynamic_state": self.dynamic_state,
+            "inventory": [item.model_dump() for item in self.inventory],
             "memory": self.agent_memory.to_dict(),
         }
     

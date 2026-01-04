@@ -1,5 +1,6 @@
 """Ollama LLM client using OpenAI-compatible API"""
 import httpx
+from typing import Any, Callable, Awaitable
 from openai import AsyncOpenAI
 
 from app.llm.base import LLMClient, LLMMessage, LLMResponse
@@ -39,9 +40,10 @@ class OllamaClient(LLMClient):
         messages: list[LLMMessage],
         model: str | None = None,
         temperature: float = 0.7,
-        max_tokens: int = 1024,
+        max_tokens: int = 8192,
         system: str | None = None,
         json_mode: bool = False,
+        stream_callback: Callable[[str], Awaitable[None]] | None = None,
     ) -> LLMResponse:
         """Generate response using Ollama"""
         model = model or self.default_model
@@ -57,6 +59,38 @@ class OllamaClient(LLMClient):
         # Make API call
         response_format = {"type": "json_object"} if json_mode else None
         
+        if stream_callback:
+            try:
+                stream = await self.client.chat.completions.create(
+                    model=model,
+                    messages=openai_messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    response_format=response_format,
+                    stream=True,
+                )
+                
+                collected_content = []
+                
+                async for chunk in stream:
+                    content = chunk.choices[0].delta.content or ""
+                    if content:
+                        collected_content.append(content)
+                        await stream_callback(content)
+                
+                full_content = "".join(collected_content)
+                
+                return LLMResponse(
+                    content=full_content,
+                    raw_response={},
+                    usage={}
+                )
+            except Exception as e:
+                # If streaming fails (e.g. not supported), fall back to normal
+                print(f"Streaming failed, falling back to normal: {e}")
+                # Fall through to non-streaming logic below
+        
+        # Non-streaming implementation (default or fallback)
         response = await self.client.chat.completions.create(
             model=model,
             messages=openai_messages,

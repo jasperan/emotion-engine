@@ -1,5 +1,6 @@
 <script>
   import '../app.css';
+  import { headerStore } from '$lib/stores/header';
 </script>
 
 <div class="flex h-screen bg-background text-on-background overflow-hidden selection:bg-primary selection:text-on-primary">
@@ -40,24 +41,46 @@
 
   <!-- Main Content -->
   <main class="flex-1 flex flex-col relative overflow-hidden">
-    <!-- Top Bar (Optional, can be used for context) -->
-    <header class="h-16 border-b border-outline/30 flex items-center justify-between px-6 bg-background/80 backdrop-blur-sm z-10">
+    <!-- Top Bar -->
+    <header class="h-16 border-b border-outline/30 flex items-center justify-between px-6 bg-background/80 backdrop-blur-sm z-10 transition-all duration-300">
        <div class="flex items-center gap-4">
-          <h1 class="font-medium text-on-background">New Chat</h1>
-          <span class="px-2 py-0.5 rounded text-xs bg-primary/10 text-primary border border-primary/20">Gemini Pro 1.5</span>
+          {#if $headerStore.breadcrumb}
+            <div class="flex items-center gap-2 text-sm">
+              {#each $headerStore.breadcrumb as item, i}
+                <a href={item.href} class="text-on-surface/60 hover:text-primary transition-colors">{item.label}</a>
+                {#if i < $headerStore.breadcrumb.length - 1}
+                  <span class="text-outline">/</span>
+                {/if}
+              {/each}
+              <span class="text-outline">/</span>
+              <span class="text-on-background font-medium">{$headerStore.title}</span>
+            </div>
+          {:else}
+            <h1 class="font-medium text-on-background">{$headerStore.title}</h1>
+          {/if}
        </div>
        <div class="flex items-center gap-2">
-           <button class="p-2 text-on-surface hover:text-on-background hover:bg-surface-alt rounded-full transition-colors">
-               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-share"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
-           </button>
-           <button class="p-2 text-on-surface hover:text-on-background hover:bg-surface-alt rounded-full transition-colors">
-               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-more-vertical"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-           </button>
+           {#if $headerStore.actions}
+             {#each $headerStore.actions as action}
+               <button 
+                class="btn {action.primary ? 'btn-primary' : 'btn-secondary'} h-9 px-3 text-sm" 
+                on:click={action.onclick}
+               >
+                 {action.label}
+               </button>
+             {/each}
+           {:else}
+             <button class="p-2 text-on-surface hover:text-on-background hover:bg-surface-alt rounded-full transition-colors">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-share"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
+             </button>
+           {/if}
        </div>
     </header>
 
     <div class="flex-1 overflow-auto">
-        <slot />
+        <div class="p-6">
+            <slot />
+        </div>
     </div>
   </main>
 </div>

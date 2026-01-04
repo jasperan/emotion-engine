@@ -1,6 +1,8 @@
 <script lang="ts">
   import { scenarios } from '$lib/api';
   import { goto } from '$app/navigation';
+  import { onMount } from 'svelte';
+  import { setHeader, resetHeader } from '$lib/stores/header';
 
   let prompt = '';
   let isLoading = false;
@@ -36,6 +38,11 @@
     }
   }
 
+  onMount(() => {
+    setHeader({ title: 'New Chat' });
+    return resetHeader;
+  });
+
   function handleKeydown(e: KeyboardEvent) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -44,7 +51,7 @@
   }
 </script>
 
-<div class="flex flex-col items-center justify-center h-full max-w-4xl mx-auto px-6 relative">
+<div class="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] max-w-6xl mx-auto px-6 relative">
   
   <div class="text-center mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
      <h1 class="text-5xl font-medium tracking-tighter mb-4 bg-clip-text text-transparent bg-gradient-to-r from-accent-blue via-accent-purple to-accent-teal">

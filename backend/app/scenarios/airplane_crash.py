@@ -4,11 +4,11 @@ from app.schemas.agent import AgentConfig
 from app.schemas.scenario import WorldConfig, ScenarioCreate
 
 
-def create_airplane_crash_scenario() -> ScenarioCreate:
-    """Create the Airplane Crash Investigation scenario with 8 diverse personas"""
+def create_airplane_crash_scenario(num_agents: int = 8) -> ScenarioCreate:
+    """Create the Airplane Crash Investigation scenario with a specified number of diverse personas"""
     
     # Define diverse personas with different expertise and perspectives
-    personas = [
+    base_personas = [
         Persona(
             name="Captain James Mitchell",
             age=58,
@@ -171,6 +171,9 @@ def create_airplane_crash_scenario() -> ScenarioCreate:
         ),
     ]
     
+    from app.scenarios.generator import PersonaGenerator
+    personas = PersonaGenerator.generate_personas(base_personas, num_agents)
+    
     # Create agent templates
     agent_templates = []
     
@@ -305,8 +308,8 @@ def create_airplane_crash_scenario() -> ScenarioCreate:
     )
     
     return ScenarioCreate(
-        name="Airplane Crash Investigation",
-        description="A small passenger plane has crashed in a suburban neighborhood. Eight residents with different backgrounds, knowledge, and perspectives must save survivors, investigate, share information, and reach conclusions about what happened. The scenario tests information sharing, critical thinking, cooperation, and the challenge of coordinating rescue efforts under pressure.",
+        name=f"Airplane Crash Investigation ({num_agents} agents)",
+        description=f"A small passenger plane has crashed in a suburban neighborhood. {num_agents} residents with different backgrounds, knowledge, and perspectives must save survivors, investigate, share information, and reach conclusions about what happened. The scenario tests information sharing, critical thinking, cooperation, and the challenge of coordinating rescue efforts under pressure.",
         config=world_config,
         agent_templates=agent_templates,
     )

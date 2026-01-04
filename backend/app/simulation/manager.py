@@ -77,10 +77,14 @@ class SimulationManager:
         if not scenario:
             raise ValueError(f"Scenario {run.scenario_id} not found")
         
+        # Create a new dedicated session for this engine
+        from app.core.database import async_session_maker as AsyncSessionLocal
+        engine_session = AsyncSessionLocal()
+        
         # Create engine
         engine = SimulationEngine(
             run_id=run_id,
-            db_session=db,
+            db_session=engine_session,
             on_event=lambda t, d: self._dispatch_event(run_id, t, d),
         )
         
@@ -172,6 +176,48 @@ class SimulationManager:
             except ValueError:
                 pass
     
+    async def resume_all_active_runs(self, db: AsyncSession) -> int:
+        """Resume all pending or running simulations from database"""
+        # Find runs that were interrupted
+        query = select(Run).where(Run.status.in_([RunStatus.PENDING, RunStatus.RUNNING]))
+        result = await db.execute(query)
+        runs_to_resume = result.scalars().all()
+        
+        count = 0
+        for run in runs_to_resume:
+            try:
+                # Reconstruct engine and start it
+                await self.resume_run_from_db(db, run.id)
+                count += 1
+            except Exception as e:
+                print(f"Failed to resume run {run.id}: {e}")
+                
+        return count
+        
+    async def resume_run_from_db(self, db: AsyncSession, run_id: str) -> SimulationEngine:
+        """Resume a specific run by loading its state from the database"""
+        # Create a new dedicated session for this engine
+        from app.core.database import async_session_maker as AsyncSessionLocal
+        engine_session = AsyncSessionLocal()
+        
+        # Create engine with dedicated session
+        engine = SimulationEngine(
+            run_id=run_id,
+            db_session=engine_session,
+            on_event=lambda t, d: self._dispatch_event(run_id, t, d),
+        )
+        
+        # Load state from DB (using the engine's session)
+        await engine.load_from_db()
+        
+        self._engines[run_id] = engine
+        
+        # Start in background if it was previously running or pending
+        task = asyncio.create_task(engine.start())
+        self._tasks[run_id] = task
+        
+        return engine
+
     def _dispatch_event(
         self,
         run_id: str,

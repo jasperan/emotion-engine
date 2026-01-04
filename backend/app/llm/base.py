@@ -1,6 +1,6 @@
 """LLM client base abstraction"""
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Callable, Awaitable
 from pydantic import BaseModel
 
 
@@ -29,6 +29,7 @@ class LLMClient(ABC):
         max_tokens: int = 1024,
         system: str | None = None,
         json_mode: bool = False,
+        stream_callback: Callable[[str], Awaitable[None]] | None = None,
     ) -> LLMResponse:
         """
         Generate a response from the LLM.

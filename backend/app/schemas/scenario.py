@@ -18,6 +18,9 @@ class WorldConfig(BaseModel):
     # Simulation settings
     max_steps: int | None = Field(None, ge=1, le=10000, description="Maximum simulation steps (None = infinite until consensus)")
     tick_delay: float = Field(0.5, ge=0, le=60, description="Delay between ticks in seconds")
+    
+    # Object definitions
+    objects: dict[str, Any] = Field(default_factory=dict, description="Definitions of items and interactables")
 
 
 class ScenarioCreate(BaseModel):

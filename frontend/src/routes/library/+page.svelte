@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { scenarios, runs, type Scenario, type Run } from '$lib/api';
+	import { setHeader, resetHeader } from '$lib/stores/header';
 
 	let scenarioList: Scenario[] = [];
 	let runList: Run[] = [];
@@ -8,6 +9,7 @@
 	let error: string | null = null;
 
 	onMount(async () => {
+		setHeader({ title: 'Library' });
 		try {
 			[scenarioList, runList] = await Promise.all([scenarios.list(), runs.list()]);
 		} catch (e) {
@@ -15,6 +17,8 @@
 		} finally {
 			loading = false;
 		}
+
+		return resetHeader;
 	});
 
 	function formatDate(dateStr: string): string {

@@ -14,7 +14,7 @@ class EvaluationAgent(Agent):
         self,
         agent_id: str | None = None,
         name: str = "Evaluator",
-        model_id: str = "llama3.2",
+        model_id: str = "gemma3:270m",
         provider: str = "ollama",
     ):
         super().__init__(

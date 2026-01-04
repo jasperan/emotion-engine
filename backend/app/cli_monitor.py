@@ -47,7 +47,14 @@ class EventRenderer:
         self.world_state: dict[str, Any] = {}
         self.conversations: list[dict[str, Any]] = []
         self.agents: dict[str, dict[str, Any]] = {}
+        self.conversations: list[dict[str, Any]] = []
+        self.agents: dict[str, dict[str, Any]] = {}
         self.run_status = "idle"
+        
+        # Streaming state
+        self.current_stream_agent: str | None = None
+        self.current_stream_text: str = ""
+        self.current_stream_token_count: int = 0
         
     def add_event(self, event_type: str, data: dict[str, Any]) -> None:
         """Add an event to the log"""
@@ -77,6 +84,21 @@ class EventRenderer:
         if len(self.events) > self.max_events:
             self.events = self.events[-self.max_events:]
     
+    def update_stream(self, agent_id: str, token: str) -> None:
+        """Update the current stream with a new token"""
+        # If agent changed, reset
+        if self.current_stream_agent != agent_id:
+            self.current_stream_agent = agent_id
+            self.current_stream_text = ""
+            self.current_stream_token_count = 0
+            
+        self.current_stream_text += token
+        self.current_stream_token_count += 1
+        
+        # Keep text length reasonable
+        if len(self.current_stream_text) > 1000:
+            self.current_stream_text = "..." + self.current_stream_text[-997:]
+
     def _update_state(self, event_type: str, data: dict[str, Any]) -> None:
         """Update internal state from events"""
         if event_type == "step_completed":
@@ -140,7 +162,7 @@ class EventRenderer:
         table.add_column("Value")
         
         # Hazard level with bar
-        hazard = self.world_state.get("hazard_level", 0)
+        hazard = int(self.world_state.get("hazard_level", 0))
         hazard_bar = f"[red]{'█' * hazard}[/red][dim]{'░' * (10 - hazard)}[/dim]"
         table.add_row("Hazard", f"{hazard}/10 {hazard_bar}")
         
@@ -165,19 +187,15 @@ class EventRenderer:
             content = Text("No active conversations", style="dim italic")
         else:
             table = Table(show_header=False, box=None, padding=(0, 1))
-            table.add_column("Location", style="cyan")
-            table.add_column("Participants", style="white")
+            table.add_column("ID", style="cyan", width=3)
+            table.add_column("Stats", style="white")
             
-            for conv in self.conversations[:5]:  # Show top 5
+            for idx, conv in enumerate(self.conversations, 1):  # Show all, enumerated
                 location = conv.get("location", "unknown")
                 participants = conv.get("participants", [])
-                if isinstance(participants, list):
-                    names = ", ".join(str(p) for p in participants[:3])
-                    if len(participants) > 3:
-                        names += f" +{len(participants) - 3}"
-                else:
-                    names = str(participants)
-                table.add_row(f"[{location}]", names)
+                count = len(participants) if isinstance(participants, list) else 0
+                
+                table.add_row(f"{idx}", f"{count} participants")
             
             content = table
         
@@ -255,6 +273,11 @@ class EventRenderer:
                 text.append(f" → ", style="dim")
                 text.append(f"{to_name}: ", style="bold")
                 text.append(f'"{content}"', style="white")
+            
+            # Context size
+            if "metadata" in data and "context_size" in data["metadata"]:
+                ctx_size = data["metadata"]["context_size"]
+                text.append(f" [ctx:{ctx_size}]", style="dim italic")
         else:
             # Format system event
             style, icon = self.EVENT_STYLES.get(event_type, ("white", "•"))
@@ -291,12 +314,56 @@ class EventRenderer:
                 agent_id = data.get("agent_id", "?")
                 location = data.get("location", "?")
                 connected_to = data.get("connected_to", "?")
-                text.append(f" {agent_name} ({agent_id[:8]}): discovered '{location}' (connected to {connected_to})", style="cyan")
+                dist = data.get("distance", 1)
+                text.append(f" {agent_name} ({agent_id[:8]}): discovered '{location}' (dist: {dist}, connected to {connected_to})", style="cyan")
+            elif event_type == "travel_started":
+                agent_name = data.get("agent_name", data.get("agent_id", "?"))
+                agent_id = data.get("agent_id", "?")
+                from_loc = data.get("from", "?")
+                to_loc = data.get("to", "?")
+                distance = data.get("distance", "?")
+                text.append(f" {agent_name} ({agent_id[:8]}): started travel {from_loc} → {to_loc} (dist: {distance})", style="magenta")
+            elif event_type == "agent_travelling":
+                agent_name = data.get("agent_name", data.get("agent_id", "?"))
+                agent_id = data.get("agent_id", "?")
+                target = data.get("target", "?")
+                progress = data.get("progress", "?")
+                distance = data.get("distance", "?")
+                text.append(f" {agent_name} ({agent_id[:8]}): travelling to {target} ({progress}/{distance})", style="magenta dim")
             elif "step" in data:
                 text.append(f" (step {data['step']})", style="dim")
         
         return text
     
+        return text
+    
+    def render_active_stream(self) -> Panel:
+        """Render the active streaming agent response"""
+        if not self.current_stream_agent:
+            return Panel(
+                Text("Waiting for agent activity...", style="dim italic"),
+                title="[bold]Live Stream[/bold]",
+                box=box.ROUNDED,
+                height=10
+            )
+            
+        agent_name = self.agents.get(self.current_stream_agent, {}).get("name", self.current_stream_agent)
+        
+        content = Text()
+        content.append(f"{agent_name}: ", style="bold cyan")
+        content.append(self.current_stream_text)
+        
+        # Add a flashing cursor effect
+        if int(datetime.now().timestamp() * 2) % 2 == 0:
+            content.append(" █", style="green")
+            
+        return Panel(
+            content,
+            title=f"[bold]Live Stream: {agent_name}[/bold]",
+            box=box.ROUNDED, 
+            height=10
+        )
+
     def render_layout(self) -> Layout:
         """Render the full layout"""
         layout = Layout()
@@ -304,7 +371,8 @@ class EventRenderer:
         layout.split_column(
             Layout(name="header", size=3),
             Layout(name="body"),
-            Layout(name="events", size=18),
+            Layout(name="stream", size=10),
+            Layout(name="events", size=12),
         )
         
         layout["body"].split_row(
@@ -322,6 +390,8 @@ class EventRenderer:
         layout["header"].update(self.render_header())
         layout["world"].update(self.render_world_state())
         layout["conversations"].update(self.render_conversations())
+        layout["conversations"].update(self.render_conversations())
+        layout["stream"].update(self.render_active_stream())
         layout["events"].update(self.render_event_log())
         
         return layout
@@ -352,7 +422,7 @@ class SimpleEventLogger:
         color = colors.get(event_type, "white")
         
         self.console.print(
-            f"[dim]{timestamp}[/dim] [{color}]{event_type:20}[/{color}] {self._summarize(data)}"
+            f"[dim]{timestamp}[/dim] [{color}]{event_type:20}[/{color}] {self._summarize(event_type, data)}"
         )
     
     def log_message(self, message: dict[str, Any]) -> None:
@@ -383,8 +453,12 @@ class SimpleEventLogger:
                 f"[dim]{timestamp}[/dim] [{color}]MSG[/{color}] "
                 f"[bold]{from_name}[/bold] → {to_target}: \"{content}\""
             )
+        
+        # Log context size if available
+        if "metadata" in message and "context_size" in message["metadata"]:
+            self.console.print(f"    [dim]Context size: {message['metadata']['context_size']} chars[/dim]")
     
-    def _summarize(self, data: dict[str, Any]) -> str:
+    def _summarize(self, event_type: str, data: dict[str, Any]) -> str:
         """Create a summary string from event data"""
         if "error" in data:
             agent_name = data.get("agent_name", data.get("agent_id", "?"))
@@ -402,6 +476,10 @@ class SimpleEventLogger:
             parts = [f"agent={agent_name} ({agent_id})"]
             if "from" in data and "to" in data:
                 parts.append(f"{data['from']} → {data['to']}")
+            if event_type == "travel_started":
+                parts.append(f"(dist: {data.get('distance')})")
+            if event_type == "agent_travelling":
+                 parts.append(f"travelling to {data.get('target')} ({data.get('progress')}/{data.get('distance')})")
             if "reason" in data:
                 parts.append(f"reason: {data['reason']}")
             return " ".join(parts)

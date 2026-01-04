@@ -14,7 +14,7 @@ class EnvironmentAgent(Agent):
         self,
         agent_id: str | None = None,
         name: str = "Environment",
-        model_id: str = "llama3.2",
+        model_id: str = "gemma3:270m",
         provider: str = "ollama",
         environment_type: str = "flood",
         dynamics_config: dict[str, Any] | None = None,

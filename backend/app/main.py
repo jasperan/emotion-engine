@@ -15,8 +15,22 @@ settings = get_settings()
 async def lifespan(app: FastAPI):
     """Application lifespan manager"""
     # Startup
-    await init_db()
+    print(f"Starting {settings.app_name}...")
+    await init_db() # Keep database initialization
+
+    # Auto-resume simulations
+    from app.database.session import AsyncSessionLocal
+    from app.simulation.manager import SimulationManager
+    
+    async with AsyncSessionLocal() as db:
+        manager = SimulationManager.get_instance()
+        resumed_count = await manager.resume_all_active_runs(db)
+        if resumed_count > 0:
+            print(f"Resumed {resumed_count} simulations.")
+            
     yield
+    # Shutdown
+    print(f"Shutting down {settings.app_name}...")
     # Shutdown (cleanup if needed)
 
 

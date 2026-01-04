@@ -6,6 +6,7 @@
 	import AgentCard from '$lib/components/AgentCard.svelte';
 	import MessageLog from '$lib/components/MessageLog.svelte';
 	import SimulationControls from '$lib/components/SimulationControls.svelte';
+	import { setHeader, resetHeader } from '$lib/stores/header';
 
 	let run: Run | null = null;
 	let agents: Agent[] = [];
@@ -66,12 +67,36 @@
 		try {
 			await refreshData();
 			websocket.connect(runId);
+			updateHeader();
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to load run';
 		} finally {
 			loading = false;
 		}
+
+		return resetHeader;
 	});
+
+	function updateHeader() {
+		if (!run) return;
+		
+		const statusLabel = run.status === 'completed' ? 'Completed' : (wsState.connected ? 'Live' : 'Disconnected');
+		
+		setHeader({
+			title: 'Run Detail',
+			breadcrumb: [
+				{ label: 'Library', href: '/library' },
+				{ label: 'Scenario', href: `/scenarios/${run.scenario_id}` }
+			],
+			actions: [
+				{ label: statusLabel, onclick: () => {}, primary: run.status === 'running' }
+			]
+		});
+	}
+
+	$: if (run || wsState.connected) {
+		updateHeader();
+	}
 
 	onDestroy(() => {
 		websocket.disconnect();
@@ -102,30 +127,13 @@
 		>
 	</div>
 {:else if run}
-	<div class="space-y-6">
+	<div class="space-y-6 max-w-7xl mx-auto">
 		<!-- Header -->
-		<div class="flex items-start justify-between">
+		<div class="flex items-end justify-between border-b border-outline/20 pb-4">
 			<div>
-				<div class="flex items-center gap-2 text-sm text-storm-400 mb-2">
-					<a href="/" class="hover:text-white">Dashboard</a>
-					<span>/</span>
-					<a href="/scenarios/{run.scenario_id}" class="hover:text-white">Scenario</a>
-					<span>/</span>
-					<span>Run</span>
-				</div>
-				<h1 class="text-2xl font-display font-bold">
-					Run <span class="font-mono text-flood-400">{run.id.slice(0, 8)}</span>
+				<h1 class="text-2xl font-display font-bold text-on-background">
+					Simulation Run <span class="font-mono text-primary ml-1">#{run.id.slice(0, 8)}</span>
 				</h1>
-			</div>
-			<div class="flex items-center gap-2">
-				{#if wsState.connected}
-					<span class="badge badge-success">
-						<span class="w-2 h-2 bg-green-400 rounded-full mr-1 animate-pulse"></span>
-						Live
-					</span>
-				{:else}
-					<span class="badge badge-warning">Disconnected</span>
-				{/if}
 			</div>
 		</div>
 

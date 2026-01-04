@@ -287,3 +287,33 @@ class ScenarioGenerator:
             "agent_templates": [t.model_dump() for t in scenario.agent_templates],
         }
 
+
+class PersonaGenerator:
+    """Generate unique personas for scenarios"""
+
+    @staticmethod
+    def generate_personas(base_personas: list[Persona], num_personas: int) -> list[Persona]:
+        """
+        Generate a list of unique personas.
+
+        Args:
+            base_personas: A list of base personas to draw from.
+            num_personas: The desired number of personas.
+
+        Returns:
+            A list of generated personas.
+        """
+        if not base_personas:
+            return []
+
+        personas = []
+        for i in range(num_personas):
+            base_persona = base_personas[i % len(base_personas)]
+            new_persona = base_persona.model_copy(deep=True)
+            new_persona.name = f"{base_persona.name} #{i + 1}"
+            new_persona.age += i % 5 - 2 
+            personas.append(new_persona)
+
+        return personas
+
+

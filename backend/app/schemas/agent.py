@@ -11,9 +11,11 @@ from app.schemas.item import Item
 class AgentAction(BaseModel):
     """An action taken by an agent"""
     action_type: Literal[
-        "move", "speak", "wait", "reflect", 
+        "move", "speak", "wait", "reflect", "help",
         "search", "take", "drop", "use", "interact",
-        "propose_task", "accept_task", "report_progress", "call_for_vote"
+        "join_conversation", "leave_conversation",
+        "propose_task", "accept_task", "report_progress", "call_for_vote",
+        "environment_update", "affect_agent"
     ] = Field(..., description="Type of action")
     target: str | None = Field(None, description="Target of the action (agent, location, item)")
     parameters: dict[str, Any] = Field(default_factory=dict, description="Action-specific parameters")

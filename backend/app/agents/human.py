@@ -102,7 +102,7 @@ Available Actions:
 - take: Pick up an item (target = item name)
 - drop: Drop an item from inventory (target = item name)
 - use: Use an item from inventory (target = item name)
-- interact: Interact with an object (target = object name, parameters: {action: "open"|"search"|etc})
+- interact: Interact with an object (target = object name, parameters: {{action: "open"|"search"|etc}})
 - search: Search the area for hidden items
 - wait: Do nothing this turn
 - join_conversation: Join a conversation with specific people

@@ -2,7 +2,7 @@
 import asyncio
 import random
 from datetime import datetime
-from typing import Any, Callable
+from typing import Any, Callable, Awaitable
 from enum import Enum
 
 from sqlalchemy.future import select

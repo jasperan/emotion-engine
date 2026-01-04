@@ -200,9 +200,15 @@ async def _run_standalone(
             await engine_sim.start()
         else:
             console.print("[cyan]Starting simulation (press Ctrl+C to stop)...[/cyan]\n")
-            with Live(renderer.render_layout(), console=console, refresh_per_second=4) as live:
+            # Increase refresh rate for smooth streaming
+            with Live(renderer.render_layout(), console=console, refresh_per_second=15) as live:
+                
+                async def stream_callback(agent_id: str, token: str):
+                    renderer.update_stream(agent_id, token)
+                    live.refresh()
+                
                 # Start simulation in background
-                task = asyncio.create_task(engine_sim.start())
+                task = asyncio.create_task(engine_sim.start(stream_callback=stream_callback))
                 
                 # Update display while running
                 while not task.done() and not stop_requested:
@@ -321,6 +327,44 @@ async def _monitor_websocket(base_url: str, run_id: str, simple: bool):
             
     except ConnectionRefusedError:
         console.print(f"[red]✗[/red] Could not connect to {ws_url}")
+        
+        if Confirm.ask("Backend server not reachable. Start it now?"):
+            console.print("[yellow]Starting backend server...[/yellow]")
+            import subprocess
+            
+            # Start backend in background
+            # We assume we are in backend dir because cli runs from there?
+            # Actually CLI might be run as `python -m app.cli` from backend dir.
+            process = subprocess.Popen(
+                [sys.executable, "-m", "app.main"],
+                stdout=subprocess.DEVNULL, 
+                stderr=subprocess.DEVNULL,
+            )
+            
+            # Wait for it to start
+            connected = False
+            with console.status("[cyan]Waiting for server to start...[/cyan]"):
+                for _ in range(15):
+                    await asyncio.sleep(1)
+                    try:
+                        import httpx
+                        async with httpx.AsyncClient() as client:
+                             # Check health endpoint instead of WS for startup
+                             resp = await client.get(f"{base_url}/health", timeout=1.0)
+                             if resp.status_code == 200:
+                                 connected = True
+                                 break
+                    except:
+                        pass
+            
+            if connected:
+                console.print("[green]✓[/green] Server started. Retrying connection...")
+                await _monitor_websocket(base_url, run_id, simple)
+                return
+            else:
+                console.print("[red]✗[/red] Failed to start server or connect in time.")
+                process.terminate()
+                
         console.print("  Make sure the backend server is running.")
     except Exception as e:
         console.print(f"[red]✗[/red] Error: {e}")

@@ -1,33 +1,33 @@
 # FastAPI and server
-fastapi==0.109.2
-uvicorn[standard]==0.27.1
-websockets==12.0
-python-multipart==0.0.9
+fastapi
+uvicorn[standard]
+websockets
+python-multipart
 
 # Database
-sqlalchemy==2.0.25
-alembic==1.13.1
-aiosqlite==0.19.0
+sqlalchemy
+alembic
+aiosqlite
 
 # Pydantic
-pydantic==2.6.1
-pydantic-settings==2.1.0
+pydantic
+pydantic-settings
 
 # HTTP client for LLM APIs
-httpx==0.26.0
-openai==1.12.0
+httpx
+openai
 
 # Async utilities
-asyncio-throttle==1.0.2
+asyncio-throttle
 
 # Testing
-pytest==8.0.0
-pytest-asyncio==0.23.4
-pytest-cov==4.1.0
+pytest
+pytest-asyncio
+pytest-cov
 
 # Type checking
-mypy==1.8.0
+mypy
 
 # Utilities
-python-dotenv==1.0.1
+python-dotenv
 

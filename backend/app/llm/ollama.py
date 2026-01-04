@@ -20,9 +20,18 @@ class OllamaClient(LLMClient):
         self.api_key = api_key or settings.ollama_api_key
         self.default_model = default_model or settings.ollama_default_model
         
+        # Create httpx client with longer timeout for GPU-bound operations
+        http_client = httpx.AsyncClient(
+            timeout=httpx.Timeout(
+                timeout=120.0,  # 2 minutes for completion
+                connect=10.0,   # 10 seconds to connect
+            )
+        )
+        
         self.client = AsyncOpenAI(
             base_url=self.base_url,
             api_key=self.api_key,
+            http_client=http_client,
         )
     
     async def generate(

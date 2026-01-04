@@ -178,7 +178,7 @@ def create_airplane_crash_scenario() -> ScenarioCreate:
     agent_templates.append(AgentConfig(
         name="Crash Site Environment",
         role="environment",
-        model_id="phi3",
+        model_id="qwen2.5:7b",
         provider="ollama",
         goals=[
             "Simulate realistic crash site conditions",
@@ -192,7 +192,7 @@ def create_airplane_crash_scenario() -> ScenarioCreate:
         agent_templates.append(AgentConfig(
             name=persona.name,
             role="human",
-            model_id="phi3",
+            model_id="qwen2.5:7b",
             provider="ollama",
             persona=persona,
             goals=[

@@ -16,7 +16,7 @@ class WorldConfig(BaseModel):
     dynamics: dict[str, Any] = Field(default_factory=dict, description="How the world changes over time")
     
     # Simulation settings
-    max_steps: int = Field(100, ge=1, le=10000, description="Maximum simulation steps")
+    max_steps: int | None = Field(None, ge=1, le=10000, description="Maximum simulation steps (None = infinite until consensus)")
     tick_delay: float = Field(0.5, ge=0, le=60, description="Delay between ticks in seconds")
 
 

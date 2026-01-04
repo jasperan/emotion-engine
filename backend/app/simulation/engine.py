@@ -63,6 +63,10 @@ class SimulationEngine:
         # Conversation management
         self.conversation_manager = ConversationManager()
         
+        # Cooperation coordinator
+        from app.agents.coordinator import CooperationCoordinator
+        self.coordinator = CooperationCoordinator()
+        
         # Real-time agent locations (updated during steps)
         self._agent_locations: dict[str, str] = {}
         
@@ -77,7 +81,8 @@ class SimulationEngine:
         
         # Set world parameters
         world_config = scenario_config.get("config", {})
-        self.max_steps = world_config.get("max_steps", 100)
+        # Default to None (infinite) unless explicitly set
+        self.max_steps = world_config.get("max_steps", None)
         self.tick_delay = world_config.get("tick_delay", 0.5)
         
         self.world_state.update(world_config.get("initial_state", {}))
@@ -98,6 +103,8 @@ class SimulationEngine:
             agent_location = agent.dynamic_state.get("location", "unknown")
             self._agent_locations[agent.id] = agent_location
             self.conversation_manager.update_agent_location(agent.id, agent_location)
+            # Subscribe agent to location room for room messages
+            self.message_bus.join_room(agent.id, agent_location)
             
             # Persist agent to database
             agent_model = AgentModel(
@@ -113,6 +120,19 @@ class SimulationEngine:
             self.db.add(agent_model)
         
         await self.db.commit()
+        
+        # Initialize shared goals from agent goals
+        all_goals = set()
+        for agent in self.agents.values():
+            if agent.role == "human" and hasattr(agent, 'goals'):
+                all_goals.update(agent.goals)
+        
+        for goal in all_goals:
+            self.coordinator.add_shared_goal(goal)
+        
+        # Add cooperation context to world state
+        self.world_state["shared_goals"] = self.coordinator.shared_goals
+        self.world_state["cooperation"] = self.coordinator.get_cooperation_context()
         
         self.state = SimulationState.IDLE
         self.on_event("initialized", {"agent_count": len(self.agents)})
@@ -177,10 +197,15 @@ class SimulationEngine:
     
     async def _run_loop(self) -> None:
         """Main simulation loop"""
+        # Safety limit to prevent infinite runs
+        MAX_SAFETY_STEPS = 1000
+        
         while (
-            self.current_step < self.max_steps
+            (self.max_steps is None or self.current_step < self.max_steps)
+            and self.current_step < MAX_SAFETY_STEPS
             and not self._stop_requested
             and self.state == SimulationState.RUNNING
+            and not self._check_consensus()
         ):
             if self._pause_requested:
                 self.state = SimulationState.PAUSED
@@ -198,12 +223,13 @@ class SimulationEngine:
             await self._complete_run()
     
     async def _execute_step(self) -> None:
-        """Execute a single simulation step with multi-turn conversations"""
+        """Execute a single simulation step with sequential agent processing"""
         self.current_step += 1
         self.world_state["current_step"] = self.current_step
         
         step_actions = []
         step_messages = []
+        step_events = []
         
         # Reset conversation counters for this step
         self.conversation_manager.reset_step_counters()
@@ -211,13 +237,10 @@ class SimulationEngine:
         # Build current agent states for world state
         self._update_agents_in_world_state()
         
-        # Phase 1: Environment agent updates (if any)
-        await self._process_environment_agents(step_actions, step_messages)
+        # Process all agents sequentially
+        await self._process_agents_sequentially(step_actions, step_messages, step_events)
         
-        # Phase 2: Multi-turn conversation loop
-        await self._process_conversations(step_actions, step_messages)
-        
-        # Phase 3: Cleanup ended conversations
+        # Cleanup ended conversations
         self.conversation_manager.cleanup_ended_conversations()
         
         # Persist step
@@ -260,6 +283,262 @@ class SimulationEngine:
             }
         self.world_state["agents"] = agents_state
     
+    async def _process_agents_sequentially(
+        self,
+        step_actions: list[dict[str, Any]],
+        step_messages: list[dict[str, Any]],
+        step_events: list[str],
+    ) -> None:
+        """Process all agents sequentially so they can see each other's actions"""
+        # Phase 1: Process environment agents first (they create events)
+        for agent_id, agent in self.agents.items():
+            if agent.role != "environment":
+                continue
+            
+            messages = self.message_bus.get_messages(agent_id)
+            
+            try:
+                response = await agent.tick(
+                    self.world_state.copy(),
+                    messages,
+                    step_actions,
+                    step_messages,
+                    step_events,
+                )
+                
+                for action in response.actions:
+                    action_dict = {
+                        "agent_id": agent_id,
+                        "agent_name": agent.name,
+                        **action.model_dump(),
+                    }
+                    step_actions.append(action_dict)
+                    
+                    if action.action_type == "environment_update":
+                        self._apply_environment_update(action.parameters)
+                        # Extract events if any
+                        if "events" in action.parameters:
+                            step_events.extend(action.parameters["events"])
+                
+                if response.message:
+                    msg = response.message
+                    stored_msg = self.message_bus.broadcast(
+                        agent_id, msg.content, self.current_step
+                    )
+                    step_messages.append(stored_msg)
+                    await self._persist_message(agent_id, msg)
+                
+                # Update world state after environment agent
+                self._update_agents_in_world_state()
+                    
+            except Exception as e:
+                agent = self.agents.get(agent_id)
+                agent_name = agent.name if agent else agent_id
+                self.on_event("agent_error", {
+                    "agent_id": agent_id,
+                    "agent_name": agent_name,
+                    "error": str(e),
+                    "step": self.current_step,
+                    "context": "environment_agent_tick",
+                })
+        
+        # Phase 2: Process human agents sequentially
+        # Get all human agents, shuffled for variety
+        human_agents = [
+            (agent_id, agent)
+            for agent_id, agent in self.agents.items()
+            if agent.role == "human"
+        ]
+        random.shuffle(human_agents)
+        
+        for agent_id, agent in human_agents:
+            # Check if agent is in a conversation and it's their turn
+            in_conversation = False
+            conversation = None
+            
+            agent_conversations = self.conversation_manager.get_agent_conversations(agent_id)
+            for conv in agent_conversations:
+                if conv.should_continue() and conv.get_next_speaker() == agent_id:
+                    in_conversation = True
+                    conversation = conv
+                    break
+            
+            # For human agents not in conversations, check if they should respond (personality-based probability)
+            if isinstance(agent, HumanAgent) and not in_conversation:
+                # Count location activity
+                agent_location = self._agent_locations.get(agent_id, agent.dynamic_state.get("location", "unknown"))
+                location_activity = len([
+                    aid for aid, loc in self._agent_locations.items()
+                    if loc == agent_location and aid != agent_id
+                ])
+                
+                # Check for events and messages
+                has_events = len(step_events) > 0
+                has_messages = len(step_messages) > 0
+                
+                # Check if agent should respond
+                if not agent.should_respond(has_events, has_messages, location_activity):
+                    continue  # Skip this agent this turn
+            
+            # Get messages for this agent
+            messages = self.message_bus.get_messages(agent_id)
+            
+            # Build world state with conversation context if applicable
+            agent_world_state = self.world_state.copy()
+            
+            # Add cooperation context
+            cooperation_context = self.coordinator.get_cooperation_context()
+            agent_world_state["cooperation"] = cooperation_context
+            
+            # Add suggestions if agent is stuck
+            if self.coordinator.is_stuck_in_loop(agent_id):
+                suggestions = self.coordinator.get_suggestions_for_agent(agent_id)
+                agent_world_state["suggestions"] = suggestions
+            
+            # Add agent's assigned tasks
+            agent_tasks = self.coordinator.agent_tasks.get(agent_id, [])
+            agent_world_state["my_tasks"] = [
+                {
+                    "id": self.coordinator.tasks[tid].id,
+                    "description": self.coordinator.tasks[tid].description,
+                    "priority": self.coordinator.tasks[tid].priority,
+                    "status": self.coordinator.tasks[tid].status,
+                }
+                for tid in agent_tasks
+                if tid in self.coordinator.tasks
+            ]
+            
+            if in_conversation and conversation:
+                # Add conversation context
+                conversation_context = conversation.get_context_for_agent(agent_id)
+                messages = conversation_context + messages
+                
+                agent_world_state["active_conversation"] = {
+                    "id": conversation.id,
+                    "location": conversation.location,
+                    "participants": [
+                        self.agents[pid].name if pid in self.agents else pid
+                        for pid in conversation.participants
+                    ],
+                    "is_my_turn": True,
+                }
+            
+            try:
+                response = await agent.tick(
+                    agent_world_state,
+                    messages,
+                    step_actions,
+                    step_messages,
+                    step_events,
+                )
+                
+                # Process actions
+                for action in response.actions:
+                    action_dict = {
+                        "agent_id": agent_id,
+                        "agent_name": agent.name,
+                        **action.model_dump(),
+                    }
+                    step_actions.append(action_dict)
+                    
+                    # Track action for loop detection
+                    self.coordinator.track_action(agent_id, action.action_type, action.target)
+                    
+                    # Handle movement
+                    if action.action_type == "move":
+                        await self._handle_movement(agent_id, action.target, action.parameters)
+                    elif action.action_type == "propose_task":
+                        self._handle_propose_task(agent_id, action.parameters)
+                    elif action.action_type == "accept_task":
+                        self._handle_accept_task(agent_id, action.target, action.parameters)
+                    elif action.action_type == "report_progress":
+                        self._handle_report_progress(agent_id, action.parameters)
+                    elif action.action_type == "call_for_vote":
+                        self._handle_call_for_vote(agent_id, action.parameters)
+                
+                # Track conversation topic for loop detection
+                if response.message and response.message.content.strip():
+                    topic = self._extract_topic(response.message.content)
+                    self.coordinator.track_conversation(agent_id, topic)
+                
+                # Process message
+                if response.message and response.message.content.strip():
+                    msg = response.message
+                    
+                    if in_conversation and conversation:
+                        # Send to conversation participants
+                        stored_msg = self.message_bus.send_to_conversation(
+                            from_agent_id=agent_id,
+                            conversation_id=conversation.id,
+                            participant_ids=conversation.participants,
+                            content=msg.content,
+                            step_index=self.current_step,
+                            location=conversation.location,
+                        )
+                        conversation.add_message(stored_msg)
+                        conversation.advance_turn(spoke=True)
+                    else:
+                        # Send as regular message (direct, room, or broadcast)
+                        if msg.message_type == "broadcast":
+                            stored_msg = self.message_bus.broadcast(
+                                agent_id, msg.content, self.current_step
+                            )
+                        elif msg.message_type == "room":
+                            # Send to all agents at location using room mechanism
+                            agent_location = self._agent_locations.get(agent_id, agent.dynamic_state.get("location", "unknown"))
+                            # Ensure all agents at location are subscribed to the room
+                            agents_at_location = [
+                                aid for aid, loc in self._agent_locations.items()
+                                if loc == agent_location
+                            ]
+                            for aid in agents_at_location:
+                                self.message_bus.join_room(aid, agent_location)
+                            
+                            stored_msg = self.message_bus.send_to_room(
+                                from_agent_id=agent_id,
+                                room_name=agent_location,
+                                content=msg.content,
+                                step_index=self.current_step,
+                            )
+                        else:  # direct
+                            # Resolve agent name to ID if needed
+                            to_agent_id = msg.to_target
+                            if to_agent_id != "broadcast":
+                                # Try to find agent by name
+                                for aid, a in self.agents.items():
+                                    if a.name == to_agent_id:
+                                        to_agent_id = aid
+                                        break
+                            
+                            stored_msg = self.message_bus.send_direct(
+                                from_agent_id=agent_id,
+                                to_agent_id=to_agent_id,
+                                content=msg.content,
+                                step_index=self.current_step,
+                            )
+                    
+                    step_messages.append(stored_msg)
+                    await self._persist_message(agent_id, msg, conversation.id if in_conversation else None)
+                elif in_conversation and conversation:
+                    # Agent chose not to speak in conversation
+                    conversation.advance_turn(spoke=False)
+                
+                # Update world state after each agent
+                self._update_agents_in_world_state()
+                    
+            except Exception as e:
+                agent = self.agents.get(agent_id)
+                agent_name = agent.name if agent else agent_id
+                self.on_event("agent_error", {
+                    "agent_id": agent_id,
+                    "agent_name": agent_name,
+                    "error": str(e),
+                    "step": self.current_step,
+                    "context": "environment_agent_tick",
+                })
+                if in_conversation and conversation:
+                    conversation.advance_turn(spoke=False)
+    
     async def _process_environment_agents(
         self,
         step_actions: list[dict[str, Any]],
@@ -284,6 +563,8 @@ class SimulationEngine:
                     
                     if action.action_type == "environment_update":
                         self._apply_environment_update(action.parameters)
+                    elif action.action_type == "affect_agent":
+                        self._apply_agent_effect(action.target, action.parameters)
                 
                 if response.message:
                     msg = response.message
@@ -294,10 +575,14 @@ class SimulationEngine:
                     await self._persist_message(agent_id, msg)
                     
             except Exception as e:
+                agent = self.agents.get(agent_id)
+                agent_name = agent.name if agent else agent_id
                 self.on_event("agent_error", {
                     "agent_id": agent_id,
+                    "agent_name": agent_name,
                     "error": str(e),
                     "step": self.current_step,
+                    "context": "environment_agent_tick",
                 })
     
     async def _process_conversations(
@@ -417,11 +702,15 @@ class SimulationEngine:
                 return False
                 
         except Exception as e:
+            agent = self.agents.get(speaker_id)
+            agent_name = agent.name if agent else speaker_id
             self.on_event("agent_error", {
                 "agent_id": speaker_id,
+                "agent_name": agent_name,
                 "error": str(e),
                 "step": self.current_step,
                 "conversation_id": conversation.id,
+                "context": "conversation_speak",
             })
             conversation.advance_turn(spoke=False)
             return False
@@ -443,13 +732,54 @@ class SimulationEngine:
         current_loc_data = locations.get(current_location, {})
         nearby = current_loc_data.get("nearby", [])
         
+        # Check if target location exists - if not, dynamically register it
+        if target_location not in locations:
+            # Dynamically register the new location
+            agent = self.agents.get(agent_id)
+            agent_name = agent.name if agent else agent_id
+            
+            # Create new location with reasonable defaults
+            locations[target_location] = {
+                "description": f"A newly discovered area: {target_location}",
+                "nearby": [current_location] if current_location in locations else [],
+                "items": [],
+                "hazard_affected": False,
+            }
+            
+            # Make it bidirectionally connected to current location
+            if current_location in locations:
+                current_nearby = locations[current_location].get("nearby", [])
+                if target_location not in current_nearby:
+                    current_nearby.append(target_location)
+                    locations[current_location]["nearby"] = current_nearby
+            
+            # Update world state
+            self.world_state["locations"] = locations
+            
+            # Log the new location creation
+            self.on_event("location_created", {
+                "agent_id": agent_id,
+                "agent_name": agent_name,
+                "location": target_location,
+                "connected_to": current_location,
+                "step": self.current_step,
+            })
+            
+            # Update nearby list for validation below
+            nearby = current_loc_data.get("nearby", [])
+        
         if target_location not in nearby and target_location != current_location:
             # Invalid movement - location not reachable
+            agent = self.agents.get(agent_id)
+            agent_name = agent.name if agent else agent_id
             self.on_event("movement_failed", {
                 "agent_id": agent_id,
+                "agent_name": agent_name,
                 "from": current_location,
                 "to": target_location,
-                "reason": "Location not reachable",
+                "reason": "Location not reachable from current location",
+                "available_locations": list(locations.keys()),
+                "nearby_locations": nearby,
             })
             return
         
@@ -461,14 +791,20 @@ class SimulationEngine:
         if agent:
             agent.dynamic_state["location"] = target_location
         
+        # Subscribe agent to location room for room messages
+        self.message_bus.join_room(agent_id, target_location)
+        
         # Update conversation manager (handles join/leave of location conversations)
         self.conversation_manager.update_agent_location(agent_id, target_location)
         
         # Update world state
         self._update_agents_in_world_state()
         
+        agent = self.agents.get(agent_id)
+        agent_name = agent.name if agent else agent_id
         self.on_event("agent_moved", {
             "agent_id": agent_id,
+            "agent_name": agent_name,
             "from": current_location,
             "to": target_location,
             "step": self.current_step,
@@ -519,6 +855,243 @@ class SimulationEngine:
                 self.world_state.setdefault("locations", {})[loc] = {
                     "hazard_affected": True,
                 }
+        
+        # Apply location-based health effects
+        self._apply_location_health_effects()
+    
+    def _apply_agent_effect(self, target_agent_id: str | None, params: dict[str, Any]) -> None:
+        """Apply direct health/stress effects to a specific agent"""
+        if not target_agent_id:
+            return
+        
+        # Try to find agent by ID first, then by name
+        agent = self.agents.get(target_agent_id)
+        if not agent:
+            # Search by name
+            for agent_id, a in self.agents.items():
+                if a.name == target_agent_id:
+                    agent = a
+                    break
+        
+        if not agent:
+            return
+        
+        # Apply health changes
+        if "health_delta" in params:
+            current_health = agent.dynamic_state.get("health", 10)
+            # Convert to float in case it's stored as string
+            try:
+                current_health = float(current_health)
+            except (ValueError, TypeError):
+                current_health = 10
+            new_health = max(0, min(10, current_health + params["health_delta"]))
+            agent.dynamic_state["health"] = new_health
+        
+        if "health" in params:
+            agent.dynamic_state["health"] = max(0, min(10, params["health"]))
+        
+        # Apply stress changes
+        if "stress_delta" in params:
+            current_stress = agent.dynamic_state.get("stress_level", 1)
+            # Convert to float in case it's stored as string
+            try:
+                current_stress = float(current_stress)
+            except (ValueError, TypeError):
+                current_stress = 1
+            new_stress = max(1, min(10, current_stress + params["stress_delta"]))
+            agent.dynamic_state["stress_level"] = new_stress
+        
+        if "stress_level" in params:
+            agent.dynamic_state["stress_level"] = max(1, min(10, params["stress_level"]))
+    
+    def _apply_location_health_effects(self) -> None:
+        """Apply health effects based on agent locations and location properties"""
+        locations = self.world_state.get("locations", {})
+        hazard_level = self.world_state.get("hazard_level", 0)
+        
+        for agent_id, agent in self.agents.items():
+            if agent.role != "human":
+                continue
+            
+            location = agent.dynamic_state.get("location", "unknown")
+            if location not in locations:
+                continue
+            
+            loc_data = locations[location]
+            
+            # Apply location effects
+            location_effects = loc_data.get("location_effects", {})
+            if "health_per_tick" in location_effects:
+                current_health = agent.dynamic_state.get("health", 10)
+                # Convert to float in case it's stored as string
+                try:
+                    current_health = float(current_health)
+                except (ValueError, TypeError):
+                    current_health = 10
+                new_health = max(0, min(10, current_health + location_effects["health_per_tick"]))
+                agent.dynamic_state["health"] = new_health
+            
+            if "stress_per_tick" in location_effects:
+                current_stress = agent.dynamic_state.get("stress_level", 1)
+                # Convert to float in case it's stored as string
+                try:
+                    current_stress = float(current_stress)
+                except (ValueError, TypeError):
+                    current_stress = 1
+                new_stress = max(1, min(10, current_stress + location_effects["stress_per_tick"]))
+                agent.dynamic_state["stress_level"] = new_stress
+            
+            # Apply item-based effects
+            items = loc_data.get("items", [])
+            for item in items:
+                # First aid kits increase health
+                if "first_aid" in item.lower() or "medical" in item.lower():
+                    current_health = agent.dynamic_state.get("health", 10)
+                    if current_health < 10:
+                        agent.dynamic_state["health"] = min(10, current_health + 0.5)
+                
+                # Contaminated items reduce health
+                if "contaminated" in item.lower() or "toxic" in item.lower():
+                    current_health = agent.dynamic_state.get("health", 10)
+                    agent.dynamic_state["health"] = max(0, current_health - 0.5)
+            
+            # Apply hazard-based effects if location is hazard-affected
+            if loc_data.get("hazard_affected", False) and hazard_level > 0:
+                # Higher hazard levels cause more health loss
+                health_loss = (hazard_level / 10.0) * 0.3
+                current_health = agent.dynamic_state.get("health", 10)
+                agent.dynamic_state["health"] = max(0, current_health - health_loss)
+                
+                # Hazard also increases stress
+                stress_gain = (hazard_level / 10.0) * 0.2
+                current_stress = agent.dynamic_state.get("stress_level", 1)
+                agent.dynamic_state["stress_level"] = min(10, current_stress + stress_gain)
+    
+    def _extract_topic(self, message: str) -> str:
+        """Extract a topic/keyword from a message for loop detection"""
+        # Simple keyword extraction
+        keywords = [
+            "rescue", "help", "move", "safety", "flood", "bridge", "shelter",
+            "medical", "supplies", "coordinate", "plan", "danger", "evacuate"
+        ]
+        message_lower = message.lower()
+        for keyword in keywords:
+            if keyword in message_lower:
+                return keyword
+        return "general"
+    
+    def _handle_propose_task(self, agent_id: str, params: dict[str, Any]) -> None:
+        """Handle task proposal from an agent"""
+        description = params.get("description", "")
+        priority = params.get("priority", 5)
+        assigned_to = params.get("assigned_to")
+        
+        if description:
+            task_id = self.coordinator.create_task(description, priority, assigned_to)
+            self.on_event("task_proposed", {
+                "agent_id": agent_id,
+                "task_id": task_id,
+                "description": description,
+                "priority": priority,
+            })
+    
+    def _handle_accept_task(self, agent_id: str, task_id: str | None, params: dict[str, Any]) -> None:
+        """Handle task acceptance by an agent"""
+        if not task_id:
+            # Try to find task by description
+            description = params.get("description", "")
+            for tid, task in self.coordinator.tasks.items():
+                if task.description == description and task.status == "pending":
+                    task_id = tid
+                    break
+        
+        if task_id and self.coordinator.assign_task(task_id, agent_id):
+            agent = self.agents.get(agent_id)
+            agent_name = agent.name if agent else agent_id
+            self.on_event("task_accepted", {
+                "agent_id": agent_id,
+                "agent_name": agent_name,
+                "task_id": task_id,
+            })
+    
+    def _handle_report_progress(self, agent_id: str, params: dict[str, Any]) -> None:
+        """Handle progress report from an agent"""
+        task_id = params.get("task_id")
+        progress = params.get("progress", 0.0)
+        goal = params.get("goal")
+        
+        if task_id and task_id in self.coordinator.tasks:
+            task = self.coordinator.tasks[task_id]
+            task.progress = max(0.0, min(1.0, progress))
+            if progress >= 1.0:
+                self.coordinator.complete_task(task_id)
+        
+        if goal:
+            goal_progress = params.get("goal_progress", 0.0)
+            self.coordinator.update_goal_progress(goal, goal_progress)
+    
+    def _handle_call_for_vote(self, agent_id: str, params: dict[str, Any]) -> None:
+        """Handle vote call from an agent (for consensus detection)"""
+        topic = params.get("topic", "general")
+        vote = params.get("vote", "continue")  # continue, end, pause
+        
+        # Store vote in world state for consensus detection
+        if "votes" not in self.world_state:
+            self.world_state["votes"] = {}
+        
+        self.world_state["votes"][agent_id] = {
+            "topic": topic,
+            "vote": vote,
+            "step": self.current_step,
+        }
+        
+        agent = self.agents.get(agent_id)
+        agent_name = agent.name if agent else agent_id
+        self.on_event("vote_cast", {
+            "agent_id": agent_id,
+            "agent_name": agent_name,
+            "topic": topic,
+            "vote": vote,
+        })
+    
+    def _check_consensus(self) -> bool:
+        """Check if agents have reached consensus to end the simulation"""
+        votes = self.world_state.get("votes", {})
+        if not votes:
+            return False
+        
+        # Get human agents
+        human_agents = [aid for aid, agent in self.agents.items() if agent.role == "human"]
+        if len(human_agents) < 2:
+            return False
+        
+        # Count votes to end
+        end_votes = sum(1 for v in votes.values() if v.get("vote") == "end")
+        total_votes = len(votes)
+        
+        # Need majority (50%+) of agents who voted to agree to end
+        # Or if we have votes from majority of all agents, check if majority want to end
+        if total_votes >= len(human_agents) * 0.5:  # At least 50% of agents voted
+            if end_votes >= total_votes * 0.6:  # 60% of voters want to end
+                self.on_event("consensus_reached", {
+                    "decision": "end",
+                    "end_votes": end_votes,
+                    "total_votes": total_votes,
+                    "total_agents": len(human_agents),
+                })
+                return True
+        
+        # Unanimous agreement (all voters want to end)
+        if total_votes >= len(human_agents) * 0.8 and end_votes == total_votes:
+            self.on_event("consensus_reached", {
+                "decision": "end",
+                "end_votes": end_votes,
+                "total_votes": total_votes,
+                "total_agents": len(human_agents),
+            })
+            return True
+        
+        return False
     
     def _compute_step_metrics(self) -> dict[str, Any]:
         """Compute metrics for the current step"""
@@ -529,8 +1102,15 @@ class SimulationEngine:
         for agent in self.agents.values():
             if agent.role == "human":
                 human_count += 1
-                total_health += agent.dynamic_state.get("health", 10)
-                total_stress += agent.dynamic_state.get("stress_level", 5)
+                # Convert to float/int in case they're stored as strings
+                health = agent.dynamic_state.get("health", 10)
+                stress = agent.dynamic_state.get("stress_level", 5)
+                try:
+                    total_health += float(health) if health else 10
+                    total_stress += float(stress) if stress else 5
+                except (ValueError, TypeError):
+                    total_health += 10
+                    total_stress += 5
         
         return {
             "avg_health": total_health / max(human_count, 1),

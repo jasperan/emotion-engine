@@ -85,6 +85,9 @@ You are the unseen hand guiding the story. Be fair but dramatic."""
         self,
         world_state: dict[str, Any],
         messages: list[dict[str, Any]],
+        step_actions: list[dict[str, Any]] | None = None,
+        step_messages: list[dict[str, Any]] | None = None,
+        step_events: list[str] | None = None,
     ) -> str:
         """Build context for designer decisions"""
         current_step = world_state.get("current_step", 0)

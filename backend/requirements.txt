@@ -30,3 +30,7 @@ mypy
 # Utilities
 python-dotenv
 
+# CLI
+click
+rich
+

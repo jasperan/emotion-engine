@@ -79,6 +79,9 @@ Be fair, specific, and constructive in your evaluation."""
         self,
         world_state: dict[str, Any],
         messages: list[dict[str, Any]],
+        step_actions: list[dict[str, Any]] | None = None,
+        step_messages: list[dict[str, Any]] | None = None,
+        step_events: list[str] | None = None,
     ) -> str:
         """Build context from run history for evaluation"""
         # Run summary

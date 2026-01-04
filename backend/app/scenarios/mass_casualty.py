@@ -222,7 +222,7 @@ def create_mass_casualty_scenario() -> ScenarioCreate:
     agent_templates.append(AgentConfig(
         name="Collapse Environment",
         role="environment",
-        model_id="phi3",
+        model_id="qwen2.5:7b",
         provider="ollama",
         goals=[
             "Simulate realistic building collapse conditions",
@@ -237,7 +237,7 @@ def create_mass_casualty_scenario() -> ScenarioCreate:
         agent_templates.append(AgentConfig(
             name=persona.name,
             role="human",
-            model_id="phi3",
+            model_id="qwen2.5:7b",
             provider="ollama",
             persona=persona,
             goals=[

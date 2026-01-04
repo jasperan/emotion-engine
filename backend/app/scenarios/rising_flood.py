@@ -1,11 +1,121 @@
 """Rising Flood example scenario with diverse personas - Enhanced for conversation system"""
+import random
 from app.schemas.persona import Persona
 from app.schemas.agent import AgentConfig
 from app.schemas.scenario import WorldConfig, ScenarioCreate
 
 
+def _generate_additional_personas(count: int, seed: int = 42) -> list[Persona]:
+    """Generate additional diverse personas for the Rising Flood scenario"""
+    random.seed(seed)
+    
+    first_names_male = ["James", "Michael", "David", "Daniel", "Christopher", "Matthew", "Andrew", "Joshua", "John", "William", "Ryan", "Joseph", "Anthony", "Mark", "Thomas", "Steven", "Kevin", "Brian", "Jason", "Justin"]
+    first_names_female = ["Sarah", "Emily", "Jessica", "Ashley", "Amanda", "Melissa", "Nicole", "Michelle", "Laura", "Kimberly", "Amy", "Angela", "Lisa", "Jennifer", "Stephanie", "Rebecca", "Elizabeth", "Samantha", "Rachel", "Lauren"]
+    last_names = ["Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez", "Hernandez", "Lopez", "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson", "Martin", "Lee"]
+    
+    occupations = [
+        "Nurse", "Paramedic", "Police Officer", "Teacher", "Engineer", "Mechanic", 
+        "Chef", "Retail Worker", "Delivery Driver", "Security Guard", "Janitor",
+        "Electrician", "Plumber", "Carpenter", "Bus Driver", "Taxi Driver",
+        "Librarian", "Social Worker", "Counselor", "Pharmacist", "Dentist",
+        "Veterinarian", "Architect", "Lawyer", "Accountant", "Banker",
+        "Real Estate Agent", "Insurance Agent", "Sales Representative", "Manager",
+        "Waiter", "Bartender", "Barista", "Cashier", "Receptionist", "Secretary"
+    ]
+    
+    skills_sets = [
+        ["first_aid", "communication"],
+        ["swimming", "physical_strength"],
+        ["navigation", "problem_solving"],
+        ["cooking", "organization"],
+        ["mechanical_repair", "tools"],
+        ["electronics", "troubleshooting"],
+        ["leadership", "decision_making"],
+        ["calm_under_pressure", "empathy"],
+        ["physical_fitness", "endurance"],
+        ["communication", "conflict_resolution"],
+    ]
+    
+    locations = ["shelter", "street", "rooftop", "bridge", "flooded_house", "medical_station", "safe_hill"]
+    
+    personas = []
+    used_names = set()
+    
+    for i in range(count):
+        # Generate diverse attributes
+        sex = random.choice(["male", "female", "non-binary"])
+        age = random.randint(18, 75)
+        
+        # Generate unique name
+        if sex == "male":
+            first_name = random.choice(first_names_male)
+        elif sex == "female":
+            first_name = random.choice(first_names_female)
+        else:
+            first_name = random.choice(first_names_male + first_names_female)
+        
+        last_name = random.choice(last_names)
+        full_name = f"{first_name} {last_name}"
+        
+        # Ensure unique name
+        counter = 1
+        while full_name in used_names:
+            full_name = f"{first_name} {last_name} {counter}"
+            counter += 1
+        used_names.add(full_name)
+        
+        occupation = random.choice(occupations)
+        skills = random.choice(skills_sets)
+        location = random.choice(locations)
+        
+        # Generate personality traits with some variation
+        openness = random.randint(3, 9)
+        conscientiousness = random.randint(4, 10)
+        extraversion = random.randint(2, 9)
+        agreeableness = random.randint(3, 10)
+        neuroticism = random.randint(2, 8)
+        risk_tolerance = random.randint(2, 9)
+        empathy_level = random.randint(4, 10)
+        leadership = random.randint(2, 9)
+        
+        # Generate backstory
+        backstory_options = [
+            f"Works as a {occupation.lower()}. {random.choice(['Recently moved to the area.', 'Lived here all their life.', 'Visiting family when the flood hit.'])}",
+            f"{occupation.lower()} with {random.randint(1, 20)} years of experience. {random.choice(['Known for being reliable.', 'Sometimes struggles with stress.', 'Always willing to help others.'])}",
+            f"Recently {random.choice(['started a new job', 'retired', 'graduated from school'])}. {random.choice(['Looking forward to the future.', 'Uncertain about what comes next.', 'Trying to make the best of things.'])}",
+        ]
+        backstory = random.choice(backstory_options)
+        
+        # Generate initial state
+        stress_level = random.randint(2, 7)
+        health = random.randint(6, 10)
+        
+        persona = Persona(
+            name=full_name,
+            age=age,
+            sex=sex,
+            occupation=occupation,
+            openness=openness,
+            conscientiousness=conscientiousness,
+            extraversion=extraversion,
+            agreeableness=agreeableness,
+            neuroticism=neuroticism,
+            risk_tolerance=risk_tolerance,
+            empathy_level=empathy_level,
+            leadership=leadership,
+            backstory=backstory,
+            skills=skills,
+            stress_level=stress_level,
+            health=health,
+            location=location,
+        )
+        personas.append(persona)
+    
+    return personas
+
+
 def create_rising_flood_scenario() -> ScenarioCreate:
-    """Create the Rising Flood example scenario with 8 human agents + 1 environment agent"""
+    """Create the Rising Flood example scenario with 50 human agents + 1 environment agent"""
     
     # Define diverse personas
     personas = [
@@ -164,6 +274,12 @@ def create_rising_flood_scenario() -> ScenarioCreate:
         ),
     ]
     
+    # Generate additional personas to reach 50 total
+    additional_count = 50 - len(personas)
+    if additional_count > 0:
+        additional_personas = _generate_additional_personas(additional_count, seed=42)
+        personas.extend(additional_personas)
+    
     # Create agent templates
     agent_templates = []
     
@@ -171,7 +287,7 @@ def create_rising_flood_scenario() -> ScenarioCreate:
     agent_templates.append(AgentConfig(
         name="Flood System",
         role="environment",
-        model_id="phi3",
+        model_id="qwen2.5:7b",
         provider="ollama",
         goals=[
             "Simulate realistic flood progression",
@@ -185,7 +301,7 @@ def create_rising_flood_scenario() -> ScenarioCreate:
         agent_templates.append(AgentConfig(
             name=persona.name,
             role="human",
-            model_id="phi3",
+            model_id="qwen2.5:7b",
             provider="ollama",
             persona=persona,
             goals=[
@@ -311,7 +427,7 @@ def create_rising_flood_scenario() -> ScenarioCreate:
     
     return ScenarioCreate(
         name="Rising Flood",
-        description="A catastrophic flood threatens a small urban district. Eight survivors with diverse backgrounds must work together to save as many lives as possible. Features multiple locations requiring coordination, trapped survivors to rescue, and a deteriorating bridge. Based on The Great Flood's Emotion Engine concept.",
+        description="A catastrophic flood threatens a small urban district. Fifty survivors with diverse backgrounds must work together to save as many lives as possible. Features multiple locations requiring coordination, trapped survivors to rescue, and a deteriorating bridge. Based on The Great Flood's Emotion Engine concept.",
         config=world_config,
         agent_templates=agent_templates,
     )

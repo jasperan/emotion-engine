@@ -39,7 +39,7 @@ A local-first multi-agent simulation system inspired by Netflix's "The Great Flo
 
 - Python 3.11+
 - Node.js 20+
-- [Ollama](https://ollama.ai/) with a model installed (e.g., `ollama pull llama3.2`)
+- [Ollama](https://ollama.ai/) with a model installed (e.g., `ollama pull qwen2.5:7b`)
 
 ### Development Setup
 
@@ -117,6 +117,54 @@ The included "Rising Flood" scenario features 8 diverse human agents:
 | Mei-Lin Wu | 8 | Child | Scared, needs protection |
 | Victor Kozlov | 45 | Unemployed | Bitter, unpredictable |
 
+## CLI Monitor Tool
+
+EmotionSim includes a powerful CLI for monitoring and running simulations directly from your terminal with beautiful real-time visualizations.
+
+### Installation
+
+```bash
+cd backend
+pip install -e .  # Install CLI entry point
+```
+
+### Commands
+
+**Run Simulation (Standalone Mode)**
+```bash
+emotionsim run --scenario "Rising Flood" --max-steps 50 --seed 42
+emotionsim run --scenario "Rising Flood" --simple  # Log output
+```
+
+**Monitor Running Simulation (Client Mode)**
+```bash
+emotionsim monitor --run-id <uuid>
+emotionsim monitor --run-id <uuid> --simple
+```
+
+**Scenario Management**
+```bash
+emotionsim scenarios                    # List scenarios
+emotionsim scenarios --create-builtin   # Create built-in scenarios
+```
+
+**Interactive Mode**
+```bash
+emotionsim interactive  # Wizard to configure and run
+```
+
+**Server Status**
+```bash
+emotionsim status  # Check if backend is running
+```
+
+### CLI Features
+
+- **Rich UI Mode**: Live-updating panels with world state, agent status, conversations, and event log
+- **Simple Mode**: Clean streaming logs for piping/grepping
+- **Dual Modes**: Standalone (no server) or Client (WebSocket to backend)
+- **Real-time Monitoring**: See all agent conversations, movements, and events as they happen
+
 ## API Endpoints
 
 ### Scenarios
@@ -173,8 +221,9 @@ Copy `backend/.env.example` to `backend/.env` and configure:
 ```env
 # LLM Provider
 OLLAMA_BASE_URL=http://localhost:11434/v1
-OLLAMA_DEFAULT_MODEL=llama3.2
+OLLAMA_DEFAULT_MODEL=qwen2.5:7b
 
+# Alternative models: phi3, llama3.2:3b, mistral:7b, qwen3:0.6b, etc.
 # For Claude (future)
 ANTHROPIC_API_KEY=your-key-here
 ```

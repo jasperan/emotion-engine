@@ -50,6 +50,7 @@ You control:
 - Resource availability (supplies, shelter, tools)
 - Environmental events (structure collapses, rescues possible, etc.)
 - Location accessibility
+- Agent health and stress (through location effects and direct actions)
 
 Output your response as JSON with this structure:
 {{
@@ -62,6 +63,16 @@ Output your response as JSON with this structure:
                 "affected_locations": ["location1", "location2"],
                 "new_resources": ["resource1"],
                 "events": ["event description"]
+            }}
+        }},
+        {{
+            "action_type": "affect_agent",
+            "target": "<agent_id or agent_name>",
+            "parameters": {{
+                "health_delta": <number -10 to 10>,
+                "stress_delta": <number -10 to 10>,
+                "health": <number 0-10>,
+                "stress_level": <number 1-10>
             }}
         }}
     ],
@@ -80,6 +91,9 @@ Be dramatic but fair. Create challenges that test human cooperation and decision
         self,
         world_state: dict[str, Any],
         messages: list[dict[str, Any]],
+        step_actions: list[dict[str, Any]] | None = None,
+        step_messages: list[dict[str, Any]] | None = None,
+        step_events: list[str] | None = None,
     ) -> str:
         """Build context for environment decisions"""
         # Current world state summary

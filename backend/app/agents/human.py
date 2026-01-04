@@ -1,4 +1,5 @@
 """Human Agent - roleplays as a person with personality"""
+import random
 from typing import Any
 
 from app.agents.base import Agent
@@ -52,6 +53,37 @@ class HumanAgent(Agent):
             "location": self.persona.location,
         }
     
+    def should_respond(
+        self,
+        has_events: bool,
+        has_messages: bool,
+        location_activity: int,
+    ) -> bool:
+        """Determine if agent should evaluate/respond this turn based on personality"""
+        base_probability = 0.3  # Base 30% chance
+        
+        # Extraversion increases base probability
+        extraversion_mod = (self.persona.extraversion - 5) * 0.05  # -0.2 to +0.2
+        
+        # Neuroticism increases reactivity to events
+        neuroticism_mod = 0.0
+        if has_events or has_messages:
+            neuroticism_mod = (self.persona.neuroticism - 5) * 0.08  # -0.32 to +0.32
+        
+        # Leadership increases initiative
+        leadership_mod = (self.persona.leadership - 5) * 0.03
+        
+        # Stress makes agents more reactive
+        stress_mod = (self.persona.stress_level - 5) * 0.05
+        
+        # Location activity (more people = more likely to interact)
+        activity_mod = min(location_activity * 0.1, 0.3)
+        
+        probability = base_probability + extraversion_mod + neuroticism_mod + leadership_mod + stress_mod + activity_mod
+        probability = max(0.1, min(0.9, probability))  # Clamp between 10% and 90%
+        
+        return random.random() < probability
+    
     def get_system_prompt(self) -> str:
         """Generate system prompt based on persona"""
         persona_description = self.persona.to_prompt_description()
@@ -72,6 +104,10 @@ Available Actions:
 - wait: Do nothing this turn
 - join_conversation: Join a conversation with specific people
 - leave_conversation: Leave the current conversation
+- propose_task: Propose a task for others (parameters: description, priority, assigned_to)
+- accept_task: Accept an available task (target = task_id or description)
+- report_progress: Report progress on a task or goal (parameters: task_id, progress, goal, goal_progress)
+- call_for_vote: Call for a vote on ending/continuing (parameters: topic, vote: "continue"|"end")
 
 Output your response as JSON:
 {{
@@ -98,12 +134,19 @@ IMPORTANT:
 - Stay in character. Your personality should influence your decisions.
 - Consider your relationships with others when speaking.
 - If you have nothing to say, you can choose not to include a message.
-- Movement takes you to a new location where you'll meet different people."""
+- Movement takes you to a new location where you'll meet different people.
+- Cooperate with others! Use propose_task and accept_task to coordinate efforts.
+- If you notice you're repeating the same actions, check the "suggestions" in world_state.
+- Work toward shared goals. Report progress when you make headway.
+- If you think the situation is resolved, you can call_for_vote to suggest ending."""
     
     def build_context(
         self,
         world_state: dict[str, Any],
         messages: list[dict[str, Any]],
+        step_actions: list[dict[str, Any]] | None = None,
+        step_messages: list[dict[str, Any]] | None = None,
+        step_events: list[str] | None = None,
     ) -> str:
         """Build context for human agent decisions"""
         # World state summary
@@ -178,9 +221,39 @@ Your Current State:
         else:
             context += "No recent communications.\n\n"
         
-        # Environmental events
+        # Step-specific events (events that happened in this step)
+        if step_events:
+            context += "Events This Step:\n"
+            for event in step_events:
+                context += f"- {event}\n"
+            context += "\n"
+        
+        # Recent actions from this step (what other agents have done)
+        if step_actions:
+            context += "Recent Actions This Step:\n"
+            for action in step_actions[-10:]:  # Show last 10 actions
+                agent_name = action.get("agent_name", action.get("agent_id", "Unknown"))
+                action_type = action.get("action_type", "unknown")
+                target = action.get("target", "")
+                if target:
+                    context += f"- {agent_name} {action_type} to {target}\n"
+                else:
+                    context += f"- {agent_name} {action_type}\n"
+            context += "\n"
+        
+        # Recent messages from this step (what other agents have said)
+        if step_messages:
+            context += "Recent Messages This Step:\n"
+            for msg in step_messages[-10:]:  # Show last 10 messages
+                sender = msg.get("from_agent_name", msg.get("from_agent", "Unknown"))
+                content = msg.get("content", "")
+                msg_type = msg.get("message_type", "direct")
+                context += f"- [{msg_type.upper()}] {sender}: \"{content}\"\n"
+            context += "\n"
+        
+        # Environmental events (historical)
         events = world_state.get("events", [])
-        if events:
+        if events and not step_events:  # Only show if no step-specific events
             context += "Recent Events:\n"
             for event in events[-3:]:
                 context += f"- {event}\n"

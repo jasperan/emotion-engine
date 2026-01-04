@@ -18,7 +18,7 @@ class Agent(ABC):
         agent_id: str | None = None,
         name: str = "Agent",
         role: str = "base",
-        model_id: str = "phi3",
+        model_id: str = "qwen2.5:7b",
         provider: str = "ollama",
         goals: list[str] | None = None,
         tools: list[str] | None = None,
@@ -59,6 +59,9 @@ class Agent(ABC):
         self,
         world_state: dict[str, Any],
         messages: list[dict[str, Any]],
+        step_actions: list[dict[str, Any]] | None = None,
+        step_messages: list[dict[str, Any]] | None = None,
+        step_events: list[str] | None = None,
     ) -> str:
         """Build the context/user prompt from world state and messages"""
         pass
@@ -118,49 +121,136 @@ class Agent(ABC):
         """Parse LLM response into structured AgentResponse"""
         content = response.content.strip()
         
-        # Try to parse as JSON first
-        try:
-            data = json.loads(content)
-            actions = []
-            for action_data in data.get("actions", []):
+        # Try to extract JSON from various formats
+        json_content = self._extract_json(content)
+        
+        if json_content:
+            try:
+                data = json.loads(json_content)
+                return self._parse_json_response(data)
+            except json.JSONDecodeError:
+                pass
+        
+        # Fallback: treat as natural language response
+        # Clean up any JSON-like artifacts
+        clean_content = self._clean_response_text(content)
+        
+        return AgentResponse(
+            actions=[],
+            message=AgentMessage(
+                content=clean_content,
+                to_target="broadcast",
+                message_type="broadcast",
+            ) if clean_content else None,
+            state_changes={},
+            reasoning="",
+        )
+    
+    def _extract_json(self, content: str) -> str | None:
+        """Extract JSON from response, handling various formats"""
+        import re
+        
+        # Already valid JSON?
+        if content.startswith("{") and content.endswith("}"):
+            return content
+        
+        # Extract from markdown code blocks
+        json_block = re.search(r'```(?:json)?\s*\n?(.*?)\n?```', content, re.DOTALL)
+        if json_block:
+            return json_block.group(1).strip()
+        
+        # Find JSON object in text
+        json_match = re.search(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', content, re.DOTALL)
+        if json_match:
+            return json_match.group(0)
+        
+        return None
+    
+    def _parse_json_response(self, data: dict) -> AgentResponse:
+        """Parse a JSON dict into AgentResponse"""
+        actions = []
+        for action_data in data.get("actions", []):
+            if isinstance(action_data, dict):
+                # Coerce target to string or None to handle LLM returning non-string values
+                target_raw = action_data.get("target")
+                if target_raw is None:
+                    target = None
+                elif isinstance(target_raw, str):
+                    target = target_raw.strip() if target_raw.strip() else None
+                else:
+                    # Convert non-string values to string (e.g., numbers, booleans)
+                    target = str(target_raw) if target_raw else None
+                
                 actions.append(AgentAction(
                     action_type=action_data.get("action_type", "none"),
-                    target=action_data.get("target"),
+                    target=target,
                     parameters=action_data.get("parameters", {}),
                 ))
-            
-            message = None
-            if data.get("message"):
-                msg_data = data["message"]
+        
+        message = None
+        msg_data = data.get("message")
+        if msg_data:
+            if isinstance(msg_data, dict):
+                msg_content = msg_data.get("content", "")
+                # Don't use JSON-looking content as message
+                if msg_content and not msg_content.strip().startswith("{"):
+                    # Validate message_type - must be one of the allowed values
+                    msg_type = msg_data.get("message_type", "broadcast")
+                    valid_types = ("direct", "room", "broadcast")
+                    if msg_type not in valid_types:
+                        msg_type = "broadcast"
+                    
+                    # Validate to_target - must be a non-empty string
+                    to_target = msg_data.get("to_target", "broadcast")
+                    if not to_target or not isinstance(to_target, str):
+                        to_target = "broadcast"
+                    
+                    message = AgentMessage(
+                        content=msg_content,
+                        to_target=to_target,
+                        message_type=msg_type,
+                    )
+            elif isinstance(msg_data, str) and not msg_data.strip().startswith("{"):
                 message = AgentMessage(
-                    content=msg_data.get("content", ""),
-                    to_target=msg_data.get("to_target", "broadcast"),
-                    message_type=msg_data.get("message_type", "broadcast"),
-                )
-            
-            return AgentResponse(
-                actions=actions,
-                message=message,
-                state_changes=data.get("state_changes", {}),
-                reasoning=data.get("reasoning", ""),
-            )
-        except json.JSONDecodeError:
-            # If not JSON, treat as a simple message response
-            return AgentResponse(
-                actions=[],
-                message=AgentMessage(
-                    content=content,
+                    content=msg_data,
                     to_target="broadcast",
                     message_type="broadcast",
-                ),
-                state_changes={},
-                reasoning="",
-            )
+                )
+        
+        return AgentResponse(
+            actions=actions,
+            message=message,
+            state_changes=data.get("state_changes", {}),
+            reasoning=data.get("reasoning", ""),
+        )
+    
+    def _clean_response_text(self, content: str) -> str:
+        """Clean up response text, removing JSON artifacts"""
+        import re
+        
+        # If it looks like JSON, don't use it as a message
+        if content.strip().startswith("{") or content.strip().startswith("["):
+            # Try to extract a "content" field from partial JSON
+            content_match = re.search(r'"content"\s*:\s*"([^"]+)"', content)
+            if content_match:
+                return content_match.group(1)
+            return ""
+        
+        # Remove any JSON blocks
+        content = re.sub(r'```(?:json)?\s*\n?.*?\n?```', '', content, flags=re.DOTALL)
+        
+        # Clean up
+        content = content.strip()
+        
+        return content
     
     async def tick(
         self,
         world_state: dict[str, Any],
         messages: list[dict[str, Any]],
+        step_actions: list[dict[str, Any]] | None = None,
+        step_messages: list[dict[str, Any]] | None = None,
+        step_events: list[str] | None = None,
     ) -> AgentResponse:
         """
         Execute one simulation tick.
@@ -168,6 +258,9 @@ class Agent(ABC):
         Args:
             world_state: Current state of the world/environment
             messages: Recent messages addressed to this agent
+            step_actions: Actions taken by other agents in current step
+            step_messages: Messages sent by other agents in current step
+            step_events: Events that occurred in current step
             
         Returns:
             AgentResponse with actions and optional message
@@ -178,16 +271,17 @@ class Agent(ABC):
         
         # Build prompts
         system_prompt = self.get_system_prompt()
-        context = self.build_context(world_state, messages)
+        context = self.build_context(world_state, messages, step_actions, step_messages, step_events)
         
-        # Call LLM
+        # Call LLM with increased token limit for complete responses
         llm_messages = [LLMMessage(role="user", content=context)]
         
         response = await self._llm_client.generate(
             messages=llm_messages,
             model=self.model_id,
             system=system_prompt,
-            temperature=0.7,
+            temperature=0.8,  # Increased for more creative responses
+            max_tokens=4096,  # Increased to prevent truncated sentences
             json_mode=True,
         )
         

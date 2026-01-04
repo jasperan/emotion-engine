@@ -54,7 +54,7 @@ def dict_to_scenario(data: dict[str, Any]) -> ScenarioCreate:
         agent_templates.append(AgentConfig(
             name=t_data["name"],
             role=t_data["role"],
-            model_id=t_data.get("model_id", "phi3"),
+            model_id=t_data.get("model_id", "qwen2.5:7b"),
             provider=t_data.get("provider", "ollama"),
             persona=persona,
             goals=t_data.get("goals", []),

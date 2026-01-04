@@ -26,7 +26,7 @@ router = APIRouter(prefix="/scenarios", tags=["scenarios"])
 class GenerateRequest(BaseModel):
     """Request body for scenario generation"""
     prompt: str = Field(..., min_length=3, description="Scenario description")
-    persona_count: int = Field(6, ge=2, le=12, description="Number of personas")
+    persona_count: int = Field(50, ge=2, le=100, description="Number of personas")
     archetypes: list[str] | None = Field(None, description="Optional persona types")
     save_to_file: bool = Field(True, description="Save to JSON file")
 

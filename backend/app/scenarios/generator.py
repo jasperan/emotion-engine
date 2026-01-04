@@ -99,7 +99,7 @@ Generate a scenario now based on the user's prompt."""
 class ScenarioGenerator:
     """Generate scenarios using LLM"""
     
-    def __init__(self, provider: str = "ollama", model_id: str = "phi3"):
+    def __init__(self, provider: str = "ollama", model_id: str = "qwen2.5:7b"):
         self.provider = provider
         self.model_id = model_id
         self._client = LLMRouter.get_client(provider)
@@ -107,7 +107,7 @@ class ScenarioGenerator:
     async def generate(
         self,
         prompt: str,
-        persona_count: int = 6,
+        persona_count: int = 50,
         archetypes: list[str] | None = None,
         max_retries: int = 3,
     ) -> ScenarioCreate:

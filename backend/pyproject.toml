@@ -1,0 +1,64 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "emotionsim"
+version = "0.1.0"
+description = "Multi-Agent Simulation System inspired by The Great Flood"
+readme = {text = "Multi-Agent Simulation System inspired by The Great Flood", content-type = "text/plain"}
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "EmotionSim Team"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "websockets",
+    "python-multipart",
+    "sqlalchemy",
+    "aiosqlite",
+    "pydantic",
+    "pydantic-settings",
+    "httpx",
+    "openai",
+    "asyncio-throttle",
+    "python-dotenv",
+    "click",
+    "rich",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "mypy",
+]
+
+[project.scripts]
+emotionsim = "app.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+

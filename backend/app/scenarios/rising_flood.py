@@ -1,4 +1,4 @@
-"""Rising Flood example scenario with diverse personas"""
+"""Rising Flood example scenario with diverse personas - Enhanced for conversation system"""
 from app.schemas.persona import Persona
 from app.schemas.agent import AgentConfig
 from app.schemas.scenario import WorldConfig, ScenarioCreate
@@ -171,83 +171,139 @@ def create_rising_flood_scenario() -> ScenarioCreate:
     agent_templates.append(AgentConfig(
         name="Flood System",
         role="environment",
-        model_id="llama3.2",
+        model_id="phi3",
         provider="ollama",
-        goals=["Simulate realistic flood progression", "Create meaningful survival challenges"],
+        goals=[
+            "Simulate realistic flood progression",
+            "Create meaningful survival challenges",
+            "Generate events that force cooperation",
+        ],
     ))
     
-    # Add human agents
+    # Add human agents with enhanced goals for conversation system
     for persona in personas:
         agent_templates.append(AgentConfig(
             name=persona.name,
             role="human",
-            model_id="llama3.2",
+            model_id="phi3",
             provider="ollama",
             persona=persona,
-            goals=["Survive the flood", "Help others if possible", "Find safety"],
+            goals=[
+                "Save as many lives as possible including yourself",
+                "Help others reach safety",
+                "Coordinate with others to share resources",
+                "Find and rescue anyone in danger",
+                "Make it to a safe location",
+            ],
         ))
     
-    # Add designer agent (optional - monitors the simulation)
-    agent_templates.append(AgentConfig(
-        name="Director",
-        role="designer",
-        model_id="llama3.2",
-        provider="ollama",
-        goals=[
-            "Create dramatic tension",
-            "Test cooperation vs self-preservation",
-            "Ensure meaningful dilemmas",
-        ],
-    ))
-    
-    # World configuration
+    # World configuration - enhanced with more locations for movement
     world_config = WorldConfig(
         name="Riverside District",
-        description="A small urban district during a catastrophic flood event",
+        description="A small urban district during a catastrophic flood event. Rising waters threaten multiple locations as survivors must work together to save lives.",
         initial_state={
             "hazard_level": 2,
             "weather": "heavy_rain",
             "time_of_day": "evening",
+            "survivors_at_risk": 3,
+            "survivors_rescued": 0,
             "locations": {
                 "shelter": {
-                    "description": "Emergency shelter in a community center. Relatively safe but crowded.",
-                    "nearby": ["street", "rooftop"],
+                    "description": "Emergency shelter in a community center. Relatively safe but crowded. Dr. Chen and Elena are organizing supplies.",
+                    "nearby": ["street", "rooftop", "medical_station"],
                     "capacity": 50,
-                    "items": ["first_aid_kit", "flashlight", "water_bottles"],
+                    "current_occupants": 15,
+                    "items": ["first_aid_kit", "flashlight", "water_bottles", "blankets", "radio"],
                     "hazard_affected": False,
+                    "observations": [
+                        "People are scared and looking for leadership",
+                        "Supplies are running low",
+                        "Someone should check on people at other locations",
+                    ],
                 },
                 "street": {
-                    "description": "Main street with rising floodwater. Dangerous but passable.",
-                    "nearby": ["shelter", "bridge", "rooftop"],
+                    "description": "Main street with rising floodwater. Dangerous but passable for now. Marcus and Bobby are here assessing the situation.",
+                    "nearby": ["shelter", "bridge", "rooftop", "flooded_house"],
                     "water_level": 2,
-                    "items": ["wooden_plank", "rope"],
+                    "items": ["wooden_plank", "rope", "sandbags"],
                     "hazard_affected": True,
+                    "observations": [
+                        "Water is rising steadily",
+                        "Someone might be trapped in a flooded house",
+                        "The bridge looks unstable",
+                    ],
                 },
                 "rooftop": {
-                    "description": "Rooftop of a three-story building. Safe from water but exposed.",
+                    "description": "Rooftop of a three-story building. Safe from water but exposed to the storm. Jake and Mei-Lin are stranded here.",
                     "nearby": ["shelter", "street"],
-                    "items": ["tarp"],
+                    "items": ["tarp", "rope"],
                     "hazard_affected": False,
+                    "observations": [
+                        "Can see the whole district from here",
+                        "Spotted movement near the bridge",
+                        "The child seems scared",
+                    ],
                 },
                 "bridge": {
-                    "description": "Old stone bridge. Structurally damaged and unstable.",
-                    "nearby": ["street"],
+                    "description": "Old stone bridge. Structurally damaged and unstable. Victor is here, seemingly paralyzed with fear.",
+                    "nearby": ["street", "safe_hill"],
                     "structural_integrity": 60,
                     "items": [],
                     "hazard_affected": True,
+                    "observations": [
+                        "Bridge is creaking ominously",
+                        "Could collapse at any moment",
+                        "Someone needs to help Victor cross",
+                    ],
+                },
+                "flooded_house": {
+                    "description": "A partially flooded house. Someone is calling for help from the second floor.",
+                    "nearby": ["street"],
+                    "water_level": 4,
+                    "items": [],
+                    "hazard_affected": True,
+                    "observations": [
+                        "Elderly person trapped on second floor",
+                        "Water still rising",
+                        "Need a boat or strong swimmer",
+                    ],
+                    "trapped_survivor": True,
+                },
+                "medical_station": {
+                    "description": "Makeshift medical station set up near the shelter. Dr. Chen can treat the injured here.",
+                    "nearby": ["shelter"],
+                    "items": ["medical_supplies", "stretcher", "medication"],
+                    "hazard_affected": False,
+                    "observations": [
+                        "Several people need medical attention",
+                        "Supplies are limited",
+                    ],
+                },
+                "safe_hill": {
+                    "description": "High ground overlooking the district. Completely safe from flooding. This is the evacuation point.",
+                    "nearby": ["bridge"],
+                    "items": ["emergency_supplies"],
+                    "hazard_affected": False,
+                    "observations": [
+                        "Rescue helicopters might land here",
+                        "Best vantage point to coordinate",
+                    ],
                 },
             },
             "events": [
                 "Flash flood warning issued for Riverside District",
                 "Power is out across the area",
+                "Someone is calling for help from a flooded house",
+                "The old bridge is showing signs of stress",
             ],
-            "resources": ["radio_emergency"],
+            "resources": ["radio_emergency", "rescue_boats_incoming"],
         },
         dynamics={
             "intensity_growth": 0.15,
             "resource_spawn_rate": 0.1,
             "event_probability": 0.2,
             "water_rise_per_tick": 0.3,
+            "bridge_deterioration": 0.05,
         },
         max_steps=50,
         tick_delay=1.0,
@@ -255,13 +311,12 @@ def create_rising_flood_scenario() -> ScenarioCreate:
     
     return ScenarioCreate(
         name="Rising Flood",
-        description="A catastrophic flood threatens a small urban district. Eight survivors with diverse backgrounds must work together (or against each other) to survive. Based on The Great Flood's Emotion Engine concept.",
+        description="A catastrophic flood threatens a small urban district. Eight survivors with diverse backgrounds must work together to save as many lives as possible. Features multiple locations requiring coordination, trapped survivors to rescue, and a deteriorating bridge. Based on The Great Flood's Emotion Engine concept.",
         config=world_config,
         agent_templates=agent_templates,
     )
 
 
-# Convenience function to get the scenario as a dict
 def get_rising_flood_config() -> dict:
     """Get the Rising Flood scenario configuration as a dictionary"""
     scenario = create_rising_flood_scenario()
@@ -271,4 +326,3 @@ def get_rising_flood_config() -> dict:
         "config": scenario.config.model_dump(),
         "agent_templates": [t.model_dump() for t in scenario.agent_templates],
     }
-

@@ -20,6 +20,9 @@
 
 				<div class="flex items-center gap-4">
 					<a href="/" class="text-storm-300 hover:text-white transition-colors">Dashboard</a>
+					<a href="/scenarios/generate" class="text-storm-300 hover:text-white transition-colors flex items-center gap-1">
+						<span>✨</span> Generate
+					</a>
 					<a href="/scenarios/new" class="btn-primary">New Scenario</a>
 				</div>
 			</div>

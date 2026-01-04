@@ -14,7 +14,7 @@
 	let showAddAgent = false;
 	let newAgent: Partial<AgentTemplate> = {
 		role: 'human',
-		model_id: 'llama3.2',
+		model_id: 'phi3',
 		provider: 'ollama'
 	};
 	let newPersona: Partial<Persona> = {
@@ -41,7 +41,7 @@
 		const template: AgentTemplate = {
 			name: newAgent.name!,
 			role: newAgent.role as AgentTemplate['role'],
-			model_id: newAgent.model_id || 'llama3.2',
+			model_id: newAgent.model_id || 'phi3',
 			provider: newAgent.provider || 'ollama',
 			goals: []
 		};
@@ -75,7 +75,7 @@
 	}
 
 	function resetNewAgent() {
-		newAgent = { role: 'human', model_id: 'llama3.2', provider: 'ollama' };
+		newAgent = { role: 'human', model_id: 'phi3', provider: 'ollama' };
 		newPersona = {
 			age: 30,
 			sex: 'non-binary',

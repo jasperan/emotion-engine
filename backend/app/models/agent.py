@@ -42,6 +42,12 @@ class AgentModel(Base):
     # Dynamic state that changes during simulation
     dynamic_state: Mapped[dict] = mapped_column(JSON, default=dict)
     
+    # Memory snapshot (episodic memories, relationships)
+    memory_snapshot: Mapped[dict] = mapped_column(JSON, default=dict)
+    
+    # Relationship memory (tracked relationships with other agents)
+    relationship_memory: Mapped[dict] = mapped_column(JSON, default=dict)
+    
     # Agent status
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     

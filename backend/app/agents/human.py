@@ -9,6 +9,7 @@ class HumanAgent(Agent):
     """
     Agent that roleplays as a human with rich personality traits.
     Makes decisions based on persona characteristics and emotional state.
+    Includes memory of relationships and past events.
     """
     
     def __init__(
@@ -40,6 +41,9 @@ class HumanAgent(Agent):
         # Sync name with persona
         self.name = self.persona.name
         
+        # Update agent memory with correct name
+        self.agent_memory.agent_name = self.name
+        
         # Initialize dynamic state from persona
         self.dynamic_state = {
             "stress_level": self.persona.stress_level,
@@ -60,18 +64,20 @@ Your Goals:
 {goals_str}
 
 Available Actions:
-- move: Move to a different location
-- speak: Say something to others
+- move: Move to a different location (target = location name)
+- speak: Say something to others at your location
 - help: Help another person
 - take: Pick up an item
 - use: Use an item from inventory
 - wait: Do nothing this turn
+- join_conversation: Join a conversation with specific people
+- leave_conversation: Leave the current conversation
 
 Output your response as JSON:
 {{
     "actions": [
         {{
-            "action_type": "move|speak|help|take|use|wait",
+            "action_type": "move|speak|help|take|use|wait|join_conversation|leave_conversation",
             "target": "<target location/person/item>",
             "parameters": {{}}
         }}
@@ -79,7 +85,7 @@ Output your response as JSON:
     "message": {{
         "content": "<what you say (in character)>",
         "to_target": "<agent name or 'broadcast'>",
-        "message_type": "direct|broadcast"
+        "message_type": "direct|broadcast|conversation"
     }},
     "state_changes": {{
         "stress_level": <new stress 1-10 if changed>,
@@ -88,7 +94,11 @@ Output your response as JSON:
     "reasoning": "<brief internal thought process>"
 }}
 
-Stay in character. Your personality should influence your decisions."""
+IMPORTANT:
+- Stay in character. Your personality should influence your decisions.
+- Consider your relationships with others when speaking.
+- If you have nothing to say, you can choose not to include a message.
+- Movement takes you to a new location where you'll meet different people."""
     
     def build_context(
         self,
@@ -100,18 +110,27 @@ Stay in character. Your personality should influence your decisions."""
         hazard_level = world_state.get("hazard_level", 0)
         current_step = world_state.get("current_step", 0)
         locations = world_state.get("locations", {})
+        agents_state = world_state.get("agents", {})
         
         # Get location info
         current_loc = self.dynamic_state.get("location", "unknown")
         loc_info = locations.get(current_loc, {})
         
+        # Get agents at this location
+        agents_here = []
+        for agent_id, agent_info in agents_state.items():
+            if agent_info.get("location") == current_loc and agent_id != self.id:
+                agents_here.append(agent_info.get("name", agent_id))
+        
+        # Build context string
         context = f"""Current Situation (Step {current_step}):
 
 Environment:
 - Hazard Level: {hazard_level}/10 {'⚠️ DANGER!' if hazard_level >= 7 else '⚡ Concerning' if hazard_level >= 4 else '✓ Manageable'}
 - Your Location: {current_loc}
 - Location Status: {loc_info.get('description', 'Unknown area')}
-- Nearby: {loc_info.get('nearby', [])}
+- People Here: {', '.join(agents_here) if agents_here else 'No one else'}
+- Nearby Locations: {loc_info.get('nearby', [])}
 - Available Items: {loc_info.get('items', [])}
 
 Your Current State:
@@ -121,27 +140,62 @@ Your Current State:
 
 """
         
+        # Add conversation context if in an active conversation
+        active_conversation = world_state.get("active_conversation")
+        if active_conversation:
+            context += f"""Active Conversation:
+- Location: {active_conversation.get('location', 'here')}
+- Participants: {', '.join(active_conversation.get('participants', []))}
+- It is your turn to speak (or you can stay silent).
+
+"""
+        
+        # Add memory context (relationships and past events)
+        memory_context = self.get_conversation_context()
+        if memory_context:
+            context += f"Your Memory:\n{memory_context}\n\n"
+        
+        # Add relationship context for people here
+        if agents_here:
+            # Get agent IDs for people here
+            agent_ids_here = [
+                aid for aid, info in agents_state.items()
+                if info.get("name") in agents_here
+            ]
+            relationship_context = self.get_relationship_context(agent_ids_here)
+            if relationship_context:
+                context += f"Your Relationships with People Here:\n{relationship_context}\n\n"
+        
         # Add messages from others
         if messages:
             context += "Recent Communications:\n"
-            for msg in messages[-10:]:
-                sender = msg.get("from_agent", "Unknown")
+            for msg in messages[-15:]:
+                sender = msg.get("from_agent_name", msg.get("from_agent", "Unknown"))
                 content = msg.get("content", "")
                 msg_type = msg.get("message_type", "direct")
                 context += f"- [{msg_type.upper()}] {sender}: \"{content}\"\n"
+            context += "\n"
         else:
-            context += "No recent communications.\n"
+            context += "No recent communications.\n\n"
         
         # Environmental events
         events = world_state.get("events", [])
         if events:
-            context += "\nRecent Events:\n"
+            context += "Recent Events:\n"
             for event in events[-3:]:
                 context += f"- {event}\n"
+            context += "\n"
         
-        context += """
-What do you do? Consider your personality, stress level, and the situation.
-Respond in character with your action and any message you want to send."""
+        # Action prompt
+        if active_conversation and active_conversation.get("is_my_turn"):
+            context += """It's your turn in the conversation. What do you say?
+Consider what others have said and respond naturally. 
+You can also choose to stay silent by not including a message.
+Think about your relationships and personality when responding."""
+        else:
+            context += """What do you do? Consider your personality, stress level, and the situation.
+Respond in character with your action and any message you want to send.
+You can move to a nearby location if you want to leave."""
         
         return context
     
@@ -159,9 +213,23 @@ Respond in character with your action and any message you want to send."""
         self.dynamic_state["health"] = new_health
         self.persona.health = new_health
     
+    def update_relationship(
+        self,
+        agent_id: str,
+        trust_delta: int = 0,
+        sentiment: str | None = None,
+        note: str | None = None,
+    ) -> None:
+        """Update relationship with another agent"""
+        self.agent_memory.update_relationship(
+            agent_id=agent_id,
+            trust_delta=trust_delta,
+            sentiment=sentiment,
+            note=note,
+        )
+    
     def to_dict(self) -> dict[str, Any]:
         """Serialize agent with persona data"""
         base = super().to_dict()
         base["persona"] = self.persona.model_dump()
         return base
-

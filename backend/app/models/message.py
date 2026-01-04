@@ -15,10 +15,11 @@ if TYPE_CHECKING:
 
 class MessageType(str, Enum):
     """Message type enumeration"""
-    DIRECT = "direct"      # Agent to agent
-    ROOM = "room"          # To a room/group
-    BROADCAST = "broadcast"  # To all agents
-    SYSTEM = "system"      # System/environment message
+    DIRECT = "direct"          # Agent to agent
+    ROOM = "room"              # To a room/group
+    BROADCAST = "broadcast"    # To all agents
+    SYSTEM = "system"          # System/environment message
+    CONVERSATION = "conversation"  # To conversation participants
 
 
 class Message(Base):
@@ -48,8 +49,8 @@ class Message(Base):
     # Content
     content: Mapped[str] = mapped_column(Text, nullable=False)
     
-    # Additional metadata
-    metadata: Mapped[dict] = mapped_column(JSON, default=dict)
+    # Additional metadata (using msg_metadata to avoid SQLAlchemy reserved name)
+    msg_metadata: Mapped[dict] = mapped_column(JSON, default=dict)
     
     # Step context
     step_index: Mapped[int] = mapped_column(Integer, nullable=False)

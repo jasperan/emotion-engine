@@ -6,16 +6,15 @@ from typing import Any, Callable
 from enum import Enum
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
 from app.agents import Agent, EnvironmentAgent, HumanAgent, DesignerAgent, EvaluationAgent
 from app.simulation.message_bus import MessageBus
+from app.simulation.conversation import ConversationManager, Conversation, ConversationState
 from app.models.run import Run, RunStatus
 from app.models.agent import AgentModel
 from app.models.step import Step
 from app.models.message import Message, MessageType
 from app.schemas.persona import Persona
-from app.schemas.agent import AgentConfig
 
 
 class SimulationState(str, Enum):
@@ -31,7 +30,7 @@ class SimulationState(str, Enum):
 class SimulationEngine:
     """
     Main simulation engine that orchestrates runs.
-    Manages agent lifecycle, tick loop, and state persistence.
+    Manages agent lifecycle, tick loop, conversations, and state persistence.
     """
     
     def __init__(
@@ -61,6 +60,12 @@ class SimulationEngine:
         self.agents: dict[str, Agent] = {}
         self.message_bus = MessageBus()
         
+        # Conversation management
+        self.conversation_manager = ConversationManager()
+        
+        # Real-time agent locations (updated during steps)
+        self._agent_locations: dict[str, str] = {}
+        
         # Control
         self._stop_requested = False
         self._pause_requested = False
@@ -87,7 +92,12 @@ class SimulationEngine:
         for template in agent_templates:
             agent = self._create_agent(template)
             self.agents[agent.id] = agent
-            self.message_bus.register_agent(agent.id)
+            self.message_bus.register_agent(agent.id, agent.name)
+            
+            # Initialize agent location in conversation manager
+            agent_location = agent.dynamic_state.get("location", "unknown")
+            self._agent_locations[agent.id] = agent_location
+            self.conversation_manager.update_agent_location(agent.id, agent_location)
             
             # Persist agent to database
             agent_model = AgentModel(
@@ -188,84 +198,27 @@ class SimulationEngine:
             await self._complete_run()
     
     async def _execute_step(self) -> None:
-        """Execute a single simulation step"""
+        """Execute a single simulation step with multi-turn conversations"""
         self.current_step += 1
         self.world_state["current_step"] = self.current_step
         
         step_actions = []
         step_messages = []
         
-        # Build current agent states for world state
-        agents_state = {}
-        for agent_id, agent in self.agents.items():
-            agents_state[agent_id] = {
-                "name": agent.name,
-                "role": agent.role,
-                **agent.dynamic_state,
-            }
-        self.world_state["agents"] = agents_state
+        # Reset conversation counters for this step
+        self.conversation_manager.reset_step_counters()
         
-        # Execute each agent's tick
-        for agent_id, agent in self.agents.items():
-            # Get messages for this agent
-            messages = self.message_bus.get_messages(agent_id)
-            
-            try:
-                # Execute agent tick
-                response = await agent.tick(self.world_state.copy(), messages)
-                
-                # Process actions
-                for action in response.actions:
-                    step_actions.append({
-                        "agent_id": agent_id,
-                        "agent_name": agent.name,
-                        **action.model_dump(),
-                    })
-                    
-                    # Handle environment updates
-                    if action.action_type == "environment_update":
-                        self._apply_environment_update(action.parameters)
-                
-                # Process message
-                if response.message:
-                    msg = response.message
-                    if msg.message_type == "broadcast":
-                        stored_msg = self.message_bus.broadcast(
-                            agent_id, msg.content, self.current_step
-                        )
-                    elif msg.message_type == "room":
-                        stored_msg = self.message_bus.send_to_room(
-                            agent_id, msg.to_target, msg.content, self.current_step
-                        )
-                    else:
-                        stored_msg = self.message_bus.send_direct(
-                            agent_id, msg.to_target, msg.content, self.current_step
-                        )
-                    
-                    step_messages.append(stored_msg)
-                    
-                    # Persist message to database
-                    db_message = Message(
-                        run_id=self.run_id,
-                        from_agent_id=agent_id,
-                        to_target=msg.to_target,
-                        message_type=MessageType(msg.message_type),
-                        content=msg.content,
-                        step_index=self.current_step,
-                    )
-                    self.db.add(db_message)
-                
-                # Update agent state in DB
-                agent_model = await self.db.get(AgentModel, agent_id)
-                if agent_model:
-                    agent_model.dynamic_state = agent.dynamic_state
-            
-            except Exception as e:
-                self.on_event("agent_error", {
-                    "agent_id": agent_id,
-                    "error": str(e),
-                    "step": self.current_step,
-                })
+        # Build current agent states for world state
+        self._update_agents_in_world_state()
+        
+        # Phase 1: Environment agent updates (if any)
+        await self._process_environment_agents(step_actions, step_messages)
+        
+        # Phase 2: Multi-turn conversation loop
+        await self._process_conversations(step_actions, step_messages)
+        
+        # Phase 3: Cleanup ended conversations
+        self.conversation_manager.cleanup_ended_conversations()
         
         # Persist step
         step = Step(
@@ -291,7 +244,264 @@ class SimulationEngine:
             "actions": step_actions,
             "messages": step_messages,
             "world_state": self.world_state,
+            "conversations": [c.to_dict() for c in self.conversation_manager.get_all_active_conversations()],
         })
+    
+    def _update_agents_in_world_state(self) -> None:
+        """Update world state with current agent information"""
+        agents_state = {}
+        for agent_id, agent in self.agents.items():
+            location = self._agent_locations.get(agent_id, agent.dynamic_state.get("location", "unknown"))
+            agents_state[agent_id] = {
+                "name": agent.name,
+                "role": agent.role,
+                "location": location,
+                **agent.dynamic_state,
+            }
+        self.world_state["agents"] = agents_state
+    
+    async def _process_environment_agents(
+        self,
+        step_actions: list[dict[str, Any]],
+        step_messages: list[dict[str, Any]],
+    ) -> None:
+        """Process environment agent updates"""
+        for agent_id, agent in self.agents.items():
+            if agent.role != "environment":
+                continue
+            
+            messages = self.message_bus.get_messages(agent_id)
+            
+            try:
+                response = await agent.tick(self.world_state.copy(), messages)
+                
+                for action in response.actions:
+                    step_actions.append({
+                        "agent_id": agent_id,
+                        "agent_name": agent.name,
+                        **action.model_dump(),
+                    })
+                    
+                    if action.action_type == "environment_update":
+                        self._apply_environment_update(action.parameters)
+                
+                if response.message:
+                    msg = response.message
+                    stored_msg = self.message_bus.broadcast(
+                        agent_id, msg.content, self.current_step
+                    )
+                    step_messages.append(stored_msg)
+                    await self._persist_message(agent_id, msg)
+                    
+            except Exception as e:
+                self.on_event("agent_error", {
+                    "agent_id": agent_id,
+                    "error": str(e),
+                    "step": self.current_step,
+                })
+    
+    async def _process_conversations(
+        self,
+        step_actions: list[dict[str, Any]],
+        step_messages: list[dict[str, Any]],
+    ) -> None:
+        """Process multi-turn conversations until they conclude"""
+        max_conversation_rounds = 10  # Safety limit
+        round_count = 0
+        
+        while round_count < max_conversation_rounds:
+            round_count += 1
+            
+            # Get all conversations that need processing
+            active_conversations = self.conversation_manager.get_conversations_needing_turns()
+            
+            if not active_conversations:
+                break
+            
+            # Process each conversation
+            any_activity = False
+            
+            for conv in active_conversations:
+                activity = await self._process_single_conversation(
+                    conv, step_actions, step_messages
+                )
+                any_activity = any_activity or activity
+            
+            # If no conversation had activity, we're done
+            if not any_activity:
+                break
+    
+    async def _process_single_conversation(
+        self,
+        conversation: Conversation,
+        step_actions: list[dict[str, Any]],
+        step_messages: list[dict[str, Any]],
+    ) -> bool:
+        """Process a single conversation turn. Returns True if there was activity."""
+        if not conversation.should_continue():
+            return False
+        
+        # Get the next speaker
+        speaker_id = conversation.get_next_speaker()
+        if not speaker_id or speaker_id not in self.agents:
+            conversation.advance_turn(spoke=False)
+            return False
+        
+        agent = self.agents[speaker_id]
+        
+        # Skip non-human agents in conversations (they're handled separately)
+        if agent.role != "human":
+            conversation.advance_turn(spoke=False)
+            return False
+        
+        # Build context for this agent including conversation history
+        conversation_context = conversation.get_context_for_agent(speaker_id)
+        pending_messages = self.message_bus.get_messages(speaker_id)
+        
+        # Combine conversation history with any pending messages
+        all_messages = conversation_context + pending_messages
+        
+        # Add conversation metadata to world state
+        conv_world_state = self.world_state.copy()
+        conv_world_state["active_conversation"] = {
+            "id": conversation.id,
+            "location": conversation.location,
+            "participants": [
+                self.agents[pid].name if pid in self.agents else pid
+                for pid in conversation.participants
+            ],
+            "is_my_turn": True,
+        }
+        
+        try:
+            response = await agent.tick(conv_world_state, all_messages)
+            
+            # Process actions (including movement)
+            for action in response.actions:
+                step_actions.append({
+                    "agent_id": speaker_id,
+                    "agent_name": agent.name,
+                    **action.model_dump(),
+                })
+                
+                # Handle movement within the step
+                if action.action_type == "move":
+                    await self._handle_movement(speaker_id, action.target, action.parameters)
+            
+            # Process message
+            if response.message and response.message.content.strip():
+                msg = response.message
+                
+                # Send to conversation participants
+                stored_msg = self.message_bus.send_to_conversation(
+                    from_agent_id=speaker_id,
+                    conversation_id=conversation.id,
+                    participant_ids=conversation.participants,
+                    content=msg.content,
+                    step_index=self.current_step,
+                    location=conversation.location,
+                )
+                
+                # Add to conversation history
+                conversation.add_message(stored_msg)
+                step_messages.append(stored_msg)
+                
+                # Persist to database
+                await self._persist_message(speaker_id, msg, conversation.id)
+                
+                conversation.advance_turn(spoke=True)
+                return True
+            else:
+                # Agent chose not to speak
+                conversation.advance_turn(spoke=False)
+                return False
+                
+        except Exception as e:
+            self.on_event("agent_error", {
+                "agent_id": speaker_id,
+                "error": str(e),
+                "step": self.current_step,
+                "conversation_id": conversation.id,
+            })
+            conversation.advance_turn(spoke=False)
+            return False
+    
+    async def _handle_movement(
+        self,
+        agent_id: str,
+        target_location: str | None,
+        parameters: dict[str, Any],
+    ) -> None:
+        """Handle agent movement between locations"""
+        if not target_location:
+            return
+        
+        current_location = self._agent_locations.get(agent_id, "unknown")
+        
+        # Validate movement (target must be nearby)
+        locations = self.world_state.get("locations", {})
+        current_loc_data = locations.get(current_location, {})
+        nearby = current_loc_data.get("nearby", [])
+        
+        if target_location not in nearby and target_location != current_location:
+            # Invalid movement - location not reachable
+            self.on_event("movement_failed", {
+                "agent_id": agent_id,
+                "from": current_location,
+                "to": target_location,
+                "reason": "Location not reachable",
+            })
+            return
+        
+        # Update location
+        self._agent_locations[agent_id] = target_location
+        
+        # Update agent's dynamic state
+        agent = self.agents.get(agent_id)
+        if agent:
+            agent.dynamic_state["location"] = target_location
+        
+        # Update conversation manager (handles join/leave of location conversations)
+        self.conversation_manager.update_agent_location(agent_id, target_location)
+        
+        # Update world state
+        self._update_agents_in_world_state()
+        
+        self.on_event("agent_moved", {
+            "agent_id": agent_id,
+            "from": current_location,
+            "to": target_location,
+            "step": self.current_step,
+        })
+    
+    async def _persist_message(
+        self,
+        agent_id: str,
+        msg: Any,
+        conversation_id: str | None = None,
+    ) -> None:
+        """Persist a message to the database"""
+        # Determine message type
+        msg_type = msg.message_type if hasattr(msg, 'message_type') else "broadcast"
+        if conversation_id:
+            msg_type = "conversation"
+        
+        # Map to MessageType enum
+        try:
+            db_msg_type = MessageType(msg_type)
+        except ValueError:
+            db_msg_type = MessageType.BROADCAST
+        
+        db_message = Message(
+            run_id=self.run_id,
+            from_agent_id=agent_id,
+            to_target=conversation_id or msg.to_target,
+            message_type=db_msg_type,
+            content=msg.content,
+            step_index=self.current_step,
+            metadata={"conversation_id": conversation_id} if conversation_id else {},
+        )
+        self.db.add(db_message)
     
     def _apply_environment_update(self, params: dict[str, Any]) -> None:
         """Apply environment agent updates to world state"""
@@ -327,7 +537,27 @@ class SimulationEngine:
             "avg_stress": total_stress / max(human_count, 1),
             "hazard_level": self.world_state.get("hazard_level", 0),
             "message_count": len(self.message_bus._message_history),
+            "active_conversations": len(self.conversation_manager.get_all_active_conversations()),
         }
+    
+    def start_explicit_conversation(
+        self,
+        initiator_id: str,
+        target_agent_ids: list[str],
+    ) -> str:
+        """Start an explicit conversation between specific agents"""
+        initiator_location = self._agent_locations.get(initiator_id)
+        return self.conversation_manager.start_explicit_conversation(
+            initiator_id, target_agent_ids, initiator_location
+        )
+    
+    def get_agents_at_location(self, location: str) -> list[str]:
+        """Get all agent IDs at a specific location"""
+        return [
+            agent_id
+            for agent_id, loc in self._agent_locations.items()
+            if loc == location
+        ]
     
     async def pause(self) -> None:
         """Pause the simulation"""
@@ -403,4 +633,3 @@ class SimulationEngine:
             "step": self.current_step,
             "evaluation": evaluation,
         })
-

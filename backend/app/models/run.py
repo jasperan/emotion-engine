@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from app.models.agent import AgentModel
     from app.models.step import Step
     from app.models.message import Message
+    from app.models.conversation import ConversationModel
 
 
 class RunStatus(str, Enum):
@@ -85,6 +86,11 @@ class Run(Base):
     )
     messages: Mapped[list["Message"]] = relationship(
         "Message",
+        back_populates="run",
+        cascade="all, delete-orphan"
+    )
+    conversations: Mapped[list["ConversationModel"]] = relationship(
+        "ConversationModel",
         back_populates="run",
         cascade="all, delete-orphan"
     )

@@ -82,7 +82,7 @@ def upgrade() -> None:
         sa.Column("to_target", sa.String(255), nullable=False),
         sa.Column("message_type", sa.String(20), default="direct"),
         sa.Column("content", sa.Text, nullable=False),
-        sa.Column("metadata", sa.JSON, default=dict),
+        sa.Column("msg_metadata", sa.JSON, default=dict),
         sa.Column("step_index", sa.Integer, nullable=False),
         sa.Column("timestamp", sa.DateTime, nullable=False),
     )

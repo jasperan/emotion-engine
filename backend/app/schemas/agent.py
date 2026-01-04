@@ -31,7 +31,7 @@ class AgentConfig(BaseModel):
     """Configuration for creating an agent"""
     name: str
     role: Literal["environment", "human", "designer", "evaluator"]
-    model_id: str = "llama3.2"
+    model_id: str = "phi3"
     provider: Literal["ollama", "anthropic"] = "ollama"
     persona: Persona | None = None  # Required for human agents
     goals: list[str] = Field(default_factory=list)

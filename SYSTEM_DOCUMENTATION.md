@@ -534,7 +534,9 @@ This installs the `emotionsim` command globally.
 
 EmotionSim provides two primary CLI modes for testing and running simulations:
 
-#### 1. `emotionsim run` - Interactive Single Simulation
+#### 1. `emotionsim run` - The Primary Simulation Mode
+
+This is the main entry point for running simulations. It provides a comprehensive, interactive terminal interface that gives you full control over the simulation execution and real-time visibility into the agent behaviors.
 
 Run a single simulation with full control and real-time monitoring.
 
@@ -654,6 +656,14 @@ Displays top simulations ranked by agent health and stress metrics.
 | Real-time UI | Yes | Yes | Yes |
 | Multiple Runs | No | Yes | No |
 | Preset Selection | No | Yes | No |
+
+
+### Movement and Navigation System
+
+Agents use a sophisticated navigation system that includes:
+- **Pathfinding**: A* algorithm for finding optimal paths avoiding obstacles.
+- **Retry Logic**: Automatic recalculation and robust retry mechanisms if a path is blocked dynamically.
+- **Stuck Detection**: Detects if an agent is unable to move and triggers a re-planning event or state change.
 
 ---
 

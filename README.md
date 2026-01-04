@@ -1,17 +1,79 @@
 # EmotionSim - Multi-Agent Simulation System
 
-A local-first multi-agent simulation system inspired by Netflix's "The Great Flood" Emotion Engine concept. Run AI agent swarms in parallel disaster simulations with diverse human personas, and analyze their cooperation and decision-making.
+![Status](https://img.shields.io/badge/Status-Active-success)
+![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)
+![License](https://img.shields.io/badge/License-MIT-green)
+![Code Style](https://img.shields.io/badge/Code%20Style-Black-000000.svg)
+
+> **"The Great Flood" in your terminal.**
+> A local-first multi-agent simulation system for running complex disaster scenarios with diverse human personas.
 
 ![CLI Monitor](img/cli.png)
 
-## Features
+## Overview
 
-- **Agent Roleplay**: Agents have rich personas with demographics, Big Five personality traits, and behavioral modifiers
-- **Discrete Simulation**: Step-by-step simulation with configurable tick rates
-- **Real-time Dashboard**: SvelteKit frontend with WebSocket updates
-- **Flexible LLM Backend**: Uses Ollama by default, designed for easy Claude integration
-- **Message Bus**: Direct, room-based, and broadcast messaging between agents
-- **Evaluation System**: AI-powered evaluation of runs with scores and narrative analysis
+EmotionSim is a research-grade simulation engine designed to analyze emergent cooperative behaviors in AI agent swarms. It combines a robust discrete-event simulation kernel with rich LLM-driven agent personas to create high-fidelity social simulations.
+
+## Key Features
+
+- **🧠 Deep Agent Roleplay**: Agents have rich personas with demographics, Big Five personality traits, and dynamic emotional states.
+- **⚡ Real-time CLI Monitor**: A beautiful, terminal-based dashboard for watching your simulation unfold in real-time.
+- **🔄 Discrete Event Simulation**: Deterministic step-by-step execution for reproducible research.
+- **📡 Modern Architecture**: FastAPI backend + SvelteKit frontend, connected via WebSockets.
+- **🔌 LLM Agnostic**: Built for Ollama (local) but extensible to Claude/GPT-4.
+- **📊 Auto-Evaluation**: Built-in evaluator agents that analyze run performance and narrative arcs.
+
+## Quick Start
+
+The fastest way to get started is using the CLI tool.
+
+### 1. Prerequisites
+
+- Python 3.11+
+- [Ollama](https://ollama.ai/) running locally (e.g., `ollama serve`)
+- An LLM model pulled (e.g., `ollama pull gemma2`)
+
+### 2. Installation
+
+```bash
+cd backend
+pip install -e .
+```
+
+### 3. Run a Simulation
+
+The `emotionsim` CLI is the main interface. Start a simulation immediately:
+
+```bash
+# Run the built-in "Rising Flood" scenario
+emotionsim run --scenario "Rising Flood"
+```
+
+This launches the **Interactive CLI Monitor**, where you can watch:
+- 🌍 **World State**: Water levels, temperature, time.
+- 👥 **Agents**: Real-time health, stress, and current actions.
+- 💬 **Live Stream**: The raw thought process of the LLM agents.
+
+### Other Running Modes
+
+**Automated Batch Testing**
+Run multiple simulations in sequence without supervision:
+```bash
+emotionsim auto --count 5
+```
+
+**Full Client-Server Mode**
+If you prefer the web dashboard:
+```bash
+# Start the full stack
+cd frontend
+npm run dev
+```
+
+This will:
+1. Start the Python backend (API + Simulation Engine)
+2. Start the SvelteKit frontend dashboard
+3. Launch the browser automatically
 
 ## Architecture
 
@@ -34,68 +96,6 @@ A local-first multi-agent simulation system inspired by Netflix's "The Great Flo
 │  └───────────┘  └───────────┘        └───────────┘        │
 └─────────────────────────────────────────────────────────────┘
 ```
-
-## Quick Start
-
-### Prerequisites
-
-- Python 3.11+
-- Node.js 20+
-- [Ollama](https://ollama.ai/) with a model installed (e.g., `ollama pull gemma3`)
-
-### Development Setup
-
-1. **Start Ollama** (if not already running):
-   ```bash
-   ollama serve
-   ```
-
-2. **Backend Setup**:
-   ```bash
-   cd backend
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   pip install -r requirements.txt
-   
-   # Run the server (database initializes automatically)
-   python -m app.main
-   ```
-
-### 🚀 Auto Mode (Recommended)
-
-Run the entire stack (Frontend + Backend) with a single command:
-
-```bash
-cd frontend
-npm run dev
-```
-
-This will:
-1. Start the Python backend (API + Simulation Engine)
-2. Start the SvelteKit frontend dashboard
-3. Launch the browser automatically
-
-
-3. **Frontend Setup**:
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-   ```
-
-4. **Access the Dashboard**: Open http://localhost:5173
-
-### Docker Setup
-
-```bash
-# Make sure Ollama is running on the host
-ollama serve
-
-# Build and start containers
-docker-compose up --build
-```
-
-Access the dashboard at http://localhost:3000
 
 ## Project Structure
 
@@ -135,8 +135,6 @@ The included "Rising Flood" scenario features 8 diverse human agents:
 | Victor Kozlov | 45 | Unemployed | Bitter, unpredictable |
 
 ## CLI Monitor Tool
-
-EmotionSim includes a powerful CLI for monitoring and running simulations directly from your terminal with beautiful real-time visualizations.
 
 ### Installation
 
@@ -181,104 +179,6 @@ emotionsim status  # Check if backend is running
 - **Simple Mode**: Clean streaming logs for piping/grepping
 - **Dual Modes**: Standalone (no server) or Client (WebSocket to backend)
 - **Real-time Monitoring**: See all agent conversations, movements, and events as they happen
-
-![CLI Monitor](img/cli.png)
-
-*Real-time CLI monitor showing agent interactions, world state, and event log*
-
-## Screenshots
-
-### CLI Monitor
-
-The CLI provides a rich terminal interface with live-updating panels:
-
-![CLI Monitor](img/cli.png)
-
-### Frontend Dashboard
-
-The web-based dashboard provides a visual interface for managing and monitoring simulations:
-
-![Frontend Dashboard](img/frontend_dashboard.png)
-*Main dashboard showing active simulations and scenarios*
-
-![Scenario View](img/frontend_scenarios.png)
-*Scenario management and configuration*
-
-![Run Details](img/frontend_run_details.png)
-*Detailed view of a running simulation with agent interactions*
-
-![Settings](img/frontend_settings.png)
-*Application settings and configuration*
-
-## API Endpoints
-
-### Scenarios
-- `GET /api/scenarios/` - List all scenarios
-- `POST /api/scenarios/` - Create a new scenario
-- `GET /api/scenarios/{id}` - Get scenario details
-- `PUT /api/scenarios/{id}` - Update a scenario
-- `DELETE /api/scenarios/{id}` - Delete a scenario
-
-### Runs
-- `GET /api/runs/` - List all runs
-- `POST /api/runs/` - Create a new run
-- `GET /api/runs/{id}` - Get run details
-- `POST /api/runs/{id}/control` - Control run (start/pause/resume/stop/step)
-- `GET /api/runs/{id}/agents` - Get agents in a run
-- `GET /api/runs/{id}/messages` - Get messages from a run
-
-### WebSocket
-- `WS /api/ws/{run_id}` - Real-time run updates
-
-## Agent Types
-
-### HumanAgent
-Roleplays as a person with:
-- **Demographics**: Name, age, sex, occupation
-- **Big Five Traits**: Openness, Conscientiousness, Extraversion, Agreeableness, Neuroticism
-- **Behavioral Modifiers**: Risk tolerance, empathy, leadership
-- **Dynamic State**: Stress level, health, inventory, location
-
-### EnvironmentAgent
-Controls the world state:
-- Hazard levels and progression
-- Resource spawning
-- Environmental events
-
-### DesignerAgent
-Meta-orchestrator that:
-- Monitors agent behaviors
-- Injects events for drama
-- Evaluates emergent patterns
-
-### EvaluationAgent
-Post-run analysis:
-- Scores cooperation, ethics, strategy
-- Generates narrative evaluation
-- Identifies highlights and concerns
-
-## Configuration
-
-### Environment Variables
-
-Copy `backend/.env.example` to `backend/.env` and configure:
-
-```env
-# LLM Provider
-OLLAMA_BASE_URL=http://localhost:11434/v1
-OLLAMA_DEFAULT_MODEL=gemma3
-
-# Alternative models: phi3, llama3.2:3b, mistral:7b, qwen3:0.6b, etc.
-# For Claude (future)
-ANTHROPIC_API_KEY=your-key-here
-```
-
-## Running Tests
-
-```bash
-cd backend
-pytest
-```
 
 ## License
 

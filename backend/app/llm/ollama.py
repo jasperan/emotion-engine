@@ -1,0 +1,79 @@
+"""Ollama LLM client using OpenAI-compatible API"""
+import httpx
+from openai import AsyncOpenAI
+
+from app.llm.base import LLMClient, LLMMessage, LLMResponse
+from app.core.config import get_settings
+
+
+class OllamaClient(LLMClient):
+    """LLM client for Ollama via OpenAI-compatible API"""
+    
+    def __init__(
+        self,
+        base_url: str | None = None,
+        api_key: str | None = None,
+        default_model: str | None = None,
+    ):
+        settings = get_settings()
+        self.base_url = base_url or settings.ollama_base_url
+        self.api_key = api_key or settings.ollama_api_key
+        self.default_model = default_model or settings.ollama_default_model
+        
+        self.client = AsyncOpenAI(
+            base_url=self.base_url,
+            api_key=self.api_key,
+        )
+    
+    async def generate(
+        self,
+        messages: list[LLMMessage],
+        model: str | None = None,
+        temperature: float = 0.7,
+        max_tokens: int = 1024,
+        system: str | None = None,
+        json_mode: bool = False,
+    ) -> LLMResponse:
+        """Generate response using Ollama"""
+        model = model or self.default_model
+        
+        # Build message list
+        openai_messages = []
+        if system:
+            openai_messages.append({"role": "system", "content": system})
+        
+        for msg in messages:
+            openai_messages.append({"role": msg.role, "content": msg.content})
+        
+        # Make API call
+        response_format = {"type": "json_object"} if json_mode else None
+        
+        response = await self.client.chat.completions.create(
+            model=model,
+            messages=openai_messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            response_format=response_format,
+        )
+        
+        return LLMResponse(
+            content=response.choices[0].message.content or "",
+            raw_response=response.model_dump(),
+            usage={
+                "prompt_tokens": response.usage.prompt_tokens if response.usage else 0,
+                "completion_tokens": response.usage.completion_tokens if response.usage else 0,
+                "total_tokens": response.usage.total_tokens if response.usage else 0,
+            }
+        )
+    
+    async def health_check(self) -> bool:
+        """Check if Ollama is available"""
+        try:
+            # Use base URL without /v1 for Ollama-specific endpoint
+            base = self.base_url.replace("/v1", "")
+            async with httpx.AsyncClient() as client:
+                response = await client.get(f"{base}/api/tags", timeout=5.0)
+                return response.status_code == 200
+        except Exception:
+            return False
+

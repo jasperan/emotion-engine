@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+	body {
+		@apply bg-gradient-to-br from-storm-950 via-storm-900 to-flood-950;
+		min-height: 100vh;
+	}
+}
+
+@layer components {
+	.card {
+		@apply bg-storm-900/50 backdrop-blur-sm border border-storm-700/30 rounded-xl p-6;
+	}
+	
+	.btn-primary {
+		@apply px-4 py-2 bg-flood-500 hover:bg-flood-400 text-white font-medium rounded-lg transition-colors duration-200;
+	}
+	
+	.btn-secondary {
+		@apply px-4 py-2 bg-storm-700 hover:bg-storm-600 text-white font-medium rounded-lg transition-colors duration-200;
+	}
+	
+	.btn-danger {
+		@apply px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-medium rounded-lg transition-colors duration-200;
+	}
+	
+	.input {
+		@apply w-full px-4 py-2 bg-storm-800 border border-storm-600 rounded-lg text-white placeholder-storm-400 focus:outline-none focus:ring-2 focus:ring-flood-500 focus:border-transparent;
+	}
+	
+	.label {
+		@apply block text-sm font-medium text-storm-300 mb-1;
+	}
+	
+	.badge {
+		@apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+	}
+	
+	.badge-success {
+		@apply bg-green-500/20 text-green-400 border border-green-500/30;
+	}
+	
+	.badge-warning {
+		@apply bg-yellow-500/20 text-yellow-400 border border-yellow-500/30;
+	}
+	
+	.badge-danger {
+		@apply bg-red-500/20 text-red-400 border border-red-500/30;
+	}
+	
+	.badge-info {
+		@apply bg-flood-500/20 text-flood-400 border border-flood-500/30;
+	}
+}
+

@@ -10,7 +10,7 @@
 	let error: string | null = null;
 	let creating = false;
 
-	$: scenarioId = $page.params.id;
+	$: scenarioId = $page.params.id as string;
 
 	onMount(async () => {
 		try {

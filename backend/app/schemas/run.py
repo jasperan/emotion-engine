@@ -57,7 +57,7 @@ class MessageResponse(BaseModel):
     to_target: str
     message_type: str
     content: str
-    metadata: dict[str, Any]
+    metadata: dict[str, Any] = Field(validation_alias='msg_metadata')
     step_index: int
     timestamp: datetime
     

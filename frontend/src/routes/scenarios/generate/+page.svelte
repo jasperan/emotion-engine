@@ -109,6 +109,8 @@
 
 	// Helper to safely get config as Record
 	$: config = previewData?.scenario?.config as Record<string, unknown> || {};
+  
+  $: stats = previewData ? getPersonaStats(previewData.scenario.agent_templates) : { count: 0, ageRange: 'N/A', occupations: [] };
 </script>
 
 <svelte:head>
@@ -299,7 +301,6 @@ Examples:
 		<!-- Personas Preview -->
 		<div class="card">
 			<h3 class="font-semibold font-display mb-3">Characters</h3>
-			{@const stats = getPersonaStats(previewData.scenario.agent_templates)}
 			<p class="text-sm text-storm-400 mb-4">
 				{stats.count} personas, ages {stats.ageRange}
 			</p>

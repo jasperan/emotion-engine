@@ -1,0 +1,106 @@
+{
+  "name": "Mystery at the Manor",
+  "description": "A tense dinner party turns into a mystery when guests discover that one of their valuable items has been stolen. The suspects are various guests, and everyone must work together to solve the crime before it happens again.",
+  "config": {
+    "name": "Manor House",
+    "description": "The grand Manor House is surrounded by lush gardens with winding paths and a stone fountain. Inside, the dining room is elegantly decorated with crystal chandeliers and polished oak tables. Guests are expected to enjoy a sumptuous dinner and lively conversation.",
+    "initial_state": {
+      "hazard_level": 3,
+      "weather": "clear",
+      "time_of_day": "evening",
+      "locations": {
+        "Dining Room": {
+          "description": "The dining room is where the guests will gather for dinner, surrounded by elegant chandeliers and ornate wallpaper.",
+          "nearby": [
+            "Library",
+            "Conservatory"
+          ],
+          "hazard_affected": false,
+          "items": [
+            "Gilt Watch",
+            "Rare Porcelain Figurine",
+            "Old Manuscript"
+          ],
+          "observations": [
+            "A guest enters the room with a suspicious look.",
+            "Someone is whispering about the previous owner's dark past."
+          ]
+        },
+        "Library": {
+          "description": "The library holds thousands of books, many with intricate gold leaf and leather spines. It's a quiet haven for those seeking solitude.",
+          "nearby": [
+            "Dining Room",
+            "Study"
+          ],
+          "hazard_affected": false,
+          "items": [
+            "Old Manuscript",
+            "Rare Book"
+          ],
+          "observations": [
+            "A book is slightly closed, as if being read.",
+            "A guest carrying an old manuscript looks nervous."
+          ]
+        },
+        "Conservatory": {
+          "description": "The conservatory is a lush greenhouse with tropical plants and soft lighting. It's the perfect spot for a quiet conversation or a moment of privacy.",
+          "nearby": [
+            "Dining Room",
+            "Garden"
+          ],
+          "hazard_affected": false,
+          "items": [
+            "Rare Orchid",
+            "Exotic Tropical Plant"
+          ],
+          "observations": [
+            "A guest is whispering to another, their voices barely audible.",
+            "Someone has left a small package on the table."
+          ]
+        },
+        "Garden": {
+          "description": "The garden features winding paths lined with ornamental bushes and colorful flowers. It's an inviting place for guests to stroll or relax.",
+          "nearby": [
+            "Conservatory",
+            "Manor House"
+          ],
+          "hazard_affected": false,
+          "items": [
+            "Stroll Path",
+            "Garden Bench"
+          ],
+          "observations": [
+            "A guest is pacing back and forth, looking agitated.",
+            "Someone left a half-empty glass of wine on the bench."
+          ]
+        }
+      },
+      "events": [
+        "A valuable item has been stolen from the dining room."
+      ]
+    },
+    "dynamics": {
+      "intensity_growth": 0.2,
+      "event_probability": 0.15
+    },
+    "max_steps": 75,
+    "tick_delay": 1.0
+  },
+  "agent_templates": [
+    {
+      "name": "Mystery Environment",
+      "role": "environment",
+      "model_id": "qwen2.5:7b",
+      "provider": "ollama",
+      "persona": null,
+      "goals": [
+        "Simulate realistic scenario progression",
+        "Create meaningful challenges",
+        "Generate events that encourage cooperation"
+      ],
+      "tools": [],
+      "initial_state": {}
+    }
+  ],
+  "generated_at": "2026-01-04T14:48:26.370298"
+}

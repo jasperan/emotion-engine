@@ -13,7 +13,7 @@
 	let loading = true;
 	let error: string | null = null;
 
-	$: runId = $page.params.id;
+	$: runId = $page.params.id as string;
 	$: wsState = $websocket;
 
 	// Update data when WebSocket events arrive
@@ -145,11 +145,11 @@
 								<div class="w-20 h-2 bg-storm-800 rounded-full overflow-hidden">
 									<div
 										class="h-full bg-gradient-to-r from-yellow-500 to-red-500 rounded-full"
-										style="width: {((run.world_state?.hazard_level as number) || 0) * 10}%"
+										style="width: {(Number(run.world_state?.hazard_level) || 0) * 10}%"
 									></div>
 								</div>
 								<span class="text-storm-200 font-mono"
-									>{(run.world_state?.hazard_level as number) || 0}/10</span
+									>{Number(run.world_state?.hazard_level) || 0}/10</span
 								>
 							</div>
 						</div>

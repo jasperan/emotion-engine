@@ -4,12 +4,11 @@ export default {
 	theme: {
 		extend: {
 			fontFamily: {
-				'display': ['Playfair Display', 'serif'],
-				'mono': ['JetBrains Mono', 'monospace'],
-				'sans': ['DM Sans', 'system-ui', 'sans-serif']
+				sans: ['Inter', 'system-ui', 'sans-serif'],
+				mono: ['JetBrains Mono', 'monospace']
 			},
 			colors: {
-				'storm': {
+				storm: {
 					50: '#f0f5ff',
 					100: '#e0eaff',
 					200: '#c7d7fe',
@@ -22,7 +21,7 @@ export default {
 					900: '#2c2e85',
 					950: '#1a1a4e'
 				},
-				'flood': {
+				flood: {
 					50: '#effbfc',
 					100: '#d6f4f7',
 					200: '#b2e8ef',
@@ -34,20 +33,29 @@ export default {
 					800: '#235565',
 					900: '#214856',
 					950: '#102e3a'
+				},
+				// Google AI Studio inspired palette
+				background: '#131314', // Very dark grey/almost black
+				surface: '#1E1F20',    // Slightly lighter for cards/sidebars
+				surface_alt: '#28292A', // Hover states
+				primary: '#A8C7FA',    // Light blue accent
+				on_primary: '#042D5F', // Text on primary
+				on_background: '#E3E3E3', // High emphasis text
+				on_surface: '#C4C7C5',    // Medium emphasis text
+				outline: '#444746',       // Borders
+				accent: {
+					blue: '#A8C7FA',
+					purple: '#D0BCFF',
+					teal: '#73F7E9'
 				}
 			},
-			animation: {
-				'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-				'float': 'float 6s ease-in-out infinite'
-			},
-			keyframes: {
-				float: {
-					'0%, 100%': { transform: 'translateY(0px)' },
-					'50%': { transform: 'translateY(-10px)' }
-				}
+			backgroundImage: {
+				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+				'subtle-glow': 'conic-gradient(from 180deg at 50% 50%, #1e1f2000 0deg, #a8c7fa10 180deg, #1e1f2000 360deg)',
 			}
 		}
 	},
 	plugins: []
 };
+
 

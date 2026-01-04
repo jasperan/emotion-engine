@@ -8,7 +8,7 @@ from app.schemas.scenario import WorldConfig, ScenarioCreate
 
 
 
-def create_rising_flood_scenario(num_agents: int = 50) -> ScenarioCreate:
+def create_rising_flood_scenario(num_agents: int = 10) -> ScenarioCreate:
     """Create the Rising Flood example scenario with a specified number of human agents + 1 environment agent"""
     
     # Define diverse personas
@@ -315,7 +315,7 @@ def create_rising_flood_scenario(num_agents: int = 50) -> ScenarioCreate:
             "water_rise_per_tick": 0.3,
             "bridge_deterioration": 0.05,
         },
-        max_steps=100,
+        max_steps=10,
         tick_delay=1.0,
     )
     

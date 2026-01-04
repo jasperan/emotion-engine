@@ -30,62 +30,62 @@ PRESET_PROMPTS = [
     {
         "name": "Earthquake Rescue",
         "prompt": "A magnitude 7.8 earthquake has struck a major city. Buildings have collapsed, power is out, and rescue teams must coordinate to save trapped civilians while dealing with aftershocks and limited resources.",
-        "persona_count": 40,
+        "persona_count": 10,
     },
     {
         "name": "Zombie Outbreak",
         "prompt": "A zombie virus has broken out in a shopping mall. Survivors must work together to barricade entrances, find supplies, and plan an escape while dealing with the infected and dwindling resources.",
-        "persona_count": 30,
+        "persona_count": 10,
     },
     {
         "name": "Hostage Negotiation",
         "prompt": "Armed robbers have taken hostages at a downtown bank. Police negotiators, SWAT team members, and the criminals must navigate a tense standoff with lives hanging in the balance.",
-        "persona_count": 25,
+        "persona_count": 10,
     },
     {
         "name": "Space Station Emergency",
         "prompt": "A critical oxygen leak has occurred on an international space station. The crew must work together to repair the damage, manage limited oxygen supplies, and maintain morale while waiting for a rescue mission.",
-        "persona_count": 15,
+        "persona_count": 10,
     },
     {
         "name": "Wildfire Evacuation",
         "prompt": "A rapidly spreading wildfire is approaching a small mountain town. Residents, firefighters, and emergency services must coordinate evacuation efforts while dealing with blocked roads, communication failures, and vulnerable populations.",
-        "persona_count": 50,
+        "persona_count": 10,
     },
     {
         "name": "Corporate Merger Negotiation",
         "prompt": "Two tech companies are negotiating a multi-billion dollar merger. Executives, lawyers, and board members from both sides must navigate complex financial terms, cultural differences, and competing interests.",
-        "persona_count": 20,
+        "persona_count": 10,
     },
     {
         "name": "Submarine Crisis",
         "prompt": "A military submarine has suffered a catastrophic failure and is stranded on the ocean floor. The crew must manage oxygen, repair critical systems, and maintain discipline while rescue operations are coordinated above.",
-        "persona_count": 35,
+        "persona_count": 10,
     },
     {
         "name": "Political Summit",
         "prompt": "World leaders have gathered for an emergency climate summit. Diplomats must negotiate binding agreements while balancing national interests, economic concerns, and the urgent need for global action.",
-        "persona_count": 45,
+        "persona_count": 10,
     },
     {
         "name": "Hospital Outbreak",
         "prompt": "A highly contagious disease has broken out in a major hospital. Medical staff must treat patients, contain the outbreak, manage limited supplies, and prevent panic while protecting themselves.",
-        "persona_count": 40,
+        "persona_count": 10,
     },
     {
         "name": "Plane Hijacking",
         "prompt": "Terrorists have hijacked a commercial airliner mid-flight. Passengers, crew, air marshals, and ground control must work to resolve the situation peacefully while the plane is running low on fuel.",
-        "persona_count": 60,
+        "persona_count": 10,
     },
     {
         "name": "Arctic Research Station",
         "prompt": "An Arctic research station has lost contact with the outside world during a severe blizzard. Scientists must survive extreme cold, manage dwindling supplies, and repair communication equipment while tensions rise.",
-        "persona_count": 12,
+        "persona_count": 10,
     },
     {
         "name": "Prison Riot",
         "prompt": "A violent riot has erupted in a maximum-security prison. Guards, inmates, negotiators, and prison administrators must navigate the chaos, prevent casualties, and restore order.",
-        "persona_count": 55,
+        "persona_count": 10,
     },
 ]
 
@@ -115,7 +115,7 @@ PRESET_PROMPTS = [
 @click.option(
     "--persona-count", "-n",
     type=int,
-    default=50,
+    default=10,
     help="Number of personas to generate (default: 50)"
 )
 @click.option(
@@ -221,7 +221,7 @@ async def interactive_mode():
     
     persona_count_str = Prompt.ask(
         "Number of personas",
-        default="50"
+        default="10"
     )
     persona_count = int(persona_count_str)
     

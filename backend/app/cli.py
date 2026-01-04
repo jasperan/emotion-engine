@@ -205,10 +205,70 @@ async def _run_standalone(
             selected_data = None
 
         # Find or create scenario
-        result = await db.execute(
-            select(Scenario).where(Scenario.name.ilike(f"%{scenario_name}%"))
-        )
-        scenario = result.scalar_one_or_none()
+        scenario = None
+        
+        # Check if scenario_name is a simple numeric ID
+        if scenario_name.isdigit():
+            # Build scenario map
+            db_scenarios_list = (await db.execute(select(Scenario).order_by(Scenario.name))).scalars().all()
+            from app.scenarios.storage import load_generated_scenarios
+            generated_scenarios = load_generated_scenarios()
+            
+            idx = int(scenario_name)
+            
+            # Check if it's a DB scenario
+            if idx < len(db_scenarios_list):
+                scenario = db_scenarios_list[idx]
+            # Check if it's a generated scenario
+            elif idx < len(db_scenarios_list) + len(generated_scenarios):
+                gen_idx = idx - len(db_scenarios_list)
+                gen_scenario = generated_scenarios[gen_idx]
+                console.print(f"[yellow]Loading generated scenario: {gen_scenario['name']}[/yellow]")
+                scenario = Scenario(
+                    name=gen_scenario["name"],
+                    description=gen_scenario["description"],
+                    config=gen_scenario["config"],
+                    agent_templates=gen_scenario["agent_templates"],
+                )
+                db.add(scenario)
+                await db.commit()
+                await db.refresh(scenario)
+        else:
+            # Try UUID lookup
+            try:
+                from uuid import UUID
+                UUID(scenario_name)
+                result = await db.execute(
+                    select(Scenario).where(Scenario.id == scenario_name)
+                )
+                scenario = result.scalar_one_or_none()
+            except (ValueError, AttributeError):
+                # Try by name
+                result = await db.execute(
+                    select(Scenario).where(Scenario.name.ilike(f"%{scenario_name}%"))
+                )
+                scenario = result.scalar_one_or_none()
+                
+                # Try generated scenario filename
+                if not scenario:
+                    from app.scenarios.storage import load_generated_scenarios
+                    generated_scenarios = load_generated_scenarios()
+                    gen_scenario = next(
+                        (s for s in generated_scenarios if scenario_name in s["filename"] or scenario_name.lower() in s["name"].lower()),
+                        None
+                    )
+                    
+                    if gen_scenario:
+                        console.print(f"[yellow]Loading generated scenario: {gen_scenario['name']}[/yellow]")
+                        scenario = Scenario(
+                            name=gen_scenario["name"],
+                            description=gen_scenario["description"],
+                            config=gen_scenario["config"],
+                            agent_templates=gen_scenario["agent_templates"],
+                        )
+                        db.add(scenario)
+                        await db.commit()
+                        await db.refresh(scenario)
         
         if not scenario:
             # Check if it's a generated scenario
@@ -591,28 +651,37 @@ async def _list_scenarios(create_builtin: bool):
         
         # Combine all scenarios
         all_scenarios = []
+        scenario_map = {}  # Map simple ID to actual scenario data
         
         # Add DB scenarios
-        for s in db_scenarios:
+        for idx, s in enumerate(db_scenarios):
+            simple_id = str(idx)
             all_scenarios.append({
                 "source": "DB",
                 "name": s.name,
-                "id": str(s.id)[:8] + "...",
+                "id": simple_id,
+                "db_id": str(s.id),
                 "agents": len(s.agent_templates) if s.agent_templates else 0,
                 "max_steps": s.config.get("max_steps", "?") if s.config else "?",
                 "description": s.description or "",
             })
+            scenario_map[simple_id] = {"type": "db", "db_id": str(s.id), "name": s.name}
         
         # Add generated scenarios
-        for g in generated_scenarios:
+        start_idx = len(db_scenarios)
+        for idx, g in enumerate(generated_scenarios):
+            simple_id = str(start_idx + idx)
+            file_id = g["filename"].replace(".json", "")
             all_scenarios.append({
                 "source": "Generated",
                 "name": g["name"],
-                "id": "file",
+                "id": simple_id,
+                "file_id": file_id,
                 "agents": g["agent_count"],
                 "max_steps": g["config"].get("max_steps", "?"),
                 "description": g["description"],
             })
+            scenario_map[simple_id] = {"type": "generated", "file_id": file_id, "name": g["name"]}
         
         if not all_scenarios:
             console.print("[yellow]No scenarios found.[/yellow]")
@@ -621,6 +690,7 @@ async def _list_scenarios(create_builtin: bool):
             return
         
         table = Table(title="Available Scenarios", box=box.ROUNDED)
+        table.add_column("ID", style="dim", width=4)
         table.add_column("Source", style="magenta", width=10)
         table.add_column("Name", style="cyan bold")
         table.add_column("Agents", style="green", width=7)
@@ -633,6 +703,7 @@ async def _list_scenarios(create_builtin: bool):
                 desc += "..."
             
             table.add_row(
+                s["id"],
                 s["source"],
                 s["name"],
                 str(s["agents"]),
@@ -643,7 +714,7 @@ async def _list_scenarios(create_builtin: bool):
         console.print()
         console.print(table)
         console.print()
-        console.print("[dim]Tip: Use 'emotionsim run --scenario \"<name>\"' to run a simulation[/dim]")
+        console.print("[dim]Tip: Use 'emotionsim run --scenario \"<name or ID>\"' to run a simulation[/dim]")
 
 
 # ============================================================================

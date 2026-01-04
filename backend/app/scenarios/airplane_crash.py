@@ -4,7 +4,7 @@ from app.schemas.agent import AgentConfig
 from app.schemas.scenario import WorldConfig, ScenarioCreate
 
 
-def create_airplane_crash_scenario(num_agents: int = 8) -> ScenarioCreate:
+def create_airplane_crash_scenario(num_agents: int = 10) -> ScenarioCreate:
     """Create the Airplane Crash Investigation scenario with a specified number of diverse personas"""
     
     # Define diverse personas with different expertise and perspectives
@@ -306,7 +306,7 @@ def create_airplane_crash_scenario(num_agents: int = 8) -> ScenarioCreate:
             "emergency_response_progress": 0.15,
             "hazard_decay": 0.1,
         },
-        max_steps=100,
+        max_steps=10,
         tick_delay=1.5,
     )
     

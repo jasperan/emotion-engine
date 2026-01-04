@@ -42,7 +42,7 @@ You MUST respond with valid JSON matching this exact structure:
       "intensity_growth": 0.1-0.3,
       "event_probability": 0.1-0.3
     },
-    "max_steps": 50-100,
+    "max_steps": 10,
     "tick_delay": 1.0
   },
   "personas": [
@@ -107,7 +107,7 @@ class ScenarioGenerator:
     async def generate(
         self,
         prompt: str,
-        persona_count: int = 50,
+        persona_count: int = 10,
         archetypes: list[str] | None = None,
         max_retries: int = 3,
     ) -> ScenarioCreate:
@@ -199,7 +199,7 @@ class ScenarioGenerator:
             description=wc.get("description", ""),
             initial_state=wc.get("initial_state", {}),
             dynamics=wc.get("dynamics", {}),
-            max_steps=wc.get("max_steps", 50),
+            max_steps=wc.get("max_steps", 10),
             tick_delay=wc.get("tick_delay", 1.0),
         )
         

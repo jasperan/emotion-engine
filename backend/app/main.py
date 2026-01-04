@@ -19,7 +19,7 @@ async def lifespan(app: FastAPI):
     await init_db() # Keep database initialization
 
     # Auto-resume simulations
-    from app.database.session import AsyncSessionLocal
+    from app.core.database import async_session_maker as AsyncSessionLocal
     from app.simulation.manager import SimulationManager
     
     async with AsyncSessionLocal() as db:

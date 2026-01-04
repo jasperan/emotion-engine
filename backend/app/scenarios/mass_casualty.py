@@ -353,7 +353,7 @@ def create_mass_casualty_scenario(num_agents: int = 10) -> ScenarioCreate:
             "resource_arrival_rate": 0.15,
             "survivor_discovery_rate": 0.1,
         },
-        max_steps=100,
+        max_steps=10,
         tick_delay=1.0,
     )
     

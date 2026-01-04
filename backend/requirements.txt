@@ -6,7 +6,6 @@ python-multipart
 
 # Database
 sqlalchemy
-alembic
 aiosqlite
 
 # Pydantic

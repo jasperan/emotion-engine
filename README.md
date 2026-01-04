@@ -55,11 +55,8 @@ A local-first multi-agent simulation system inspired by Netflix's "The Great Flo
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    pip install -r requirements.txt
    
-   # Initialize database
-   alembic upgrade head
-   
-   # Run the server
-   uvicorn app.main:app --reload
+   # Run the server (database initializes automatically)
+   python -m app.main
    ```
 
 3. **Frontend Setup**:
@@ -96,7 +93,6 @@ emotion-engine/
 │   │   ├── schemas/        # Pydantic schemas
 │   │   ├── scenarios/      # Pre-built scenarios (Rising Flood)
 │   │   └── simulation/     # Simulation engine and message bus
-│   ├── alembic/            # Database migrations
 │   └── tests/              # Pytest tests
 ├── frontend/
 │   ├── src/

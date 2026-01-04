@@ -106,6 +106,9 @@
 			occupations: [...new Set(occupations)].slice(0, 4)
 		};
 	}
+
+	// Helper to safely get config as Record
+	$: config = previewData?.scenario?.config as Record<string, unknown> || {};
 </script>
 
 <svelte:head>
@@ -267,7 +270,6 @@ Examples:
 		<!-- World Config Preview -->
 		<div class="card">
 			<h3 class="font-semibold font-display mb-3">World Configuration</h3>
-			{@const config = previewData.scenario.config as Record<string, unknown>}
 			<div class="grid grid-cols-2 gap-4 text-sm">
 				<div>
 					<span class="text-storm-500">Name:</span>
@@ -280,8 +282,8 @@ Examples:
 			</div>
 
 			{#if config.initial_state && typeof config.initial_state === 'object'}
-				{@const state = config.initial_state as Record<string, unknown>}
-				{#if state.locations && typeof state.locations === 'object'}
+				{@const state = config.initial_state}
+				{#if state && typeof state === 'object' && 'locations' in state && state.locations && typeof state.locations === 'object'}
 					<div class="mt-4">
 						<h4 class="text-sm font-medium text-storm-400 mb-2">Locations</h4>
 						<div class="flex flex-wrap gap-2">

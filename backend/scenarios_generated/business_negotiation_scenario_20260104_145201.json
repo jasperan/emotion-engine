@@ -1,0 +1,301 @@
+{
+  "name": "Business Negotiation Scenario",
+  "description": "Three companies are bidding for a lucrative contract. Their negotiation skills, strategic alliances, and individual motivations will determine who secures the deal.",
+  "config": {
+    "name": "Corporate Conference Center",
+    "description": "A large conference center hosting three companies in separate but interconnected meeting rooms. The central area allows for impromptu discussions and collaboration.",
+    "initial_state": {
+      "hazard_level": 2,
+      "weather": "clear",
+      "time_of_day": "afternoon",
+      "locations": {
+        "Company A Meeting Room": {
+          "description": "A spacious room with a large conference table, comfortable chairs, and digital tablets for presentations.",
+          "nearby": [
+            "Central Area",
+            "Company B Meeting Room"
+          ],
+          "hazard_affected": false,
+          "items": [
+            "Presentation Slides",
+            "Notebook"
+          ],
+          "observations": [
+            "Team is focused on finalizing their proposal.",
+            "A tension can be felt between team members."
+          ]
+        },
+        "Central Area": {
+          "description": "An open space with a coffee station, refreshments, and comfortable seating areas. It serves as a hub for informal negotiations.",
+          "nearby": [
+            "Company A Meeting Room",
+            "Company C Meeting Room"
+          ],
+          "hazard_affected": false,
+          "items": [
+            "Cola Bottles",
+            "Cookies"
+          ],
+          "observations": [
+            "Teams are engaging in friendly conversations.",
+            "A mix of seriousness and casualness is present."
+          ]
+        },
+        "Company B Meeting Room": {
+          "description": "Similar to Company A, with a digital projector for presentations.",
+          "nearby": [
+            "Central Area",
+            "Company C Meeting Room"
+          ],
+          "hazard_affected": false,
+          "items": [
+            "Marketing Brochure",
+            "Contract Drafts"
+          ],
+          "observations": [
+            "Team is reviewing the competition's proposal.",
+            "Some members appear hesitant about their strategy."
+          ]
+        },
+        "Company C Meeting Room": {
+          "description": "The largest room, featuring a large table with an expansive view of the conference center.",
+          "nearby": [
+            "Central Area",
+            "Company B Meeting Room"
+          ],
+          "hazard_affected": false,
+          "items": [
+            "Financial Reports",
+            "Laptop"
+          ],
+          "observations": [
+            "Team is discussing potential partnerships.",
+            "Leaders are confident about their position."
+          ]
+        }
+      },
+      "events": [
+        "A representative from another company enters the Central Area and offers valuable insights.",
+        "A team member from Company A notices a strategic error in their proposal."
+      ]
+    },
+    "dynamics": {
+      "intensity_growth": 0.2,
+      "event_probability": 0.15
+    },
+    "max_steps": 75,
+    "tick_delay": 1.0
+  },
+  "agent_templates": [
+    {
+      "name": "Alex Johnson",
+      "role": "human",
+      "model_id": "qwen2.5:7b",
+      "provider": "ollama",
+      "persona": {
+        "name": "Alex Johnson",
+        "age": 48,
+        "sex": "male",
+        "occupation": "Sales Manager",
+        "openness": 7,
+        "conscientiousness": 9,
+        "extraversion": 6,
+        "agreeableness": 5,
+        "neuroticism": 3,
+        "risk_tolerance": 8,
+        "empathy_level": 6,
+        "leadership": 7,
+        "backstory": "A seasoned sales manager with over 20 years of experience, known for his strategic thinking and leadership.",
+        "skills": [
+          "Negotiation",
+          "Sales",
+          "Marketing"
+        ],
+        "relationships": {},
+        "stress_level": 4,
+        "health": 8,
+        "inventory": [],
+        "location": "Company A Meeting Room"
+      },
+      "goals": [
+        "Survive and help others survive",
+        "Work with others to overcome challenges",
+        "Share information and resources",
+        "Make decisions based on your personality and skills"
+      ],
+      "tools": [],
+      "initial_state": {}
+    },
+    {
+      "name": "Lena Thompson",
+      "role": "human",
+      "model_id": "qwen2.5:7b",
+      "provider": "ollama",
+      "persona": {
+        "name": "Lena Thompson",
+        "age": 32,
+        "sex": "female",
+        "occupation": "Project Manager",
+        "openness": 6,
+        "conscientiousness": 9,
+        "extraversion": 4,
+        "agreeableness": 8,
+        "neuroticism": 5,
+        "risk_tolerance": 3,
+        "empathy_level": 7,
+        "leadership": 5,
+        "backstory": "A young project manager with a passion for collaboration, often finding herself between team members and leaders.",
+        "skills": [
+          "Project Management",
+          "Team Building",
+          "Coordination"
+        ],
+        "relationships": {},
+        "stress_level": 6,
+        "health": 7,
+        "inventory": [],
+        "location": "Central Area"
+      },
+      "goals": [
+        "Survive and help others survive",
+        "Work with others to overcome challenges",
+        "Share information and resources",
+        "Make decisions based on your personality and skills"
+      ],
+      "tools": [],
+      "initial_state": {}
+    },
+    {
+      "name": "David Patel",
+      "role": "human",
+      "model_id": "qwen2.5:7b",
+      "provider": "ollama",
+      "persona": {
+        "name": "David Patel",
+        "age": 54,
+        "sex": "non-binary",
+        "occupation": "Financial Analyst",
+        "openness": 8,
+        "conscientiousness": 6,
+        "extraversion": 3,
+        "agreeableness": 7,
+        "neuroticism": 4,
+        "risk_tolerance": 5,
+        "empathy_level": 9,
+        "leadership": 4,
+        "backstory": "A seasoned financial analyst with a deep understanding of business finances, often seen as impartial and fair.",
+        "skills": [
+          "Financial Analysis",
+          "Cost Estimation",
+          "Budget Management"
+        ],
+        "relationships": {},
+        "stress_level": 5,
+        "health": 9,
+        "inventory": [],
+        "location": "Company B Meeting Room"
+      },
+      "goals": [
+        "Survive and help others survive",
+        "Work with others to overcome challenges",
+        "Share information and resources",
+        "Make decisions based on your personality and skills"
+      ],
+      "tools": [],
+      "initial_state": {}
+    },
+    {
+      "name": "Ella Green",
+      "role": "human",
+      "model_id": "qwen2.5:7b",
+      "provider": "ollama",
+      "persona": {
+        "name": "Ella Green",
+        "age": 26,
+        "sex": "female",
+        "occupation": "Marketing Specialist",
+        "openness": 9,
+        "conscientiousness": 7,
+        "extraversion": 8,
+        "agreeableness": 9,
+        "neuroticism": 4,
+        "risk_tolerance": 6,
+        "empathy_level": 8,
+        "leadership": 3,
+        "backstory": "A young marketing specialist with a vibrant personality and a knack for creating innovative strategies, often seen as the voice of optimism.",
+        "skills": [
+          "Marketing Strategy",
+          "Creativity",
+          "Communication"
+        ],
+        "relationships": {},
+        "stress_level": 3,
+        "health": 10,
+        "inventory": [],
+        "location": "Company C Meeting Room"
+      },
+      "goals": [
+        "Survive and help others survive",
+        "Work with others to overcome challenges",
+        "Share information and resources",
+        "Make decisions based on your personality and skills"
+      ],
+      "tools": [],
+      "initial_state": {}
+    },
+    {
+      "name": "Marco Rodriguez",
+      "role": "human",
+      "model_id": "qwen2.5:7b",
+      "provider": "ollama",
+      "persona": {
+        "name": "Marco Rodriguez",
+        "age": 65,
+        "sex": "male",
+        "occupation": "Retired Business Consultant",
+        "openness": 4,
+        "conscientiousness": 8,
+        "extraversion": 2,
+        "agreeableness": 7,
+        "neuroticism": 3,
+        "risk_tolerance": 5,
+        "empathy_level": 6,
+        "leadership": 9,
+        "backstory": "A retired business consultant with a wealth of experience and wisdom, often acting as a mentor to newer team members.",
+        "skills": [
+          "Business Strategy",
+          "Consulting",
+          "Negotiation"
+        ],
+        "relationships": {},
+        "stress_level": 2,
+        "health": 7,
+        "inventory": [],
+        "location": "Company A Meeting Room"
+      },
+      "goals": [
+        "Survive and help others survive",
+        "Work with others to overcome challenges",
+        "Share information and resources",
+        "Make decisions based on your personality and skills"
+      ],
+      "tools": [],
+      "initial_state": {}
+    },
+    {
+      "name": "[Corporate Conference Center] Environment",
+      "role": "environment",
+      "model_id": "qwen2.5:7b",
+      "provider": "ollama",
+      "persona": null,
+      "goals": [
+        "Simulate realistic scenario progression",
+        "Create meaningful challenges",
+        "Generate events that encourage cooperation"
+      ],
+      "tools": [],
+      "initial_state": {}
+    }
+  ],
+  "generated_at": "2026-01-04T14:52:01.183950"
+}

@@ -1,0 +1,31 @@
+% arxiv.sty
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{arxiv}[2020/04/15 arXiv style]
+
+\RequirePackage[utf8]{inputenc}
+\RequirePackage[english]{babel}
+\RequirePackage{amsmath}
+\RequirePackage{amsfonts}
+\RequirePackage{amssymb}
+\RequirePackage{graphicx}
+\RequirePackage{hyperref}
+\RequirePackage{url}
+\RequirePackage{authblk}
+
+\setlength{\parindent}{12pt}
+\setlength{\parskip}{3pt plus1pt minus2pt}
+\setlength{\baselineskip}{20pt plus2pt minus1pt}
+\setlength{\textheight}{23cm}
+\setlength{\textwidth}{17cm}
+\setlength{\oddsidemargin}{-0.5cm}
+\setlength{\evensidemargin}{-0.5cm}
+\setlength{\topmargin}{-1cm}
+
+\date{}
+\renewcommand\Authfont{\bfseries}
+\renewcommand\Affilfont{\itshape\small}
+
+\newcommand{\keywords}[1]{\par\addvspace\baselineskip
+\noindent\keywordname\enspace\ignorespaces#1}
+\newcommand{\keywordname}{\textbf{Keywords:}}
+

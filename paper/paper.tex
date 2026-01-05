@@ -1,0 +1,184 @@
+\documentclass{article}
+
+% arXiv-style formatting
+\usepackage{arxiv}
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{lmodern}        % use scalable fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{lipsum}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstset{style=mystyle}
+
+\title{Emergent Consensus in Local-First Autonomous Agent Swarms}
+
+\author{
+  Nacho Martínez (jasperan) \\
+  DevRel \\
+  Oracle \\
+  \texttt{ignacio.martinez@oracle.com} \\
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+As Large Language Models (LLMs) evolve from simple chatbots to autonomous agents, the potential for simulating complex social dynamics increases exponentially. In this paper, I present EmotionSim, a local-first framework for running high-fidelity multi-agent simulations. Unlike cloud-based solutions that face latency and privacy hurdles, EmotionSim leverages quantized local models (specifically the Gemma 3 family) to execute rich, discrete-event simulations of disaster scenarios. I demonstrate the system's capabilities through an "Airplane Crash Investigation" scenario, where 10 diverse autonomous agents---ranging from a retired pilot to an investigative journalist---must autonomously perceive their environment, share information, and reach a consensus on the cause of the accident. My findings show that even small, locally-hosted models can exhibit sophisticated emergent cooperation and information propagation patterns, supported by a system throughput of over 200 tokens/second on consumer hardware.
+\end{abstract}
+
+
+% keywords can be removed
+\keywords{Multi-Agent Systems \and Autonomous Agents \and Emergent Behavior \and Local AI \and Disaster Simulation}
+
+
+\section{Introduction}
+The field of Artificial Intelligence is undergoing a paradigm shift from static prompts to dynamic, agentic interactions. Researchers are increasingly interested in how swarms of AI agents can model complex human systems, from economic markets to social crises \cite{park2023generative}. However, conducting this research often requires massive compute resources or reliance on expensive, opaque proprietary APIs.
+
+I developed \textbf{EmotionSim} to democratize access to high-fidelity social simulation. By optimizing for local execution using the Ollama runtime and efficient discrete-event scheduling, EmotionSim allows researchers to "run a disaster in their terminal," observing the micro-dynamics of human cooperation and panic without data leaving their machine.
+
+\section{System Architecture}
+EmotionSim is built on a decoupled, event-driven architecture designed to balance narrative richness with simulation determinism.
+
+\subsection{Discrete Event Engine}
+At the core is a deterministic simulation engine. Unlike real-time game loops, the engine advances in discrete "ticks," allowing agents to deliberate for as long as necessary without desynchronizing the world state.
+
+\begin{lstlisting}[language=Python, caption=Deterministic Simulation Step]
+async def _execute_step(self):
+    # 1. Process pending world events (e.g., flood rising)
+    self._process_event_queue()
+    
+    # 2. Agent Deliberation Cycle
+    actions = []
+    for agent in self.agents.values():
+        if agent.is_active:
+             # Agents make decisions based on local perception
+             action = await agent.tick(self.state)
+             actions.append(action)
+             
+    # 3. Resolve Actions and Update World State
+    self._resolve_conflicts_and_apply(actions)
+\end{lstlisting}
+
+\subsection{Rich Persona System}
+Agents are not merely prompt templates; they are stateful entities with defined psychological profiles. Each agent is initialized with Big Five personality traits, a specific skillset, and a hidden "backstory" that influences their perception.
+
+\begin{lstlisting}[language=Python, caption=Persona Definition]
+class Persona(BaseModel):
+    name: str
+    occupation: str
+    # Big Five Traits (0.0 - 1.0)
+    openness: float
+    conscientiousness: float
+    extraversion: float
+    agreeableness: float
+    neuroticism: float
+    
+    # Dynamic State
+    stress_level: int
+    health: int
+    inventory: List[str]
+\end{lstlisting}
+
+This granularity ensures that a "Retired Pilot" agent notices engine debris that a "Civilian" agent would ignore, driving information asymmetry and the need for communication.
+
+\section{Experiment: Autonomous Investigation}
+To test the system's capacity for emergent logic, I designed the "Airplane Crash Investigation" scenario.
+
+\subsection{Scenario Setup}
+The simulation initializes 10 agents in a suburban neighborhood immediately following a light aircraft crash.
+\begin{itemize}
+    \item \textbf{Agents}: Includes a Retired Pilot (witness), an ER Doctor (first responder), a Journalist (information broker), and several local residents.
+    \item \textbf{Environment}: Locations include the Crash Site, a Hilltop vantage point, and a Community Center.
+    \item \textbf{Information Distribution}: Key clues (e.g., "left engine smoke") are only visible to specific agents based on their location and backstory.
+\end{itemize}
+
+\subsection{Emergent Behaviors}
+During the simulation, I observed distinct phases of autonomous behavior:
+\begin{enumerate}
+    \item \textbf{Triage Phase (Steps 1-3)}: High-empathy agents (Doctor, Pastor) immediately prioritized the "Crash Site" to help survivors, disregarding investigation.
+    \item \textbf{Information Consensus (Steps 4-7)}: The Journalist agent actively moved between groups, aggregating witness reports. The Retired Pilot provided technical context to the Journalist's questions.
+    \item \textbf{Conclusion (Steps 8+)}: Without explicit instruction, the agents converged on a "mechanical failure" theory rather than "pilot error," synthesizing disjointed observations.
+\end{enumerate}
+
+\section{Benchmarks and Feasibility}
+While the primary focus is behavior, performance determines feasibility for large-scale research. I benchmarked the system using the `gemma3:270m` model to test the limits of efficiency.
+
+\begin{table}[h]
+ \caption{Performance on Consumer Hardware (10 Agents)}
+ \centering
+ \begin{tabular}{ll}
+ \toprule
+ Metric & Result \\
+ \midrule
+ Total Duration (1 Step) & 42.47 sec \\
+ Total Tokens Processed & 12,549 \\
+ Throughput & 200.71 tokens/sec \\
+ Avg Agent Latency & 4.72 sec \\
+ \bottomrule
+ \end{tabular}
+ \label{tab:benchmarks}
+\end{table}
+
+The system achieves over \textbf{200 tokens/second} throughput. This high efficiency implies that simulating complex social interactions is becoming accessible to individual researchers without the need for H100 clusters.
+
+\section{Conclusion}
+EmotionSim validates that local-first AI models have reached a threshold of capability sufficient for complex social simulation. By embedding these models in a robust discrete-event framework, I enable a new class of privacy-preserving, reproducible agentic research. Future work will focus on scaling to 100+ agents using hierarchical swarms.
+
+\section*{Code Availability}
+The code is available at \url{https://github.com/jasperan/emotion-engine}.
+
+\bibliographystyle{unsrt}  
+%\bibliography{references}  %%% Remove comment to use the external .bib file (using bibtex).
+%%% and comment out the ``thebibliography'' section.
+
+
+%%% Comment out this section when you \bibliography{references} is enabled.
+\begin{thebibliography}{1}
+
+\bibitem{park2023generative}
+Joon Sung Park, Joseph C. O'Brien, Carrie J. Cai, Meredith Ringel Morris, Percy Liang, and Michael S. Bernstein.
+\newblock Generative agents: Interactive simulacra of human behavior.
+\newblock {\em arXiv preprint arXiv:2304.03442}, 2023.
+
+\bibitem{xi2023rise}
+Zhiheng Xi, Wenxiang Chen, Xin Guo, Wei He, Yiwen Ding, Boyang Hong, Ming Zhang, et al.
+\newblock The rise and potential of large language model based agents: A survey.
+\newblock {\em arXiv preprint arXiv:2309.07864}, 2023.
+
+\end{thebibliography}
+
+
+\end{document}

@@ -551,9 +551,15 @@ class SimpleEventLogger:
     
     def __init__(self, console: Console | None = None):
         self.console = console or Console()
+        self.last_stream_agent: str | None = None
     
     def log_event(self, event_type: str, data: dict[str, Any]) -> None:
         """Log an event to console"""
+        # If we were streaming, print newline
+        if self.last_stream_agent:
+            self.console.print()
+            self.last_stream_agent = None
+
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
         
         # Color based on event type
@@ -576,6 +582,11 @@ class SimpleEventLogger:
     
     def log_message(self, message: dict[str, Any]) -> None:
         """Log a message to console"""
+        # If we were streaming, print newline
+        if self.last_stream_agent:
+            self.console.print()
+            self.last_stream_agent = None
+            
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
         
         msg_type = message.get("message_type", "direct")
@@ -606,6 +617,18 @@ class SimpleEventLogger:
         # Log context size if available
         if "metadata" in message and "context_size" in message["metadata"]:
             self.console.print(f"    [dim]Context size: {message['metadata']['context_size']} chars[/dim]")
+            
+    def log_token(self, agent_id: str, token: str, agent_name: str | None = None) -> None:
+        """Log a streaming token"""
+        if self.last_stream_agent != agent_id:
+            if self.last_stream_agent is not None:
+                self.console.print()  # Newline after previous agent
+            
+            name = agent_name or agent_id
+            self.console.print(f"\n[bold cyan]{name}:[/bold cyan] ", end="")
+            self.last_stream_agent = agent_id
+            
+        self.console.print(token, end="")
     
     def _summarize(self, event_type: str, data: dict[str, Any]) -> str:
         """Create a summary string from event data"""

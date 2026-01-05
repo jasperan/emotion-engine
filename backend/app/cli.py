@@ -415,7 +415,18 @@ async def _run_standalone(
         # Run with live display or simple output
         if simple:
             console.print("[cyan]Starting simulation...[/cyan]\n")
-            await engine_sim.start()
+            
+            async def simple_stream_callback(agent_id: str, token: str):
+                agent = engine_sim.agents.get(agent_id)
+                name = agent.name if agent else agent_id
+                logger.log_token(agent_id, token, name)
+                
+            await engine_sim.start(stream_callback=simple_stream_callback)
+            
+            # Ensure newline after last stream
+            if logger.last_stream_agent:
+                console.print()
+                logger.last_stream_agent = None
         else:
             console.print("[cyan]Starting simulation (press Ctrl+C to stop)...[/cyan]\n")
             # Increase refresh rate for smooth streaming

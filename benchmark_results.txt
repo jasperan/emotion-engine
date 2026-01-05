@@ -1,0 +1,26 @@
+Starting benchmark for model: gemma3:270m (target)
+Initializing simulation with 10 agents using gemma3:270m...
+Running 1 step simulation...
+Step completed.
+
+==================================================
+
+==================================================
+BENCHMARK REPORT: gemma3:270m (10 Agents, 1 Step)
+==================================================
+Total Duration (Wall Time): 42.47s
+Total LLM Requests:         9
+Total Tokens Generated:     8525
+Total Tokens Processed:     12549
+------------------------------
+Avg Latency:                4.72s
+Median Latency:             1.17s
+P95 Latency:                31.41s
+------------------------------
+System Throughput:          200.71 tokens/sec
+Avg Model Generation Speed: 55.11 tokens/sec
+==================================================
+
+Request Distribution:
+Min Duration: 0.59s
+Max Duration: 31.41s

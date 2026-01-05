@@ -82,6 +82,7 @@
              <button 
                 on:click={handleSubmit}
                 disabled={!prompt.trim() || isLoading}
+                aria-label="Generate scenario"
                 class="btn-icon p-2 rounded-full bg-on-primary/10 text-on-background/50 hover:bg-primary hover:text-on-primary transition-all disabled:opacity-30 disabled:cursor-not-allowed"
              >
                 {#if isLoading}
@@ -94,7 +95,7 @@
       </div>
       
       {#if error}
-         <div class="absolute -bottom-12 left-0 right-0 text-center text-red-400 text-sm">
+         <div role="alert" class="absolute -bottom-12 left-0 right-0 text-center text-red-400 text-sm animate-in fade-in slide-in-from-top-1">
             {error}
          </div>
       {/if}
@@ -103,13 +104,13 @@
   <!-- Suggestions / Chips -->
   {#if !isLoading && !prompt}
   <div class="mt-8 flex flex-wrap justify-center gap-3 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-100">
-      <button on:click={() => prompt = "Disaster Strike: A flash flood hits a coastal village."} class="px-4 py-2 rounded-xl bg-surface-alt/50 border border-outline/30 text-sm text-on-surface hover:bg-surface-alt hover:border-outline/60 transition-colors text-left">
+      <button on:click={() => prompt = "Disaster Strike: A flash flood hits a coastal village."} aria-label="Use example: Flash Flood" class="px-4 py-2 rounded-xl bg-surface-alt/50 border border-outline/30 text-sm text-on-surface hover:bg-surface-alt hover:border-outline/60 transition-colors text-left">
           🌊 Flash Flood
       </button>
-      <button on:click={() => prompt = "Mystery: Guests at a dinner party discover a theft."} class="px-4 py-2 rounded-xl bg-surface-alt/50 border border-outline/30 text-sm text-on-surface hover:bg-surface-alt hover:border-outline/60 transition-colors text-left">
+      <button on:click={() => prompt = "Mystery: Guests at a dinner party discover a theft."} aria-label="Use example: Dinner Party Mystery" class="px-4 py-2 rounded-xl bg-surface-alt/50 border border-outline/30 text-sm text-on-surface hover:bg-surface-alt hover:border-outline/60 transition-colors text-left">
           🕵️ Dinner Party Mystery
       </button>
-       <button on:click={() => prompt = "Negotiation: Three companies bidding for a contract."} class="px-4 py-2 rounded-xl bg-surface-alt/50 border border-outline/30 text-sm text-on-surface hover:bg-surface-alt hover:border-outline/60 transition-colors text-left">
+       <button on:click={() => prompt = "Negotiation: Three companies bidding for a contract."} aria-label="Use example: Contract Negotiation" class="px-4 py-2 rounded-xl bg-surface-alt/50 border border-outline/30 text-sm text-on-surface hover:bg-surface-alt hover:border-outline/60 transition-colors text-left">
           🤝 Contract Negotiation
       </button>
   </div>

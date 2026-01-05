@@ -213,7 +213,7 @@
 		<div class="card">
 			<div class="flex items-center justify-between mb-4">
 				<h2 class="text-lg font-semibold font-display">Agents</h2>
-				<button type="button" class="btn-secondary text-sm" on:click={() => (showAddAgent = true)}>
+				<button type="button" class="btn-secondary text-sm" aria-label="Add new agent" on:click={() => (showAddAgent = true)}>
 					+ Add Agent
 				</button>
 			</div>
@@ -265,8 +265,9 @@
 				<div class="space-y-4">
 					<div class="grid grid-cols-2 gap-4">
 						<div>
-							<label class="label">Agent Name</label>
+							<label for="agentName" class="label">Agent Name</label>
 							<input
+								id="agentName"
 								type="text"
 								bind:value={newAgent.name}
 								class="input"
@@ -274,8 +275,8 @@
 							/>
 						</div>
 						<div>
-							<label class="label">Role</label>
-							<select bind:value={newAgent.role} class="input">
+							<label for="agentRole" class="label">Role</label>
+							<select id="agentRole" bind:value={newAgent.role} class="input">
 								<option value="human">Human</option>
 								<option value="environment">Environment</option>
 								<option value="designer">Designer</option>
@@ -289,20 +290,21 @@
 
 						<div class="grid grid-cols-3 gap-4">
 							<div>
-								<label class="label">Age</label>
-								<input type="number" bind:value={newPersona.age} class="input" min="1" max="120" />
+								<label for="agentAge" class="label">Age</label>
+								<input id="agentAge" type="number" bind:value={newPersona.age} class="input" min="1" max="120" />
 							</div>
 							<div>
-								<label class="label">Sex</label>
-								<select bind:value={newPersona.sex} class="input">
+								<label for="agentSex" class="label">Sex</label>
+								<select id="agentSex" bind:value={newPersona.sex} class="input">
 									<option value="male">Male</option>
 									<option value="female">Female</option>
 									<option value="non-binary">Non-binary</option>
 								</select>
 							</div>
 							<div>
-								<label class="label">Occupation</label>
+								<label for="agentOccupation" class="label">Occupation</label>
 								<input
+									id="agentOccupation"
 									type="text"
 									bind:value={newPersona.occupation}
 									class="input"
@@ -312,8 +314,9 @@
 						</div>
 
 						<div>
-							<label class="label">Backstory</label>
+							<label for="agentBackstory" class="label">Backstory</label>
 							<textarea
+								id="agentBackstory"
 								bind:value={newPersona.backstory}
 								class="input h-20 resize-none"
 								placeholder="Brief life history..."
@@ -323,8 +326,9 @@
 						<h5 class="font-medium text-storm-300 text-sm mt-4">Personality Traits (1-10)</h5>
 						<div class="grid grid-cols-2 gap-4">
 							<div>
-								<label class="label text-xs">Openness</label>
+								<label for="agentOpenness" class="label text-xs">Openness</label>
 								<input
+									id="agentOpenness"
 									type="range"
 									bind:value={newPersona.openness}
 									min="1"
@@ -334,8 +338,9 @@
 								<span class="text-xs text-storm-400">{newPersona.openness}</span>
 							</div>
 							<div>
-								<label class="label text-xs">Conscientiousness</label>
+								<label for="agentConscientiousness" class="label text-xs">Conscientiousness</label>
 								<input
+									id="agentConscientiousness"
 									type="range"
 									bind:value={newPersona.conscientiousness}
 									min="1"
@@ -345,8 +350,9 @@
 								<span class="text-xs text-storm-400">{newPersona.conscientiousness}</span>
 							</div>
 							<div>
-								<label class="label text-xs">Extraversion</label>
+								<label for="agentExtraversion" class="label text-xs">Extraversion</label>
 								<input
+									id="agentExtraversion"
 									type="range"
 									bind:value={newPersona.extraversion}
 									min="1"
@@ -356,8 +362,9 @@
 								<span class="text-xs text-storm-400">{newPersona.extraversion}</span>
 							</div>
 							<div>
-								<label class="label text-xs">Agreeableness</label>
+								<label for="agentAgreeableness" class="label text-xs">Agreeableness</label>
 								<input
+									id="agentAgreeableness"
 									type="range"
 									bind:value={newPersona.agreeableness}
 									min="1"
@@ -367,8 +374,9 @@
 								<span class="text-xs text-storm-400">{newPersona.agreeableness}</span>
 							</div>
 							<div>
-								<label class="label text-xs">Neuroticism</label>
+								<label for="agentNeuroticism" class="label text-xs">Neuroticism</label>
 								<input
+									id="agentNeuroticism"
 									type="range"
 									bind:value={newPersona.neuroticism}
 									min="1"
@@ -378,8 +386,9 @@
 								<span class="text-xs text-storm-400">{newPersona.neuroticism}</span>
 							</div>
 							<div>
-								<label class="label text-xs">Risk Tolerance</label>
+								<label for="agentRiskTolerance" class="label text-xs">Risk Tolerance</label>
 								<input
+									id="agentRiskTolerance"
 									type="range"
 									bind:value={newPersona.risk_tolerance}
 									min="1"

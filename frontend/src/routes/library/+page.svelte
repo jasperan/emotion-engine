@@ -125,6 +125,7 @@
 		{:else}
 			<div class="card overflow-hidden p-0">
 				<table class="w-full">
+					<caption class="sr-only">Recent Simulation Runs</caption>
 					<thead class="bg-storm-800/50">
 						<tr class="text-left text-sm text-storm-400">
 							<th class="px-4 py-3 font-medium">Run ID</th>
@@ -160,7 +161,7 @@
 									{formatDate(run.created_at)}
 								</td>
 								<td class="px-4 py-3 text-right">
-									<a href="/runs/{run.id}" class="text-flood-400 hover:text-flood-300 text-sm">
+									<a href="/runs/{run.id}" class="text-flood-400 hover:text-flood-300 text-sm" aria-label="View run {run.id}">
 										View →
 									</a>
 								</td>

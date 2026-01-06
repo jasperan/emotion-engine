@@ -160,8 +160,9 @@ Examples:
 
 				<!-- Persona Count -->
 				<div>
-					<label class="label">Number of Characters: {personaCount}</label>
+					<label for="persona-count" class="label">Number of Characters: {personaCount}</label>
 					<input
+						id="persona-count"
 						type="range"
 						bind:value={personaCount}
 						min="2"
@@ -175,8 +176,8 @@ Examples:
 				</div>
 
 				<!-- Archetypes -->
-				<div>
-					<label class="label">Character Types (optional)</label>
+				<div role="group" aria-labelledby="archetypes-label">
+					<div id="archetypes-label" class="label">Character Types (optional)</div>
 					<p class="text-sm text-storm-500 mb-2">
 						Select specific types to include, or leave empty for AI to decide
 					</p>

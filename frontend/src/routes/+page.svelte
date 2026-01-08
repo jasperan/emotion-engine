@@ -7,6 +7,12 @@
   let prompt = '';
   let isLoading = false;
   let error: string | null = null;
+  let textareaElement: HTMLTextAreaElement;
+
+  function applySuggestion(text: string) {
+    prompt = text;
+    textareaElement?.focus();
+  }
 
   async function handleSubmit() {
     if (!prompt.trim()) return;
@@ -68,11 +74,13 @@
       
       <div class="relative bg-surface rounded-2xl border border-outline/50 shadow-2xl overflow-hidden focus-within:border-accent-blue/50 focus-within:ring-1 focus-within:ring-accent-blue/50 transition-all">
          <textarea
+            bind:this={textareaElement}
             bind:value={prompt}
             on:keydown={handleKeydown}
             class="w-full bg-transparent border-0 p-4 text-base text-on-background placeholder:text-on-surface/50 focus:ring-0 resize-none min-h-[120px]"
             placeholder="Ex: Create a scenario where 5 neighbors in a small town have to decide how to allocate a limited water supply during a drought..."
             disabled={isLoading}
+            aria-label="Simulation prompt"
          ></textarea>
          
          <div class="flex justify-between items-center px-4 pb-3">
@@ -83,6 +91,7 @@
                 on:click={handleSubmit}
                 disabled={!prompt.trim() || isLoading}
                 class="btn-icon p-2 rounded-full bg-on-primary/10 text-on-background/50 hover:bg-primary hover:text-on-primary transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                aria-label="Generate scenario"
              >
                 {#if isLoading}
                   <div class="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
@@ -103,13 +112,13 @@
   <!-- Suggestions / Chips -->
   {#if !isLoading && !prompt}
   <div class="mt-8 flex flex-wrap justify-center gap-3 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-100">
-      <button on:click={() => prompt = "Disaster Strike: A flash flood hits a coastal village."} class="px-4 py-2 rounded-xl bg-surface-alt/50 border border-outline/30 text-sm text-on-surface hover:bg-surface-alt hover:border-outline/60 transition-colors text-left">
+      <button on:click={() => applySuggestion("Disaster Strike: A flash flood hits a coastal village.")} class="px-4 py-2 rounded-xl bg-surface-alt/50 border border-outline/30 text-sm text-on-surface hover:bg-surface-alt hover:border-outline/60 transition-colors text-left">
           🌊 Flash Flood
       </button>
-      <button on:click={() => prompt = "Mystery: Guests at a dinner party discover a theft."} class="px-4 py-2 rounded-xl bg-surface-alt/50 border border-outline/30 text-sm text-on-surface hover:bg-surface-alt hover:border-outline/60 transition-colors text-left">
+      <button on:click={() => applySuggestion("Mystery: Guests at a dinner party discover a theft.")} class="px-4 py-2 rounded-xl bg-surface-alt/50 border border-outline/30 text-sm text-on-surface hover:bg-surface-alt hover:border-outline/60 transition-colors text-left">
           🕵️ Dinner Party Mystery
       </button>
-       <button on:click={() => prompt = "Negotiation: Three companies bidding for a contract."} class="px-4 py-2 rounded-xl bg-surface-alt/50 border border-outline/30 text-sm text-on-surface hover:bg-surface-alt hover:border-outline/60 transition-colors text-left">
+       <button on:click={() => applySuggestion("Negotiation: Three companies bidding for a contract.")} class="px-4 py-2 rounded-xl bg-surface-alt/50 border border-outline/30 text-sm text-on-surface hover:bg-surface-alt hover:border-outline/60 transition-colors text-left">
           🤝 Contract Negotiation
       </button>
   </div>

@@ -265,8 +265,9 @@
 				<div class="space-y-4">
 					<div class="grid grid-cols-2 gap-4">
 						<div>
-							<label class="label">Agent Name</label>
+							<label for="agent-name" class="label">Agent Name</label>
 							<input
+								id="agent-name"
 								type="text"
 								bind:value={newAgent.name}
 								class="input"
@@ -274,8 +275,8 @@
 							/>
 						</div>
 						<div>
-							<label class="label">Role</label>
-							<select bind:value={newAgent.role} class="input">
+							<label for="agent-role" class="label">Role</label>
+							<select id="agent-role" bind:value={newAgent.role} class="input">
 								<option value="human">Human</option>
 								<option value="environment">Environment</option>
 								<option value="designer">Designer</option>
@@ -289,20 +290,21 @@
 
 						<div class="grid grid-cols-3 gap-4">
 							<div>
-								<label class="label">Age</label>
-								<input type="number" bind:value={newPersona.age} class="input" min="1" max="120" />
+								<label for="persona-age" class="label">Age</label>
+								<input id="persona-age" type="number" bind:value={newPersona.age} class="input" min="1" max="120" />
 							</div>
 							<div>
-								<label class="label">Sex</label>
-								<select bind:value={newPersona.sex} class="input">
+								<label for="persona-sex" class="label">Sex</label>
+								<select id="persona-sex" bind:value={newPersona.sex} class="input">
 									<option value="male">Male</option>
 									<option value="female">Female</option>
 									<option value="non-binary">Non-binary</option>
 								</select>
 							</div>
 							<div>
-								<label class="label">Occupation</label>
+								<label for="persona-occupation" class="label">Occupation</label>
 								<input
+									id="persona-occupation"
 									type="text"
 									bind:value={newPersona.occupation}
 									class="input"
@@ -312,8 +314,9 @@
 						</div>
 
 						<div>
-							<label class="label">Backstory</label>
+							<label for="persona-backstory" class="label">Backstory</label>
 							<textarea
+								id="persona-backstory"
 								bind:value={newPersona.backstory}
 								class="input h-20 resize-none"
 								placeholder="Brief life history..."
@@ -323,8 +326,9 @@
 						<h5 class="font-medium text-storm-300 text-sm mt-4">Personality Traits (1-10)</h5>
 						<div class="grid grid-cols-2 gap-4">
 							<div>
-								<label class="label text-xs">Openness</label>
+								<label for="trait-openness" class="label text-xs">Openness</label>
 								<input
+									id="trait-openness"
 									type="range"
 									bind:value={newPersona.openness}
 									min="1"
@@ -334,8 +338,9 @@
 								<span class="text-xs text-storm-400">{newPersona.openness}</span>
 							</div>
 							<div>
-								<label class="label text-xs">Conscientiousness</label>
+								<label for="trait-conscientiousness" class="label text-xs">Conscientiousness</label>
 								<input
+									id="trait-conscientiousness"
 									type="range"
 									bind:value={newPersona.conscientiousness}
 									min="1"
@@ -345,8 +350,9 @@
 								<span class="text-xs text-storm-400">{newPersona.conscientiousness}</span>
 							</div>
 							<div>
-								<label class="label text-xs">Extraversion</label>
+								<label for="trait-extraversion" class="label text-xs">Extraversion</label>
 								<input
+									id="trait-extraversion"
 									type="range"
 									bind:value={newPersona.extraversion}
 									min="1"
@@ -356,8 +362,9 @@
 								<span class="text-xs text-storm-400">{newPersona.extraversion}</span>
 							</div>
 							<div>
-								<label class="label text-xs">Agreeableness</label>
+								<label for="trait-agreeableness" class="label text-xs">Agreeableness</label>
 								<input
+									id="trait-agreeableness"
 									type="range"
 									bind:value={newPersona.agreeableness}
 									min="1"
@@ -367,8 +374,9 @@
 								<span class="text-xs text-storm-400">{newPersona.agreeableness}</span>
 							</div>
 							<div>
-								<label class="label text-xs">Neuroticism</label>
+								<label for="trait-neuroticism" class="label text-xs">Neuroticism</label>
 								<input
+									id="trait-neuroticism"
 									type="range"
 									bind:value={newPersona.neuroticism}
 									min="1"
@@ -378,8 +386,9 @@
 								<span class="text-xs text-storm-400">{newPersona.neuroticism}</span>
 							</div>
 							<div>
-								<label class="label text-xs">Risk Tolerance</label>
+								<label for="trait-risk" class="label text-xs">Risk Tolerance</label>
 								<input
+									id="trait-risk"
 									type="range"
 									bind:value={newPersona.risk_tolerance}
 									min="1"

@@ -10,6 +10,9 @@
 	let generating = false;
 	let error: string | null = null;
 
+    // UI Refs
+    let promptInput: HTMLTextAreaElement;
+
 	// Preview state
 	let previewData: GenerateResponse | null = null;
 	let showPreview = false;
@@ -107,6 +110,13 @@
 		};
 	}
 
+    function selectExample(example: string) {
+        prompt = example;
+        if (promptInput) {
+            promptInput.focus();
+        }
+    }
+
 	// Helper to safely get config as Record
 	$: config = previewData?.scenario?.config as Record<string, unknown> || {};
   
@@ -127,7 +137,7 @@
 	</div>
 
 	{#if error}
-		<div class="card border-red-500/30 bg-red-900/10">
+		<div class="card border-red-500/30 bg-red-900/10" role="alert">
 			<p class="text-red-400">{error}</p>
 		</div>
 	{/if}
@@ -136,7 +146,7 @@
 		<!-- Generation Form -->
 		<div class="card">
 			<h2 class="text-lg font-semibold font-display mb-4 flex items-center gap-2">
-				<span class="text-2xl">✨</span>
+				<span class="text-2xl" aria-hidden="true">✨</span>
 				Describe Your Scenario
 			</h2>
 
@@ -146,6 +156,7 @@
 					<label for="prompt" class="label">Scenario Prompt</label>
 					<textarea
 						id="prompt"
+                        bind:this={promptInput}
 						bind:value={prompt}
 						class="input h-32 resize-none"
 						placeholder="Describe your scenario in natural language...
@@ -155,29 +166,37 @@ Examples:
 • Zombie outbreak in a shopping mall during Black Friday
 • Hostage situation at a bank with negotiators and hostages
 • Wildfire evacuation in a small mountain town"
+                        aria-required="true"
 					></textarea>
+                    <div class="text-xs text-storm-500 text-right mt-1">
+                        {prompt.length} characters
+                    </div>
 				</div>
 
 				<!-- Persona Count -->
 				<div>
-					<label class="label">Number of Characters: {personaCount}</label>
+					<label for="personaCount" class="label">Number of Characters: {personaCount}</label>
 					<input
+                        id="personaCount"
 						type="range"
 						bind:value={personaCount}
 						min="2"
 						max="12"
 						class="w-full h-2 bg-storm-700 rounded-lg appearance-none cursor-pointer accent-flood-500"
+                        aria-valuemin="2"
+                        aria-valuemax="12"
+                        aria-valuenow={personaCount}
 					/>
-					<div class="flex justify-between text-xs text-storm-500 mt-1">
+					<div class="flex justify-between text-xs text-storm-500 mt-1" aria-hidden="true">
 						<span>2 (minimal)</span>
 						<span>12 (complex)</span>
 					</div>
 				</div>
 
 				<!-- Archetypes -->
-				<div>
-					<label class="label">Character Types (optional)</label>
-					<p class="text-sm text-storm-500 mb-2">
+				<div role="group" aria-labelledby="archetypes-label">
+					<label id="archetypes-label" class="label block mb-1">Character Types (optional)</label>
+					<p class="text-sm text-storm-500 mb-2" id="archetypes-desc">
 						Select specific types to include, or leave empty for AI to decide
 					</p>
 					<div class="flex flex-wrap gap-2">
@@ -189,6 +208,7 @@ Examples:
 								)
 									? 'bg-flood-500 text-white'
 									: 'bg-storm-700 text-storm-300 hover:bg-storm-600'}"
+                                aria-pressed={archetypes.includes(archetype)}
 								on:click={() => toggleArchetype(archetype)}
 							>
 								{archetype}
@@ -196,7 +216,7 @@ Examples:
 						{/each}
 					</div>
 					{#if archetypes.length > 0}
-						<p class="text-sm text-flood-400 mt-2">Selected: {archetypes.join(', ')}</p>
+						<p class="text-sm text-flood-400 mt-2" role="status">Selected: {archetypes.join(', ')}</p>
 					{/if}
 				</div>
 
@@ -218,13 +238,14 @@ Examples:
 					type="button"
 					class="btn-primary w-full py-3 text-lg flex items-center justify-center gap-2"
 					disabled={generating || !prompt.trim()}
+                    aria-busy={generating}
 					on:click={handleGenerate}
 				>
 					{#if generating}
-						<span class="animate-spin">⚙️</span>
+						<span class="animate-spin" aria-hidden="true">⚙️</span>
 						Generating with phi3...
 					{:else}
-						<span>🎲</span>
+						<span aria-hidden="true">🎲</span>
 						Generate Scenario
 					{/if}
 				</button>
@@ -244,7 +265,7 @@ Examples:
 					<button
 						type="button"
 						class="text-left p-3 rounded-lg bg-storm-800/50 hover:bg-storm-700/50 text-storm-300 text-sm transition-colors"
-						on:click={() => (prompt = example)}
+						on:click={() => selectExample(example)}
 					>
 						"{example}"
 					</button>
@@ -367,4 +388,3 @@ Examples:
 		overflow: hidden;
 	}
 </style>
-

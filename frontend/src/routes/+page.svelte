@@ -90,9 +90,8 @@
              <button 
                 on:click={handleSubmit}
                 disabled={!prompt.trim() || isLoading}
-                aria-label={isLoading ? "Generating scenario" : "Send prompt"}
                 class="btn-icon p-2 rounded-full bg-on-primary/10 text-on-background/50 hover:bg-primary hover:text-on-primary transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                aria-label="Generate scenario"
+                aria-label={isLoading ? "Generating scenario" : "Send prompt"}
              >
                 {#if isLoading}
                   <div class="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>

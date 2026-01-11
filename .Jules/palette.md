@@ -5,3 +5,7 @@
 ## 2024-05-23 - Interactive Elements
 **Learning:** Many interactive elements are missing `aria-label` or proper keyboard support.
 **Action:** Focus on adding `aria-label` to icon-only buttons and ensuring focus states are visible.
+
+## 2024-05-24 - Labeling Icon-Only Buttons
+**Learning:** Found multiple icon-only buttons (like Share in header) without `aria-label`. This makes them invisible or confusing to screen reader users.
+**Action:** Always verify icon-only buttons have a descriptive `aria-label` and `aria-hidden="true"` on the SVG icon itself to prevent redundant announcements.

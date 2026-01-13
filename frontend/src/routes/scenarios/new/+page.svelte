@@ -234,10 +234,11 @@
 							{/if}
 							<button
 								type="button"
-								class="text-red-400 hover:text-red-300"
+								class="text-red-400 hover:text-red-300 px-2 py-1 rounded hover:bg-red-500/10 transition-colors"
 								on:click={() => removeAgent(i)}
+								aria-label="Remove agent {agent.name}"
 							>
-								✕
+								<span aria-hidden="true">✕</span>
 							</button>
 						</div>
 					{/each}

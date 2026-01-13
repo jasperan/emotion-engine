@@ -9,3 +9,7 @@
 ## 2024-05-24 - Labeling Icon-Only Buttons
 **Learning:** Found multiple icon-only buttons (like Share in header) without `aria-label`. This makes them invisible or confusing to screen reader users.
 **Action:** Always verify icon-only buttons have a descriptive `aria-label` and `aria-hidden="true"` on the SVG icon itself to prevent redundant announcements.
+
+## 2025-02-23 - Accessible Remove Buttons
+**Learning:** Destructive actions like "Remove Agent" represented by a single "X" character are common but inaccessible.
+**Action:** Wrap the icon/character in `<span aria-hidden="true">` and provide a dynamic `aria-label` (e.g., "Remove agent {name}") on the button itself. Adding hover background and padding also improves hit target usability.

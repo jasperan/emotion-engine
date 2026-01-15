@@ -4,6 +4,10 @@
   import { page } from '$app/stores';
 </script>
 
+<a href="#main-content" class="fixed top-4 left-4 z-50 -translate-y-24 rounded-md bg-primary px-4 py-2 font-medium text-on-primary shadow-lg transition-transform focus:translate-y-0">
+  Skip to main content
+</a>
+
 <div class="flex h-screen bg-background text-on-background overflow-hidden selection:bg-primary selection:text-on-primary">
   <!-- Sidebar -->
   <aside class="w-64 flex flex-col border-r border-outline/30 bg-surface hidden md:flex">
@@ -41,7 +45,7 @@
   </aside>
 
   <!-- Main Content -->
-  <main class="flex-1 flex flex-col relative overflow-hidden">
+  <main id="main-content" class="flex-1 flex flex-col relative overflow-hidden" tabindex="-1">
     <!-- Top Bar -->
     <header class="h-16 border-b border-outline/30 flex items-center justify-between px-6 bg-background/80 backdrop-blur-sm z-10 transition-all duration-300">
        <div class="flex items-center gap-4">

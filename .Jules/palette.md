@@ -13,3 +13,7 @@
 ## 2025-02-23 - Accessible Remove Buttons
 **Learning:** Destructive actions like "Remove Agent" represented by a single "X" character are common but inaccessible.
 **Action:** Wrap the icon/character in `<span aria-hidden="true">` and provide a dynamic `aria-label` (e.g., "Remove agent {name}") on the button itself. Adding hover background and padding also improves hit target usability.
+
+## 2025-02-24 - Skip Links for Keyboard Navigation
+**Learning:** Sidebar layouts create a significant barrier for keyboard users, requiring them to tab through every navigation item on every page load.
+**Action:** Implement a "Skip to Content" link at the very top of the DOM that becomes visible on focus and jumps directly to the main content area (`id="main-content"`). Ensure the target has `tabindex="-1"` to reliably receive focus.

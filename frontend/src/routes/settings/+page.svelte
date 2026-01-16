@@ -1,3 +1,4 @@
+
 <script lang="ts">
   import { onMount } from 'svelte';
   import { setHeader, resetHeader } from '$lib/stores/header';
@@ -6,6 +7,9 @@
     setHeader({ title: 'Settings' });
     return resetHeader;
   });
+
+  let autoScroll = true;
+  let compactView = false;
 </script>
 
 <div class="max-w-4xl mx-auto space-y-8">
@@ -50,22 +54,34 @@
             </h2>
             <div class="space-y-4">
                 <div class="flex items-center justify-between p-3 bg-surface-alt/20 rounded-lg">
-                    <div>
+                    <div id="auto-scroll-label">
                         <span class="block font-medium">Auto-scroll Message Log</span>
                         <span class="text-xs text-on-surface/60">Automatically scroll to the latest message during simulations.</span>
                     </div>
-                    <button class="w-12 h-6 rounded-full bg-primary/20 border border-primary/30 relative shadow-inner">
-                        <div class="absolute right-1 top-1 w-4 h-4 rounded-full bg-primary"></div>
+                    <button
+                        role="switch"
+                        aria-checked={autoScroll}
+                        aria-labelledby="auto-scroll-label"
+                        class="w-12 h-6 rounded-full border relative shadow-inner transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 {autoScroll ? 'bg-primary/20 border-primary/30' : 'bg-surface-alt border-outline/30'}"
+                        on:click={() => autoScroll = !autoScroll}
+                    >
+                        <div class="absolute top-1 h-4 w-4 rounded-full transition-all duration-200 {autoScroll ? 'right-1 bg-primary' : 'left-1 bg-outline'}"></div>
                     </button>
                 </div>
                 
                 <div class="flex items-center justify-between p-3 bg-surface-alt/20 rounded-lg">
-                    <div>
+                    <div id="compact-view-label">
                         <span class="block font-medium">Compact View</span>
                         <span class="text-xs text-on-surface/60">Use a more dense layout for agent cards and logs.</span>
                     </div>
-                    <button class="w-12 h-6 rounded-full bg-outline/20 border border-outline/30 relative shadow-inner">
-                        <div class="absolute left-1 top-1 w-4 h-4 rounded-full bg-outline"></div>
+                    <button
+                        role="switch"
+                        aria-checked={compactView}
+                        aria-labelledby="compact-view-label"
+                        class="w-12 h-6 rounded-full border relative shadow-inner transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 {compactView ? 'bg-primary/20 border-primary/30' : 'bg-surface-alt border-outline/30'}"
+                        on:click={() => compactView = !compactView}
+                    >
+                        <div class="absolute top-1 h-4 w-4 rounded-full transition-all duration-200 {compactView ? 'right-1 bg-primary' : 'left-1 bg-outline'}"></div>
                     </button>
                 </div>
             </div>

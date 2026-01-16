@@ -33,4 +33,5 @@ python-dotenv
 # CLI
 click
 rich
+questionary
 

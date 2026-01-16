@@ -14,6 +14,7 @@ from rich.table import Table
 from rich.panel import Panel
 from rich import box
 import httpx
+import questionary
 
 from app.cli_monitor import EventRenderer, SimpleEventLogger
 from app.core.config import get_settings
@@ -51,12 +52,14 @@ async def check_model_selection():
                         console.print(f"  {i}. {m}")
                     
                     console.print()
-                    choice = Prompt.ask(
+                    console.print()
+                    choice = questionary.select(
                         "Select a model to use",
-                        choices=[str(i) for i in range(1, len(models) + 1)],
-                        default="1"
-                    )
-                    selected_model = models[int(choice) - 1]
+                        choices=models,
+                        use_arrow_keys=True
+                    ).ask()
+                    selected_model = choice
+
                     
                     # Update settings (in memory for this session)
                     settings.ollama_default_model = selected_model
@@ -191,18 +194,18 @@ async def _run_standalone(
                 console.print("[red]No scenarios found![/red]")
                 return
 
-            choice_idx = Prompt.ask("Enter number", default="1")
-            try:
-                idx = int(choice_idx) - 1
-                if 0 <= idx < len(choices):
-                    scenario_name = choices[idx]
-                    selected_source, selected_data = choice_sources[idx]
-                else:
-                    console.print("[red]Invalid selection[/red]")
-                    return
-            except ValueError:
-                console.print("[red]Invalid input[/red]")
+            scenario_name = questionary.select(
+                "Select a Scenario:",
+                choices=choices,
+                use_arrow_keys=True
+            ).ask()
+            
+            if not scenario_name:
                 return
+                
+            # Find the source for the selected name
+            idx = choices.index(scenario_name)
+            selected_source, selected_data = choice_sources[idx]
         else:
             selected_source = None
             selected_data = None
@@ -822,13 +825,31 @@ async def _interactive_wizard():
         
         console.print()
         
+        # Prepare choices for questionary
+        q_choices = []
+        for s_obj in all_scenarios:
+             if isinstance(s_obj, dict): # generated
+                 name = s_obj["name"]
+                 agent_count = s_obj["agent_count"]
+             else: # db object
+                 name = s_obj.name
+                 agent_count = len(s_obj.agent_templates) if s_obj.agent_templates else 0
+             
+             q_choices.append(questionary.Choice(
+                 title=f"{name} ({agent_count} agents)",
+                 value=len(q_choices) # Store index as value
+             ))
+        
         # Select scenario
-        choice = Prompt.ask(
+        choice_idx = questionary.select(
             "Select scenario",
-            choices=[str(i) for i in range(1, len(all_scenarios) + 1)],
-            default="1"
-        )
-        choice_idx = int(choice) - 1
+            choices=q_choices,
+            use_arrow_keys=True
+        ).ask()
+        
+        if choice_idx is None:
+             return
+
         source_type, selected_data = scenario_sources[choice_idx]
         
         # Load scenario into DB if it's a generated one
@@ -1413,8 +1434,22 @@ async def select_active_run() -> str | None:
         console.print(table)
         console.print()
         
-        choice = Prompt.ask("Select run to monitor", choices=[str(i) for i in range(1, len(runs) + 1)], default="1")
-        return runs[int(choice) - 1].id
+        # Create choices properly
+        run_choices = []
+        for r in runs:
+             s_name = r.scenario.name if r.scenario else "Unknown"
+             run_choices.append(questionary.Choice(
+                 title=f"{r.id} | {s_name} | Step {r.current_step}",
+                 value=r.id
+             ))
+             
+        run_id = questionary.select(
+            "Select run to monitor",
+            choices=run_choices,
+            use_arrow_keys=True
+        ).ask()
+        
+        return run_id
 
 async def generate_scenario_task():
     """Interactive scenario generation task"""
@@ -1466,19 +1501,21 @@ async def main_menu_async():
         # print("\033c", end="")
         
         console.print(Panel(title, style="bold magenta", border_style="magenta", expand=False))
-        console.print("[bold]Select a Task:[/bold]")
+        menu_choices = [
+            questionary.Choice("Generate New Scenario", value="1"),
+            questionary.Choice("Browse Scenarios", value="2"),
+            questionary.Choice("Run Scenario (Standalone)", value="3"),
+            questionary.Choice("Monitor Simulation", value="4"),
+            questionary.Choice("Interactive Wizard", value="5"),
+            questionary.Separator(),
+            questionary.Choice("Exit", value="0")
+        ]
         
-        table = Table(show_header=False, box=None)
-        table.add_row("[1]", "Generate New Scenario", style="magenta")
-        table.add_row("[2]", "Browse Scenarios", style="cyan")
-        table.add_row("[3]", "Run Scenario (Standalone)", style="green")
-        table.add_row("[4]", "Monitor Simulation", style="yellow")
-        table.add_row("[5]", "Interactive Wizard", style="blue")
-        table.add_row("[0]", "Exit", style="red")
-        
-        console.print(table)
-        
-        choice = Prompt.ask("\nEnter choice", choices=["1", "2", "3", "4", "5", "0"], default="1")
+        choice = questionary.select(
+            "Select a Task:",
+            choices=menu_choices,
+            use_arrow_keys=True
+        ).ask()
         
         if choice == "1":
             await generate_scenario_task()
@@ -1502,6 +1539,6 @@ async def main_menu_async():
             # Interactive Wizard
             await _interactive_wizard()
             input("\nPress Enter to continue...")
-        elif choice == "0":
+        elif not choice or choice == "0":
             console.print("[bold]Goodbye![/bold]")
             sys.exit(0)

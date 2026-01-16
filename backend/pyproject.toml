@@ -35,6 +35,7 @@ dependencies = [
     "python-dotenv",
     "click",
     "rich",
+    "questionary",
 ]
 
 [project.optional-dependencies]

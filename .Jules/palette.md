@@ -17,3 +17,7 @@
 ## 2025-02-24 - Skip Links for Keyboard Navigation
 **Learning:** Sidebar layouts create a significant barrier for keyboard users, requiring them to tab through every navigation item on every page load.
 **Action:** Implement a "Skip to Content" link at the very top of the DOM that becomes visible on focus and jumps directly to the main content area (`id="main-content"`). Ensure the target has `tabindex="-1"` to reliably receive focus.
+
+## 2025-02-24 - Accessible Toggle Switches
+**Learning:** Visual-only toggle switches (using divs) are inaccessible to screen reader users and keyboard navigators.
+**Action:** Replace div-soup switches with `<button role="switch" aria-checked={isChecked} aria-label="...">`. Use CSS/Tailwind to visually represent the state based on the value, but rely on semantic attributes for behavior.

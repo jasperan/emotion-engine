@@ -143,6 +143,24 @@ cd backend
 pip install -e .  # Install CLI entry point
 ```
 
+### Interactive Menu
+Run `python backend/cli.py` (or just `emotionsim` if installed) to see the new dashboard:
+
+```
+    ╔════════════════════════════════════════════════════════════════╗
+    ║                 EMOTION ENGINE CLI                             ║
+    ║             Autonomous Agent Scenario Generator                ║
+    ╚════════════════════════════════════════════════════════════════╝
+
+Select a Task:
+ [1]  Generate New Scenario     
+ [2]  Browse Scenarios          
+ [3]  Run Scenario (Standalone) 
+ [4]  Monitor Simulation        
+ [5]  Interactive Wizard        
+ [0]  Exit                      
+```
+
 ### Commands
 
 **Run Simulation (Standalone Mode)**

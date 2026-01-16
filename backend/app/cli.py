@@ -11,6 +11,7 @@ from rich.console import Console
 from rich.live import Live
 from rich.prompt import Prompt, Confirm
 from rich.table import Table
+from rich.panel import Panel
 from rich import box
 import httpx
 
@@ -79,14 +80,16 @@ console = Console()
 # CLI Group
 # ============================================================================
 
-@click.group()
+@click.group(invoke_without_command=True)
 @click.version_option(version="0.1.0", prog_name="emotionsim")
-def cli():
+@click.pass_context
+def cli(ctx):
     """EmotionSim - Multi-Agent Simulation System
     
     Monitor simulations in real-time or run them directly from the CLI.
     """
-    pass
+    if ctx.invoked_subcommand is None:
+        asyncio.run(main_menu_async())
 
 
 # ============================================================================
@@ -1351,3 +1354,154 @@ def main():
 if __name__ == "__main__":
     main()
 
+
+# ============================================================================
+# Interactive Main Menu
+# ============================================================================
+
+async def select_active_run() -> str | None:
+    """Select an active run from the database"""
+    from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+    from sqlalchemy import select, or_
+    import time
+    
+    from app.core.config import get_settings
+    from app.core.database import Base
+    from app.models.run import Run, RunStatus
+    from app.models.scenario import Scenario
+
+    settings = get_settings()
+    engine = create_async_engine(settings.database_url, echo=False)
+    async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+        
+    async with async_session() as db:
+        # Fetch active runs (PENDING or RUNNING)
+        query = select(Run).options(select.joinedload(Run.scenario)).where(
+            or_(Run.status == RunStatus.RUNNING, Run.status == RunStatus.PENDING)
+        ).order_by(Run.created_at.desc())
+        
+        result = await db.execute(query)
+        runs = result.scalars().all()
+        
+        if not runs:
+            console.print("[yellow]No active simulations found.[/yellow]")
+            return None
+            
+        console.print("\n[bold cyan]Active Simulations:[/bold cyan]")
+        
+        table = Table(box=box.SIMPLE)
+        table.add_column("#", style="dim")
+        table.add_column("Run ID", style="cyan")
+        table.add_column("Scenario", style="green")
+        table.add_column("Status", style="yellow")
+        table.add_column("Step", style="white")
+        table.add_column("Created", style="dim")
+        
+        for i, run in enumerate(runs, 1):
+            table.add_row(
+                str(i),
+                run.id,
+                run.scenario.name if run.scenario else "Unknown",
+                run.status.value,
+                f"{run.current_step}/{run.max_steps}",
+                run.created_at.strftime("%H:%M:%S")
+            )
+            
+        console.print(table)
+        console.print()
+        
+        choice = Prompt.ask("Select run to monitor", choices=[str(i) for i in range(1, len(runs) + 1)], default="1")
+        return runs[int(choice) - 1].id
+
+async def generate_scenario_task():
+    """Interactive scenario generation task"""
+    from app.scenarios.generator import ScenarioGenerator
+    from app.scenarios.storage import save_scenario
+    from rich.prompt import IntPrompt
+    
+    console.print("\n[bold yellow]Generate New Scenario[/bold yellow]")
+    console.print("[dim]Examples: 'A tornado hits a small town', 'Alien first contact', 'Heist at a museum'[/dim]\n")
+    
+    prompt = Prompt.ask("[bold]Describe your scenario[/bold]")
+    if not prompt:
+        return
+
+    persona_count = IntPrompt.ask("Number of personas", default=10)
+    
+    console.print(f"\n[cyan]Generating scenario with {persona_count} agents...[/cyan]")
+    
+    try:
+        generator = ScenarioGenerator()
+        with console.status("[cyan]Calling AI to generate scenario...[/cyan]"):
+            scenario = await generator.generate(
+                prompt=prompt,
+                persona_count=persona_count,
+            )
+        
+        filepath = save_scenario(scenario)
+        
+        console.print(f"\n[green]✓[/green] Generated: [bold]{scenario.name}[/bold]")
+        console.print(f"[green]✓[/green] Saved to: [dim]{filepath}[/dim]")
+        console.print(f"  {scenario.description}\n")
+        
+    except Exception as e:
+        console.print(f"[red]Generation failed: {e}[/red]")
+
+async def main_menu_async():
+    """Interactive main menu loop"""
+    import sys
+    
+    title = """
+    ╔════════════════════════════════════════════════════════════════╗
+    ║                 EMOTION ENGINE CLI                             ║
+    ║             Autonomous Agent Scenario Generator                ║
+    ╚════════════════════════════════════════════════════════════════╝
+    """
+    
+    while True:
+        # Clear screen mainly for visual cleanliness, might not work everywhere
+        # print("\033c", end="")
+        
+        console.print(Panel(title, style="bold magenta", border_style="magenta", expand=False))
+        console.print("[bold]Select a Task:[/bold]")
+        
+        table = Table(show_header=False, box=None)
+        table.add_row("[1]", "Generate New Scenario", style="magenta")
+        table.add_row("[2]", "Browse Scenarios", style="cyan")
+        table.add_row("[3]", "Run Scenario (Standalone)", style="green")
+        table.add_row("[4]", "Monitor Simulation", style="yellow")
+        table.add_row("[5]", "Interactive Wizard", style="blue")
+        table.add_row("[0]", "Exit", style="red")
+        
+        console.print(table)
+        
+        choice = Prompt.ask("\nEnter choice", choices=["1", "2", "3", "4", "5", "0"], default="1")
+        
+        if choice == "1":
+            await generate_scenario_task()
+            input("\nPress Enter to continue...")
+        elif choice == "2":
+            # List scenarios (create_builtin=False)
+            await _list_scenarios(create_builtin=False)
+            input("\nPress Enter to continue...")
+        elif choice == "3":
+            # Run scenario
+            # Prompt for scenario name inside _run_standalone if None
+            await _run_standalone(scenario_name=None, max_steps=None, seed=None, tick_delay=None, simple=False)
+            input("\nPress Enter to continue...")
+        elif choice == "4":
+            # Monitor
+            run_id = await select_active_run()
+            if run_id:
+                await _monitor_websocket(base_url="ws://localhost:8000/api/ws", run_id=run_id, simple=False)
+            input("\nPress Enter to continue...")
+        elif choice == "5":
+            # Interactive Wizard
+            await _interactive_wizard()
+            input("\nPress Enter to continue...")
+        elif choice == "0":
+            console.print("[bold]Goodbye![/bold]")
+            sys.exit(0)

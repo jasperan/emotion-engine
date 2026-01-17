@@ -17,3 +17,7 @@
 ## 2025-02-24 - Skip Links for Keyboard Navigation
 **Learning:** Sidebar layouts create a significant barrier for keyboard users, requiring them to tab through every navigation item on every page load.
 **Action:** Implement a "Skip to Content" link at the very top of the DOM that becomes visible on focus and jumps directly to the main content area (`id="main-content"`). Ensure the target has `tabindex="-1"` to reliably receive focus.
+
+## 2025-02-27 - Semantic Tables and Links
+**Learning:** Tables with repetitive links like "View" or "Edit" are a major accessibility barrier. A screen reader user navigating by links hears "View, View, View" without context.
+**Action:** Always include unique context in the `aria-label` for repetitive links (e.g., "View run 12345"). Also ensure visual progress bars have `role="progressbar"` and appropriate aria attributes so they aren't invisible to assistive tech.

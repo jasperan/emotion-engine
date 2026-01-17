@@ -145,13 +145,20 @@
 								</td>
 								<td class="px-4 py-3">
 									<div class="flex items-center gap-2">
-										<div class="w-24 h-2 bg-storm-800 rounded-full overflow-hidden">
+										<div
+											class="w-24 h-2 bg-storm-800 rounded-full overflow-hidden"
+											role="progressbar"
+											aria-label="Simulation progress"
+											aria-valuenow={Math.round((run.current_step / run.max_steps) * 100)}
+											aria-valuemin="0"
+											aria-valuemax="100"
+										>
 											<div
 												class="h-full bg-flood-500 rounded-full transition-all"
 												style="width: {(run.current_step / run.max_steps) * 100}%"
 											></div>
 										</div>
-										<span class="text-xs text-storm-400 font-mono">
+										<span class="text-xs text-storm-400 font-mono" aria-hidden="true">
 											{run.current_step}/{run.max_steps}
 										</span>
 									</div>
@@ -160,7 +167,11 @@
 									{formatDate(run.created_at)}
 								</td>
 								<td class="px-4 py-3 text-right">
-									<a href="/runs/{run.id}" class="text-flood-400 hover:text-flood-300 text-sm">
+									<a
+										href="/runs/{run.id}"
+										class="text-flood-400 hover:text-flood-300 text-sm"
+										aria-label="View run {run.id}"
+									>
 										View →
 									</a>
 								</td>

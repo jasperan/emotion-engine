@@ -17,7 +17,7 @@
     } finally {
       isLoading = false;
     }
-    return resetHeader;
+    return () => resetHeader();
   });
 
   function startRun(scenarioId: string) {

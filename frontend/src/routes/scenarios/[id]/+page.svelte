@@ -37,7 +37,7 @@
 			loading = false;
 		}
 
-		return resetHeader;
+		return () => resetHeader();
 	});
 
 	async function createRun() {

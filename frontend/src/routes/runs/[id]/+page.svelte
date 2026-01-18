@@ -74,7 +74,7 @@
 			loading = false;
 		}
 
-		return resetHeader;
+		return () => resetHeader();
 	});
 
 	function updateHeader() {
@@ -148,15 +148,22 @@
 					<h3 class="text-lg font-semibold font-display mb-3">World State</h3>
 					<div class="space-y-2 text-sm">
 						<div class="flex justify-between">
-							<span class="text-storm-400">Hazard Level</span>
+							<span id="hazard-level-label" class="text-storm-400">Hazard Level</span>
 							<div class="flex items-center gap-2">
-								<div class="w-20 h-2 bg-storm-800 rounded-full overflow-hidden">
+								<div
+									class="w-20 h-2 bg-storm-800 rounded-full overflow-hidden"
+									role="progressbar"
+									aria-labelledby="hazard-level-label"
+									aria-valuenow={Number(run.world_state?.hazard_level) || 0}
+									aria-valuemin="0"
+									aria-valuemax="10"
+								>
 									<div
 										class="h-full bg-gradient-to-r from-yellow-500 to-red-500 rounded-full"
 										style="width: {(Number(run.world_state?.hazard_level) || 0) * 10}%"
 									></div>
 								</div>
-								<span class="text-storm-200 font-mono"
+								<span class="text-storm-200 font-mono" aria-hidden="true"
 									>{Number(run.world_state?.hazard_level) || 0}/10</span
 								>
 							</div>

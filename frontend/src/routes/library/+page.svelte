@@ -18,7 +18,7 @@
 			loading = false;
 		}
 
-		return resetHeader;
+		return () => resetHeader();
 	});
 
 	function formatDate(dateStr: string): string {

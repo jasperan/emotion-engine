@@ -147,18 +147,20 @@ pip install -e .  # Install CLI entry point
 Run `python backend/cli.py` (or just `emotionsim` if installed) to see the new dashboard:
 
 ```
-    ╔════════════════════════════════════════════════════════════════╗
-    ║                 EMOTION ENGINE CLI                             ║
-    ║             Autonomous Agent Scenario Generator                ║
-    ╚════════════════════════════════════════════════════════════════╝
+```text
+╭───────────────────────────────────────────╮
+│ Emotion Engine CLI                        │
+│ Autonomous Agent Simulation System         │
+╰───────────────────────────────────────────╯
 
-Select a Task:
- [1]  Generate New Scenario     
- [2]  Browse Scenarios          
- [3]  Run Scenario (Standalone) 
- [4]  Monitor Simulation        
- [5]  Interactive Wizard        
- [0]  Exit                      
+? Select a Task:
+  Generate New Scenario
+  Browse Scenarios
+  Run Scenario (Standalone)
+  Monitor Simulation
+  Interactive Wizard
+  Exit
+```
 ```
 
 ### Commands

@@ -19,6 +19,11 @@ import questionary
 from app.cli_monitor import EventRenderer, SimpleEventLogger
 from app.core.config import get_settings
 
+def print_header():
+    console.print(Panel.fit(
+        "[bold cyan]Emotion Engine CLI[/bold cyan]\n[dim]Autonomous Agent Simulation System[/dim]",
+        border_style="cyan"
+    ))
 
 async def check_model_selection():
     """Ensure a valid model is selected and available"""
@@ -134,7 +139,8 @@ async def _run_standalone(
     
     settings = get_settings()
     
-    console.print("\n[bold cyan]EmotionSim[/bold cyan] - Standalone Mode\n")
+    print_header()
+    console.print("[dim]Standalone Mode[/dim]\n")
     
     # Check model
     await check_model_selection()
@@ -499,7 +505,8 @@ async def _monitor_websocket(base_url: str, run_id: str, simple: bool):
     
     ws_url = f"{base_url}/{run_id}"
     
-    console.print(f"\n[bold cyan]EmotionSim Monitor[/bold cyan] - Client Mode")
+    print_header()
+    console.print(f"[dim]Client Mode[/dim]")
     console.print(f"Connecting to: [dim]{ws_url}[/dim]\n")
     
     if simple:
@@ -758,11 +765,8 @@ async def _interactive_wizard():
     from app.models.scenario import Scenario
     from app.scenarios.defaults import DEFAULT_SCENARIOS
     
-    console.print()
-    console.print("[bold cyan]╔══════════════════════════════════════╗[/bold cyan]")
-    console.print("[bold cyan]║     EmotionSim Interactive Mode      ║[/bold cyan]")
-    console.print("[bold cyan]╚══════════════════════════════════════╝[/bold cyan]")
-    console.print()
+    print_header()
+    console.print("[dim]Interactive Simulation Wizard[/dim]\n")
     
     settings = get_settings()
     engine = create_async_engine(settings.database_url, echo=False)
@@ -1485,22 +1489,9 @@ async def generate_scenario_task():
     except Exception as e:
         console.print(f"[red]Generation failed: {e}[/red]")
 
-async def main_menu_async():
-    """Interactive main menu loop"""
-    import sys
-    
-    title = """
-    ╔════════════════════════════════════════════════════════════════╗
-    ║                 EMOTION ENGINE CLI                             ║
-    ║             Autonomous Agent Scenario Generator                ║
-    ╚════════════════════════════════════════════════════════════════╝
-    """
-    
     while True:
-        # Clear screen mainly for visual cleanliness, might not work everywhere
-        # print("\033c", end="")
+        print_header()
         
-        console.print(Panel(title, style="bold magenta", border_style="magenta", expand=False))
         menu_choices = [
             questionary.Choice("Generate New Scenario", value="1"),
             questionary.Choice("Browse Scenarios", value="2"),

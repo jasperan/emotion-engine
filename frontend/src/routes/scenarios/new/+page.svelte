@@ -35,6 +35,15 @@
 		location: 'shelter'
 	};
 
+	const traits: { key: 'openness' | 'conscientiousness' | 'extraversion' | 'agreeableness' | 'neuroticism' | 'risk_tolerance'; label: string; min: string; max: string }[] = [
+		{ key: 'openness', label: 'Openness', min: 'Reserved', max: 'Open' },
+		{ key: 'conscientiousness', label: 'Conscientiousness', min: 'Spontaneous', max: 'Organized' },
+		{ key: 'extraversion', label: 'Extraversion', min: 'Solitary', max: 'Outgoing' },
+		{ key: 'agreeableness', label: 'Agreeableness', min: 'Detached', max: 'Compassionate' },
+		{ key: 'neuroticism', label: 'Neuroticism', min: 'Confident', max: 'Sensitive' },
+		{ key: 'risk_tolerance', label: 'Risk Tolerance', min: 'Averse', max: 'Seeking' }
+	];
+
 	function addAgent() {
 		if (!newAgent.name) return;
 
@@ -326,78 +335,27 @@
 
 						<h5 class="font-medium text-storm-300 text-sm mt-4">Personality Traits (1-10)</h5>
 						<div class="grid grid-cols-2 gap-4">
-							<div>
-								<label for="trait-openness" class="label text-xs">Openness</label>
-								<input
-									id="trait-openness"
-									type="range"
-									bind:value={newPersona.openness}
-									min="1"
-									max="10"
-									class="w-full"
-								/>
-								<span class="text-xs text-storm-400">{newPersona.openness}</span>
-							</div>
-							<div>
-								<label for="trait-conscientiousness" class="label text-xs">Conscientiousness</label>
-								<input
-									id="trait-conscientiousness"
-									type="range"
-									bind:value={newPersona.conscientiousness}
-									min="1"
-									max="10"
-									class="w-full"
-								/>
-								<span class="text-xs text-storm-400">{newPersona.conscientiousness}</span>
-							</div>
-							<div>
-								<label for="trait-extraversion" class="label text-xs">Extraversion</label>
-								<input
-									id="trait-extraversion"
-									type="range"
-									bind:value={newPersona.extraversion}
-									min="1"
-									max="10"
-									class="w-full"
-								/>
-								<span class="text-xs text-storm-400">{newPersona.extraversion}</span>
-							</div>
-							<div>
-								<label for="trait-agreeableness" class="label text-xs">Agreeableness</label>
-								<input
-									id="trait-agreeableness"
-									type="range"
-									bind:value={newPersona.agreeableness}
-									min="1"
-									max="10"
-									class="w-full"
-								/>
-								<span class="text-xs text-storm-400">{newPersona.agreeableness}</span>
-							</div>
-							<div>
-								<label for="trait-neuroticism" class="label text-xs">Neuroticism</label>
-								<input
-									id="trait-neuroticism"
-									type="range"
-									bind:value={newPersona.neuroticism}
-									min="1"
-									max="10"
-									class="w-full"
-								/>
-								<span class="text-xs text-storm-400">{newPersona.neuroticism}</span>
-							</div>
-							<div>
-								<label for="trait-risk" class="label text-xs">Risk Tolerance</label>
-								<input
-									id="trait-risk"
-									type="range"
-									bind:value={newPersona.risk_tolerance}
-									min="1"
-									max="10"
-									class="w-full"
-								/>
-								<span class="text-xs text-storm-400">{newPersona.risk_tolerance}</span>
-							</div>
+							{#each traits as trait}
+								<div>
+									<div class="flex justify-between mb-1">
+										<label for="trait-{trait.key}" class="label text-xs mb-0">{trait.label}</label>
+										<span class="text-xs text-storm-400 font-mono" aria-hidden="true">{newPersona[trait.key]}/10</span>
+									</div>
+									<input
+										id="trait-{trait.key}"
+										type="range"
+										bind:value={newPersona[trait.key]}
+										min="1"
+										max="10"
+										class="w-full h-2 bg-storm-700 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-flood-500"
+										aria-valuetext="{newPersona[trait.key]} out of 10 ({trait.min} to {trait.max})"
+									/>
+									<div class="flex justify-between text-[10px] text-storm-500 px-1 mt-1">
+										<span>{trait.min}</span>
+										<span>{trait.max}</span>
+									</div>
+								</div>
+							{/each}
 						</div>
 					{/if}
 				</div>

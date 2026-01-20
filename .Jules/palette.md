@@ -25,3 +25,7 @@
 ## 2025-05-25 - Accessible Toggle Switches
 **Learning:** Static `div`s used as toggle switches are inaccessible and cannot be animated smoothly using `left`/`right` properties.
 **Action:** Replace with `<button role="switch">`, use `aria-checked`, and animate the knob using `translate-x` for smooth, GPU-accelerated transitions.
+
+## 2025-05-26 - Accessible Range Sliders
+**Learning:** `input type="range"` elements often lack context, presenting just a number to users who may not know the scale (e.g., 1-10) or its meaning (e.g., "Reserved" vs "Open").
+**Action:** Always provide visual labels for the minimum and maximum values of the scale. Use `aria-valuetext` to convey the current state descriptively (e.g., "5 out of 10 (Reserved to Open)") to screen reader users, and ensure the input has visible focus styles.

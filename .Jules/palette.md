@@ -21,3 +21,7 @@
 ## 2025-02-27 - Semantic Tables and Links
 **Learning:** Tables with repetitive links like "View" or "Edit" are a major accessibility barrier. A screen reader user navigating by links hears "View, View, View" without context.
 **Action:** Always include unique context in the `aria-label` for repetitive links (e.g., "View run 12345"). Also ensure visual progress bars have `role="progressbar"` and appropriate aria attributes so they aren't invisible to assistive tech.
+
+## 2025-05-25 - Accessible Toggle Switches
+**Learning:** Static `div`s used as toggle switches are inaccessible and cannot be animated smoothly using `left`/`right` properties.
+**Action:** Replace with `<button role="switch">`, use `aria-checked`, and animate the knob using `translate-x` for smooth, GPU-accelerated transitions.

@@ -29,3 +29,7 @@
 ## 2025-05-26 - Accessible Range Sliders
 **Learning:** `input type="range"` elements often lack context, presenting just a number to users who may not know the scale (e.g., 1-10) or its meaning (e.g., "Reserved" vs "Open").
 **Action:** Always provide visual labels for the minimum and maximum values of the scale. Use `aria-valuetext` to convey the current state descriptively (e.g., "5 out of 10 (Reserved to Open)") to screen reader users, and ensure the input has visible focus styles.
+
+## 2025-05-27 - Accessible Error Messages
+**Learning:** Dynamic error messages that appear below inputs are often missed by screen readers if they lack `role="alert"`. Users relying on assistive tech may not realize their submission failed.
+**Action:** Add `role="alert"` to the error message container. Link the input field to the error message using `aria-invalid="true"` and `aria-errormessage="error-id"` to ensure the error is announced immediately and associated with the control.

@@ -12,6 +12,7 @@
 
 	// New agent form state
 	let showAddAgent = false;
+	let addAgentError: string | null = null;
 	let newAgent: Partial<AgentTemplate> = {
 		role: 'human',
 		model_id: 'phi3',
@@ -45,7 +46,10 @@
 	];
 
 	function addAgent() {
-		if (!newAgent.name) return;
+		if (!newAgent.name) {
+			addAgentError = 'Name is required';
+			return;
+		}
 
 		const template: AgentTemplate = {
 			name: newAgent.name!,
@@ -84,6 +88,7 @@
 	}
 
 	function resetNewAgent() {
+		addAgentError = null;
 		newAgent = { role: 'human', model_id: 'phi3', provider: 'ollama' };
 		newPersona = {
 			age: 30,
@@ -257,8 +262,17 @@
 
 		<!-- Submit -->
 		<div class="flex gap-4">
-			<button type="submit" class="btn-primary flex-1" disabled={saving}>
-				{saving ? 'Creating...' : 'Create Scenario'}
+			<button
+				type="submit"
+				class="btn-primary flex-1 flex items-center justify-center gap-2"
+				disabled={saving}
+			>
+				{#if saving}
+					<div class="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin"></div>
+					Creating...
+				{:else}
+					Create Scenario
+				{/if}
 			</button>
 			<a href="/" class="btn-secondary">Cancel</a>
 		</div>
@@ -280,9 +294,17 @@
 								id="agent-name"
 								type="text"
 								bind:value={newAgent.name}
+								on:input={() => (addAgentError = null)}
 								class="input"
 								placeholder="e.g., Dr. Sarah Chen"
+								aria-invalid={!!addAgentError}
+								aria-errormessage="agent-name-error"
 							/>
+							{#if addAgentError}
+								<p id="agent-name-error" class="text-red-400 text-sm mt-1" role="alert">
+									{addAgentError}
+								</p>
+							{/if}
 						</div>
 						<div>
 							<label for="agent-role" class="label">Role</label>

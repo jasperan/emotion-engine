@@ -298,7 +298,7 @@
 								class="input"
 								placeholder="e.g., Dr. Sarah Chen"
 								aria-invalid={!!addAgentError}
-								aria-errormessage="agent-name-error"
+								aria-errormessage={addAgentError ? 'agent-name-error' : undefined}
 							/>
 							{#if addAgentError}
 								<p id="agent-name-error" class="text-red-400 text-sm mt-1" role="alert">

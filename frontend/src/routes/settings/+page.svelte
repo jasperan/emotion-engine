@@ -5,6 +5,37 @@
   let autoScroll = true;
   let compactView = false;
 
+  // Configuration state
+  let ollamaUrl = 'http://localhost:11434/v1';
+  let defaultModel = 'gemma3';
+
+  let saving: Record<string, boolean> = {};
+  type StatusMessage = { type: 'success' | 'error'; text: string } | null;
+  let statusMsg: Record<string, StatusMessage> = {};
+  let timeoutIds: Record<string, NodeJS.Timeout> = {};
+
+  async function saveConfig(field: string) {
+    saving[field] = true;
+    statusMsg[field] = null; // Clear previous message
+
+    if (timeoutIds[field]) {
+      clearTimeout(timeoutIds[field]);
+    }
+
+    // Simulate API delay
+    await new Promise(r => setTimeout(r, 800));
+
+    saving[field] = false;
+    statusMsg[field] = { type: 'success', text: 'Saved successfully' };
+
+    // Clear success message after 3s
+    timeoutIds[field] = setTimeout(() => {
+        if (statusMsg[field]?.type === 'success') {
+            statusMsg[field] = null;
+        }
+    }, 3000);
+  }
+
   onMount(() => {
     setHeader({ title: 'Settings' });
     return resetHeader;
@@ -28,19 +59,65 @@
                 <div class="space-y-2">
                     <label for="ollama-url" class="text-sm font-medium text-on-surface">Ollama Base URL</label>
                     <div class="flex gap-2">
-                        <input type="text" id="ollama-url" placeholder="http://localhost:11434/v1" class="input flex-1" value="http://localhost:11434/v1" />
-                        <button class="btn btn-secondary">Save</button>
+                        <input
+                            bind:value={ollamaUrl}
+                            type="text"
+                            id="ollama-url"
+                            placeholder="http://localhost:11434/v1"
+                            class="input flex-1"
+                        />
+                        <button
+                            class="btn btn-secondary min-w-[80px]"
+                            on:click={() => saveConfig('ollamaUrl')}
+                            disabled={saving['ollamaUrl']}
+                        >
+                            {#if saving['ollamaUrl']}
+                                <div class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mx-auto"></div>
+                            {:else}
+                                Save
+                            {/if}
+                        </button>
                     </div>
-                    <p class="text-[10px] text-on-surface/50">The endpoint for your Ollama instance (OpenAI-compatible).</p>
+                    <div class="flex justify-between items-start">
+                        <p class="text-[10px] text-on-surface/50">The endpoint for your Ollama instance (OpenAI-compatible).</p>
+                        {#if statusMsg['ollamaUrl']}
+                            <span role="alert" class="text-xs {statusMsg['ollamaUrl'].type === 'success' ? 'text-green-500' : 'text-red-500'} animate-in fade-in">
+                                {statusMsg['ollamaUrl'].text}
+                            </span>
+                        {/if}
+                    </div>
                 </div>
 
                 <div class="space-y-2">
                     <label for="default-model" class="text-sm font-medium text-on-surface">Default Model</label>
                     <div class="flex gap-2">
-                        <input type="text" id="default-model" placeholder="gemma3" class="input flex-1" value="gemma3" />
-                        <button class="btn btn-secondary">Save</button>
+                        <input
+                            bind:value={defaultModel}
+                            type="text"
+                            id="default-model"
+                            placeholder="gemma3"
+                            class="input flex-1"
+                        />
+                        <button
+                            class="btn btn-secondary min-w-[80px]"
+                            on:click={() => saveConfig('defaultModel')}
+                            disabled={saving['defaultModel']}
+                        >
+                             {#if saving['defaultModel']}
+                                <div class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mx-auto"></div>
+                            {:else}
+                                Save
+                            {/if}
+                        </button>
                     </div>
-                    <p class="text-[10px] text-on-surface/50">The model to use for simulations by default.</p>
+                    <div class="flex justify-between items-start">
+                         <p class="text-[10px] text-on-surface/50">The model to use for simulations by default.</p>
+                         {#if statusMsg['defaultModel']}
+                            <span role="alert" class="text-xs {statusMsg['defaultModel'].type === 'success' ? 'text-green-500' : 'text-red-500'} animate-in fade-in">
+                                {statusMsg['defaultModel'].text}
+                            </span>
+                        {/if}
+                    </div>
                 </div>
             </div>
         </section>

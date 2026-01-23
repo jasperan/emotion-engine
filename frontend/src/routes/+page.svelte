@@ -81,6 +81,8 @@
             placeholder="Ex: Create a scenario where 5 neighbors in a small town have to decide how to allocate a limited water supply during a drought..."
             disabled={isLoading}
             aria-label="Simulation prompt"
+            aria-invalid={error ? 'true' : undefined}
+            aria-errormessage={error ? 'prompt-error' : undefined}
          ></textarea>
          
          <div class="flex justify-between items-center px-4 pb-3">
@@ -96,14 +98,14 @@
                 {#if isLoading}
                   <div class="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
                 {:else}
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
+                  <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
                 {/if}
              </button>
          </div>
       </div>
       
       {#if error}
-         <div class="absolute -bottom-12 left-0 right-0 text-center text-red-400 text-sm">
+         <div id="prompt-error" role="alert" class="absolute -bottom-12 left-0 right-0 text-center text-red-400 text-sm">
             {error}
          </div>
       {/if}

@@ -214,3 +214,9 @@ docs/plans/
 .agent
 
 CLAUDE.md.Jules
+
+SYSTEM_DOCUMENTATION.md.Jules
+SYSTEM_DOCUMENTATION.md
+# Jules-generated support documentation
+additional_context.md
+*.Jules

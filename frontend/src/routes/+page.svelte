@@ -1,7 +1,7 @@
 <script lang="ts">
   import { scenarios } from '$lib/api';
   import { goto } from '$app/navigation';
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import { setHeader, resetHeader } from '$lib/stores/header';
 
   let prompt = '';
@@ -9,8 +9,17 @@
   let error: string | null = null;
   let textareaElement: HTMLTextAreaElement;
 
-  function applySuggestion(text: string) {
+  function resize() {
+    if (textareaElement) {
+      textareaElement.style.height = 'auto';
+      textareaElement.style.height = textareaElement.scrollHeight + 'px';
+    }
+  }
+
+  async function applySuggestion(text: string) {
     prompt = text;
+    await tick();
+    resize();
     textareaElement?.focus();
   }
 
@@ -77,7 +86,8 @@
             bind:this={textareaElement}
             bind:value={prompt}
             on:keydown={handleKeydown}
-            class="w-full bg-transparent border-0 p-4 text-base text-on-background placeholder:text-on-surface/50 focus:ring-0 resize-none min-h-[120px]"
+            on:input={resize}
+            class="w-full bg-transparent border-0 p-4 text-base text-on-background placeholder:text-on-surface/50 focus:ring-0 resize-none min-h-[120px] max-h-[50vh]"
             placeholder="Ex: Create a scenario where 5 neighbors in a small town have to decide how to allocate a limited water supply during a drought..."
             disabled={isLoading}
             aria-label="Simulation prompt"

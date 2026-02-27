@@ -1,9 +1,9 @@
 # EmotionSim - Multi-Agent Simulation System
 
-![Status](https://img.shields.io/badge/Status-Active-success)
-![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)
-![License](https://img.shields.io/badge/License-MIT-green)
-![Code Style](https://img.shields.io/badge/Code%20Style-Black-000000.svg)
+![Status](https://img.shields.io/badge/Status-Active-success?style=for-the-badge)
+![Python](https://img.shields.io/badge/Python-3.11+-blue.svg?style=for-the-badge)
+![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+![Code Style](https://img.shields.io/badge/Code%20Style-Black-000000.svg?style=for-the-badge)
 
 > **"The Great Flood" in your terminal.**
 > A local-first multi-agent simulation system for running complex disaster scenarios with diverse human personas.
@@ -207,3 +207,12 @@ MIT License - see LICENSE file for details.
 ## Acknowledgments
 
 Inspired by the Emotion Engine concept from Netflix's "The Great Flood" - where AI agents run through thousands of disaster simulations to develop emotional intelligence and moral reasoning.
+
+---
+
+<div align="center">
+
+[![GitHub](https://img.shields.io/badge/GitHub-jasperan-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/jasperan)&nbsp;
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-jasperan-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/jasperan/)
+
+</div>

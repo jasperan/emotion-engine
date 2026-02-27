@@ -4,6 +4,7 @@
 ![Python](https://img.shields.io/badge/Python-3.11+-blue.svg?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 ![Code Style](https://img.shields.io/badge/Code%20Style-Black-000000.svg?style=for-the-badge)
+![Ollama](https://img.shields.io/badge/backend-Ollama-black?style=for-the-badge)
 
 > **"The Great Flood" in your terminal.**
 > A local-first multi-agent simulation system for running complex disaster scenarios with diverse human personas.

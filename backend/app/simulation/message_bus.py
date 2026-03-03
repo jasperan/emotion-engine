@@ -189,6 +189,37 @@ class MessageBus:
         
         return message
     
+    def send_acp_message(self, acp_msg, step_index: int = 0):
+        """Bridge method: convert ACPMessage to internal format and route."""
+        content = acp_msg.payload.get("content", "")
+        sender_name = acp_msg.sender.name
+
+        if acp_msg.channel == "direct" and acp_msg.recipient:
+            return self.send_direct(
+                from_agent_id=sender_name,
+                to_agent_id=acp_msg.recipient,
+                content=content,
+                step_index=step_index,
+                metadata={"acp_msg_type": acp_msg.msg_type, "acp_id": acp_msg.id},
+            )
+        elif acp_msg.channel == "broadcast":
+            return self.broadcast(
+                from_agent_id=sender_name,
+                content=content,
+                step_index=step_index,
+                metadata={"acp_msg_type": acp_msg.msg_type, "acp_id": acp_msg.id},
+            )
+        elif acp_msg.channel.startswith("room:"):
+            room_name = acp_msg.channel.split(":", 1)[1]
+            return self.send_to_room(
+                from_agent_id=sender_name,
+                room_name=room_name,
+                content=content,
+                step_index=step_index,
+                metadata={"acp_msg_type": acp_msg.msg_type, "acp_id": acp_msg.id},
+            )
+        return None
+
     def system_message(
         self,
         content: str,

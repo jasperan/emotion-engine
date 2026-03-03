@@ -8,6 +8,7 @@ from app.llm.base import LLMMessage, LLMResponse
 from app.llm.router import LLMRouter
 from app.schemas.agent import AgentResponse, AgentAction, AgentMessage
 from app.agents.memory import AgentMemory
+from app.acp.message import AgentIdentity, PersonalityProfile
 
 
 class Agent(ABC):
@@ -106,6 +107,29 @@ class Agent(ABC):
         
         return "\n".join(context_parts)
     
+    def get_acp_identity(self) -> AgentIdentity:
+        """Create an ACP AgentIdentity from this agent's state."""
+        personality = None
+        if hasattr(self, 'persona') and self.persona:
+            personality = PersonalityProfile(
+                openness=getattr(self.persona, 'openness', 5),
+                conscientiousness=getattr(self.persona, 'conscientiousness', 5),
+                extraversion=getattr(self.persona, 'extraversion', 5),
+                agreeableness=getattr(self.persona, 'agreeableness', 5),
+                neuroticism=getattr(self.persona, 'neuroticism', 5),
+                risk_tolerance=getattr(self.persona, 'risk_tolerance', 5),
+                empathy_level=getattr(self.persona, 'empathy_level', 5),
+                leadership=getattr(self.persona, 'leadership', 5),
+                stress=getattr(self.persona, 'stress_level', 0),
+                confidence=0.5,
+            )
+        return AgentIdentity(
+            name=self.name,
+            role=getattr(self, 'role', 'human_sim'),
+            personality=personality,
+            capabilities=getattr(self.persona, 'skills', []) if hasattr(self, 'persona') and self.persona else [],
+        )
+
     def update_arrival_context(
         self,
         location: str,

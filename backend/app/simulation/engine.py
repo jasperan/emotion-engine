@@ -18,6 +18,9 @@ from app.models.agent import AgentModel
 from app.models.step import Step
 from app.models.message import Message, MessageType
 from app.schemas.persona import Persona
+from app.acp.registry import AgentRegistry
+from app.acp.coordination import CoordinationController
+from app.agents.voting_mixin import GroupDecisionMixin
 
 
 class SimulationState(str, Enum):
@@ -80,7 +83,12 @@ class SimulationEngine:
         self._stop_requested = False
         self._pause_requested = False
         self._step_event = asyncio.Event()
-    
+
+        # ACP components
+        self.acp_registry = AgentRegistry()
+        self.acp_coordination = CoordinationController(level="moderate")
+        self.group_voting = GroupDecisionMixin()
+
     async def load_from_db(self) -> None:
         """Load simulation state from database for resumption"""
         self.state = SimulationState.INITIALIZING
@@ -127,7 +135,8 @@ class SimulationEngine:
                 
             self.agents[agent.id] = agent
             self.message_bus.register_agent(agent.id, agent.name)
-            
+            self.acp_registry.register(agent.get_acp_identity())
+
             # Restore location tracking
             location = agent.dynamic_state.get("location", "unknown")
             self._agent_locations[agent.id] = location
@@ -203,7 +212,8 @@ class SimulationEngine:
             agent = self._create_agent(template)
             self.agents[agent.id] = agent
             self.message_bus.register_agent(agent.id, agent.name)
-            
+            self.acp_registry.register(agent.get_acp_identity())
+
             # Initialize agent location in conversation manager
             agent_location = agent.dynamic_state.get("location", "unknown")
             self._agent_locations[agent.id] = agent_location

@@ -1,5 +1,5 @@
 import time
-from .message import AgentIdentity
+from .message import AgentIdentity, AgentStatus
 
 
 class AgentRegistry:
@@ -13,7 +13,7 @@ class AgentRegistry:
         self.agents.pop(name, None)
 
     def get_active(self) -> list[AgentIdentity]:
-        return [a for a in self.agents.values() if a.status == "active"]
+        return [a for a in self.agents.values() if a.status == AgentStatus.ACTIVE]
 
     def get_by_role(self, role: str) -> list[AgentIdentity]:
         return [a for a in self.agents.values() if a.role == role]

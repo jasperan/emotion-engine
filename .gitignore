@@ -226,4 +226,13 @@ additional_context.md
 
 # Dogfood / QA output
 dogfood-output/
+dogfood-output-*/
 .playwright-mcp/
+
+
+# OpenCode-generated documentation (local reference only)
+TESTING_REPORT.md
+TESTING_REVIEW_SUMMARY.md
+AGENT_HARNESS_ANNEX.md
+SKILLS_EXECUTION_SUMMARY.md
+FRONTEND_DESIGN_REVIEW.md

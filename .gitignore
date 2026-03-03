@@ -223,3 +223,7 @@ SYSTEM_DOCUMENTATION.md
 # Jules-generated support documentation
 additional_context.md
 *.Jules
+
+# Dogfood / QA output
+dogfood-output/
+.playwright-mcp/

@@ -8,16 +8,20 @@
 	let loading = true;
 	let error: string | null = null;
 
-	onMount(async () => {
+	onMount(() => {
 		setHeader({ title: 'Library' });
-		try {
-			[scenarioList, runList] = await Promise.all([scenarios.list(), runs.list()]);
-		} catch (e) {
-			error = e instanceof Error ? e.message : 'Failed to load data';
-		} finally {
-			loading = false;
+
+		async function loadData() {
+			try {
+				[scenarioList, runList] = await Promise.all([scenarios.list(), runs.list()]);
+			} catch (e) {
+				error = e instanceof Error ? e.message : 'Failed to load data';
+			} finally {
+				loading = false;
+			}
 		}
 
+		loadData();
 		return () => resetHeader();
 	});
 
@@ -56,9 +60,9 @@
 	<div class="card bg-gradient-to-br from-storm-900/80 to-flood-950/50 border-flood-700/30">
 		<div class="flex items-center gap-6">
 			<div
-				class="w-20 h-20 bg-gradient-to-br from-flood-400 to-storm-600 rounded-2xl flex items-center justify-center shadow-xl animate-float"
+				class="w-20 h-20 bg-gradient-to-br from-flood-400 to-storm-600 rounded-2xl flex items-center justify-center shadow-xl"
 			>
-				<span class="text-4xl">🌊</span>
+				<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/></svg>
 			</div>
 			<div>
 				<h1 class="text-3xl font-display font-bold mb-2">Emotion Engine</h1>
@@ -74,15 +78,22 @@
 	<section>
 		<div class="flex items-center justify-between mb-4">
 			<h2 class="text-xl font-display font-semibold">Scenarios</h2>
-			<a href="/scenarios/new" class="btn-primary text-sm">+ Create Scenario</a>
+			<a href="/scenarios/new" class="btn btn-primary text-sm">+ Create Scenario</a>
 		</div>
 
 		{#if loading}
-			<div class="card text-center py-12">
-				<div
-					class="w-8 h-8 border-2 border-flood-500 border-t-transparent rounded-full animate-spin mx-auto"
-				></div>
-				<p class="text-storm-400 mt-4">Loading scenarios...</p>
+			<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+				{#each Array(3) as _}
+					<div class="card space-y-3">
+						<div class="skeleton h-5 w-3/4"></div>
+						<div class="skeleton h-4 w-full"></div>
+						<div class="skeleton h-4 w-1/2"></div>
+						<div class="flex justify-between mt-4">
+							<div class="skeleton h-3 w-16"></div>
+							<div class="skeleton h-3 w-20"></div>
+						</div>
+					</div>
+				{/each}
 			</div>
 		{:else if error}
 			<div class="card border-red-500/30 bg-red-900/10">
@@ -98,7 +109,7 @@
 				{#each scenarioList as scenario}
 					<a
 						href="/scenarios/{scenario.id}"
-						class="card hover:border-flood-500/50 transition-all hover:shadow-lg hover:shadow-flood-500/10"
+						class="card-interactive block"
 					>
 						<h3 class="text-lg font-semibold font-display mb-2">{scenario.name}</h3>
 						<p class="text-sm text-storm-400 mb-3 line-clamp-2">
@@ -136,7 +147,7 @@
 					</thead>
 					<tbody class="divide-y divide-storm-700/30">
 						{#each runList.slice(0, 10) as run}
-							<tr class="hover:bg-storm-800/30">
+							<tr class="hover:bg-storm-800/30 cursor-pointer transition-colors" on:click={() => window.location.href = `/runs/${run.id}`}>
 								<td class="px-4 py-3">
 									<span class="font-mono text-sm text-storm-300">{run.id.slice(0, 8)}...</span>
 								</td>

@@ -13,30 +13,33 @@
 
 	$: scenarioId = $page.params.id as string;
 
-	onMount(async () => {
-		try {
-			[scenario, runList] = await Promise.all([
-				scenarios.get(scenarioId),
-				runs.list(scenarioId)
-			]);
+	onMount(() => {
+		async function loadScenario() {
+			try {
+				[scenario, runList] = await Promise.all([
+					scenarios.get(scenarioId),
+					runs.list(scenarioId)
+				]);
 
-			if (scenario) {
-				setHeader({
-					title: 'Scenario Detail',
-					breadcrumb: [
-						{ label: 'Library', href: '/library' }
-					],
-					actions: [
-						{ label: '▶ Start Run', primary: true, onclick: createRun }
-					]
-				});
+				if (scenario) {
+					setHeader({
+						title: 'Scenario Detail',
+						breadcrumb: [
+							{ label: 'Library', href: '/library' }
+						],
+						actions: [
+							{ label: 'Start Run', primary: true, onclick: createRun }
+						]
+					});
+				}
+			} catch (e) {
+				error = e instanceof Error ? e.message : 'Failed to load scenario';
+			} finally {
+				loading = false;
 			}
-		} catch (e) {
-			error = e instanceof Error ? e.message : 'Failed to load scenario';
-		} finally {
-			loading = false;
 		}
 
+		loadScenario();
 		return () => resetHeader();
 	});
 
@@ -86,9 +89,22 @@
 </svelte:head>
 
 {#if loading}
-	<div class="card text-center py-12">
-		<div class="w-8 h-8 border-2 border-flood-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-		<p class="text-storm-400 mt-4">Loading scenario...</p>
+	<div class="space-y-8 max-w-7xl mx-auto">
+		<div class="border-b border-outline/20 pb-6 space-y-3">
+			<div class="skeleton h-8 w-1/2"></div>
+			<div class="skeleton h-5 w-3/4"></div>
+		</div>
+		<div class="grid lg:grid-cols-4 gap-8">
+			<div class="skeleton h-48 rounded-xl"></div>
+			<div class="lg:col-span-3 space-y-4">
+				<div class="skeleton h-6 w-40"></div>
+				<div class="grid sm:grid-cols-2 gap-4">
+					{#each Array(4) as _}
+						<div class="skeleton h-24 rounded-xl"></div>
+					{/each}
+				</div>
+			</div>
+		</div>
 	</div>
 {:else if error}
 	<div class="card border-red-500/30 bg-red-900/10">

@@ -63,17 +63,20 @@
 		}
 	}
 
-	onMount(async () => {
-		try {
-			await refreshData();
-			websocket.connect(runId);
-			updateHeader();
-		} catch (e) {
-			error = e instanceof Error ? e.message : 'Failed to load run';
-		} finally {
-			loading = false;
+	onMount(() => {
+		async function init() {
+			try {
+				await refreshData();
+				websocket.connect(runId);
+				updateHeader();
+			} catch (e) {
+				error = e instanceof Error ? e.message : 'Failed to load run';
+			} finally {
+				loading = false;
+			}
 		}
 
+		init();
 		return () => resetHeader();
 	});
 
@@ -113,11 +116,22 @@
 </svelte:head>
 
 {#if loading}
-	<div class="card text-center py-12">
-		<div
-			class="w-8 h-8 border-2 border-flood-500 border-t-transparent rounded-full animate-spin mx-auto"
-		></div>
-		<p class="text-storm-400 mt-4">Loading run...</p>
+	<div class="space-y-6 max-w-7xl mx-auto">
+		<div class="border-b border-outline/20 pb-4">
+			<div class="skeleton h-7 w-64"></div>
+		</div>
+		<div class="grid lg:grid-cols-3 gap-6">
+			<div class="space-y-6">
+				<div class="skeleton h-44 rounded-xl"></div>
+				<div class="skeleton h-32 rounded-xl"></div>
+				{#each Array(3) as _}
+					<div class="skeleton h-28 rounded-xl"></div>
+				{/each}
+			</div>
+			<div class="lg:col-span-2">
+				<div class="skeleton h-[500px] rounded-xl"></div>
+			</div>
+		</div>
 	</div>
 {:else if error}
 	<div class="card border-red-500/30 bg-red-900/10">

@@ -6,29 +6,53 @@
 	body {
 		background-color: theme('colors.background');
 		color: theme('colors.on-background');
-		@apply font-sans antialiased;
+		@apply font-sans antialiased leading-relaxed;
+	}
+
+	/* Respect reduced motion preferences */
+	@media (prefers-reduced-motion: reduce) {
+		*,
+		*::before,
+		*::after {
+			animation-duration: 0.01ms !important;
+			animation-iteration-count: 1 !important;
+			transition-duration: 0.01ms !important;
+			scroll-behavior: auto !important;
+		}
 	}
 }
 
 @layer components {
 	.btn {
-		@apply inline-flex items-center justify-center rounded-lg px-4 py-2 font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+		@apply inline-flex items-center justify-center rounded-lg px-4 py-2 font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background;
 	}
 
 	.btn-primary {
-		@apply bg-flood-500 hover:bg-flood-400 text-white shadow-lg shadow-flood-500/25;
+		@apply bg-flood-500 hover:bg-flood-400 text-white shadow-lg shadow-flood-500/25 active:scale-[0.98];
 	}
 
 	.btn-secondary {
-		@apply bg-storm-700 hover:bg-storm-600 text-white;
+		@apply bg-storm-700 hover:bg-storm-600 text-white active:scale-[0.98];
+	}
+
+	.btn-danger {
+		@apply bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-500/20 active:scale-[0.98];
+	}
+
+	.btn-ghost {
+		@apply bg-transparent hover:bg-surface-alt text-on-surface hover:text-on-background;
 	}
 
 	.card {
-		@apply bg-storm-800/50 backdrop-blur-sm border border-storm-700/50 rounded-xl p-6;
+		@apply bg-storm-800/50 backdrop-blur-sm border border-storm-700/50 rounded-xl p-6 transition-colors duration-200;
+	}
+
+	.card-interactive {
+		@apply card cursor-pointer hover:border-flood-500/40 hover:bg-storm-800/70 hover:shadow-lg hover:shadow-flood-500/5;
 	}
 
 	.input {
-		@apply w-full px-4 py-2 bg-storm-800 border border-storm-600 rounded-lg text-white placeholder-storm-400 focus:outline-none focus:ring-2 focus:ring-flood-500 focus:border-transparent;
+		@apply w-full px-4 py-2.5 bg-storm-800 border border-storm-600 rounded-lg text-white placeholder-storm-400 focus:outline-none focus:ring-2 focus:ring-flood-500 focus:border-transparent transition-all duration-200;
 	}
 
 	.label {
@@ -54,4 +78,41 @@
 	.badge-info {
 		@apply bg-flood-500/20 text-flood-400 border border-flood-500/30;
 	}
+
+	/* Skeleton loading animation */
+	.skeleton {
+		@apply bg-storm-700/50 rounded animate-pulse;
+	}
+
+	.skeleton-text {
+		@apply skeleton h-4 w-full;
+	}
+
+	.skeleton-card {
+		@apply skeleton rounded-xl p-6 h-40;
+	}
+}
+
+@layer utilities {
+	/* Fade in animation */
+	@keyframes fadeIn {
+		from { opacity: 0; transform: translateY(8px); }
+		to { opacity: 1; transform: translateY(0); }
+	}
+
+	.animate-fade-in {
+		animation: fadeIn 0.4s ease-out forwards;
+	}
+
+	/* Staggered children animation */
+	.stagger-children > * {
+		opacity: 0;
+		animation: fadeIn 0.3s ease-out forwards;
+	}
+	.stagger-children > *:nth-child(1) { animation-delay: 0.05s; }
+	.stagger-children > *:nth-child(2) { animation-delay: 0.1s; }
+	.stagger-children > *:nth-child(3) { animation-delay: 0.15s; }
+	.stagger-children > *:nth-child(4) { animation-delay: 0.2s; }
+	.stagger-children > *:nth-child(5) { animation-delay: 0.25s; }
+	.stagger-children > *:nth-child(6) { animation-delay: 0.3s; }
 }

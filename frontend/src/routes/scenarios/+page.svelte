@@ -8,15 +8,20 @@
   let isLoading = true;
   let error: string | null = null;
 
-  onMount(async () => {
-    setHeader({ title: 'Library' }); // or Scenarios
-    try {
-      scenariosList = await scenarios.list();
-    } catch (e) {
-      error = e instanceof Error ? e.message : 'Failed to load scenarios';
-    } finally {
-      isLoading = false;
+  onMount(() => {
+    setHeader({ title: 'Scenarios' });
+
+    async function loadScenarios() {
+      try {
+        scenariosList = await scenarios.list();
+      } catch (e) {
+        error = e instanceof Error ? e.message : 'Failed to load scenarios';
+      } finally {
+        isLoading = false;
+      }
     }
+
+    loadScenarios();
     return () => resetHeader();
   });
 
@@ -51,8 +56,24 @@
   </div>
 
   {#if isLoading}
-    <div class="flex justify-center items-center h-64">
-      <div class="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {#each Array(6) as _}
+        <div class="bg-surface border border-outline/30 rounded-xl p-6 space-y-4">
+          <div class="flex justify-between items-start">
+            <div class="skeleton w-12 h-12 rounded-lg"></div>
+            <div class="skeleton h-5 w-16 rounded-full"></div>
+          </div>
+          <div class="skeleton h-5 w-3/4"></div>
+          <div class="space-y-2">
+            <div class="skeleton h-4 w-full"></div>
+            <div class="skeleton h-4 w-2/3"></div>
+          </div>
+          <div class="flex gap-3 mt-4">
+            <div class="skeleton h-9 flex-1 rounded-lg"></div>
+            <div class="skeleton h-9 w-9 rounded-lg"></div>
+          </div>
+        </div>
+      {/each}
     </div>
   {:else if error}
     <div class="p-6 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-center">
@@ -73,7 +94,7 @@
   {:else}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {#each scenariosList as scenario}
-        <div class="group relative bg-surface hover:bg-surface-alt/50 border border-outline/30 hover:border-accent-blue/30 rounded-xl p-6 transition-all duration-300 hover:shadow-xl hover:shadow-accent-blue/5">
+        <div class="group relative bg-surface hover:bg-surface-alt/50 border border-outline/30 hover:border-accent-blue/30 rounded-xl p-6 transition-all duration-300 hover:shadow-xl hover:shadow-accent-blue/5 cursor-pointer">
           <div class="absolute inset-0 bg-gradient-to-br from-accent-blue/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl pointer-events-none"></div>
           
           <div class="relative z-10">

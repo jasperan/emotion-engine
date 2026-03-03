@@ -114,14 +114,17 @@
   <!-- Suggestions / Chips -->
   {#if !isLoading && !prompt}
   <div class="mt-8 flex flex-wrap justify-center gap-3 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-100">
-      <button on:click={() => applySuggestion("Disaster Strike: A flash flood hits a coastal village.")} class="px-4 py-2 rounded-xl bg-surface-alt/50 border border-outline/30 text-sm text-on-surface hover:bg-surface-alt hover:border-outline/60 transition-colors text-left">
-          🌊 Flash Flood
+      <button on:click={() => applySuggestion("Disaster Strike: A flash flood hits a coastal village.")} class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surface-alt/50 border border-outline/30 text-sm text-on-surface hover:bg-surface-alt hover:border-accent-blue/30 hover:text-primary transition-all cursor-pointer">
+          <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-flood-400"><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/></svg>
+          Flash Flood
       </button>
-      <button on:click={() => applySuggestion("Mystery: Guests at a dinner party discover a theft.")} class="px-4 py-2 rounded-xl bg-surface-alt/50 border border-outline/30 text-sm text-on-surface hover:bg-surface-alt hover:border-outline/60 transition-colors text-left">
-          🕵️ Dinner Party Mystery
+      <button on:click={() => applySuggestion("Mystery: Guests at a dinner party discover a theft.")} class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surface-alt/50 border border-outline/30 text-sm text-on-surface hover:bg-surface-alt hover:border-accent-purple/30 hover:text-accent-purple transition-all cursor-pointer">
+          <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-accent-purple"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          Dinner Party Mystery
       </button>
-       <button on:click={() => applySuggestion("Negotiation: Three companies bidding for a contract.")} class="px-4 py-2 rounded-xl bg-surface-alt/50 border border-outline/30 text-sm text-on-surface hover:bg-surface-alt hover:border-outline/60 transition-colors text-left">
-          🤝 Contract Negotiation
+       <button on:click={() => applySuggestion("Negotiation: Three companies bidding for a contract.")} class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surface-alt/50 border border-outline/30 text-sm text-on-surface hover:bg-surface-alt hover:border-accent-teal/30 hover:text-accent-teal transition-all cursor-pointer">
+          <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-accent-teal"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Contract Negotiation
       </button>
   </div>
   {/if}

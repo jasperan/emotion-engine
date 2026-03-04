@@ -2,11 +2,47 @@
 @tailwind components;
 @tailwind utilities;
 
+/* === Design System Variables === */
+:root {
+	/* Touch targets - minimum 44x44px */
+	--touch-min: 44px;
+	--touch-preferred: 48px;
+	
+	/* Focus states */
+	--focus-ring-width: 2px;
+	--focus-ring-offset: 2px;
+	--focus-ring-color: theme('colors.primary');
+	
+	/* Animation durations */
+	--duration-fast: 150ms;
+	--duration-normal: 200ms;
+	--duration-slow: 300ms;
+	
+	/* Z-index scale */
+	--z-dropdown: 10;
+	--z-sticky: 20;
+	--z-fixed: 30;
+	--z-modal-backdrop: 40;
+	--z-modal: 50;
+	--z-tooltip: 60;
+}
+
 @layer base {
 	body {
 		background-color: theme('colors.background');
 		color: theme('colors.on-background');
 		@apply font-sans antialiased leading-relaxed;
+	}
+	
+	/* Improve focus visibility for keyboard users */
+	:focus-visible {
+		outline: var(--focus-ring-width) solid var(--focus-ring-color);
+		outline-offset: var(--focus-ring-offset);
+	}
+	
+	/* Remove default focus for mouse users */
+	:focus:not(:focus-visible) {
+		outline: none;
 	}
 
 	/* Respect reduced motion preferences */
@@ -20,11 +56,28 @@
 			scroll-behavior: auto !important;
 		}
 	}
+	
+	/* Minimum touch target size */
+	button, 
+	[role="button"],
+	a,
+	input[type="checkbox"],
+	input[type="radio"],
+	select {
+		min-height: var(--touch-min);
+		min-width: var(--touch-min);
+	}
 }
 
 @layer components {
 	.btn {
-		@apply inline-flex items-center justify-center rounded-lg px-4 py-2 font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+		@apply inline-flex items-center justify-center rounded-lg px-4 py-2.5 font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
+		min-height: var(--touch-preferred);
+	}
+	
+	.btn:focus-visible {
+		outline: var(--focus-ring-width) solid var(--focus-ring-color);
+		outline-offset: var(--focus-ring-offset);
 	}
 
 	.btn-primary {
@@ -52,11 +105,22 @@
 	}
 
 	.input {
-		@apply w-full px-4 py-2.5 bg-storm-800 border border-storm-600 rounded-lg text-white placeholder-storm-400 focus:outline-none focus:ring-2 focus:ring-flood-500 focus:border-transparent transition-all duration-200;
+		@apply w-full px-4 py-2.5 bg-storm-800 border border-storm-600 rounded-lg text-white placeholder-storm-400 transition-all duration-200;
+		min-height: var(--touch-min);
+	}
+	
+	.input:focus {
+		@apply ring-2 ring-flood-500 border-transparent;
+		outline: none;
+	}
+	
+	.input:focus-visible {
+		outline: var(--focus-ring-width) solid var(--focus-ring-color);
+		outline-offset: var(--focus-ring-offset);
 	}
 
 	.label {
-		@apply block text-sm font-medium text-storm-300 mb-1;
+		@apply block text-sm font-medium text-storm-300 mb-1.5;
 	}
 
 	.badge {

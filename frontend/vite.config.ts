@@ -7,7 +7,7 @@ export default defineConfig({
 		host: true, // Enable access from outside (equivalent to --host flag)
 		proxy: {
 			'/api': {
-				target: 'http://localhost:8000',
+				target: 'http://localhost:8001',
 				changeOrigin: true
 			}
 		}

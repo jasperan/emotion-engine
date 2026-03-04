@@ -236,3 +236,11 @@ TESTING_REVIEW_SUMMARY.md
 AGENT_HARNESS_ANNEX.md
 SKILLS_EXECUTION_SUMMARY.md
 FRONTEND_DESIGN_REVIEW.md
+
+# Generated documentation
+docs/plans/
+docs/*.md
+!docs/README.md
+*_FEATURES.md
+*_ENHANCEMENTS.md
+*_REPORT.md

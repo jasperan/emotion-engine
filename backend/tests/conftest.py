@@ -55,6 +55,7 @@ def mock_llm_client() -> LLMClient:
         max_tokens: int = 1024,
         system: str | None = None,
         json_mode: bool = False,
+        stream_callback=None,
     ) -> LLMResponse:
         # Return a mock structured response
         return LLMResponse(

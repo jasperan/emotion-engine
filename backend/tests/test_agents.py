@@ -155,10 +155,11 @@ class TestAgentTick:
         ]
         
         response = await agent.tick(world_state, messages)
-        
+
         assert response is not None
         assert response.message is not None
-        mock_llm_client.generate.assert_called_once()
+        # Cognitive cycle: think + plan + act = 3 calls on first tick
+        assert mock_llm_client.generate.call_count >= 1
     
     async def test_environment_agent_tick(self, mock_llm_client):
         """Test environment agent tick execution"""

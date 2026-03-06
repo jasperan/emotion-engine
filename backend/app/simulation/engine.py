@@ -87,6 +87,9 @@ class SimulationEngine:
         # Failed movement tracking (reset each step to prevent retry loops)
         self._agent_failed_movements: dict[str, set[str]] = {}
 
+        # Hop distance cache (cleared each step)
+        self._hop_cache: dict[tuple[str, str], int] = {}
+
         # Control
         self._stop_requested = False
         self._pause_requested = False
@@ -413,6 +416,9 @@ class SimulationEngine:
         # Reset failed movement cache for this step
         self._agent_failed_movements.clear()
 
+        # Reset hop distance cache for this step
+        self._hop_cache = {}
+
         # Reset conversation counters for this step
         self.conversation_manager.reset_step_counters()
 
@@ -513,7 +519,54 @@ class SimulationEngine:
                 **agent.dynamic_state,
             }
         self.world_state["agents"] = agents_state
-    
+
+    def _calculate_hop_distance(self, agent_id_1: str, agent_id_2: str) -> int:
+        """Calculate hop distance between two agents using BFS. Cached per step."""
+        cache_key = tuple(sorted((agent_id_1, agent_id_2)))
+        if cache_key in self._hop_cache:
+            return self._hop_cache[cache_key]
+
+        loc1 = self._agent_locations.get(agent_id_1)
+        loc2 = self._agent_locations.get(agent_id_2)
+
+        if loc1 is None or loc2 is None:
+            self._hop_cache[cache_key] = 99
+            return 99
+
+        if loc1 == loc2:
+            self._hop_cache[cache_key] = 0
+            return 0
+
+        # BFS from loc1 to loc2
+        from collections import deque
+        locations = self.world_state.get("locations", {})
+        visited: set[str] = {loc1}
+        queue: deque[tuple[str, int]] = deque([(loc1, 0)])
+
+        while queue:
+            current, dist = queue.popleft()
+            for neighbor in locations.get(current, {}).get("nearby", []):
+                if neighbor == loc2:
+                    result = dist + 1
+                    self._hop_cache[cache_key] = result
+                    return result
+                if neighbor not in visited:
+                    visited.add(neighbor)
+                    queue.append((neighbor, dist + 1))
+
+        self._hop_cache[cache_key] = 99
+        return 99
+
+    def _get_comm_zone(self, sender_id: str, receiver_id: str) -> str:
+        """Get communication zone: 'same', 'adjacent', or 'distant'."""
+        hops = self._calculate_hop_distance(sender_id, receiver_id)
+        if hops == 0:
+            return "same"
+        elif hops == 1:
+            return "adjacent"
+        else:
+            return "distant"
+
     async def _process_agents_sequentially(
         self,
         step_actions: list[dict[str, Any]],

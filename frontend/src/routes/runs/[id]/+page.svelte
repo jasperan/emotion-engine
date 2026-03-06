@@ -35,6 +35,12 @@
 			if (stepMessages.length > 0) {
 				messages = [...messages, ...stepMessages];
 			}
+
+			// Cap message accumulation
+			const MAX_MESSAGES = 500;
+			if (messages.length > MAX_MESSAGES) {
+				messages = messages.slice(-MAX_MESSAGES);
+			}
 		} else if (event.event === 'run_completed' || event.event === 'run_stopped') {
 			if (run) {
 				run.status = event.event === 'run_completed' ? 'completed' : 'cancelled';

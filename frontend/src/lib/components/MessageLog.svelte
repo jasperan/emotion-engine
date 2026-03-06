@@ -4,6 +4,12 @@
 	export let messages: Message[] = [];
 	export let agents: Agent[] = [];
 
+	const WINDOW_SIZE = 50;
+	let showAll = false;
+
+	$: visibleMessages = showAll ? messages : messages.slice(-WINDOW_SIZE);
+	$: hasMore = messages.length > WINDOW_SIZE && !showAll;
+
 	function getAgentName(agentId: string | null): string {
 		if (!agentId) return 'System';
 		const agent = agents.find((a) => a.id === agentId);
@@ -47,7 +53,15 @@
 				<p>No messages yet. Start the simulation to see agent interactions.</p>
 			</div>
 		{:else}
-			{#each messages as message}
+			{#if hasMore}
+				<button
+					class="w-full text-center py-2 text-sm text-flood-400 hover:text-flood-300 bg-storm-800/30 rounded-lg border border-storm-700/30 transition-colors"
+					on:click={() => (showAll = true)}
+				>
+					Load earlier ({messages.length - WINDOW_SIZE} more)
+				</button>
+			{/if}
+			{#each visibleMessages as message}
 				<div class="border-l-2 {getMessageTypeColor(message.message_type)} p-3 rounded-r-lg">
 					<div class="flex items-start justify-between mb-1">
 						<div class="flex items-center gap-2">

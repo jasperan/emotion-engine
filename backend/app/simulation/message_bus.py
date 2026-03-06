@@ -3,6 +3,8 @@ from typing import Any, Callable
 from datetime import datetime
 from collections import defaultdict
 
+from app.simulation.alias_registry import AliasRegistry
+
 
 class MessageBus:
     """
@@ -29,6 +31,9 @@ class MessageBus:
         # Agent names for display
         self._agent_names: dict[str, str] = {}
         
+        # Alias registry for name resolution
+        self.alias_registry = AliasRegistry()
+
         # Event callbacks
         self._on_message_callbacks: list[Callable[[dict[str, Any]], None]] = []
     
@@ -38,12 +43,14 @@ class MessageBus:
         self._agent_queues[agent_id] = []
         if agent_name:
             self._agent_names[agent_id] = agent_name
+            self.alias_registry.register(agent_id, agent_name)
     
     def unregister_agent(self, agent_id: str) -> None:
         """Unregister an agent from the message bus"""
         self._all_agents.discard(agent_id)
         self._agent_queues.pop(agent_id, None)
         self._agent_names.pop(agent_id, None)
+        self.alias_registry.unregister(agent_id)
         # Remove from all rooms
         for room in self._room_subscriptions.values():
             room.discard(agent_id)

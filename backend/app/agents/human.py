@@ -106,8 +106,10 @@ Available Actions:
 - drop: Drop an item from inventory (target = item name)
 - use: Use an item from inventory (target = item name)
 - interact: Interact with an object (target = object name, parameters: {{action: "open"|"search"|etc}})
+- explore: Explore the area to discover new nearby locations
 - search: Search the area for hidden items
 - wait: Do nothing this turn
+- start_conversation: Start a focused conversation with specific people (target = agent name)
 - join_conversation: Join a conversation with specific people
 - leave_conversation: Leave the current conversation
 - propose_task: Propose a task for others (parameters: description, priority, assigned_to)
@@ -123,11 +125,16 @@ Available Actions:
 - coordinate: Propose group coordination (parameters: description)
 - delegate_task: Delegate a task to a specific agent (target = agent name, parameters: description)
 
+MOVEMENT: You can ONLY move to locations listed in Nearby Locations. Use 'explore' to discover new areas.
+COMMUNICATION: Speak freely at your location. Nearby locations hear you faintly. Distant agents are hard to reach.
+CONVERSATIONS: Use start_conversation to talk with specific people. join_conversation to enter ongoing ones. leave_conversation to exit.
+COOPERATION: Use propose for agreements. delegate_task to assign work. coordinate to lead group efforts.
+
 Output your response as JSON:
 {{
     "actions": [
         {{
-            "action_type": "move|speak|help|take|drop|use|interact|search|wait|join_conversation|leave_conversation|propose|accept_proposal|reject_proposal|counter_propose|vouch_for|share_plan|coordinate|delegate_task",
+            "action_type": "move|speak|help|take|drop|use|interact|explore|search|wait|start_conversation|join_conversation|leave_conversation|propose|accept_proposal|reject_proposal|counter_propose|vouch_for|share_plan|coordinate|delegate_task",
             "target": "<target location/person/item>",
             "parameters": {{}}
         }}
@@ -163,6 +170,19 @@ IMPORTANT:
 - Share your plan with allies to build trust.
 - If you're a natural leader, use 'coordinate' and 'delegate_task' to organize group efforts."""
     
+    def _format_nearby(self, nearby: list[str], locations: dict[str, Any]) -> str:
+        """Format nearby locations with hazard status indicators."""
+        if not nearby:
+            return "None"
+        parts = []
+        for loc_name in nearby:
+            loc_data = locations.get(loc_name, {})
+            if loc_data.get("hazard_affected", False):
+                parts.append(f"{loc_name} (hazardous)")
+            else:
+                parts.append(f"{loc_name} (safe)")
+        return ", ".join(parts)
+
     def build_context(
         self,
         world_state: dict[str, Any],
@@ -221,7 +241,7 @@ Environment:
 - Your Location: {current_loc}
 - Location Status: {loc_info.get('description', 'Unknown area')}
 - People Here: {', '.join(agents_here) if agents_here else 'No one else'}
-- Nearby Locations: {loc_info.get('nearby', [])}
+- Nearby Locations: {self._format_nearby(loc_info.get('nearby', []), locations)}
 - Visible Items/Objects: {', '.join(visible_items) if visible_items else 'None visible'}
 """
 

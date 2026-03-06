@@ -2,6 +2,36 @@
 	import type { Agent } from '$lib/api';
 
 	export let agent: Agent;
+
+	// Big Five trait labels
+	const traitLabels: Record<string, string> = {
+		openness: 'Open',
+		conscientiousness: 'Conscientious',
+		extraversion: 'Extraverted',
+		agreeableness: 'Agreeable',
+		neuroticism: 'Neurotic',
+		risk_tolerance: 'Risk-taker',
+		empathy_level: 'Empathetic',
+		leadership: 'Leader'
+	};
+
+	// Get top personality traits (highest values)
+	function getTopTraits(persona: Record<string, unknown> | null, count = 3): { name: string; value: number }[] {
+		if (!persona) return [];
+		const traitKeys = Object.keys(traitLabels);
+		const traits = traitKeys
+			.filter((k) => typeof persona[k] === 'number')
+			.map((k) => ({ name: traitLabels[k], value: Number(persona[k]) }))
+			.sort((a, b) => b.value - a.value);
+		return traits.slice(0, count);
+	}
+
+	function truncate(text: string, maxLen = 120): string {
+		if (text.length <= maxLen) return text;
+		return text.slice(0, maxLen) + '...';
+	}
+
+	$: topTraits = getTopTraits(agent.persona);
 </script>
 
 <div class="card">
@@ -73,6 +103,38 @@
 					<span class="text-storm-200 text-xs">{agent.dynamic_state.location}</span>
 				</div>
 			{/if}
+		</div>
+	{/if}
+
+	{#if agent.current_plan}
+		<div class="mt-3 pt-3 border-t border-storm-700/30 space-y-1.5">
+			<div class="flex items-center gap-1.5 mb-1">
+				<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-flood-400"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+				<span class="text-xs font-semibold text-flood-400 uppercase tracking-wide">Current Plan</span>
+			</div>
+			<p class="text-sm text-storm-200">{agent.current_plan.goal}</p>
+			<div class="flex items-center justify-between text-xs">
+				<span class="text-storm-400">{agent.current_plan.step_progress}</span>
+				<span class="text-storm-500">deadline: step {agent.current_plan.deadline_step}</span>
+			</div>
+			<p class="text-xs text-storm-300">{agent.current_plan.current_step}</p>
+		</div>
+	{/if}
+
+	{#if agent.last_reasoning}
+		<div class="mt-3 pt-3 border-t border-storm-700/30">
+			<span class="text-xs font-semibold text-storm-400 uppercase tracking-wide">Last Reasoning</span>
+			<p class="text-xs text-storm-300 italic mt-1">{truncate(agent.last_reasoning)}</p>
+		</div>
+	{/if}
+
+	{#if topTraits.length > 0}
+		<div class="mt-3 pt-3 border-t border-storm-700/30 flex flex-wrap gap-1.5">
+			{#each topTraits as trait}
+				<span class="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 font-medium">
+					{trait.name}
+				</span>
+			{/each}
 		</div>
 	{/if}
 </div>

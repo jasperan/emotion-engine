@@ -18,6 +18,13 @@ export interface Run {
 	completed_at: string | null;
 }
 
+export interface AgentPlan {
+	goal: string;
+	current_step: string;
+	step_progress: string;
+	deadline_step: number;
+}
+
 export interface Agent {
 	id: string;
 	name: string;
@@ -27,6 +34,8 @@ export interface Agent {
 	persona: Record<string, unknown> | null;
 	dynamic_state: Record<string, unknown> | null;
 	is_active: boolean;
+	current_plan?: AgentPlan | null;
+	last_reasoning?: string | null;
 }
 
 export interface Message {

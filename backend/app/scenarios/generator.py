@@ -36,6 +36,15 @@ You MUST respond with valid JSON matching this exact structure:
           "observations": ["observation1", "observation2"]
         }
       },
+      "potential_locations": {
+        "hidden_location_name": {
+          "description": "A discoverable location not initially visible",
+          "nearby": ["connected_location"],
+          "items": ["useful_item"],
+          "hazard_affected": true/false,
+          "discovery_hints": ["keyword1", "keyword2", "keyword3"]
+        }
+      },
       "events": ["Initial event 1", "Initial event 2"]
     },
     "dynamics": {

@@ -280,6 +280,36 @@ def create_airplane_crash_scenario(num_agents: int = 10) -> ScenarioCreate:
                     ],
                 },
             },
+            "potential_locations": {
+                "wreckage_site": {
+                    "description": "The main fuselage wreckage, partially buried in a crater. The cockpit area is crushed but the midsection has a survivable void space.",
+                    "nearby": ["crash_site"],
+                    "items": ["emergency_radio", "first_aid_kit", "flight_manual"],
+                    "hazard_affected": True,
+                    "discovery_hints": ["wreckage", "fuselage", "plane", "cockpit", "cabin"],
+                },
+                "fuel_spill_zone": {
+                    "description": "A patch of ground soaked in aviation fuel, spreading from the left wing. Extremely flammable.",
+                    "nearby": ["crash_site", "perimeter"],
+                    "items": ["fuel_sample", "wing_fragment"],
+                    "hazard_affected": True,
+                    "discovery_hints": ["fuel", "spill", "leak", "chemical", "wing"],
+                },
+                "wooded_trail": {
+                    "description": "A trail through trees behind the residential area. Debris from the plane's approach path is scattered here.",
+                    "nearby": ["residential_area", "hilltop"],
+                    "items": ["engine_cowling", "luggage", "tree_damage_evidence"],
+                    "hazard_affected": False,
+                    "discovery_hints": ["trail", "woods", "trees", "forest", "debris", "path"],
+                },
+                "storm_drain": {
+                    "description": "A large storm drain running beneath the perimeter road. Could serve as a sheltered observation point.",
+                    "nearby": ["perimeter", "community_center"],
+                    "items": ["reflective_vest"],
+                    "hazard_affected": False,
+                    "discovery_hints": ["drain", "tunnel", "underground", "culvert", "pipe"],
+                },
+            },
             "events": [
                 "Small passenger plane crashed in Riverside neighborhood",
                 "Emergency services dispatched",

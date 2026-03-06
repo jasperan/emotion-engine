@@ -331,6 +331,36 @@ def create_mass_casualty_scenario(num_agents: int = 10) -> ScenarioCreate:
                     ],
                 },
             },
+            "potential_locations": {
+                "basement_access": {
+                    "description": "A service entrance leading to the building's basement level. Partially blocked by rubble but passable with effort.",
+                    "nearby": ["collapse_zone"],
+                    "items": ["utility_shutoff_valve", "emergency_lighting", "building_plans"],
+                    "hazard_affected": True,
+                    "discovery_hints": ["basement", "underground", "service", "utility", "lower"],
+                },
+                "parking_garage": {
+                    "description": "The multi-level parking garage adjacent to the collapsed building. Structurally damaged but the ground level may shelter survivors.",
+                    "nearby": ["collapse_zone", "perimeter"],
+                    "items": ["car_jack", "jumper_cables", "fire_extinguisher"],
+                    "hazard_affected": True,
+                    "discovery_hints": ["parking", "garage", "cars", "vehicles", "lot"],
+                },
+                "rooftop_helipad": {
+                    "description": "A rooftop helipad on the adjacent office building. Could serve as a helicopter landing zone for critical evacuations.",
+                    "nearby": ["command_post"],
+                    "items": ["signal_flares", "wind_sock"],
+                    "hazard_affected": False,
+                    "discovery_hints": ["rooftop", "helipad", "helicopter", "landing", "roof", "above"],
+                },
+                "alley_passage": {
+                    "description": "A narrow alley between the collapsed building and an adjacent structure. Provides alternative access to the east side of the collapse zone.",
+                    "nearby": ["safe_zone", "collapse_zone"],
+                    "items": ["ladder", "rope"],
+                    "hazard_affected": True,
+                    "discovery_hints": ["alley", "passage", "narrow", "side", "gap", "between"],
+                },
+            },
             "events": [
                 "Building partially collapsed at 10:47 AM",
                 "Initial evacuation saved 40+ people",

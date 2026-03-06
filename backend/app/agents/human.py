@@ -1,8 +1,11 @@
 """Human Agent - roleplays as a person with personality"""
 import random
-from typing import Any
+from typing import Any, Callable, Awaitable
 
 from app.agents.base import Agent
+from app.agents.cognitive_engine import CognitiveEngine, CognitivePhase
+from app.llm.base import LLMMessage
+from app.schemas.agent import AgentResponse
 from app.schemas.persona import Persona
 
 
@@ -304,6 +307,122 @@ You can move to a nearby location if you want to leave."""
         
         return context
     
+    async def tick(
+        self,
+        world_state: dict[str, Any],
+        messages: list[dict[str, Any]],
+        step_actions: list[dict[str, Any]] | None = None,
+        step_messages: list[dict[str, Any]] | None = None,
+        step_events: list[str] | None = None,
+        stream_callback: Callable[[str], Awaitable[None]] | None = None,
+    ) -> AgentResponse:
+        """
+        Execute one simulation tick using the cognitive cycle:
+        think -> plan -> act -> reflect.
+        """
+        # 1. Store incoming messages in memory (same as base)
+        for msg in messages:
+            self.add_to_memory({"type": "message", "data": msg})
+
+        # 2. Lazily initialize cognitive engine
+        if not hasattr(self, "_cognitive_engine"):
+            self._cognitive_engine = CognitiveEngine(self.persona)
+
+        # 3. Get intent memory and current step
+        intent = self.agent_memory.intent
+        current_step = world_state.get("current_step", 0)
+
+        # 4. Determine which cognitive phases to run
+        phases = self._cognitive_engine.determine_phases(intent, current_step)
+
+        # 5. THINK phase
+        assessment = None
+        if CognitivePhase.THINK in phases:
+            memory_context = self.get_conversation_context()
+            recent_msgs = [
+                f"{m.get('from_agent_name', 'Unknown')}: {m.get('content', '')}"
+                for m in messages
+            ]
+            assessment = await self._cognitive_engine.think(
+                world_state=str(world_state),
+                memory_context=memory_context,
+                recent_messages=recent_msgs,
+                llm_generate=self._llm_client.generate,
+            )
+
+        # 6. PLAN phase
+        if CognitivePhase.PLAN in phases:
+            # If deadline exceeded, abandon old plan
+            if intent.plan_deadline_exceeded(current_step):
+                intent.complete_plan("abandoned", "Deadline exceeded")
+
+            plan = await self._cognitive_engine.plan(
+                assessment=assessment or {},
+                intent=intent,
+                world_state=str(world_state),
+                llm_generate=self._llm_client.generate,
+                current_step=current_step,
+            )
+            intent.set_plan(plan)
+
+        # 7. ACT phase (always runs)
+        system_prompt = self.get_system_prompt()
+        context = self.build_context(
+            world_state, messages, step_actions, step_messages, step_events
+        )
+
+        # Prepend plan context
+        plan_context = intent.get_context_string()
+        if plan_context:
+            context = plan_context + "\n\n" + context
+
+        # Enforce current plan step if a plan exists
+        if intent.current_plan and intent.current_plan.current_step < len(intent.current_plan.steps):
+            step_desc = intent.current_plan.steps[intent.current_plan.current_step]
+            context += (
+                f"\n\nYOU MUST execute this plan step NOW: {step_desc}. "
+                "Do NOT just discuss it."
+            )
+
+        llm_messages = [LLMMessage(role="user", content=context)]
+        context_size = len(context)
+
+        response = await self._llm_client.generate(
+            messages=llm_messages,
+            model=self.model_id,
+            system=system_prompt,
+            temperature=0.8,
+            max_tokens=2048,
+            json_mode=True,
+            stream_callback=stream_callback,
+        )
+
+        # Parse response
+        agent_response = self.parse_llm_response(response)
+
+        # Add context size to message metadata
+        if agent_response.message:
+            if not agent_response.message.metadata:
+                agent_response.message.metadata = {}
+            agent_response.message.metadata["context_size"] = context_size
+
+        # 8. Update dynamic state from response (same as base)
+        self.dynamic_state.update(agent_response.state_changes)
+
+        # 9. Store actions in memory (same as base)
+        self.add_to_memory({
+            "type": "action",
+            "actions": [a.model_dump() for a in agent_response.actions],
+            "message": agent_response.message.model_dump() if agent_response.message else None,
+            "context_size": context_size,
+        })
+
+        # 10. REFLECT phase
+        actions_taken = [a.action_type for a in agent_response.actions]
+        self._cognitive_engine.reflect(intent, actions_taken, current_step)
+
+        return agent_response
+
     def update_stress(self, delta: int) -> None:
         """Update stress level with bounds checking"""
         current = self.dynamic_state.get("stress_level", 5)

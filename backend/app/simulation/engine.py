@@ -924,10 +924,16 @@ class SimulationEngine:
         else:  # direct
             to_agent_id = msg.to_target
             if to_agent_id != "broadcast":
-                for aid, a in self.agents.items():
-                    if a.name == to_agent_id:
-                        to_agent_id = aid
-                        break
+                # Try alias registry first (handles partial names, nicknames, titles)
+                resolved = self.message_bus.alias_registry.resolve(to_agent_id)
+                if resolved:
+                    to_agent_id = resolved
+                else:
+                    # Fallback to exact name match
+                    for aid, a in self.agents.items():
+                        if a.name == to_agent_id:
+                            to_agent_id = aid
+                            break
             stored_msg = self.message_bus.send_direct(
                 from_agent_id=agent_id,
                 to_agent_id=to_agent_id,
@@ -1444,6 +1450,24 @@ class SimulationEngine:
                     visited.add(neighbor)
                     queue.append((neighbor, path + [neighbor]))
                     
+        return None
+
+    def _fuzzy_match_location(self, target: str, nearby: list[str]) -> str | None:
+        """Fuzzy-match a target location name against nearby locations.
+        Handles: case differences, 'the X' prefix, underscore/space equivalence."""
+        target_clean = target.strip().lower()
+        for prefix in ("the ", "a ", "an "):
+            if target_clean.startswith(prefix):
+                target_clean = target_clean[len(prefix):]
+
+        for loc in nearby:
+            loc_clean = loc.strip().lower()
+            if target_clean == loc_clean:
+                return loc
+            if target_clean.replace(" ", "_") == loc_clean or target_clean.replace("_", " ") == loc_clean:
+                return loc
+            if target_clean in loc_clean or loc_clean in target_clean:
+                return loc
         return None
 
     async def _handle_movement(

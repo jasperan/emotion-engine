@@ -16,7 +16,10 @@ class Settings(BaseSettings):
     # Ollama (default LLM provider)
     ollama_base_url: str = "http://localhost:11434/v1"
     ollama_api_key: str = "ollama"
-    ollama_default_model: str = "qwen3.5:35b-a3b"
+    ollama_default_model: str = "qwen3.5:27b"
+    ollama_fallback_model: str = "qwen3.5:4b"
+    ollama_timeout: int = 60
+    ollama_auto_fallback: bool = True
     
     # Claude (optional, for future use)
     anthropic_api_key: str = ""

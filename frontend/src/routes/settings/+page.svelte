@@ -1,13 +1,21 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { setHeader, resetHeader } from '$lib/stores/header';
+  import { ollama } from '$lib/api';
 
   let autoScroll = true;
   let compactView = false;
+  let autoFallback = true;
 
   // Configuration state
   let ollamaUrl = 'http://localhost:11434/v1';
   let defaultModel = 'qwen3.5:27b';
+  let fallbackModel = 'qwen3.5:4b';
+
+  // Model list state
+  let availableModels: string[] = [];
+  let modelsLoaded = false;
+  let modelsError = false;
 
   let saving: Record<string, boolean> = {};
   type StatusMessage = { type: 'success' | 'error'; text: string } | null;
@@ -36,8 +44,21 @@
     }, 3000);
   }
 
+  async function loadModels() {
+    try {
+      const models = await ollama.models();
+      availableModels = models;
+      modelsLoaded = true;
+      modelsError = models.length === 0;
+    } catch {
+      modelsError = true;
+      modelsLoaded = true;
+    }
+  }
+
   onMount(() => {
     setHeader({ title: 'Settings' });
+    loadModels();
     return resetHeader;
   });
 </script>
@@ -89,15 +110,27 @@
                 </div>
 
                 <div class="space-y-2">
-                    <label for="default-model" class="text-sm font-medium text-on-surface">Default Model</label>
+                    <label for="default-model" class="text-sm font-medium text-on-surface">Primary Model</label>
                     <div class="flex gap-2">
-                        <input
-                            bind:value={defaultModel}
-                            type="text"
-                            id="default-model"
-                            placeholder="gemma3"
-                            class="input flex-1"
-                        />
+                        {#if modelsLoaded && !modelsError && availableModels.length > 0}
+                            <select
+                                bind:value={defaultModel}
+                                id="default-model"
+                                class="input flex-1"
+                            >
+                                {#each availableModels as model}
+                                    <option value={model}>{model}</option>
+                                {/each}
+                            </select>
+                        {:else}
+                            <input
+                                bind:value={defaultModel}
+                                type="text"
+                                id="default-model"
+                                placeholder="qwen3.5:27b"
+                                class="input flex-1"
+                            />
+                        {/if}
                         <button
                             class="btn btn-secondary min-w-[80px]"
                             on:click={() => saveConfig('defaultModel')}
@@ -111,13 +144,73 @@
                         </button>
                     </div>
                     <div class="flex justify-between items-start">
-                         <p class="text-[10px] text-on-surface/50">The model to use for simulations by default.</p>
+                         <p class="text-[10px] text-on-surface/50">The primary model to use for simulations.</p>
                          {#if statusMsg['defaultModel']}
                             <span role="alert" class="text-xs {statusMsg['defaultModel'].type === 'success' ? 'text-green-500' : 'text-red-500'} animate-in fade-in">
                                 {statusMsg['defaultModel'].text}
                             </span>
                         {/if}
                     </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label for="fallback-model" class="text-sm font-medium text-on-surface">Fallback Model</label>
+                    <div class="flex gap-2">
+                        {#if modelsLoaded && !modelsError && availableModels.length > 0}
+                            <select
+                                bind:value={fallbackModel}
+                                id="fallback-model"
+                                class="input flex-1"
+                            >
+                                {#each availableModels as model}
+                                    <option value={model}>{model}</option>
+                                {/each}
+                            </select>
+                        {:else}
+                            <input
+                                bind:value={fallbackModel}
+                                type="text"
+                                id="fallback-model"
+                                placeholder="qwen3.5:4b"
+                                class="input flex-1"
+                            />
+                        {/if}
+                        <button
+                            class="btn btn-secondary min-w-[80px]"
+                            on:click={() => saveConfig('fallbackModel')}
+                            disabled={saving['fallbackModel']}
+                        >
+                             {#if saving['fallbackModel']}
+                                <div class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mx-auto"></div>
+                            {:else}
+                                Save
+                            {/if}
+                        </button>
+                    </div>
+                    <div class="flex justify-between items-start">
+                         <p class="text-[10px] text-on-surface/50">Used when the primary model is unavailable or fails.</p>
+                         {#if statusMsg['fallbackModel']}
+                            <span role="alert" class="text-xs {statusMsg['fallbackModel'].type === 'success' ? 'text-green-500' : 'text-red-500'} animate-in fade-in">
+                                {statusMsg['fallbackModel'].text}
+                            </span>
+                        {/if}
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between p-3 bg-surface-alt/20 rounded-lg">
+                    <div id="label-autofallback">
+                        <span class="block font-medium text-sm">Auto-Fallback</span>
+                        <span class="text-xs text-on-surface/60">Automatically switch to fallback model on primary failure.</span>
+                    </div>
+                    <button
+                        role="switch"
+                        aria-checked={autoFallback}
+                        aria-labelledby="label-autofallback"
+                        on:click={() => autoFallback = !autoFallback}
+                        class="w-12 h-6 rounded-full border relative shadow-inner transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary {autoFallback ? 'bg-primary/20 border-primary/30' : 'bg-outline/20 border-outline/30'}"
+                    >
+                        <div class="absolute top-1 left-1 w-4 h-4 rounded-full transition-transform {autoFallback ? 'translate-x-6 bg-primary' : 'translate-x-0 bg-outline'}"></div>
+                    </button>
                 </div>
             </div>
         </section>

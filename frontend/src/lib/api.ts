@@ -166,6 +166,20 @@ export const runs = {
 	},
 };
 
+// Ollama API
+export const ollama = {
+	async models(): Promise<string[]> {
+		try {
+			const resp = await fetch('/api/ollama/models');
+			if (!resp.ok) return ['qwen3.5:27b', 'qwen3.5:4b'];
+			const data = await resp.json();
+			return data.models || [];
+		} catch {
+			return ['qwen3.5:27b', 'qwen3.5:4b'];
+		}
+	}
+};
+
 // Scenarios API
 export const scenarios = {
 	list: async (): Promise<Scenario[]> => {

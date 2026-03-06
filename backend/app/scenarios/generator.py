@@ -99,7 +99,7 @@ Generate a scenario now based on the user's prompt."""
 class ScenarioGenerator:
     """Generate scenarios using LLM"""
     
-    def __init__(self, provider: str = "ollama", model_id: str = "qwen2.5:7b"):
+    def __init__(self, provider: str = "ollama", model_id: str = "qwen3.5:9b"):
         self.provider = provider
         self.model_id = model_id
         self._client = LLMRouter.get_client(provider)

@@ -8,6 +8,11 @@ from app.simulation.conversation import (
     ConversationState,
     ConversationType,
 )
+from app.simulation.agent_supervisor import AgentSupervisor, AgentTelemetry
+from app.simulation.negotiation import NegotiationManager, Proposal, ProposalState, Agreement
+from app.simulation.trust_network import TrustNetwork, TrustSignal
+from app.simulation.world_state_diff import WorldStateDiff, WorldStateDiffTracker
+from app.simulation.conversation_outcomes import ConversationOutcomeExtractor, ConversationOutcome
 
 __all__ = [
     "MessageBus",
@@ -18,4 +23,16 @@ __all__ = [
     "ConversationManager",
     "ConversationState",
     "ConversationType",
+    "AgentSupervisor",
+    "AgentTelemetry",
+    "NegotiationManager",
+    "Proposal",
+    "ProposalState",
+    "Agreement",
+    "TrustNetwork",
+    "TrustSignal",
+    "WorldStateDiff",
+    "WorldStateDiffTracker",
+    "ConversationOutcomeExtractor",
+    "ConversationOutcome",
 ]

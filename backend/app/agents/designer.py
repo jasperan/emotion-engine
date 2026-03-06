@@ -14,7 +14,7 @@ class DesignerAgent(Agent):
         self,
         agent_id: str | None = None,
         name: str = "Director",
-        model_id: str = "gemma3:270m",
+        model_id: str = "qwen3.5:27b",
         provider: str = "ollama",
         scenario_goals: list[str] | None = None,
         intervention_threshold: float = 0.3,

@@ -1,5 +1,6 @@
 """Simulation Engine - main orchestrator for runs"""
 import asyncio
+import logging
 import random
 from datetime import datetime
 from typing import Any, Callable, Awaitable
@@ -10,9 +11,14 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents import Agent, EnvironmentAgent, HumanAgent, DesignerAgent, EvaluationAgent
-from app.llm.router import LLMRouter
+from app.llm.router import LLMRouter, configure_model_routing
 from app.simulation.message_bus import MessageBus
 from app.simulation.conversation import ConversationManager, Conversation, ConversationState
+from app.simulation.agent_supervisor import AgentSupervisor
+from app.simulation.negotiation import NegotiationManager, ProposalState
+from app.simulation.trust_network import TrustNetwork
+from app.simulation.world_state_diff import WorldStateDiffTracker
+from app.simulation.conversation_outcomes import ConversationOutcomeExtractor
 from app.models.run import Run, RunStatus
 from app.models.agent import AgentModel
 from app.models.step import Step
@@ -21,6 +27,8 @@ from app.schemas.persona import Persona
 from app.acp.registry import AgentRegistry
 from app.acp.coordination import CoordinationController
 from app.agents.voting_mixin import GroupDecisionMixin
+
+logger = logging.getLogger(__name__)
 
 
 class SimulationState(str, Enum):
@@ -75,10 +83,10 @@ class SimulationEngine:
         
         # Real-time agent locations (updated during steps)
         self._agent_locations: dict[str, str] = {}
-        
+
         # Failed movement tracking (reset each step to prevent retry loops)
         self._agent_failed_movements: dict[str, set[str]] = {}
-        
+
         # Control
         self._stop_requested = False
         self._pause_requested = False
@@ -88,6 +96,37 @@ class SimulationEngine:
         self.acp_registry = AgentRegistry()
         self.acp_coordination = CoordinationController(level="moderate")
         self.group_voting = GroupDecisionMixin()
+
+        # === NEW: Symphony/Pi-inspired systems ===
+        from app.core.config import get_settings
+        settings = get_settings()
+
+        # L1: Agent Supervisor (Symphony-inspired fault isolation)
+        self.supervisor = AgentSupervisor(
+            tick_timeout=settings.agent_tick_timeout,
+            max_backoff=settings.agent_max_backoff,
+            max_consecutive_failures=settings.agent_max_consecutive_failures,
+        )
+
+        # L2: Negotiation Manager (Symphony state-machine for proposals)
+        self.negotiation = NegotiationManager(
+            default_expiry_steps=settings.negotiation_default_expiry_steps,
+        )
+
+        # L5: Trust Network (bilateral trust signals)
+        self.trust_network = TrustNetwork()
+
+        # L6: Conversation Outcome Extractor
+        self.outcome_extractor = ConversationOutcomeExtractor()
+
+        # L8: World State Diff Tracker (Pi hash-anchor inspired)
+        self.diff_tracker = WorldStateDiffTracker()
+
+        # L9: Configure per-agent-type model routing
+        configure_model_routing({
+            "environment": settings.model_route_environment or settings.ollama_fallback_model,
+            "reactive": settings.model_route_reactive or settings.ollama_fallback_model,
+        })
 
     async def load_from_db(self) -> None:
         """Load simulation state from database for resumption"""
@@ -119,7 +158,7 @@ class SimulationEngine:
             config = {
                 "name": model.name,
                 "role": model.role,
-                "model_id": model.model_id or "gemma3:270m",
+                "model_id": model.model_id or "qwen3.5:27b",
                 "provider": model.provider or "ollama",
                 "persona": model.persona,
                 "goals": model.persona.get("goals", []) if model.persona else [],
@@ -136,6 +175,7 @@ class SimulationEngine:
             self.agents[agent.id] = agent
             self.message_bus.register_agent(agent.id, agent.name)
             self.acp_registry.register(agent.get_acp_identity())
+            self.supervisor.register_agent(agent.id, agent.name)
 
             # Restore location tracking
             location = agent.dynamic_state.get("location", "unknown")
@@ -213,6 +253,7 @@ class SimulationEngine:
             self.agents[agent.id] = agent
             self.message_bus.register_agent(agent.id, agent.name)
             self.acp_registry.register(agent.get_acp_identity())
+            self.supervisor.register_agent(agent.id, agent.name)
 
             # Initialize agent location in conversation manager
             agent_location = agent.dynamic_state.get("location", "unknown")
@@ -266,7 +307,7 @@ class SimulationEngine:
         if role == "environment":
             return EnvironmentAgent(
                 name=config.get("name", "Environment"),
-                model_id=config.get("model_id", "gemma3:270m"),
+                model_id=config.get("model_id", "qwen3.5:27b"),
                 provider=config.get("provider", "ollama"),
                 environment_type=config.get("environment_type", "flood"),
                 dynamics_config=config.get("dynamics_config"),
@@ -274,14 +315,14 @@ class SimulationEngine:
         elif role == "designer":
             return DesignerAgent(
                 name=config.get("name", "Director"),
-                model_id=config.get("model_id", "gemma3:270m"),
+                model_id=config.get("model_id", "qwen3.5:27b"),
                 provider=config.get("provider", "ollama"),
                 scenario_goals=config.get("goals"),
             )
         elif role == "evaluator":
             return EvaluationAgent(
                 name=config.get("name", "Evaluator"),
-                model_id=config.get("model_id", "gemma3:270m"),
+                model_id=config.get("model_id", "qwen3.5:27b"),
                 provider=config.get("provider", "ollama"),
             )
         else:  # human
@@ -297,7 +338,7 @@ class SimulationEngine:
             
             return HumanAgent(
                 name=config.get("name", "Human"),
-                model_id=config.get("model_id", "gemma3:270m"),
+                model_id=config.get("model_id", "qwen3.5:27b"),
                 provider=config.get("provider", "ollama"),
                 persona=persona,
                 goals=config.get("goals"),
@@ -364,20 +405,28 @@ class SimulationEngine:
         """Execute a single simulation step with sequential agent processing"""
         self.current_step += 1
         self.world_state["current_step"] = self.current_step
-        
+
         step_actions = []
         step_messages = []
         step_events = []
-        
+
         # Reset failed movement cache for this step
         self._agent_failed_movements.clear()
-        
+
         # Reset conversation counters for this step
         self.conversation_manager.reset_step_counters()
-        
+
+        # L8: Start diff tracking for this step
+        self.diff_tracker.start_step(self.current_step, self.world_state)
+
+        # L2: Expire old proposals
+        expired = self.negotiation.expire_proposals(self.current_step)
+        for prop_id in expired:
+            self.on_event("proposal_expired", {"proposal_id": prop_id, "step": self.current_step})
+
         # Build current agent states for world state
         self._update_agents_in_world_state()
-        
+
         # Process all agents sequentially
         await self._process_agents_sequentially(
             step_actions,
@@ -385,9 +434,42 @@ class SimulationEngine:
             step_events,
             stream_callback
         )
-        
+
+        # L4: Intra-step reaction round
+        await self._execute_reaction_round(step_actions, step_messages, step_events, stream_callback)
+
+        # L6: Extract outcomes from ended conversations before cleanup
+        ended_conversations = [
+            conv for conv in self.conversation_manager._conversations.values()
+            if conv.state == ConversationState.ENDED
+        ]
+        for conv in ended_conversations:
+            agent_names = {aid: self.agents[aid].name for aid in conv.participants if aid in self.agents}
+            outcome = self.outcome_extractor.extract_outcome(
+                conversation_id=conv.id,
+                messages=conv.message_history,
+                participants=list(conv.participants),
+                location=conv.location,
+                agent_names=agent_names,
+            )
+            # Feed commitments into IntentMemory for each participant
+            for agent_name, commitment_text in outcome.commitments.items():
+                for aid, agent in self.agents.items():
+                    if agent.name == agent_name and hasattr(agent, 'agent_memory'):
+                        agent.agent_memory.intent.add_commitment(
+                            to="group", what=commitment_text, step=self.current_step
+                        )
+            self.on_event("conversation_outcome", {
+                "conversation_id": conv.id,
+                "outcome": outcome.to_dict(),
+                "step": self.current_step,
+            })
+
         # Cleanup ended conversations
         self.conversation_manager.cleanup_ended_conversations()
+
+        # L8: End diff tracking
+        self.diff_tracker.end_step(self.world_state)
         
         # Persist step
         step = Step(
@@ -407,13 +489,16 @@ class SimulationEngine:
         
         await self.db.commit()
         
-        # Emit step event
+        # Emit step event with telemetry (L3)
         self.on_event("step_completed", {
             "step": self.current_step,
             "actions": step_actions,
             "messages": step_messages,
             "world_state": self.world_state,
             "conversations": [c.to_dict() for c in self.conversation_manager.get_all_active_conversations()],
+            "agent_telemetry": self.supervisor.get_all_telemetry(),
+            "world_state_diff": self.diff_tracker.get_current_diff().to_dict(),
+            "negotiations": self.negotiation.to_dict(),
         })
     
     def _update_agents_in_world_state(self) -> None:
@@ -438,67 +523,54 @@ class SimulationEngine:
     ) -> None:
         """Process all agents sequentially so they can see each other's actions"""
         # Phase 1: Process environment agents first (they create events)
+        # L1: Use supervisor for fault isolation
         for agent_id, agent in self.agents.items():
             if agent.role != "environment":
                 continue
-            
+
+            if not self.supervisor.is_agent_available(agent_id):
+                continue
+
             messages = self.message_bus.get_messages(agent_id)
-            
-            try:
-                response = await agent.tick(
-                    self.world_state.copy(),
-                    messages,
-                    step_actions,
-                    step_messages,
-                    step_events,
-                )
-                agent.last_reasoning = response.reasoning or None
 
-                for action in response.actions:
-                    action_dict = {
-                        "agent_id": agent_id,
-                        "agent_name": agent.name,
-                        **action.model_dump(),
-                    }
-                    step_actions.append(action_dict)
+            response = await self.supervisor.supervised_tick(
+                agent, self.world_state.copy(), messages,
+                step_actions, step_messages, step_events,
+            )
+            agent.last_reasoning = response.reasoning or None
 
-                    if action.action_type == "environment_update":
-                        self._apply_environment_update(action.parameters)
-                        # Extract events if any
-                        if "events" in action.parameters:
-                            step_events.extend(action.parameters["events"])
-
-                if response.message:
-                    msg = response.message
-                    stored_msg = self.message_bus.broadcast(
-                        agent_id, msg.content, self.current_step
-                    )
-                    step_messages.append(stored_msg)
-                    await self._persist_message(agent_id, msg)
-
-                    # Emit event immediately for real-time logs
-                    self.on_event("message", {
-                        "type": "message",
-                        "data": stored_msg,
-                        "timestamp": datetime.utcnow().strftime("%H:%M:%S")
-                    })
-
-                    # Yield to let UI update
-                    await asyncio.sleep(0)
-
-                # Update world state after environment agent
-                self._update_agents_in_world_state()
-
-            except Exception as e:
-                agent = self.agents.get(agent_id)
-                agent_name = agent.name if agent else agent_id
-                self.on_event("agent_error", {
+            for action in response.actions:
+                action_dict = {
                     "agent_id": agent_id,
-                    "agent_name": agent_name,
-                    "error": str(e),
-                    "step": self.current_step,
-                    "context": "environment_agent_tick",
+                    "agent_name": agent.name,
+                    **action.model_dump(),
+                }
+                step_actions.append(action_dict)
+
+                if action.action_type == "environment_update":
+                    self._apply_environment_update(action.parameters)
+                    if "events" in action.parameters:
+                        for evt in action.parameters["events"]:
+                            step_events.append(evt)
+                            self.diff_tracker.record_event(evt)
+
+            if response.message:
+                msg = response.message
+                stored_msg = self.message_bus.broadcast(
+                    agent_id, msg.content, self.current_step
+                )
+                step_messages.append(stored_msg)
+                self.diff_tracker.record_message()
+                await self._persist_message(agent_id, msg)
+
+                self.on_event("message", {
+                    "type": "message",
+                    "data": stored_msg,
+                    "timestamp": datetime.utcnow().strftime("%H:%M:%S")
                 })
+                await asyncio.sleep(0)
+
+            self._update_agents_in_world_state()
         
         # Build agent_plans and agent_trust for plan visibility
         agent_plans = {}
@@ -536,276 +608,590 @@ class SimulationEngine:
         random.shuffle(human_agents)
         
         for agent_id, agent in human_agents:
+            # L1: Check supervisor availability
+            if not self.supervisor.is_agent_available(agent_id):
+                continue
+
             # Check if agent is in a conversation and it's their turn
             in_conversation = False
             conversation = None
-            
+
             agent_conversations = self.conversation_manager.get_agent_conversations(agent_id)
             for conv in agent_conversations:
                 if conv.should_continue() and conv.get_next_speaker() == agent_id:
                     in_conversation = True
                     conversation = conv
                     break
-            
-            # For human agents not in conversations, check if they should respond (personality-based probability)
+
+            # For human agents not in conversations, check if they should respond
             if isinstance(agent, HumanAgent) and not in_conversation:
-                # Count location activity
                 agent_location = self._agent_locations.get(agent_id, agent.dynamic_state.get("location", "unknown"))
                 location_activity = len([
                     aid for aid, loc in self._agent_locations.items()
                     if loc == agent_location and aid != agent_id
                 ])
-                
-                # Check for events and messages
                 has_events = len(step_events) > 0
                 has_messages = len(step_messages) > 0
-                
-                # Check if agent should respond
-                if not agent.should_respond(has_events, has_messages, location_activity):
-                    continue  # Skip this agent this turn
-            
-            # Get messages for this agent
-            messages = self.message_bus.get_messages(agent_id)
-            
-            # Build world state with conversation context if applicable
-            agent_world_state = self.world_state.copy()
-            
-            # Add cooperation context
-            cooperation_context = self.coordinator.get_cooperation_context()
-            agent_world_state["cooperation"] = cooperation_context
-            
-            # Add suggestions if agent is stuck
-            if self.coordinator.is_stuck_in_loop(agent_id):
-                suggestions = self.coordinator.get_suggestions_for_agent(agent_id)
-                agent_world_state["suggestions"] = suggestions
-            
-            # Add agent's assigned tasks
-            agent_tasks = self.coordinator.agent_tasks.get(agent_id, [])
-            agent_world_state["my_tasks"] = [
-                {
-                    "id": self.coordinator.tasks[tid].id,
-                    "description": self.coordinator.tasks[tid].description,
-                    "priority": self.coordinator.tasks[tid].priority,
-                    "status": self.coordinator.tasks[tid].status,
-                }
-                for tid in agent_tasks
-                if tid in self.coordinator.tasks
-            ]
-            
-            if in_conversation and conversation:
-                # Add conversation context
-                conversation_context = conversation.get_context_for_agent(agent_id)
-                messages = conversation_context + messages
-                
-                agent_world_state["active_conversation"] = {
-                    "id": conversation.id,
-                    "location": conversation.location,
-                    "participants": [
-                        self.agents[pid].name if pid in self.agents else pid
-                        for pid in conversation.participants
-                    ],
-                    "is_my_turn": True,
-                }
-            
-            # Get messages for this agent
-            messages = self.message_bus.get_messages(agent_id)
-            
-            # Build world state with conversation context if applicable
-            agent_world_state = self.world_state.copy()
-            
-            # Add cooperation context
-            cooperation_context = self.coordinator.get_cooperation_context()
-            agent_world_state["cooperation"] = cooperation_context
-            
-            # Add suggestions if agent is stuck
-            if self.coordinator.is_stuck_in_loop(agent_id):
-                suggestions = self.coordinator.get_suggestions_for_agent(agent_id)
-                agent_world_state["suggestions"] = suggestions
-            
-            # Add agent's assigned tasks
-            agent_tasks = self.coordinator.agent_tasks.get(agent_id, [])
-            agent_world_state["my_tasks"] = [
-                {
-                    "id": self.coordinator.tasks[tid].id,
-                    "description": self.coordinator.tasks[tid].description,
-                    "priority": self.coordinator.tasks[tid].priority,
-                    "status": self.coordinator.tasks[tid].status,
-                }
-                for tid in agent_tasks
-                if tid in self.coordinator.tasks
-            ]
-            
-            if in_conversation and conversation:
-                # Add conversation context
-                conversation_context = conversation.get_context_for_agent(agent_id)
-                messages = conversation_context + messages
-                
-                agent_world_state["active_conversation"] = {
-                    "id": conversation.id,
-                    "location": conversation.location,
-                    "participants": [
-                        self.agents[pid].name if pid in self.agents else pid
-                        for pid in conversation.participants
-                    ],
-                    "is_my_turn": True,
-                }
-            
-            # Process agent tick (no retry loop - movement failures are handled gracefully)
-            try:
-                # Create agent-specific callback
-                agent_callback = None
-                if stream_callback:
-                    async def _cb(token: str):
-                        await stream_callback(agent_id, token)
-                    agent_callback = _cb
 
-                response = await agent.tick(
-                    agent_world_state,
-                    messages,
-                    step_actions,
-                    step_messages,
-                    step_events,
-                    stream_callback=agent_callback,
+                # Also force response if agent has pending proposals (L2)
+                has_pending_proposals = len(self.negotiation.get_pending_proposals_for_agent(agent_id)) > 0
+
+                if not has_pending_proposals and not agent.should_respond(has_events, has_messages, location_activity):
+                    continue
+
+            # Get messages for this agent
+            messages = self.message_bus.get_messages(agent_id)
+
+            # Build world state with all context
+            agent_world_state = self.world_state.copy()
+
+            # Add cooperation context
+            agent_world_state["cooperation"] = self.coordinator.get_cooperation_context()
+
+            # Add suggestions if agent is stuck
+            if self.coordinator.is_stuck_in_loop(agent_id):
+                agent_world_state["suggestions"] = self.coordinator.get_suggestions_for_agent(agent_id)
+
+            # Add agent's assigned tasks
+            agent_tasks_list = self.coordinator.agent_tasks.get(agent_id, [])
+            agent_world_state["my_tasks"] = [
+                {
+                    "id": self.coordinator.tasks[tid].id,
+                    "description": self.coordinator.tasks[tid].description,
+                    "priority": self.coordinator.tasks[tid].priority,
+                    "status": self.coordinator.tasks[tid].status,
+                }
+                for tid in agent_tasks_list
+                if tid in self.coordinator.tasks
+            ]
+
+            # L2: Add negotiation context
+            agent_world_state["negotiations"] = self.negotiation.get_negotiation_context(agent_id)
+
+            # L5: Add trust signals
+            trust_context = self.trust_network.get_trust_context(agent_id)
+            if trust_context:
+                agent_world_state["trust_signals"] = trust_context
+            # Consume signals after building context
+            self.trust_network.get_pending_signals(agent_id, clear=True)
+
+            # L6: Add recent conversation outcomes
+            recent_outcomes = self.outcome_extractor.get_agent_recent_outcomes(agent_id, limit=2)
+            if recent_outcomes:
+                agent_world_state["recent_conversation_outcomes"] = [
+                    o.to_context_string() for o in recent_outcomes
+                ]
+
+            # L8: Add world state diff
+            agent_names = {aid: a.name for aid, a in self.agents.items()}
+            diff_context = self.diff_tracker.get_current_diff().to_context_string(agent_id, agent_names)
+            if diff_context:
+                agent_world_state["world_state_diff"] = diff_context
+
+            if in_conversation and conversation:
+                conversation_context = conversation.get_context_for_agent(agent_id)
+                messages = conversation_context + messages
+                agent_world_state["active_conversation"] = {
+                    "id": conversation.id,
+                    "location": conversation.location,
+                    "participants": [
+                        self.agents[pid].name if pid in self.agents else pid
+                        for pid in conversation.participants
+                    ],
+                    "is_my_turn": True,
+                }
+
+            # L1: Use supervisor for fault-isolated tick
+            agent_callback = None
+            if stream_callback:
+                async def _cb(token: str, _aid=agent_id):
+                    await stream_callback(_aid, token)
+                agent_callback = _cb
+
+            response = await self.supervisor.supervised_tick(
+                agent, agent_world_state, messages,
+                step_actions, step_messages, step_events,
+                stream_callback=agent_callback,
+            )
+            agent.last_reasoning = response.reasoning or None
+
+            # Process actions
+            for action in response.actions:
+                await self._process_agent_action(
+                    agent_id, agent, action, step_actions, step_messages,
+                    in_conversation, conversation,
                 )
-                agent.last_reasoning = response.reasoning or None
 
-                # Process actions
-                for action in response.actions:
-                    if action.action_type == "move":
-                        # Attempt movement - if it fails, just skip it (no retry)
-                        success = await self._handle_movement(agent_id, action.target, action.parameters)
-                        if not success:
-                            # Movement failed - skip this action and continue with others
-                            continue
-                    elif action.action_type == "propose_task":
-                        self._handle_propose_task(agent_id, action.parameters)
-                    elif action.action_type == "accept_task":
-                        self._handle_accept_task(agent_id, action.target, action.parameters)
-                    elif action.action_type == "report_progress":
-                        self._handle_report_progress(agent_id, action.parameters)
-                    elif action.action_type == "call_for_vote":
-                        self._handle_call_for_vote(agent_id, action.parameters)
-                    elif action.action_type == "take":
-                        await self._handle_take(agent_id, action.target)
-                    elif action.action_type == "drop":
-                        await self._handle_drop(agent_id, action.target)
-                    elif action.action_type == "use":
-                        await self._handle_use(agent_id, action.target)
-                    elif action.action_type == "interact":
-                        await self._handle_interact(agent_id, action.target, action.parameters)
-                    elif action.action_type == "search":
-                        await self._handle_search(agent_id)
-                        
-                    # Add to step actions log
-                    action_dict = {
-                        "agent_id": agent_id,
-                        "agent_name": agent.name,
-                        **action.model_dump(),
-                    }
-                    step_actions.append(action_dict)
-                    
-                    # Track action for loop detection
-                    self.coordinator.track_action(agent_id, action.action_type, action.target)
-                    
-                    # Track conversation topic for loop detection
-                    if response.message and response.message.content.strip():
-                        topic = self._extract_topic(response.message.content)
-                        self.coordinator.track_conversation(agent_id, topic)
-                    
-                    # Process message
-                    if response.message and response.message.content.strip():
-                        msg = response.message
-                        
-                        if in_conversation and conversation:
-                            # Send to conversation participants
-                            stored_msg = self.message_bus.send_to_conversation(
-                                from_agent_id=agent_id,
-                                conversation_id=conversation.id,
-                                participant_ids=conversation.participants,
-                                content=msg.content,
-                                step_index=self.current_step,
-                                location=conversation.location,
-                                metadata=msg.metadata,
-                            )
-                            conversation.add_message(stored_msg)
-                            conversation.advance_turn(spoke=True)
-                        else:
-                            # Send as regular message (direct, room, or broadcast)
-                            if msg.message_type == "broadcast":
-                                stored_msg = self.message_bus.broadcast(
-                                    agent_id, msg.content, self.current_step,
-                                    metadata=msg.metadata,
-                                )
-                            elif msg.message_type == "room":
-                                # Send to all agents at location using room mechanism
-                                agent_location = self._agent_locations.get(agent_id, agent.dynamic_state.get("location", "unknown"))
-                                # Ensure all agents at location are subscribed to the room
-                                agents_at_location = [
-                                    aid for aid, loc in self._agent_locations.items()
-                                    if loc == agent_location
-                                ]
-                                for aid in agents_at_location:
-                                    self.message_bus.join_room(aid, agent_location)
-                                
-                                stored_msg = self.message_bus.send_to_room(
-                                    from_agent_id=agent_id,
-                                    room_name=agent_location,
-                                    content=msg.content,
-                                    step_index=self.current_step,
-                                    metadata=msg.metadata,
-                                )
-                            else:  # direct
-                                # Resolve agent name to ID if needed
-                                to_agent_id = msg.to_target
-                                if to_agent_id != "broadcast":
-                                    # Try to find agent by name
-                                    for aid, a in self.agents.items():
-                                        if a.name == to_agent_id:
-                                            to_agent_id = aid
-                                            break
-                                
-                                stored_msg = self.message_bus.send_direct(
-                                    from_agent_id=agent_id,
-                                    to_agent_id=to_agent_id,
-                                    content=msg.content,
-                                    step_index=self.current_step,
-                                    metadata=msg.metadata,
-                                )
-                        
-                        step_messages.append(stored_msg)
-                        await self._persist_message(agent_id, msg, conversation.id if in_conversation else None)
-                        
-                        # Emit event immediately for real-time logs
-                        self.on_event("message", {
-                            "type": "message",
-                            "data": stored_msg,
-                            "timestamp": datetime.utcnow().strftime("%H:%M:%S")
-                        })
-                        
-                        # Yield to let UI update
-                        await asyncio.sleep(0)
-                    elif in_conversation and conversation:
-                        # Agent chose not to speak in conversation
-                        conversation.advance_turn(spoke=False)
-                
-                # Update world state after each agent
-                self._update_agents_in_world_state()
-                        
-            except Exception as e:
-                agent = self.agents.get(agent_id)
-                agent_name = agent.name if agent else agent_id
-                self.on_event("agent_error", {
-                    "agent_id": agent_id,
-                    "agent_name": agent_name,
-                    "error": str(e),
-                    "step": self.current_step,
-                    "context": "human_agent_tick",
+            # Process message
+            if response.message and response.message.content.strip():
+                msg = response.message
+                stored_msg = self._route_message(
+                    agent_id, agent, msg, in_conversation, conversation,
+                )
+                step_messages.append(stored_msg)
+                self.diff_tracker.record_message()
+                await self._persist_message(agent_id, msg, conversation.id if in_conversation else None)
+
+                self.on_event("message", {
+                    "type": "message",
+                    "data": stored_msg,
+                    "timestamp": datetime.utcnow().strftime("%H:%M:%S")
                 })
-                if in_conversation and conversation:
-                    conversation.advance_turn(spoke=False)
+                await asyncio.sleep(0)
+            elif in_conversation and conversation:
+                conversation.advance_turn(spoke=False)
+
+            # Track for loop detection
+            if response.message and response.message.content.strip():
+                topic = self._extract_topic(response.message.content)
+                self.coordinator.track_conversation(agent_id, topic)
+
+            # L5: Poll pending trust changes from HumanAgent and feed into TrustNetwork
+            if isinstance(agent, HumanAgent) and hasattr(agent, '_pending_trust_changes'):
+                for tc in agent._pending_trust_changes:
+                    self.trust_network.record_trust_change(
+                        from_agent=agent_id,
+                        to_agent=tc["to_agent"],
+                        old_trust=tc["old_trust"],
+                        new_trust=tc["new_trust"],
+                        reason=tc["reason"],
+                        step=self.current_step,
+                    )
+                agent._pending_trust_changes.clear()
+
+            self._update_agents_in_world_state()
                     
 
     
+    async def _process_agent_action(
+        self,
+        agent_id: str,
+        agent: Agent,
+        action: Any,
+        step_actions: list[dict[str, Any]],
+        step_messages: list[dict[str, Any]],
+        in_conversation: bool,
+        conversation: Any,
+    ) -> None:
+        """Process a single agent action, dispatching to appropriate handler"""
+        if action.action_type == "move":
+            success = await self._handle_movement(agent_id, action.target, action.parameters)
+            if success and action.target:
+                old_loc = self._agent_locations.get(agent_id, "unknown")
+                self.diff_tracker.record_movement(agent_id, old_loc, action.target)
+            if not success:
+                return  # Skip failed movement
+        elif action.action_type == "propose_task":
+            self._handle_propose_task(agent_id, action.parameters)
+        elif action.action_type == "accept_task":
+            self._handle_accept_task(agent_id, action.target, action.parameters)
+        elif action.action_type == "report_progress":
+            self._handle_report_progress(agent_id, action.parameters)
+        elif action.action_type == "call_for_vote":
+            self._handle_call_for_vote(agent_id, action.parameters)
+        elif action.action_type == "take":
+            await self._handle_take(agent_id, action.target)
+        elif action.action_type == "drop":
+            await self._handle_drop(agent_id, action.target)
+        elif action.action_type == "use":
+            await self._handle_use(agent_id, action.target)
+        elif action.action_type == "interact":
+            await self._handle_interact(agent_id, action.target, action.parameters)
+        elif action.action_type == "search":
+            await self._handle_search(agent_id)
+        # L2: Negotiation actions
+        elif action.action_type == "propose":
+            self._handle_propose(agent_id, action.target, action.parameters)
+        elif action.action_type == "accept_proposal":
+            self._handle_accept_proposal(agent_id, action.target, action.parameters)
+        elif action.action_type == "reject_proposal":
+            self._handle_reject_proposal(agent_id, action.target, action.parameters)
+        elif action.action_type == "counter_propose":
+            self._handle_counter_propose(agent_id, action.target, action.parameters)
+        elif action.action_type == "withdraw_proposal":
+            self._handle_withdraw_proposal(agent_id, action.target)
+        # L5: Trust actions
+        elif action.action_type == "vouch_for":
+            self._handle_vouch_for(agent_id, action.target, action.parameters)
+        elif action.action_type == "share_plan":
+            self._handle_share_plan(agent_id, action.target)
+        # L7: Emergent leadership
+        elif action.action_type == "coordinate":
+            self._handle_coordinate(agent_id, action.parameters)
+        elif action.action_type == "delegate_task":
+            self._handle_delegate_task(agent_id, action.target, action.parameters)
+
+        # Log action
+        action_dict = {
+            "agent_id": agent_id,
+            "agent_name": agent.name,
+            **action.model_dump(),
+        }
+        step_actions.append(action_dict)
+        self.coordinator.track_action(agent_id, action.action_type, action.target)
+
+    def _route_message(
+        self,
+        agent_id: str,
+        agent: Agent,
+        msg: Any,
+        in_conversation: bool,
+        conversation: Any,
+    ) -> dict[str, Any]:
+        """Route a message to the appropriate destination"""
+        if in_conversation and conversation:
+            stored_msg = self.message_bus.send_to_conversation(
+                from_agent_id=agent_id,
+                conversation_id=conversation.id,
+                participant_ids=conversation.participants,
+                content=msg.content,
+                step_index=self.current_step,
+                location=conversation.location,
+                metadata=msg.metadata,
+            )
+            conversation.add_message(stored_msg)
+            conversation.advance_turn(spoke=True)
+        elif msg.message_type == "broadcast":
+            stored_msg = self.message_bus.broadcast(
+                agent_id, msg.content, self.current_step,
+                metadata=msg.metadata,
+            )
+        elif msg.message_type == "room":
+            agent_location = self._agent_locations.get(agent_id, agent.dynamic_state.get("location", "unknown"))
+            for aid, loc in self._agent_locations.items():
+                if loc == agent_location:
+                    self.message_bus.join_room(aid, agent_location)
+            stored_msg = self.message_bus.send_to_room(
+                from_agent_id=agent_id,
+                room_name=agent_location,
+                content=msg.content,
+                step_index=self.current_step,
+                metadata=msg.metadata,
+            )
+        else:  # direct
+            to_agent_id = msg.to_target
+            if to_agent_id != "broadcast":
+                for aid, a in self.agents.items():
+                    if a.name == to_agent_id:
+                        to_agent_id = aid
+                        break
+            stored_msg = self.message_bus.send_direct(
+                from_agent_id=agent_id,
+                to_agent_id=to_agent_id,
+                content=msg.content,
+                step_index=self.current_step,
+                metadata=msg.metadata,
+            )
+        return stored_msg
+
+    # === L4: Intra-step Reaction Round ===
+
+    async def _execute_reaction_round(
+        self,
+        step_actions: list[dict[str, Any]],
+        step_messages: list[dict[str, Any]],
+        step_events: list[str],
+        stream_callback: Callable[[str, str], Awaitable[None]] | None = None,
+    ) -> None:
+        """
+        After all agents tick, agents who received direct messages or proposals
+        this step get a quick reactive tick with restricted actions.
+        This enables same-step proposal->response instead of 2+ step latency.
+        """
+        reactive_agents = set()
+
+        # Agents with pending proposals that were created this step
+        for prop in self.negotiation._proposals.values():
+            if (
+                prop.created_at_step == self.current_step
+                and prop.state == ProposalState.PENDING
+                and prop.target_id
+            ):
+                reactive_agents.add(prop.target_id)
+
+        # Agents who received direct messages this step
+        for msg in step_messages:
+            if msg.get("message_type") == "direct":
+                target = msg.get("to_target")
+                if target and target in self.agents:
+                    reactive_agents.add(target)
+
+        if not reactive_agents:
+            return
+
+        for agent_id in reactive_agents:
+            agent = self.agents.get(agent_id)
+            if not agent or agent.role != "human":
+                continue
+            if not self.supervisor.is_agent_available(agent_id):
+                continue
+
+            messages = self.message_bus.get_messages(agent_id)
+            if not messages:
+                continue
+
+            # Build minimal reactive context
+            agent_world_state = self.world_state.copy()
+            agent_world_state["negotiations"] = self.negotiation.get_negotiation_context(agent_id)
+            agent_world_state["_reactive_round"] = True
+
+            response = await self.supervisor.supervised_tick(
+                agent, agent_world_state, messages,
+                step_actions, step_messages, step_events,
+            )
+            agent.last_reasoning = response.reasoning or None
+
+            for action in response.actions:
+                # Only allow reactive actions
+                if action.action_type in (
+                    "speak", "accept_proposal", "reject_proposal",
+                    "counter_propose", "help", "wait",
+                ):
+                    await self._process_agent_action(
+                        agent_id, agent, action, step_actions, step_messages,
+                        False, None,
+                    )
+
+            if response.message and response.message.content.strip():
+                stored_msg = self._route_message(agent_id, agent, response.message, False, None)
+                step_messages.append(stored_msg)
+                self.diff_tracker.record_message()
+                await self._persist_message(agent_id, response.message)
+
+                self.on_event("message", {
+                    "type": "message",
+                    "data": stored_msg,
+                    "timestamp": datetime.utcnow().strftime("%H:%M:%S")
+                })
+
+            self._update_agents_in_world_state()
+
+    # === L2: Negotiation Action Handlers ===
+
+    def _handle_propose(self, agent_id: str, target: str | None, params: dict[str, Any]) -> None:
+        """Handle a formal proposal (Symphony-style state machine)"""
+        # Resolve target name to ID
+        target_id = target
+        if target_id:
+            for aid, a in self.agents.items():
+                if a.name == target_id:
+                    target_id = aid
+                    break
+
+        proposal = self.negotiation.create_proposal(
+            proposer_id=agent_id,
+            target_id=target_id,
+            proposal_type=params.get("type", "cooperation"),
+            description=params.get("description", ""),
+            parameters=params,
+            current_step=self.current_step,
+        )
+        self.diff_tracker.record_proposal()
+        self.on_event("proposal_created", {
+            "proposal": proposal.to_dict(),
+            "agent_id": agent_id,
+            "step": self.current_step,
+        })
+
+    def _handle_accept_proposal(self, agent_id: str, proposal_id: str | None, params: dict[str, Any]) -> None:
+        """Handle accepting a proposal"""
+        if not proposal_id:
+            # Try to find the most recent pending proposal targeting this agent
+            pending = self.negotiation.get_pending_proposals_for_agent(agent_id)
+            if pending:
+                proposal_id = pending[0].id
+            else:
+                return
+
+        agreement = self.negotiation.accept_proposal(
+            proposal_id, agent_id, self.current_step,
+            reasoning=params.get("reasoning", ""),
+        )
+        if agreement:
+            # Feed commitments into IntentMemory
+            for party_id, commitment in agreement.commitments.items():
+                agent = self.agents.get(party_id)
+                if agent and hasattr(agent, 'agent_memory'):
+                    other_parties = [p for p in agreement.parties if p != party_id]
+                    to_name = self.agents[other_parties[0]].name if other_parties and other_parties[0] in self.agents else "others"
+                    agent.agent_memory.intent.add_commitment(
+                        to=to_name, what=commitment, step=self.current_step
+                    )
+
+            self.on_event("proposal_accepted", {
+                "proposal_id": proposal_id,
+                "agreement": agreement.to_dict(),
+                "step": self.current_step,
+            })
+
+    def _handle_reject_proposal(self, agent_id: str, proposal_id: str | None, params: dict[str, Any]) -> None:
+        """Handle rejecting a proposal"""
+        if not proposal_id:
+            pending = self.negotiation.get_pending_proposals_for_agent(agent_id)
+            if pending:
+                proposal_id = pending[0].id
+            else:
+                return
+
+        self.negotiation.reject_proposal(
+            proposal_id, agent_id, self.current_step,
+            reasoning=params.get("reasoning", ""),
+        )
+        self.on_event("proposal_rejected", {
+            "proposal_id": proposal_id,
+            "agent_id": agent_id,
+            "step": self.current_step,
+        })
+
+    def _handle_counter_propose(self, agent_id: str, proposal_id: str | None, params: dict[str, Any]) -> None:
+        """Handle counter-proposal"""
+        if not proposal_id:
+            pending = self.negotiation.get_pending_proposals_for_agent(agent_id)
+            if pending:
+                proposal_id = pending[0].id
+            else:
+                return
+
+        self.negotiation.counter_propose(
+            proposal_id, agent_id, params, self.current_step,
+        )
+        self.on_event("counter_proposal", {
+            "proposal_id": proposal_id,
+            "agent_id": agent_id,
+            "counter_terms": params,
+            "step": self.current_step,
+        })
+
+    def _handle_withdraw_proposal(self, agent_id: str, proposal_id: str | None) -> None:
+        """Handle proposal withdrawal"""
+        if proposal_id:
+            self.negotiation.withdraw_proposal(proposal_id, agent_id, self.current_step)
+
+    # === L5: Trust Action Handlers ===
+
+    def _handle_vouch_for(self, agent_id: str, subject: str | None, params: dict[str, Any]) -> None:
+        """Handle agent vouching for another agent"""
+        if not subject:
+            return
+
+        # Resolve subject name to ID
+        subject_id = subject
+        for aid, a in self.agents.items():
+            if a.name == subject:
+                subject_id = aid
+                break
+
+        # Vouch to all agents at the same location
+        agent_location = self._agent_locations.get(agent_id)
+        recipients = [
+            aid for aid, loc in self._agent_locations.items()
+            if loc == agent_location and aid != agent_id and aid != subject_id
+        ]
+
+        signals = self.trust_network.vouch_for(
+            voucher_id=agent_id,
+            subject_id=subject_id,
+            recipient_ids=recipients,
+            step=self.current_step,
+            reason=params.get("reason", ""),
+        )
+        for _ in signals:
+            self.diff_tracker.record_trust_signal()
+
+        self.on_event("vouch_for", {
+            "voucher": agent_id,
+            "subject": subject_id,
+            "recipients": recipients,
+            "step": self.current_step,
+        })
+
+    def _handle_share_plan(self, agent_id: str, target: str | None) -> None:
+        """Handle explicit plan sharing (trust-building gesture)"""
+        agent = self.agents.get(agent_id)
+        if not agent or not hasattr(agent, 'agent_memory'):
+            return
+
+        intent = agent.agent_memory.intent
+        if not intent.current_plan:
+            return
+
+        # Share plan increases trust with target
+        if target:
+            target_id = target
+            for aid, a in self.agents.items():
+                if a.name == target:
+                    target_id = aid
+                    break
+
+            # Get current trust level
+            rel = agent.agent_memory.get_relationship(target_id)
+            old_trust = rel.trust_level if rel else 5
+
+            if isinstance(agent, HumanAgent):
+                agent.update_relationship(target_id, trust_delta=1, note="Shared their plan with me")
+
+            new_trust = old_trust + 1
+            self.trust_network.record_trust_change(
+                from_agent=agent_id, to_agent=target_id,
+                old_trust=old_trust, new_trust=new_trust,
+                reason="Shared their plan openly",
+                step=self.current_step,
+            )
+
+        self.on_event("plan_shared", {
+            "agent_id": agent_id,
+            "target": target,
+            "plan_goal": intent.current_plan.goal,
+            "step": self.current_step,
+        })
+
+    # === L7: Emergent Leadership Handlers ===
+
+    def _handle_coordinate(self, agent_id: str, params: dict[str, Any]) -> None:
+        """Handle coordination action (emergent leadership)"""
+        description = params.get("description", "")
+        if description:
+            self.on_event("coordination_proposed", {
+                "agent_id": agent_id,
+                "agent_name": self.agents[agent_id].name if agent_id in self.agents else agent_id,
+                "description": description,
+                "step": self.current_step,
+            })
+
+    def _handle_delegate_task(self, agent_id: str, target: str | None, params: dict[str, Any]) -> None:
+        """Handle task delegation (emergent leadership)"""
+        if not target or not params.get("description"):
+            return
+
+        # Resolve target name to ID
+        target_id = target
+        for aid, a in self.agents.items():
+            if a.name == target:
+                target_id = aid
+                break
+
+        # Create as a proposal so target can accept/reject
+        self.negotiation.create_proposal(
+            proposer_id=agent_id,
+            target_id=target_id,
+            proposal_type="task_delegation",
+            description=params.get("description", ""),
+            parameters={
+                "proposer_commitment": "coordinate and support",
+                "target_commitment": params.get("description", ""),
+                **params,
+            },
+            current_step=self.current_step,
+        )
+        self.diff_tracker.record_proposal()
+
+        self.on_event("task_delegated", {
+            "from_agent": agent_id,
+            "to_agent": target_id,
+            "description": params.get("description"),
+            "step": self.current_step,
+        })
+
     async def _process_environment_agents(
         self,
         step_actions: list[dict[str, Any]],

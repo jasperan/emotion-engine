@@ -103,7 +103,7 @@
     {
       "name": "Sarah Chen",
       "role": "human",
-      "model_id": "qwen2.5:7b",
+      "model_id": "qwen3.5:9b",
       "provider": "ollama",
       "persona": {
         "name": "Sarah Chen",
@@ -142,7 +142,7 @@
     {
       "name": "David Kim",
       "role": "human",
-      "model_id": "qwen2.5:7b",
+      "model_id": "qwen3.5:9b",
       "provider": "ollama",
       "persona": {
         "name": "David Kim",
@@ -181,7 +181,7 @@
     {
       "name": "Michael Thompson",
       "role": "human",
-      "model_id": "qwen2.5:7b",
+      "model_id": "qwen3.5:9b",
       "provider": "ollama",
       "persona": {
         "name": "Michael Thompson",
@@ -220,7 +220,7 @@
     {
       "name": "Lily Zhang",
       "role": "human",
-      "model_id": "qwen2.5:7b",
+      "model_id": "qwen3.5:9b",
       "provider": "ollama",
       "persona": {
         "name": "Lily Zhang",
@@ -259,7 +259,7 @@
     {
       "name": "Robert Kim",
       "role": "human",
-      "model_id": "qwen2.5:7b",
+      "model_id": "qwen3.5:9b",
       "provider": "ollama",
       "persona": {
         "name": "Robert Kim",
@@ -298,7 +298,7 @@
     {
       "name": "Jasmine Nguyen",
       "role": "human",
-      "model_id": "qwen2.5:7b",
+      "model_id": "qwen3.5:9b",
       "provider": "ollama",
       "persona": {
         "name": "Jasmine Nguyen",
@@ -337,7 +337,7 @@
     {
       "name": "Edward Taylor",
       "role": "human",
-      "model_id": "qwen2.5:7b",
+      "model_id": "qwen3.5:9b",
       "provider": "ollama",
       "persona": {
         "name": "Edward Taylor",
@@ -376,7 +376,7 @@
     {
       "name": "Olivia Martinez",
       "role": "human",
-      "model_id": "qwen2.5:7b",
+      "model_id": "qwen3.5:9b",
       "provider": "ollama",
       "persona": {
         "name": "Olivia Martinez",
@@ -415,7 +415,7 @@
     {
       "name": "James Lee",
       "role": "human",
-      "model_id": "qwen2.5:7b",
+      "model_id": "qwen3.5:9b",
       "provider": "ollama",
       "persona": {
         "name": "James Lee",
@@ -454,7 +454,7 @@
     {
       "name": "Thomas Wang",
       "role": "human",
-      "model_id": "qwen2.5:7b",
+      "model_id": "qwen3.5:9b",
       "provider": "ollama",
       "persona": {
         "name": "Thomas Wang",
@@ -493,7 +493,7 @@
     {
       "name": "Silicon Valley Environment",
       "role": "environment",
-      "model_id": "qwen2.5:7b",
+      "model_id": "qwen3.5:9b",
       "provider": "ollama",
       "persona": null,
       "goals": [

@@ -92,7 +92,7 @@
     {
       "name": "Dr. Emily Carter",
       "role": "human",
-      "model_id": "qwen2.5:7b",
+      "model_id": "qwen3.5:9b",
       "provider": "ollama",
       "persona": {
         "name": "Dr. Emily Carter",
@@ -131,7 +131,7 @@
     {
       "name": "Sergeant Michael Reeves",
       "role": "human",
-      "model_id": "qwen2.5:7b",
+      "model_id": "qwen3.5:9b",
       "provider": "ollama",
       "persona": {
         "name": "Sergeant Michael Reeves",
@@ -170,7 +170,7 @@
     {
       "name": "Engineer Jane Kim",
       "role": "human",
-      "model_id": "qwen2.5:7b",
+      "model_id": "qwen3.5:9b",
       "provider": "ollama",
       "persona": {
         "name": "Engineer Jane Kim",
@@ -209,7 +209,7 @@
     {
       "name": "Sasha Lee",
       "role": "human",
-      "model_id": "qwen2.5:7b",
+      "model_id": "qwen3.5:9b",
       "provider": "ollama",
       "persona": {
         "name": "Sasha Lee",
@@ -248,7 +248,7 @@
     {
       "name": "Carlos Rodriguez",
       "role": "human",
-      "model_id": "qwen2.5:7b",
+      "model_id": "qwen3.5:9b",
       "provider": "ollama",
       "persona": {
         "name": "Carlos Rodriguez",
@@ -287,7 +287,7 @@
     {
       "name": "Lily Nguyen",
       "role": "human",
-      "model_id": "qwen2.5:7b",
+      "model_id": "qwen3.5:9b",
       "provider": "ollama",
       "persona": {
         "name": "Lily Nguyen",
@@ -326,7 +326,7 @@
     {
       "name": "David Martinez",
       "role": "human",
-      "model_id": "qwen2.5:7b",
+      "model_id": "qwen3.5:9b",
       "provider": "ollama",
       "persona": {
         "name": "David Martinez",
@@ -365,7 +365,7 @@
     {
       "name": "Mia Johnson",
       "role": "human",
-      "model_id": "qwen2.5:7b",
+      "model_id": "qwen3.5:9b",
       "provider": "ollama",
       "persona": {
         "name": "Mia Johnson",
@@ -404,7 +404,7 @@
     {
       "name": "Riley Thompson",
       "role": "human",
-      "model_id": "qwen2.5:7b",
+      "model_id": "qwen3.5:9b",
       "provider": "ollama",
       "persona": {
         "name": "Riley Thompson",
@@ -443,7 +443,7 @@
     {
       "name": "Quake Environment",
       "role": "environment",
-      "model_id": "qwen2.5:7b",
+      "model_id": "qwen3.5:9b",
       "provider": "ollama",
       "persona": null,
       "goals": [

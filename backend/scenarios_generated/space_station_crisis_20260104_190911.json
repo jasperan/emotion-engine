@@ -111,7 +111,7 @@
     {
       "name": "Dr. Sarah Patel",
       "role": "human",
-      "model_id": "qwen2.5:7b",
+      "model_id": "qwen3.5:9b",
       "provider": "ollama",
       "persona": {
         "name": "Dr. Sarah Patel",
@@ -151,7 +151,7 @@
     {
       "name": "Alex Rodriguez",
       "role": "human",
-      "model_id": "qwen2.5:7b",
+      "model_id": "qwen3.5:9b",
       "provider": "ollama",
       "persona": {
         "name": "Alex Rodriguez",
@@ -191,7 +191,7 @@
     {
       "name": "Lena Singh",
       "role": "human",
-      "model_id": "qwen2.5:7b",
+      "model_id": "qwen3.5:9b",
       "provider": "ollama",
       "persona": {
         "name": "Lena Singh",
@@ -231,7 +231,7 @@
     {
       "name": "Megan Thompson",
       "role": "human",
-      "model_id": "qwen2.5:7b",
+      "model_id": "qwen3.5:9b",
       "provider": "ollama",
       "persona": {
         "name": "Megan Thompson",
@@ -270,7 +270,7 @@
     {
       "name": "Javier Hernandez",
       "role": "human",
-      "model_id": "qwen2.5:7b",
+      "model_id": "qwen3.5:9b",
       "provider": "ollama",
       "persona": {
         "name": "Javier Hernandez",
@@ -309,7 +309,7 @@
     {
       "name": "Dr. Emily Chen",
       "role": "human",
-      "model_id": "qwen2.5:7b",
+      "model_id": "qwen3.5:9b",
       "provider": "ollama",
       "persona": {
         "name": "Dr. Emily Chen",
@@ -348,7 +348,7 @@
     {
       "name": "Rajiv Kapoor",
       "role": "human",
-      "model_id": "qwen2.5:7b",
+      "model_id": "qwen3.5:9b",
       "provider": "ollama",
       "persona": {
         "name": "Rajiv Kapoor",
@@ -387,7 +387,7 @@
     {
       "name": "Sophia Lee",
       "role": "human",
-      "model_id": "qwen2.5:7b",
+      "model_id": "qwen3.5:9b",
       "provider": "ollama",
       "persona": {
         "name": "Sophia Lee",
@@ -426,7 +426,7 @@
     {
       "name": "Carlos Valdez",
       "role": "human",
-      "model_id": "qwen2.5:7b",
+      "model_id": "qwen3.5:9b",
       "provider": "ollama",
       "persona": {
         "name": "Carlos Valdez",
@@ -465,7 +465,7 @@
     {
       "name": "Sam Patel",
       "role": "human",
-      "model_id": "qwen2.5:7b",
+      "model_id": "qwen3.5:9b",
       "provider": "ollama",
       "persona": {
         "name": "Sam Patel",
@@ -504,7 +504,7 @@
     {
       "name": "Space Station Environment",
       "role": "environment",
-      "model_id": "qwen2.5:7b",
+      "model_id": "qwen3.5:9b",
       "provider": "ollama",
       "persona": null,
       "goals": [

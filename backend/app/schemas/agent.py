@@ -15,7 +15,14 @@ class AgentAction(BaseModel):
         "search", "take", "drop", "use", "interact",
         "join_conversation", "leave_conversation",
         "propose_task", "accept_task", "report_progress", "call_for_vote",
-        "environment_update", "affect_agent"
+        "environment_update", "affect_agent",
+        # Negotiation actions (Symphony-inspired state machine)
+        "propose", "accept_proposal", "reject_proposal",
+        "counter_propose", "withdraw_proposal",
+        # Trust actions (bilateral trust signals)
+        "share_plan", "vouch_for",
+        # Leadership actions (emergent coordination)
+        "coordinate", "delegate_task",
     ] = Field(..., description="Type of action")
     target: str | None = Field(None, description="Target of the action (agent, location, item)")
     parameters: dict[str, Any] = Field(default_factory=dict, description="Action-specific parameters")

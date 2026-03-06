@@ -1,8 +1,29 @@
-"""LLM Router for selecting providers"""
+"""LLM Router for selecting providers with per-agent-type model routing"""
 from typing import Literal, Callable, Awaitable
 
 from app.llm.base import LLMClient, LLMMessage, LLMResponse
 from app.llm.ollama import OllamaClient
+
+
+# Per-agent-type model routing (Pi-inspired: different models for different agent roles)
+# Maps agent role -> model override. None means use default.
+_AGENT_MODEL_ROUTING: dict[str, str | None] = {
+    "human": None,           # Uses primary model (complex persona reasoning)
+    "environment": None,     # Will be set to fallback model
+    "designer": None,        # Uses primary model (narrative guidance)
+    "evaluator": None,       # Uses primary model (analysis)
+    "reactive": None,        # Will be set to fallback model (quick reactions)
+}
+
+
+def get_model_for_role(role: str) -> str | None:
+    """Get the model override for a given agent role. Returns None to use default."""
+    return _AGENT_MODEL_ROUTING.get(role)
+
+
+def configure_model_routing(routing: dict[str, str | None]) -> None:
+    """Update model routing configuration at runtime"""
+    _AGENT_MODEL_ROUTING.update(routing)
 
 
 class LLMRouter:
@@ -49,6 +70,7 @@ class LLMRouter:
         max_tokens: int = 8192,
         stream_callback: Callable[[str], Awaitable[None]] | None = None,
         model_override: str | None = None,
+        agent_role: str | None = None,
     ) -> LLMResponse:
         """
         Generate a response with automatic fallback to a smaller model.
@@ -75,7 +97,10 @@ class LLMRouter:
 
         settings = get_settings()
         client = LLMRouter.get_client("ollama")
-        primary_model = model_override or settings.ollama_default_model
+
+        # Per-agent-type model routing (Pi-inspired)
+        role_model = get_model_for_role(agent_role) if agent_role else None
+        primary_model = model_override or role_model or settings.ollama_default_model
 
         try:
             return await client.generate(

@@ -19,7 +19,7 @@ class Agent(ABC):
         agent_id: str | None = None,
         name: str = "Agent",
         role: str = "base",
-        model_id: str = "gemma3:270m",
+        model_id: str = "qwen3.5:27b",
         provider: str = "ollama",
         goals: list[str] | None = None,
         tools: list[str] | None = None,

@@ -20,7 +20,7 @@ class HumanAgent(Agent):
         self,
         agent_id: str | None = None,
         name: str = "Human",
-        model_id: str = "gemma3:270m",
+        model_id: str = "qwen3.5:27b",
         provider: str = "ollama",
         persona: Persona | None = None,
         goals: list[str] | None = None,
@@ -114,12 +114,20 @@ Available Actions:
 - accept_task: Accept an available task (target = task_id or description)
 - report_progress: Report progress on a task or goal (parameters: task_id, progress, goal, goal_progress)
 - call_for_vote: Call for a vote on ending/continuing (parameters: topic, vote: "continue"|"end")
+- propose: Make a formal proposal to another agent (target = agent name, parameters: description, type, proposer_commitment, target_commitment)
+- accept_proposal: Accept a pending proposal (target = proposal_id)
+- reject_proposal: Reject a pending proposal (target = proposal_id, parameters: reasoning)
+- counter_propose: Counter a proposal with modified terms (target = proposal_id, parameters: description, commitments)
+- vouch_for: Vouch for another agent's trustworthiness (target = agent name, parameters: reason)
+- share_plan: Share your current plan with someone as a trust gesture (target = agent name)
+- coordinate: Propose group coordination (parameters: description)
+- delegate_task: Delegate a task to a specific agent (target = agent name, parameters: description)
 
 Output your response as JSON:
 {{
     "actions": [
         {{
-            "action_type": "move|speak|help|take|drop|use|interact|search|wait|join_conversation|leave_conversation",
+            "action_type": "move|speak|help|take|drop|use|interact|search|wait|join_conversation|leave_conversation|propose|accept_proposal|reject_proposal|counter_propose|vouch_for|share_plan|coordinate|delegate_task",
             "target": "<target location/person/item>",
             "parameters": {{}}
         }}
@@ -148,7 +156,12 @@ IMPORTANT:
 - Work toward shared goals. Report progress when you make headway.
 - If you think the situation is resolved, you can call_for_vote to suggest ending.
 - Use items if they can help you or others (e.g. medical kits for health).
-- Search the room if you need resources."""
+- Search the room if you need resources.
+- Use 'propose' for formal agreements. Others must accept/reject. This is tracked.
+- If someone proposes something to you, respond with accept_proposal or reject_proposal.
+- Vouch for trustworthy people to help others trust them.
+- Share your plan with allies to build trust.
+- If you're a natural leader, use 'coordinate' and 'delegate_task' to organize group efforts."""
     
     def build_context(
         self,
@@ -266,6 +279,47 @@ Your Current State:
                     visible_plans.append(f"- {name} (unfamiliar): appears to be busy")
             if visible_plans:
                 context += "People nearby and their apparent intentions:\n" + "\n".join(visible_plans) + "\n\n"
+
+        # L2: Negotiation context (pending proposals, active agreements)
+        negotiations = world_state.get("negotiations", {})
+        incoming = negotiations.get("incoming_proposals", [])
+        my_pending = negotiations.get("my_pending_proposals", [])
+        agreements = negotiations.get("active_agreements", [])
+        if incoming:
+            context += "Pending Proposals for You:\n"
+            for prop in incoming:
+                context += f"- [{prop['id']}] {prop['description']} (from {prop.get('proposer_id', 'someone')})\n"
+                context += f"  You can: accept_proposal, reject_proposal, or counter_propose (target = proposal ID)\n"
+            context += "\n"
+        if my_pending:
+            context += "Your Pending Proposals (awaiting response):\n"
+            for prop in my_pending:
+                context += f"- [{prop['id']}] {prop['description']} -> {prop.get('target_id', 'open')}\n"
+            context += "\n"
+        if agreements:
+            context += "Active Agreements:\n"
+            for agr in agreements:
+                context += f"- {agr['terms']}\n"
+                for party, commitment in agr.get("commitments", {}).items():
+                    context += f"  {party}: {commitment}\n"
+            context += "\n"
+
+        # L5: Trust signals
+        trust_signals = world_state.get("trust_signals")
+        if trust_signals:
+            context += f"{trust_signals}\n\n"
+
+        # L6: Recent conversation outcomes
+        conv_outcomes = world_state.get("recent_conversation_outcomes", [])
+        if conv_outcomes:
+            for outcome_str in conv_outcomes:
+                context += f"{outcome_str}\n"
+            context += "\n"
+
+        # L8: World state diff (what changed)
+        diff_context = world_state.get("world_state_diff")
+        if diff_context:
+            context += f"{diff_context}\n\n"
 
         # Add messages from others
         if messages:
@@ -468,12 +522,28 @@ You can move to a nearby location if you want to leave."""
         note: str | None = None,
     ) -> None:
         """Update relationship with another agent"""
+        # Track old trust for bilateral signal (L5)
+        rel = self.agent_memory.get_relationship(agent_id)
+        old_trust = rel.trust_level if rel else 5
+
         self.agent_memory.update_relationship(
             agent_id=agent_id,
             trust_delta=trust_delta,
             sentiment=sentiment,
             note=note,
         )
+
+        # Store trust change info for the engine to pick up
+        if trust_delta != 0:
+            new_trust = max(1, min(10, old_trust + trust_delta))
+            if not hasattr(self, '_pending_trust_changes'):
+                self._pending_trust_changes = []
+            self._pending_trust_changes.append({
+                "to_agent": agent_id,
+                "old_trust": old_trust,
+                "new_trust": new_trust,
+                "reason": note or "interaction",
+            })
     
     def to_dict(self) -> dict[str, Any]:
         """Serialize agent with persona data"""

@@ -28,14 +28,19 @@ def print_header():
 async def check_model_selection():
     """Ensure a valid model is selected and available"""
     settings = get_settings()
-    base_url = settings.ollama_base_url
+    # Use native Ollama API for model listing (strip /v1 suffix if present)
+    base_url = settings.ollama_base_url.rstrip("/")
+    if base_url.endswith("/v1"):
+        native_url = base_url[:-3]
+    else:
+        native_url = base_url
     default_model = settings.ollama_default_model
-    
+
     try:
         async with httpx.AsyncClient() as client:
             try:
-                # List models
-                response = await client.get(f"{base_url}/tags", timeout=2.0)
+                # List models via native Ollama API
+                response = await client.get(f"{native_url}/api/tags", timeout=2.0)
                 if response.status_code != 200:
                     console.print(f"[yellow]Warning: Could not connect to Ollama at {base_url}[/yellow]")
                     console.print(f"Using configured default: [bold]{default_model}[/bold]")

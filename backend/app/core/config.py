@@ -33,6 +33,18 @@ class Settings(BaseSettings):
     oracle_db_user: str = "emotionsim"
     oracle_db_password: str = "emotionsim"
 
+    # Per-agent-type model routing (Pi-inspired: different models for different roles)
+    model_route_environment: str | None = None  # None = use fallback model
+    model_route_reactive: str | None = None  # None = use fallback model
+
+    # Agent supervisor settings (Symphony-inspired fault isolation)
+    agent_tick_timeout: float = 120.0  # seconds
+    agent_max_backoff: float = 300.0  # seconds
+    agent_max_consecutive_failures: int = 5
+
+    # Negotiation settings
+    negotiation_default_expiry_steps: int = 5
+
     # Simulation defaults
     default_max_steps: int | None = None  # None means infinite until consensus
     default_tick_delay: float = 0.5  # seconds between ticks
@@ -40,6 +52,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
+        protected_namespaces = ("settings_",)
 
 
 @lru_cache

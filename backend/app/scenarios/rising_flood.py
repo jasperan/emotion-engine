@@ -300,6 +300,36 @@ def create_rising_flood_scenario(num_agents: int = 10) -> ScenarioCreate:
                     ],
                 },
             },
+            "potential_locations": {
+                "drainage_tunnel": {
+                    "description": "A storm drain tunnel running beneath the main street. Dark, partially flooded, but passable.",
+                    "nearby": ["street", "safe_hill"],
+                    "items": ["debris", "metal_grate"],
+                    "hazard_affected": True,
+                    "discovery_hints": ["tunnel", "drain", "underground", "sewer", "pipe"],
+                },
+                "abandoned_store": {
+                    "description": "A boarded-up convenience store. Some supplies may still be inside.",
+                    "nearby": ["street"],
+                    "items": ["canned_food", "bottled_water", "flashlight_batteries"],
+                    "hazard_affected": False,
+                    "discovery_hints": ["store", "shop", "supplies", "food", "building"],
+                },
+                "church_tower": {
+                    "description": "The bell tower of the old church. High ground with a view of the flood.",
+                    "nearby": ["street", "rooftop"],
+                    "items": ["bell_rope", "binoculars"],
+                    "hazard_affected": False,
+                    "discovery_hints": ["church", "tower", "bell", "high", "lookout", "view"],
+                },
+                "boat_shed": {
+                    "description": "A small shed near the bridge where fishing boats are stored.",
+                    "nearby": ["bridge"],
+                    "items": ["rowboat", "oars", "life_vest"],
+                    "hazard_affected": True,
+                    "discovery_hints": ["boat", "shed", "raft", "canoe", "vessel", "dock"],
+                },
+            },
             "events": [
                 "Flash flood warning issued for Riverside District",
                 "Power is out across the area",

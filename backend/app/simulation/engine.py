@@ -873,6 +873,8 @@ class SimulationEngine:
             self._handle_coordinate(agent_id, action.parameters)
         elif action.action_type == "delegate_task":
             self._handle_delegate_task(agent_id, action.target, action.parameters)
+        elif action.action_type == "explore":
+            self._handle_explore(agent_id, action.parameters)
 
         # Log action
         action_dict = {
@@ -1250,6 +1252,48 @@ class SimulationEngine:
             "description": params.get("description"),
             "step": self.current_step,
         })
+
+    def _handle_explore(self, agent_id: str, parameters: dict) -> None:
+        """Handle explore action — check potential_locations for discoverable areas."""
+        agent = self.agents[agent_id]
+        current_loc = self._agent_locations.get(agent_id, "unknown")
+        description = parameters.get("description", "").lower()
+        potential = self.world_state.get("potential_locations", {})
+
+        discovered = None
+        for loc_name, loc_data in list(potential.items()):
+            # Only discover locations connected to current location
+            if current_loc not in loc_data.get("nearby", []):
+                continue
+            # Check if any discovery hint matches the explore description
+            hints = loc_data.get("discovery_hints", [])
+            if any(hint in description for hint in hints):
+                discovered = loc_name
+                break
+
+        if discovered:
+            loc_data = potential.pop(discovered)
+            # Add to active locations
+            self.world_state["locations"][discovered] = loc_data
+            # Ensure bidirectional connections
+            for connected_loc in loc_data.get("nearby", []):
+                if connected_loc in self.world_state["locations"]:
+                    if discovered not in self.world_state["locations"][connected_loc].get("nearby", []):
+                        self.world_state["locations"][connected_loc]["nearby"].append(discovered)
+            agent._action_feedback.append(
+                f"Discovery: You found '{discovered}' — {loc_data['description']}"
+            )
+            self.on_event("location_discovered", {
+                "agent_id": agent_id,
+                "agent_name": agent.name,
+                "location": discovered,
+                "connected_to": current_loc,
+                "step": self.current_step,
+            })
+        else:
+            agent._action_feedback.append(
+                "Exploration: You search the area but find nothing new."
+            )
 
     async def _process_environment_agents(
         self,

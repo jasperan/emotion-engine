@@ -58,9 +58,9 @@
 					{run.current_step}/{run.max_steps}
 				</span>
 			</div>
-			<div class="w-full h-2 bg-storm-800 rounded-full overflow-hidden">
+			<div class="w-full h-2 bg-storm-800 rounded-full overflow-hidden" role="progressbar" aria-label="Simulation progress" aria-valuenow={run.current_step} aria-valuemin={0} aria-valuemax={run.max_steps}>
 				<div
-					class="h-full bg-flood-500 rounded-full transition-all"
+					class="h-full bg-flood-500 rounded-full transition-all duration-300"
 					style="width: {(run.current_step / run.max_steps) * 100}%"
 				></div>
 			</div>
@@ -76,37 +76,63 @@
 		<div class="space-y-2">
 			{#if run.status === 'pending' || run.status === 'paused'}
 				<button
-					class="btn-primary w-full"
+					class="btn btn-primary w-full transition-all duration-200"
 					disabled={controlling}
+					aria-label={run.status === 'paused' ? 'Resume simulation' : 'Start simulation'}
 					on:click={() => handleAction(run.status === 'paused' ? 'resume' : 'start')}
 				>
-					{controlling ? '...' : run.status === 'paused' ? 'Resume' : 'Start'}
+					{#if controlling}
+						<span class="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></span>
+						Working...
+					{:else}
+						<span class="mr-1.5" aria-hidden="true">{run.status === 'paused' ? '▶' : '▶'}</span>
+						{run.status === 'paused' ? 'Resume' : 'Start'}
+					{/if}
 				</button>
 			{/if}
 
 			{#if run.status === 'running'}
 				<div class="grid grid-cols-2 gap-2">
 					<button
-						class="btn-secondary"
+						class="btn btn-secondary transition-all duration-200"
 						disabled={controlling}
+						aria-label="Pause simulation"
 						on:click={() => handleAction('pause')}
 					>
-						{controlling ? '...' : 'Pause'}
+						{#if controlling}
+							<span class="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></span>
+						{:else}
+							<span class="mr-1.5" aria-hidden="true">⏸</span>
+						{/if}
+						Pause
 					</button>
 					<button
-						class="btn-secondary"
+						class="btn btn-secondary transition-all duration-200"
 						disabled={controlling}
+						aria-label="Advance one step"
 						on:click={() => handleAction('step')}
 					>
-						{controlling ? '...' : 'Step'}
+						{#if controlling}
+							<span class="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></span>
+						{:else}
+							<span class="mr-1.5" aria-hidden="true">▶|</span>
+						{/if}
+						Step
 					</button>
 				</div>
 				<button
-					class="btn-danger w-full"
+					class="btn btn-danger w-full transition-all duration-200"
 					disabled={controlling}
+					aria-label="Stop simulation"
 					on:click={() => handleAction('stop')}
 				>
-					{controlling ? '...' : 'Stop'}
+					{#if controlling}
+						<span class="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></span>
+						Stopping...
+					{:else}
+						<span class="mr-1.5" aria-hidden="true">⏹</span>
+						Stop
+					{/if}
 				</button>
 			{/if}
 

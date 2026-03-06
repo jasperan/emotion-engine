@@ -244,6 +244,29 @@ Your Current State:
             if relationship_context:
                 context += f"Your Relationships with People Here:\n{relationship_context}\n\n"
         
+        # Other agents' apparent intentions (trust-gated)
+        agent_plans = world_state.get("agent_plans", {})
+        agent_trust = world_state.get("agent_trust", {}).get(self.id, {})
+        if agent_plans:
+            visible_plans = []
+            for aid, plan_info in agent_plans.items():
+                if aid == self.id:
+                    continue
+                agent_info = agents_state.get(aid, {})
+                if agent_info.get("location") != current_loc:
+                    continue
+                trust = agent_trust.get(aid, 3)
+                name = agent_info.get("name", aid)
+                if trust >= 5:
+                    visible_plans.append(
+                        f"- {name} (trust: {trust}/10): {plan_info.get('goal', 'unknown')} "
+                        f"[{plan_info.get('current_step', '?')}] ({plan_info.get('step_progress', '')})"
+                    )
+                else:
+                    visible_plans.append(f"- {name} (unfamiliar): appears to be busy")
+            if visible_plans:
+                context += "People nearby and their apparent intentions:\n" + "\n".join(visible_plans) + "\n\n"
+
         # Add messages from others
         if messages:
             context += "Recent Communications:\n"

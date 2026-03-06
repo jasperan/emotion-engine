@@ -499,6 +499,32 @@ class SimulationEngine:
                     "context": "environment_agent_tick",
                 })
         
+        # Build agent_plans and agent_trust for plan visibility
+        agent_plans = {}
+        agent_trust = {}
+        for aid, agent in self.agents.items():
+            if hasattr(agent, 'agent_memory') and hasattr(agent.agent_memory, 'intent'):
+                intent = agent.agent_memory.intent
+                if intent.current_plan:
+                    plan = intent.current_plan
+                    current_step_desc = (
+                        plan.steps[plan.current_step]
+                        if plan.current_step < len(plan.steps)
+                        else "completing"
+                    )
+                    agent_plans[aid] = {
+                        "goal": plan.goal,
+                        "current_step": current_step_desc,
+                        "step_progress": f"{plan.current_step + 1}/{len(plan.steps)}",
+                    }
+            if hasattr(agent, 'agent_memory'):
+                trust_data = {}
+                for rel in agent.agent_memory._relationships.values():
+                    trust_data[rel.agent_id] = rel.trust_level
+                agent_trust[aid] = trust_data
+        self.world_state["agent_plans"] = agent_plans
+        self.world_state["agent_trust"] = agent_trust
+
         # Phase 2: Process human agents sequentially
         # Get all human agents, shuffled for variety
         human_agents = [

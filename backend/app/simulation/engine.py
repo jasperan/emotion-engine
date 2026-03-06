@@ -1542,45 +1542,35 @@ class SimulationEngine:
         current_loc_data = locations.get(current_location, {})
         nearby = current_loc_data.get("nearby", [])
         
-        # Check if target location exists - if not, dynamically register it
+        # Check if target location exists
         if target_location not in locations:
-            # Dynamically register the new location
-            agent = self.agents.get(agent_id)
-            agent_name = agent.name if agent else agent_id
-            
-            # Create new location with reasonable defaults and DISTANCE
-            dist = random.randint(1, 3) # Assign random distance for new places
-            locations[target_location] = {
-                "description": f"A newly discovered area: {target_location}",
-                "nearby": [current_location] if current_location in locations else [],
-                "items": [],
-                "hazard_affected": False,
-                "distance": dist
-            }
-            
-            # Make it bidirectionally connected to current location
-            if current_location in locations:
-                current_nearby = locations[current_location].get("nearby", [])
-                if target_location not in current_nearby:
-                    current_nearby.append(target_location)
-                    locations[current_location]["nearby"] = current_nearby
-            
-            # Update world state
-            self.world_state["locations"] = locations
-            
-            # Log the new location creation
-            self.on_event("location_created", {
-                "agent_id": agent_id,
-                "agent_name": agent_name,
-                "location": target_location,
-                "connected_to": current_location,
-                "distance": dist,
-                "step": self.current_step,
-            })
-            
-            # Update nearby list for validation below
-            nearby = current_loc_data.get("nearby", [])
+            # Try fuzzy match against ALL known locations
+            fuzzy = self._fuzzy_match_location(target_location, list(locations.keys()))
+            if fuzzy:
+                target_location = fuzzy
+            else:
+                # Location doesn't exist at all — fail with feedback
+                agent._action_feedback.append(
+                    f"Movement failed: '{target_location}' doesn't exist. "
+                    f"Nearby locations: {', '.join(nearby)}."
+                )
+                self._agent_failed_movements[agent_id].add(target_location)
+                self.on_event("movement_failed", {
+                    "agent_id": agent_id,
+                    "agent_name": agent.name if agent else agent_id,
+                    "from": current_location,
+                    "to": target_location,
+                    "reason": "Location does not exist",
+                    "nearby_locations": nearby,
+                })
+                return False
         
+        if target_location not in nearby and target_location != current_location:
+            # Try fuzzy match against nearby
+            fuzzy = self._fuzzy_match_location(target_location, nearby)
+            if fuzzy:
+                target_location = fuzzy
+
         if target_location not in nearby and target_location != current_location:
             # Try to find a path for multi-step movement
             path = self._find_path(current_location, target_location, locations)
@@ -1609,10 +1599,14 @@ class SimulationEngine:
                 agent = self.agents.get(agent_id)
                 agent_name = agent.name if agent else agent_id
                 reason = "Location not reachable from current location"
-                
+
                 # Track this failed movement to prevent retries in this step
                 self._agent_failed_movements[agent_id].add(target_location)
-                
+
+                agent._action_feedback.append(
+                    f"Movement failed: Can't reach '{target_location}' from '{current_location}'. "
+                    f"Nearby locations: {', '.join(nearby)}."
+                )
                 self.on_event("movement_failed", {
                     "agent_id": agent_id,
                     "agent_name": agent_name,

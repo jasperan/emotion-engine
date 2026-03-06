@@ -25,6 +25,14 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     anthropic_default_model: str = "claude-3-sonnet-20240229"
     
+    # Oracle Datalake (optional — logs everything to Oracle 26ai Free)
+    datalake_enabled: bool = False
+    oracle_db_host: str = "localhost"
+    oracle_db_port: int = 1522
+    oracle_db_service: str = "FREEPDB1"
+    oracle_db_user: str = "emotionsim"
+    oracle_db_password: str = "emotionsim"
+
     # Simulation defaults
     default_max_steps: int | None = None  # None means infinite until consensus
     default_tick_delay: float = 0.5  # seconds between ticks

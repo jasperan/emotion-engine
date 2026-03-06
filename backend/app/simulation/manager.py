@@ -1,5 +1,6 @@
 """Simulation Manager - manages multiple concurrent runs"""
 import asyncio
+import logging
 from typing import Any, Callable
 from datetime import datetime
 
@@ -9,6 +10,9 @@ from sqlalchemy import select
 from app.simulation.engine import SimulationEngine, SimulationState
 from app.models.scenario import Scenario
 from app.models.run import Run, RunStatus
+from app.core.config import get_settings
+
+logger = logging.getLogger(__name__)
 
 
 class SimulationManager:
@@ -22,12 +26,15 @@ class SimulationManager:
     def __init__(self):
         # Active simulation engines by run_id
         self._engines: dict[str, SimulationEngine] = {}
-        
+
         # WebSocket event handlers by run_id
         self._event_handlers: dict[str, list[Callable[[str, dict[str, Any]], None]]] = {}
-        
+
         # Background tasks
         self._tasks: dict[str, asyncio.Task] = {}
+
+        # Datalake loggers by run_id
+        self._datalake_loggers: dict[str, Any] = {}
     
     @classmethod
     def get_instance(cls) -> "SimulationManager":
@@ -87,23 +94,26 @@ class SimulationManager:
             db_session=engine_session,
             on_event=lambda t, d: self._dispatch_event(run_id, t, d),
         )
-        
+
         # Build config from scenario
         config = {
             "config": scenario.config,
             "agent_templates": scenario.agent_templates,
             "seed": run.seed,
         }
-        
+
         # Initialize engine
         await engine.initialize(config)
-        
+
         self._engines[run_id] = engine
-        
+
+        # Attach datalake logger if enabled
+        self._attach_datalake(run_id, scenario.name, run.seed, scenario.config)
+
         # Start in background
         task = asyncio.create_task(engine.start())
         self._tasks[run_id] = task
-        
+
         return engine
     
     async def pause_run(self, run_id: str) -> None:
@@ -209,14 +219,66 @@ class SimulationManager:
         
         # Load state from DB (using the engine's session)
         await engine.load_from_db()
-        
+
         self._engines[run_id] = engine
-        
+
+        # Attach datalake logger if enabled
+        self._attach_datalake(run_id, f"resumed-{run_id[:8]}")
+
         # Start in background if it was previously running or pending
         task = asyncio.create_task(engine.start())
         self._tasks[run_id] = task
-        
+
         return engine
+
+    def _attach_datalake(
+        self,
+        run_id: str,
+        scenario_name: str,
+        seed: int | None = None,
+        run_config: dict | None = None,
+    ) -> None:
+        """Attach a datalake logger to a run if datalake is enabled."""
+        settings = get_settings()
+        if not settings.datalake_enabled:
+            return
+
+        try:
+            from app.datalake.logger import DatalakeLogger
+            from app.datalake.config import DatabaseConfig
+
+            config = DatabaseConfig(
+                host=settings.oracle_db_host,
+                port=settings.oracle_db_port,
+                service_name=settings.oracle_db_service,
+                user=settings.oracle_db_user,
+                password=settings.oracle_db_password,
+            )
+
+            engine = self._engines.get(run_id)
+            model = "unknown"
+            if engine:
+                model = settings.ollama_default_model
+
+            dl_logger = DatalakeLogger(
+                run_id=run_id,
+                scenario_name=scenario_name,
+                model=model,
+                fallback_model=settings.ollama_fallback_model,
+                seed=seed,
+                run_config=run_config,
+                store=None,  # Will use default config from DatabaseConfig
+            )
+            # Override store with our config
+            from app.datalake.store import SimulationStore
+            dl_logger.store = SimulationStore(config)
+
+            # Subscribe datalake logger to run events
+            self.subscribe(run_id, dl_logger.on_event)
+            self._datalake_loggers[run_id] = dl_logger
+            logger.info("Datalake logger attached to run %s", run_id)
+        except Exception as e:
+            logger.warning("Failed to attach datalake logger: %s", e)
 
     def _dispatch_event(
         self,
@@ -239,4 +301,12 @@ class SimulationManager:
         task = self._tasks.pop(run_id, None)
         if task and not task.done():
             task.cancel()
+
+        # Close datalake logger
+        dl_logger = self._datalake_loggers.pop(run_id, None)
+        if dl_logger:
+            try:
+                dl_logger.close()
+            except Exception:
+                pass
 

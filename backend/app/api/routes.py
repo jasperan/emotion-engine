@@ -5,6 +5,7 @@ from app.api.scenarios import router as scenarios_router
 from app.api.runs import router as runs_router
 from app.api.websocket import router as websocket_router
 from app.api.seed import router as seed_router
+from app.api.datalake import router as datalake_router
 from app.llm.router import LLMRouter
 
 router = APIRouter()
@@ -14,6 +15,7 @@ router.include_router(scenarios_router)
 router.include_router(runs_router)
 router.include_router(websocket_router)
 router.include_router(seed_router)
+router.include_router(datalake_router)
 
 
 @router.get("/")

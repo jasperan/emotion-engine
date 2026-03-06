@@ -39,6 +39,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+oracle = [
+    "oracledb",
+]
 dev = [
     "pytest",
     "pytest-asyncio",

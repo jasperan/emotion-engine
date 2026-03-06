@@ -51,6 +51,14 @@ class AgentConfig(BaseModel):
     inventory: list[Item] = Field(default_factory=list, description="Initial inventory")
 
 
+class AgentPlanStatus(BaseModel):
+    """Current plan status for an agent"""
+    goal: str
+    current_step: str
+    step_progress: str
+    deadline_step: int | None = None
+
+
 class AgentStatus(BaseModel):
     """Current status of an agent in a run"""
     id: str
@@ -60,5 +68,7 @@ class AgentStatus(BaseModel):
     persona: Persona | None = None
     dynamic_state: dict[str, Any] = Field(default_factory=dict)
     inventory: list[Item] = Field(default_factory=list)
+    current_plan: AgentPlanStatus | None = None
+    last_reasoning: str | None = None
 
 

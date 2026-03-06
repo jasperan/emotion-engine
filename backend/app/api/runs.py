@@ -15,6 +15,7 @@ from app.schemas.run import (
     StepResponse,
     MessageResponse,
 )
+from app.schemas.agent import AgentPlanStatus
 from app.simulation import SimulationManager
 
 router = APIRouter(prefix="/runs", tags=["runs"])
@@ -116,9 +117,15 @@ async def get_run_agents(
         select(AgentModel).where(AgentModel.run_id == run_id)
     )
     agents = result.scalars().all()
-    
-    return [
-        {
+
+    # Check for live engine to get cognitive data from in-memory agents
+    manager = SimulationManager.get_instance()
+    engine = manager.get_engine(run_id)
+    live_agents = engine.agents if engine else {}
+
+    agent_list = []
+    for agent in agents:
+        agent_data = {
             "id": agent.id,
             "name": agent.name,
             "role": agent.role,
@@ -127,9 +134,56 @@ async def get_run_agents(
             "persona": agent.persona,
             "dynamic_state": agent.dynamic_state,
             "is_active": agent.is_active,
+            "current_plan": None,
+            "last_reasoning": None,
         }
-        for agent in agents
-    ]
+
+        # Try live agent first (most up-to-date)
+        live_agent = live_agents.get(agent.id)
+        if live_agent:
+            # Extract plan from live agent's intent memory
+            if hasattr(live_agent, 'agent_memory') and hasattr(live_agent.agent_memory, 'intent'):
+                intent = live_agent.agent_memory.intent
+                if intent.current_plan:
+                    plan = intent.current_plan
+                    current_step_desc = (
+                        plan.steps[plan.current_step]
+                        if plan.current_step < len(plan.steps)
+                        else "Plan complete"
+                    )
+                    agent_data["current_plan"] = AgentPlanStatus(
+                        goal=plan.goal,
+                        current_step=current_step_desc,
+                        step_progress=f"{plan.current_step + 1}/{len(plan.steps)}",
+                        deadline_step=plan.deadline_step,
+                    ).model_dump()
+            # Extract last reasoning from live agent
+            if hasattr(live_agent, 'last_reasoning') and live_agent.last_reasoning:
+                agent_data["last_reasoning"] = live_agent.last_reasoning
+        else:
+            # Fall back to DB memory_snapshot for intent data
+            snapshot = agent.memory_snapshot or {}
+            intent_data = snapshot.get("intent")
+            if intent_data:
+                plan_data = intent_data.get("current_plan")
+                if plan_data:
+                    steps = plan_data.get("steps", [])
+                    current_step_idx = plan_data.get("current_step", 0)
+                    current_step_desc = (
+                        steps[current_step_idx]
+                        if current_step_idx < len(steps)
+                        else "Plan complete"
+                    )
+                    agent_data["current_plan"] = AgentPlanStatus(
+                        goal=plan_data.get("goal", ""),
+                        current_step=current_step_desc,
+                        step_progress=f"{current_step_idx + 1}/{len(steps)}",
+                        deadline_step=plan_data.get("deadline_step"),
+                    ).model_dump()
+
+        agent_list.append(agent_data)
+
+    return agent_list
 
 
 @router.get("/{run_id}/steps", response_model=list[StepResponse])

@@ -43,6 +43,9 @@ class Agent(ABC):
         # Legacy memory list for backwards compatibility
         self.memory: list[dict[str, Any]] = []
         self.memory_limit = memory_limit
+
+        # Last reasoning from most recent tick
+        self.last_reasoning: str | None = None
         
         self.memory_limit = memory_limit
         

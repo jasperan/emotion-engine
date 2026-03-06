@@ -452,7 +452,8 @@ class SimulationEngine:
                     step_messages,
                     step_events,
                 )
-                
+                agent.last_reasoning = response.reasoning or None
+
                 for action in response.actions:
                     action_dict = {
                         "agent_id": agent_id,
@@ -460,13 +461,13 @@ class SimulationEngine:
                         **action.model_dump(),
                     }
                     step_actions.append(action_dict)
-                    
+
                     if action.action_type == "environment_update":
                         self._apply_environment_update(action.parameters)
                         # Extract events if any
                         if "events" in action.parameters:
                             step_events.extend(action.parameters["events"])
-                
+
                 if response.message:
                     msg = response.message
                     stored_msg = self.message_bus.broadcast(
@@ -474,20 +475,20 @@ class SimulationEngine:
                     )
                     step_messages.append(stored_msg)
                     await self._persist_message(agent_id, msg)
-                    
+
                     # Emit event immediately for real-time logs
                     self.on_event("message", {
                         "type": "message",
                         "data": stored_msg,
                         "timestamp": datetime.utcnow().strftime("%H:%M:%S")
                     })
-                    
+
                     # Yield to let UI update
                     await asyncio.sleep(0)
-                
+
                 # Update world state after environment agent
                 self._update_agents_in_world_state()
-                    
+
             except Exception as e:
                 agent = self.agents.get(agent_id)
                 agent_name = agent.name if agent else agent_id
@@ -666,7 +667,8 @@ class SimulationEngine:
                     step_events,
                     stream_callback=agent_callback,
                 )
-                
+                agent.last_reasoning = response.reasoning or None
+
                 # Process actions
                 for action in response.actions:
                     if action.action_type == "move":
@@ -818,7 +820,8 @@ class SimulationEngine:
             
             try:
                 response = await agent.tick(self.world_state.copy(), messages)
-                
+                agent.last_reasoning = response.reasoning or None
+
                 for action in response.actions:
                     step_actions.append({
                         "agent_id": agent_id,
@@ -925,7 +928,8 @@ class SimulationEngine:
         
         try:
             response = await agent.tick(conv_world_state, all_messages)
-            
+            agent.last_reasoning = response.reasoning or None
+
             # Process actions (including movement)
             for action in response.actions:
                 step_actions.append({

@@ -33,7 +33,7 @@ class AgentModel(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     
     # LLM configuration
-    model_id: Mapped[str] = mapped_column(String(100), default="gemma3:270m")
+    model_id: Mapped[str] = mapped_column(String(100), default="qwen3.5:27b")
     provider: Mapped[str] = mapped_column(String(50), default="ollama")
     
     # Persona configuration (for HumanAgent)

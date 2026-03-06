@@ -7,7 +7,7 @@
 
   // Configuration state
   let ollamaUrl = 'http://localhost:11434/v1';
-  let defaultModel = 'gemma3';
+  let defaultModel = 'qwen3.5:27b';
 
   let saving: Record<string, boolean> = {};
   type StatusMessage = { type: 'success' | 'error'; text: string } | null;

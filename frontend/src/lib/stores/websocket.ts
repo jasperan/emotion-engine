@@ -20,6 +20,8 @@ function createWebSocketStore() {
 	let ws: WebSocket | null = null;
 	let currentRunId: string | null = null;
 	let reconnectTimeout: NodeJS.Timeout | null = null;
+	let reconnectDelay = 1000;
+	const MAX_RECONNECT_DELAY = 30000;
 
 	function connect(runId: string) {
 		// Disconnect existing connection if any
@@ -36,6 +38,7 @@ function createWebSocketStore() {
 			ws = new WebSocket(wsUrl);
 
 			ws.onopen = () => {
+				reconnectDelay = 1000;
 				update((state) => ({
 					...state,
 					connected: true,
@@ -64,13 +67,14 @@ function createWebSocketStore() {
 					connected: false,
 				}));
 
-				// Attempt to reconnect after 3 seconds if we still have a runId
+				// Attempt to reconnect with exponential backoff if we still have a runId
 				if (currentRunId) {
 					reconnectTimeout = setTimeout(() => {
 						if (currentRunId) {
 							connect(currentRunId);
 						}
-					}, 3000);
+					}, reconnectDelay);
+					reconnectDelay = Math.min(reconnectDelay * 2, MAX_RECONNECT_DELAY);
 				}
 			};
 		} catch (error) {
@@ -84,6 +88,7 @@ function createWebSocketStore() {
 
 	function disconnect() {
 		currentRunId = null;
+		reconnectDelay = 1000;
 
 		if (reconnectTimeout) {
 			clearTimeout(reconnectTimeout);

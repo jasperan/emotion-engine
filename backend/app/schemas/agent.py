@@ -13,7 +13,8 @@ class AgentAction(BaseModel):
     action_type: Literal[
         "move", "speak", "wait", "reflect", "help",
         "search", "take", "drop", "use", "interact",
-        "join_conversation", "leave_conversation",
+        "explore",  # discover hidden locations
+        "start_conversation", "join_conversation", "leave_conversation",
         "propose_task", "accept_task", "report_progress", "call_for_vote",
         "environment_update", "affect_agent",
         # Negotiation actions (Symphony-inspired state machine)

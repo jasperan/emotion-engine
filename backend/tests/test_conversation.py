@@ -115,39 +115,47 @@ class TestConversationManager:
         assert len(manager._conversations) == 0
     
     def test_update_agent_location(self):
-        """Test updating agent locations and auto-joining conversations"""
+        """Test updating agent locations (no auto-join)"""
         manager = ConversationManager()
-        
-        # First agent at shelter
+
+        # First agent at shelter - no auto-join
         joined = manager.update_agent_location("agent1", "shelter")
-        assert len(joined) == 1
-        
-        # Second agent at shelter should join same conversation
+        assert len(joined) == 0
+
+        # Second agent at shelter - also no auto-join
         joined = manager.update_agent_location("agent2", "shelter")
-        assert len(joined) == 1
-        
-        # Get the conversation
-        conv = manager.get_location_conversation("shelter")
-        assert conv is not None
-        assert len(conv.participants) == 2
+        assert len(joined) == 0
+
+        # Agents are tracked at location even without conversations
+        agents = manager.get_agents_at_location("shelter")
+        assert len(agents) == 2
     
-    def test_agent_leaves_on_move(self):
-        """Test that agents leave conversations when moving"""
+    def test_agent_leaves_location_conv_on_move(self):
+        """Test that agents leave location conversations when moving"""
         manager = ConversationManager()
-        
-        manager.update_agent_location("agent1", "shelter")
-        manager.update_agent_location("agent2", "shelter")
-        
-        conv = manager.get_location_conversation("shelter")
+
+        # Manually create a location conversation
+        conv = manager.create_conversation(
+            initiator_id="agent1",
+            participant_ids={"agent1", "agent2"},
+            location="shelter",
+            topic="shelter talk",
+        )
+        # Also register their locations
+        manager._agent_locations["agent1"] = "shelter"
+        manager._agent_locations["agent2"] = "shelter"
+        # Register as location conversation for leave-on-move to work
+        manager._location_conversations["shelter"] = conv.id
+        # Mark as LOCATION type so the leave-on-move logic triggers
+        conv.conversation_type = ConversationType.LOCATION
+
         assert len(conv.participants) == 2
-        
+
         # Agent1 moves to street
         manager.update_agent_location("agent1", "street")
-        
-        shelter_conv = manager.get_location_conversation("shelter")
-        # Conversation might be ended since only 1 participant
-        if shelter_conv and shelter_conv.state == ConversationState.ACTIVE:
-            assert "agent1" not in shelter_conv.participants
+
+        # Conversation ended since only 1 participant left
+        assert "agent1" not in conv.participants
     
     def test_explicit_conversation(self):
         """Test starting an explicit conversation"""
@@ -168,47 +176,55 @@ class TestConversationManager:
     def test_get_agent_conversations(self):
         """Test getting all conversations for an agent"""
         manager = ConversationManager()
-        
-        # Agent joins location conversation
-        manager.update_agent_location("agent1", "shelter")
-        manager.update_agent_location("agent2", "shelter")
-        
-        # Also starts explicit conversation
+
+        # Create an explicit conversation
+        manager.create_conversation(
+            initiator_id="agent1",
+            participant_ids={"agent1", "agent2"},
+            location="shelter",
+            topic="plan A",
+        )
+
+        # Also starts another explicit conversation
         manager.start_explicit_conversation(
             initiator_id="agent1",
             target_agent_ids=["agent3"],
         )
-        
+
         convs = manager.get_agent_conversations("agent1")
         assert len(convs) == 2
     
     def test_add_message_to_conversation(self):
         """Test adding messages to a managed conversation"""
         manager = ConversationManager()
-        
-        manager.update_agent_location("agent1", "shelter")
-        manager.update_agent_location("agent2", "shelter")
-        
-        conv = manager.get_location_conversation("shelter")
-        
+
+        conv = manager.create_conversation(
+            initiator_id="agent1",
+            participant_ids={"agent1", "agent2"},
+            location="shelter",
+            topic="chat",
+        )
+
         result = manager.add_message_to_conversation(
             conv.id,
             {"content": "Hello everyone", "from_agent": "agent1"},
         )
-        
+
         assert result
         assert len(conv.message_history) == 1
     
     def test_cleanup_ended_conversations(self):
         """Test cleanup of ended conversations"""
         manager = ConversationManager()
-        
-        manager.update_agent_location("agent1", "shelter")
-        manager.update_agent_location("agent2", "shelter")
-        
-        conv = manager.get_location_conversation("shelter")
+
+        conv = manager.create_conversation(
+            initiator_id="agent1",
+            participant_ids={"agent1", "agent2"},
+            location="shelter",
+            topic="chat",
+        )
         conv.end()
-        
+
         ended_ids = manager.cleanup_ended_conversations()
         assert conv.id in ended_ids
         assert conv.id not in manager._conversations

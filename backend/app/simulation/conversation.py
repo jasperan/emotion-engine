@@ -27,17 +27,21 @@ class Conversation:
     Manages turn-taking, participant tracking, and conversation state.
     """
     
+    MAX_PARTICIPANTS = 5  # Maximum participants per conversation
+
     def __init__(
         self,
         conversation_id: str | None = None,
         location: str | None = None,
         conversation_type: ConversationType = ConversationType.LOCATION,
         initiator_id: str | None = None,
+        topic: str | None = None,
     ):
         self.id = conversation_id or str(uuid.uuid4())
         self.location = location
         self.conversation_type = conversation_type
         self.initiator_id = initiator_id
+        self.topic = topic
         
         self.state = ConversationState.ACTIVE
         self.participants: set[str] = set()
@@ -172,6 +176,7 @@ class Conversation:
             "message_count": len(self.message_history),
             "started_at": self.started_at.isoformat(),
             "last_activity": self.last_activity.isoformat(),
+            "topic": self.topic,
             "ended_at": self.ended_at.isoformat() if self.ended_at else None,
         }
 
@@ -182,6 +187,8 @@ class ConversationManager:
     Handles conversation creation, agent joining/leaving, and turn coordination.
     """
     
+    MAX_PER_LOCATION = 2  # Maximum concurrent conversations per location
+
     def __init__(self):
         # Active conversations by ID
         self._conversations: dict[str, Conversation] = {}
@@ -201,13 +208,12 @@ class ConversationManager:
     def update_agent_location(self, agent_id: str, new_location: str) -> list[str]:
         """
         Update an agent's location and manage conversation membership.
-        Returns list of conversation IDs the agent joined.
+        No longer auto-joins conversations; agents must explicitly join.
+        Returns list of conversation IDs the agent joined (always empty).
         """
         old_location = self._agent_locations.get(agent_id)
         self._agent_locations[agent_id] = new_location
-        
-        joined_conversations = []
-        
+
         # Leave location-based conversations at old location
         if old_location and old_location != new_location:
             old_conv_id = self._location_conversations.get(old_location)
@@ -215,14 +221,8 @@ class ConversationManager:
                 conv = self._conversations[old_conv_id]
                 if conv.conversation_type == ConversationType.LOCATION:
                     self._leave_conversation(agent_id, old_conv_id)
-        
-        # Join or create location-based conversation at new location
-        if new_location:
-            conv_id = self._get_or_create_location_conversation(new_location)
-            if self._join_conversation(agent_id, conv_id):
-                joined_conversations.append(conv_id)
-        
-        return joined_conversations
+
+        return []  # No auto-join
     
     def _get_or_create_location_conversation(self, location: str) -> str:
         """Get or create a location-based conversation"""
@@ -270,9 +270,40 @@ class ConversationManager:
             self._agent_conversations[agent_id].add(conv.id)
         
         self._notify_event("conversation_created", conv.to_dict())
-        
+
         return conv.id
-    
+
+    def create_conversation(
+        self,
+        initiator_id: str,
+        participant_ids: set[str],
+        location: str,
+        topic: str = "general discussion",
+        conversation_type: ConversationType = ConversationType.EXPLICIT,
+    ) -> Conversation | None:
+        """Create an explicit conversation with limits. Returns None if location limit reached."""
+        # Check location limit
+        active_at_location = sum(
+            1 for conv in self._conversations.values()
+            if conv.location == location and conv.state == ConversationState.ACTIVE
+        )
+        if active_at_location >= self.MAX_PER_LOCATION:
+            return None
+
+        conv = Conversation(
+            location=location,
+            conversation_type=conversation_type,
+            initiator_id=initiator_id,
+            topic=topic,
+        )
+        for pid in participant_ids:
+            conv.add_participant(pid)
+        self._conversations[conv.id] = conv
+        for pid in participant_ids:
+            self._agent_conversations[pid].add(conv.id)
+        self._notify_event("conversation_created", conv.to_dict())
+        return conv
+
     def _join_conversation(self, agent_id: str, conversation_id: str) -> bool:
         """Have an agent join a conversation"""
         if conversation_id not in self._conversations:
@@ -303,11 +334,16 @@ class ConversationManager:
             return True
         return False
     
-    def join_conversation(self, agent_id: str, conversation_id: str) -> bool:
-        """Public method to join a conversation"""
+    def join_conversation(self, conversation_id: str, agent_id: str) -> bool:
+        """Public method to join a conversation with participant limit check"""
+        conv = self._conversations.get(conversation_id)
+        if not conv:
+            return False
+        if len(conv.participants) >= Conversation.MAX_PARTICIPANTS:
+            return False
         return self._join_conversation(agent_id, conversation_id)
-    
-    def leave_conversation(self, agent_id: str, conversation_id: str) -> bool:
+
+    def leave_conversation(self, conversation_id: str, agent_id: str) -> bool:
         """Public method to leave a conversation"""
         return self._leave_conversation(agent_id, conversation_id)
     
@@ -339,6 +375,22 @@ class ConversationManager:
             if loc == location
         }
     
+    def get_location_conversation_summaries(self, location: str, exclude_agent: str | None = None) -> list[dict]:
+        """Get summaries of active conversations at a location, excluding given agent's conversations."""
+        summaries = []
+        for conv in self._conversations.values():
+            if conv.location != location or conv.state != ConversationState.ACTIVE:
+                continue
+            if exclude_agent and exclude_agent in conv.participants:
+                continue
+            summaries.append({
+                "id": conv.id,
+                "topic": conv.topic or "general discussion",
+                "participants": list(conv.participants),
+                "exchanges": len(conv.message_history),
+            })
+        return summaries
+
     def add_message_to_conversation(
         self,
         conversation_id: str,

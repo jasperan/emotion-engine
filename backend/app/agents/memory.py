@@ -4,6 +4,8 @@ from datetime import datetime
 from dataclasses import dataclass, field
 from collections import defaultdict
 
+from app.agents.intent_memory import IntentMemory
+
 
 @dataclass
 class EpisodicMemory:
@@ -109,6 +111,9 @@ class AgentMemory:
         
         # How the agent arrived at current location
         self._arrival_context: dict[str, Any] = {}
+
+        # Intent memory (Tier 4) - plans, commitments, blocked actions
+        self.intent = IntentMemory()
     
     def add_event(self, event: dict[str, Any]) -> None:
         """Add an event to memory"""
@@ -366,8 +371,13 @@ class AgentMemory:
                     f"({rel.interaction_count} interactions, {rel.sentiment} feeling)"
                 )
         
+        # Intent context (current plan, commitments, blocked actions)
+        intent_context = self.intent.get_context_string()
+        if intent_context:
+            context_parts.append(intent_context)
+
         return "\n".join(context_parts)
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Serialize memory to dictionary for persistence"""
         return {
@@ -378,6 +388,7 @@ class AgentMemory:
             "relationships": {k: v.to_dict() for k, v in self._relationships.items()},
             "arrival_context": self._arrival_context,
             "episodic_counter": self._episodic_counter,
+            "intent": self.intent.to_dict(),
         }
     
     @classmethod
@@ -397,6 +408,7 @@ class AgentMemory:
         }
         memory._arrival_context = data.get("arrival_context", {})
         memory._episodic_counter = data.get("episodic_counter", 0)
+        memory.intent = IntentMemory.from_dict(data.get("intent", {}))
         return memory
     
     def clear(self) -> None:
@@ -406,4 +418,5 @@ class AgentMemory:
         self._relationships.clear()
         self._pending_summarization.clear()
         self._arrival_context.clear()
+        self.intent.clear()
 

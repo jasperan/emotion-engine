@@ -53,6 +53,9 @@ class Agent(ABC):
         self.dynamic_state: dict[str, Any] = {}
         self.inventory = [] # Initialize empty inventory
 
+        # Per-agent action feedback buffer (injected into next context)
+        self._action_feedback: list[str] = []
+
         
         # LLM client
         self._llm_client = LLMRouter.get_client(provider)  # type: ignore

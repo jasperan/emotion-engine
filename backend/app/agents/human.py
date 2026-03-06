@@ -223,7 +223,15 @@ Environment:
 - People Here: {', '.join(agents_here) if agents_here else 'No one else'}
 - Nearby Locations: {loc_info.get('nearby', [])}
 - Visible Items/Objects: {', '.join(visible_items) if visible_items else 'None visible'}
+"""
 
+        # Inject action feedback from previous tick
+        if self._action_feedback:
+            context += "\nRecent Feedback:\n"
+            for feedback in self._action_feedback:
+                context += f"  - {feedback}\n"
+
+        context += f"""
 Your Current State:
 - Stress: {self.dynamic_state.get('stress_level', 5)}/10
 - Health: {self.dynamic_state.get('health', 10)}/10

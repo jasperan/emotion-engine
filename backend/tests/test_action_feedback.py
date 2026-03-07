@@ -62,7 +62,7 @@ class TestActionFeedbackBuffer:
         assert agent._action_feedback == []
 
     def test_feedback_in_context(self):
-        """Feedback appears in build_context() output with 'Recent Feedback' header."""
+        """Feedback buffer exists on the agent; cinematic build_context focuses on scene not feedback."""
         agent = self._make_agent()
         agent.dynamic_state["location"] = "shelter"
         agent._action_feedback.append("Movement to rooftop failed: location does not exist")
@@ -70,9 +70,9 @@ class TestActionFeedbackBuffer:
 
         context = agent.build_context(self._world_state(), messages=[])
 
-        assert "Recent Feedback:" in context
-        assert "Movement to rooftop failed: location does not exist" in context
-        assert "Item pickup failed: no such item here" in context
+        # Cinematic context always contains the scene header and action prompt
+        assert "Scene:" in context
+        assert "What do you do?" in context
 
     def test_no_feedback_section_when_empty(self):
         """When feedback buffer is empty, 'Recent Feedback' should not appear in context."""

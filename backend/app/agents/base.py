@@ -189,8 +189,35 @@ class Agent(ABC):
         
         return None
     
+    def _normalize_response(self, raw: dict) -> dict:
+        """Convert new cinematic schema to AgentResponse-compatible format."""
+        # Already old format — pass through
+        if "actions" in raw:
+            return raw
+        # New cinematic schema
+        actions = []
+        if raw.get("move_to"):
+            actions.append({"action_type": "move", "target": raw["move_to"], "parameters": {}})
+        speech = raw.get("speech")
+        message = None
+        if speech:
+            message = {"content": speech, "to_target": "broadcast", "message_type": "broadcast"}
+        return {
+            "actions": actions,
+            "message": message,
+            "state_changes": {"stress_level": raw.get("stress_level", self.dynamic_state.get("stress_level", 5))},
+            "reasoning": raw.get("thought", ""),
+            "_cinematic": {
+                "action": raw.get("action", ""),
+                "thought": raw.get("thought", ""),
+                "emotion": raw.get("emotion", ""),
+            }
+        }
+
     def _parse_json_response(self, data: dict) -> AgentResponse:
         """Parse a JSON dict into AgentResponse"""
+        data = self._normalize_response(data)
+        self._last_cinematic = data.get("_cinematic", {})
         actions = []
         for action_data in data.get("actions", []):
             if isinstance(action_data, dict):

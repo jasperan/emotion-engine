@@ -54,10 +54,10 @@ class TestBuildContextIncludesOthersPlans:
 
         context = agent.build_context(world_state, [])
 
+        # Cinematic context shows co-located agents by name with emotional state
         assert "Bob" in context
-        assert "Build a raft" in context
-        assert "Gather wood" in context
-        assert "1/3" in context
+        # Plan details are not shown in cinematic context (character-level awareness only)
+        assert "Build a raft" not in context
 
     def test_low_trust_hides_plan_details(self):
         agent = _make_agent("Alice", "shelter")
@@ -83,9 +83,11 @@ class TestBuildContextIncludesOthersPlans:
 
         context = agent.build_context(world_state, [])
 
-        assert "unfamiliar" in context
+        # Cinematic context never shows plan details regardless of trust
         assert "Build a raft" not in context
         assert "Gather wood" not in context
+        # Bob is still visible as a co-located person
+        assert "Bob" in context
 
     def test_plans_only_visible_for_colocated_agents(self):
         agent = _make_agent("Alice", "shelter")

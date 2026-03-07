@@ -20,12 +20,14 @@ class TestSystemPrompt:
     def test_prompt_mentions_explore(self):
         agent = self._make_agent()
         prompt = agent.get_system_prompt()
-        assert "explore" in prompt.lower()
+        # New cinematic prompt uses move_to field instead of an explicit explore action
+        assert "move_to" in prompt.lower()
 
     def test_prompt_mentions_start_conversation(self):
         agent = self._make_agent()
         prompt = agent.get_system_prompt()
-        assert "start_conversation" in prompt
+        # New cinematic prompt uses speech field instead of start_conversation action
+        assert "speech" in prompt
 
     def test_prompt_mentions_proximity(self):
         agent = self._make_agent()

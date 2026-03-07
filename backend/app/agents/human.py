@@ -88,87 +88,63 @@ class HumanAgent(Agent):
         return random.random() < probability
     
     def get_system_prompt(self) -> str:
-        """Generate system prompt based on persona"""
-        persona_description = self.persona.to_prompt_description()
-        
-        goals_str = "\n".join(f"- {goal}" for goal in self.goals)
-        
-        return f"""{persona_description}
+        """Generate cinematic screenplay-style system prompt."""
+        p = self.persona
 
-Your Goals:
-{goals_str}
+        # Translate Big Five into human voice
+        personality_lines = []
+        if p.extraversion >= 7:
+            personality_lines.append("You speak first, think second. Silence makes you uneasy.")
+        elif p.extraversion <= 3:
+            personality_lines.append("You observe before you act. Words cost you something.")
+        if p.conscientiousness >= 7:
+            personality_lines.append("You make plans and you keep them. Chaos is your enemy.")
+        if p.agreeableness >= 7:
+            personality_lines.append("You pull people together. Conflict sits badly in your chest.")
+        elif p.agreeableness <= 3:
+            personality_lines.append("You say what you mean. Feelings can wait.")
+        if p.neuroticism >= 7:
+            personality_lines.append("Your emotions run close to the surface. You feel everything first.")
+        if hasattr(p, 'leadership') and p.leadership >= 7:
+            personality_lines.append("You lead naturally. People look to you and you feel it.")
+        personality_str = "\n".join(personality_lines) or "You do what needs to be done."
 
-Available Actions:
-- move: Move to a different location (target = location name)
-- speak: Say something to others at your location
-- help: Help another person
-- take: Pick up an item (target = item name)
-- drop: Drop an item from inventory (target = item name)
-- use: Use an item from inventory (target = item name)
-- interact: Interact with an object (target = object name, parameters: {{action: "open"|"search"|etc}})
-- explore: Explore the area to discover new nearby locations
-- search: Search the area for hidden items
-- wait: Do nothing this turn
-- start_conversation: Start a focused conversation with specific people (target = agent name)
-- join_conversation: Join a conversation with specific people
-- leave_conversation: Leave the current conversation
-- propose_task: Propose a task for others (parameters: description, priority, assigned_to)
-- accept_task: Accept an available task (target = task_id or description)
-- report_progress: Report progress on a task or goal (parameters: task_id, progress, goal, goal_progress)
-- call_for_vote: Call for a vote on ending/continuing (parameters: topic, vote: "continue"|"end")
-- propose: Make a formal proposal to another agent (target = agent name, parameters: description, type, proposer_commitment, target_commitment)
-- accept_proposal: Accept a pending proposal (target = proposal_id)
-- reject_proposal: Reject a pending proposal (target = proposal_id, parameters: reasoning)
-- counter_propose: Counter a proposal with modified terms (target = proposal_id, parameters: description, commitments)
-- vouch_for: Vouch for another agent's trustworthiness (target = agent name, parameters: reason)
-- share_plan: Share your current plan with someone as a trust gesture (target = agent name)
-- coordinate: Propose group coordination (parameters: description)
-- delegate_task: Delegate a task to a specific agent (target = agent name, parameters: description)
+        stress = self.dynamic_state.get("stress_level", getattr(p, 'stress_level', 5))
+        if stress >= 8:
+            state_str = "You are at your limit. Every sound feels like a threat."
+        elif stress >= 5:
+            state_str = "You are running on adrenaline. Your hands won't stop shaking."
+        else:
+            state_str = "You are holding it together. For now."
 
-MOVEMENT: You can ONLY move to locations listed in Nearby Locations. Use 'explore' to discover new areas.
-COMMUNICATION: Speak freely at your location. Nearby locations hear you faintly. Distant agents are hard to reach.
-CONVERSATIONS: Use start_conversation to talk with specific people. join_conversation to enter ongoing ones. leave_conversation to exit.
-COOPERATION: Use propose for agreements. delegate_task to assign work. coordinate to lead group efforts.
+        return f"""You are {p.name}, {p.age} years old. {p.occupation}.
 
-Output your response as JSON:
+{p.backstory}
+
+Your personality:
+{personality_str}
+
+Right now:
+{state_str}
+
+You are living through a disaster. Every second matters.
+
+Respond ONLY as JSON — no markdown, no extra text:
 {{
-    "actions": [
-        {{
-            "action_type": "move|speak|help|take|drop|use|interact|explore|search|wait|start_conversation|join_conversation|leave_conversation|propose|accept_proposal|reject_proposal|counter_propose|vouch_for|share_plan|coordinate|delegate_task",
-            "target": "<target location/person/item>",
-            "parameters": {{}}
-        }}
-    ],
-    "message": {{
-        "content": "<what you say (in character)>",
-        "to_target": "<agent name or 'broadcast'>",
-        "message_type": "direct|broadcast|conversation"
-    }},
-    "state_changes": {{
-        "stress_level": <new stress 1-10 if changed>,
-        "health": <new health if changed>
-    }},
-    "reasoning": "<brief internal thought process>"
+  "action": "<what you physically do — one sentence, third person, like a stage direction>",
+  "speech": "<exactly what you say out loud — or null if you stay silent>",
+  "thought": "<your private inner thought — raw, unfiltered>",
+  "emotion": "<one or two words: your dominant emotion right now>",
+  "move_to": "<location name to move to — or null to stay>",
+  "stress_level": <1-10 integer>
 }}
 
-IMPORTANT:
-- Stay in character. Your personality should influence your decisions.
-- Consider your relationships with others when speaking.
-- If you have nothing to say, you can choose not to include a message.
-- Movement takes you to a new location where you'll meet different people.
-- Cooperate with others! Use propose_task and accept_task to coordinate efforts.
-- BE DECISIVE. Do not waste time with idle chatter if there is a crisis.
-- Make clear decisions and take action. Avoid passive language like "maybe we should" or "I wonder if".
-- If you notice you're repeating the same actions, check the "suggestions" in world_state.
-- Work toward shared goals. Report progress when you make headway.
-- If you think the situation is resolved, you can call_for_vote to suggest ending.
-- Use items if they can help you or others (e.g. medical kits for health).
-- Search the room if you need resources.
-- Use 'propose' for formal agreements. Others must accept/reject. This is tracked.
-- If someone proposes something to you, respond with accept_proposal or reject_proposal.
-- Vouch for trustworthy people to help others trust them.
-- Share your plan with allies to build trust.
-- If you're a natural leader, use 'coordinate' and 'delegate_task' to organize group efforts."""
+Rules:
+- speech must be what your character would ACTUALLY SAY in this moment — specific, in-character, urgent
+- action is a stage direction (e.g. "She grabs the rope and ties it to the railing.")
+- thought is private — others cannot hear it
+- move_to is a valid nearby location name, or null
+- Be decisive. No hedging. No "maybe we should." Act."""
     
     def _format_nearby(self, nearby: list[str], locations: dict[str, Any]) -> str:
         """Format nearby locations with hazard status indicators."""
@@ -191,225 +167,97 @@ IMPORTANT:
         step_messages: list[dict[str, Any]] | None = None,
         step_events: list[str] | None = None,
     ) -> str:
-        """Build context for human agent decisions"""
-        # World state summary
-        hazard_level = world_state.get("hazard_level", 0)
+        """Build cinematic scene context for the agent."""
+        hazard = world_state.get("hazard_level", 0)
         current_step = world_state.get("current_step", 0)
         locations = world_state.get("locations", {})
         agents_state = world_state.get("agents", {})
-        objects = world_state.get("objects", {}) # Get object definitions
-        
-        # Get location info
         current_loc = self.dynamic_state.get("location", "unknown")
         loc_info = locations.get(current_loc, {})
-        
-        # Get agents at this location
+
+        # Who else is here
         agents_here = []
-        for agent_id, agent_info in agents_state.items():
-            if agent_info.get("location") == current_loc and agent_id != self.id:
-                agents_here.append(agent_info.get("name", agent_id))
-        
-        # Process items and interactables
-        visible_items = []
-        loc_items = loc_info.get("items", [])
-        for item_ref in loc_items:
-            # item_ref can be a string ID or a dict (legacy)
-            if isinstance(item_ref, str):
-                item_def = objects.get(item_ref, {"name": item_ref})
-                if isinstance(item_def, dict):
-                    name = item_def.get("name", item_ref)
-                    if item_def.get("is_visible", True):
-                        visible_items.append(name)
-            elif isinstance(item_ref, dict):
-                 if item_ref.get("is_visible", True):
-                    visible_items.append(item_ref.get("name", "Unknown Item"))
-        
-        # Process inventory
-        inventory_list = []
+        for aid, info in agents_state.items():
+            if info.get("location") == current_loc and aid != self.id:
+                stress = info.get("stress_level", 5)
+                emotion = "desperate" if stress >= 8 else "tense" if stress >= 6 else "focused"
+                agents_here.append(f"{info.get('name', aid)} — {emotion}")
+
+        # Recent events as story beats
+        events = step_events or []
+        event_bullets = "\n".join(f"  • {e}" for e in events[-4:]) if events else "  • Nothing new."
+
+        # Recent speech from messages
+        recent_speech = []
+        for msg in (step_messages or [])[-5:]:
+            from_name = msg.get("from_agent_name", "?")
+            content = msg.get("content", "")[:150]
+            mtype = msg.get("message_type", "direct")
+            if mtype == "broadcast":
+                recent_speech.append(f'  {from_name} (to all): "{content}"')
+            elif mtype in ("direct", "conversation"):
+                to = msg.get("to_agent_name", msg.get("to_target", "someone"))
+                recent_speech.append(f'  {from_name} → {to}: "{content}"')
+
+        # Nearby locations
+        nearby = loc_info.get("nearby", [])
+        nearby_str = ", ".join(nearby) if nearby else "none visible"
+
+        # Inventory
+        inv = []
         for item in self.inventory:
-            # Item object or dict
             if hasattr(item, "name"):
-                inventory_list.append(item.name)
+                inv.append(item.name)
             elif isinstance(item, dict):
-                inventory_list.append(item.get("name", "Unknown Item"))
+                inv.append(item.get("name", "?"))
+        inv_str = ", ".join(inv) if inv else "nothing"
 
-        # Build context string
-        context = f"""Current Situation (Step {current_step}):
+        # Hazard as dramatic prose
+        if hazard >= 8:
+            hazard_str = "CRITICAL — survival is seconds away"
+        elif hazard >= 6:
+            hazard_str = "severe — people are in danger"
+        elif hazard >= 4:
+            hazard_str = "dangerous — the situation is worsening"
+        else:
+            hazard_str = "manageable — but escalating"
 
-Environment:
-- Hazard Level: {hazard_level}/10 {'⚠️ DANGER!' if hazard_level >= 7 else '⚡ Concerning' if hazard_level >= 4 else '✓ Manageable'}
-- Your Location: {current_loc}
-- Location Status: {loc_info.get('description', 'Unknown area')}
-- People Here: {', '.join(agents_here) if agents_here else 'No one else'}
-- Nearby Locations: {self._format_nearby(loc_info.get('nearby', []), locations)}
-- Visible Items/Objects: {', '.join(visible_items) if visible_items else 'None visible'}
+        context = f"""━━ Scene: {current_loc} (Step {current_step}) ━━
+Threat level: {hazard_str}
+
+With you:
+{chr(10).join('  - ' + a for a in agents_here) if agents_here else '  (you are alone)'}
+
+Recent events:
+{event_bullets}
+
+Recent words spoken:
+{chr(10).join(recent_speech) if recent_speech else '  (silence)'}
+
+You can move to: {nearby_str}
+Your inventory: {inv_str}
 """
 
-        # Inject action feedback from previous tick
-        if self._action_feedback:
-            context += "\nRecent Feedback:\n"
-            for feedback in self._action_feedback:
-                context += f"  - {feedback}\n"
+        # Memory
+        memory_ctx = self.get_conversation_context()
+        if memory_ctx:
+            context += f"\nWhat you remember:\n{memory_ctx}\n"
 
-        context += f"""
-Your Current State:
-- Stress: {self.dynamic_state.get('stress_level', 5)}/10
-- Health: {self.dynamic_state.get('health', 10)}/10
-- Inventory: {', '.join(inventory_list) if inventory_list else 'Empty'}
-
-"""
-        
-        # Add conversation context if in an active conversation
-        active_conversation = world_state.get("active_conversation")
-        if active_conversation:
-            context += f"""Active Conversation:
-- Location: {active_conversation.get('location', 'here')}
-- Participants: {', '.join(active_conversation.get('participants', []))}
-- It is your turn to speak (or you can stay silent).
-
-"""
-        
-        # Add memory context (relationships and past events)
-        memory_context = self.get_conversation_context()
-        if memory_context:
-            context += f"Your Memory:\n{memory_context}\n\n"
-        
-        # Add relationship context for people here
+        # Relationships with people here
         if agents_here:
-            # Get agent IDs for people here
-            agent_ids_here = [
-                aid for aid, info in agents_state.items()
-                if info.get("name") in agents_here
-            ]
-            relationship_context = self.get_relationship_context(agent_ids_here)
-            if relationship_context:
-                context += f"Your Relationships with People Here:\n{relationship_context}\n\n"
-        
-        # Other agents' apparent intentions (trust-gated)
-        agent_plans = world_state.get("agent_plans", {})
-        agent_trust = world_state.get("agent_trust", {}).get(self.id, {})
-        if agent_plans:
-            visible_plans = []
-            for aid, plan_info in agent_plans.items():
-                if aid == self.id:
-                    continue
-                agent_info = agents_state.get(aid, {})
-                if agent_info.get("location") != current_loc:
-                    continue
-                trust = agent_trust.get(aid, 3)
-                name = agent_info.get("name", aid)
-                if trust >= 5:
-                    visible_plans.append(
-                        f"- {name} (trust: {trust}/10): {plan_info.get('goal', 'unknown')} "
-                        f"[{plan_info.get('current_step', '?')}] ({plan_info.get('step_progress', '')})"
-                    )
-                else:
-                    visible_plans.append(f"- {name} (unfamiliar): appears to be busy")
-            if visible_plans:
-                context += "People nearby and their apparent intentions:\n" + "\n".join(visible_plans) + "\n\n"
+            agent_ids_here = [aid for aid, info in agents_state.items()
+                             if info.get("location") == current_loc and aid != self.id]
+            rel_ctx = self.get_relationship_context(agent_ids_here)
+            if rel_ctx:
+                context += f"\nYour read on the people here:\n{rel_ctx}\n"
 
-        # L2: Negotiation context (pending proposals, active agreements)
-        negotiations = world_state.get("negotiations", {})
-        incoming = negotiations.get("incoming_proposals", [])
-        my_pending = negotiations.get("my_pending_proposals", [])
-        agreements = negotiations.get("active_agreements", [])
-        if incoming:
-            context += "Pending Proposals for You:\n"
-            for prop in incoming:
-                context += f"- [{prop['id']}] {prop['description']} (from {prop.get('proposer_id', 'someone')})\n"
-                context += f"  You can: accept_proposal, reject_proposal, or counter_propose (target = proposal ID)\n"
-            context += "\n"
-        if my_pending:
-            context += "Your Pending Proposals (awaiting response):\n"
-            for prop in my_pending:
-                context += f"- [{prop['id']}] {prop['description']} -> {prop.get('target_id', 'open')}\n"
-            context += "\n"
-        if agreements:
-            context += "Active Agreements:\n"
-            for agr in agreements:
-                context += f"- {agr['terms']}\n"
-                for party, commitment in agr.get("commitments", {}).items():
-                    context += f"  {party}: {commitment}\n"
-            context += "\n"
+        # Active conversation
+        active_conv = world_state.get("active_conversation")
+        if active_conv:
+            participants = active_conv.get("participants", [])
+            context += f"\n[You are in a conversation with: {', '.join(participants)}. It is your turn.]\n"
 
-        # L5: Trust signals
-        trust_signals = world_state.get("trust_signals")
-        if trust_signals:
-            context += f"{trust_signals}\n\n"
-
-        # L6: Recent conversation outcomes
-        conv_outcomes = world_state.get("recent_conversation_outcomes", [])
-        if conv_outcomes:
-            for outcome_str in conv_outcomes:
-                context += f"{outcome_str}\n"
-            context += "\n"
-
-        # L8: World state diff (what changed)
-        diff_context = world_state.get("world_state_diff")
-        if diff_context:
-            context += f"{diff_context}\n\n"
-
-        # Add messages from others
-        if messages:
-            context += "Recent Communications:\n"
-            for msg in messages[-15:]:
-                sender = msg.get("from_agent_name", msg.get("from_agent", "Unknown"))
-                content = msg.get("content", "")
-                msg_type = msg.get("message_type", "direct")
-                context += f"- [{msg_type.upper()}] {sender}: \"{content}\"\n"
-            context += "\n"
-        else:
-            context += "No recent communications.\n\n"
-        
-        # Step-specific events (events that happened in this step)
-        if step_events:
-            context += "Events This Step:\n"
-            for event in step_events:
-                context += f"- {event}\n"
-            context += "\n"
-        
-        # Recent actions from this step (what other agents have done)
-        if step_actions:
-            context += "Recent Actions This Step:\n"
-            for action in step_actions[-10:]:  # Show last 10 actions
-                agent_name = action.get("agent_name", action.get("agent_id", "Unknown"))
-                action_type = action.get("action_type", "unknown")
-                target = action.get("target", "")
-                if target:
-                    context += f"- {agent_name} {action_type} to {target}\n"
-                else:
-                    context += f"- {agent_name} {action_type}\n"
-            context += "\n"
-        
-        # Recent messages from this step (what other agents have said)
-        if step_messages:
-            context += "Recent Messages This Step:\n"
-            for msg in step_messages[-10:]:  # Show last 10 messages
-                sender = msg.get("from_agent_name", msg.get("from_agent", "Unknown"))
-                content = msg.get("content", "")
-                msg_type = msg.get("message_type", "direct")
-                context += f"- [{msg_type.upper()}] {sender}: \"{content}\"\n"
-            context += "\n"
-        
-        # Environmental events (historical)
-        events = world_state.get("events", [])
-        if events and not step_events:  # Only show if no step-specific events
-            context += "Recent Events:\n"
-            for event in events[-3:]:
-                context += f"- {event}\n"
-            context += "\n"
-        
-        # Action prompt
-        if active_conversation and active_conversation.get("is_my_turn"):
-            context += """It's your turn in the conversation. What do you say?
-Consider what others have said and respond naturally. 
-You can also choose to stay silent by not including a message.
-Think about your relationships and personality when responding."""
-        else:
-            context += """What do you do? Consider your personality, stress level, and the situation.
-Respond in character with your action and any message you want to send.
-You can move to a nearby location if you want to leave."""
-        
+        context += "\nWhat do you do?"
         return context
     
     async def tick(

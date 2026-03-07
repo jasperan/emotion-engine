@@ -29,6 +29,21 @@ def reset_llm_semaphore() -> None:
 
 _vram_cache: dict[str, tuple[bool, float]] = {}  # model -> (is_warm, timestamp)
 _VRAM_CACHE_TTL = 5.0  # seconds
+_vram_cache_lock: asyncio.Lock | None = None
+
+
+def get_vram_cache_lock() -> asyncio.Lock:
+    global _vram_cache_lock
+    if _vram_cache_lock is None:
+        _vram_cache_lock = asyncio.Lock()
+    return _vram_cache_lock
+
+
+def reset_vram_cache() -> None:
+    """Reset the VRAM cache and lock (for testing only)."""
+    global _vram_cache, _vram_cache_lock
+    _vram_cache = {}
+    _vram_cache_lock = None
 
 
 async def check_model_warm(model: str, native_url: str) -> bool:
@@ -47,13 +62,30 @@ async def check_model_warm(model: str, native_url: str) -> bool:
 async def is_model_warm_cached(model: str, native_url: str) -> bool:
     """Cached version of check_model_warm with 5-second TTL."""
     now = time.monotonic()
+    # Fast path: check without lock first
     if model in _vram_cache:
         warm, ts = _vram_cache[model]
         if now - ts < _VRAM_CACHE_TTL:
             return warm
-    warm = await check_model_warm(model, native_url)
-    _vram_cache[model] = (warm, now)
-    return warm
+    # Slow path: acquire lock, re-check, then fetch
+    lock = get_vram_cache_lock()
+    async with lock:
+        now = time.monotonic()  # re-read after acquiring lock
+        if model in _vram_cache:
+            warm, ts = _vram_cache[model]
+            if now - ts < _VRAM_CACHE_TTL:
+                return warm
+        warm = await check_model_warm(model, native_url)
+        _vram_cache[model] = (warm, now)
+        return warm
+
+
+def _native_url(base_url: str) -> str:
+    """Strip /v1 suffix from Ollama base URL to get the native API URL."""
+    url = base_url.rstrip("/")
+    if url.endswith("/v1"):
+        url = url[:-3]
+    return url
 
 
 class OllamaClient(LLMClient):
@@ -102,9 +134,7 @@ class OllamaClient(LLMClient):
         # so any in-flight request can finish loading the model first
         if settings.vram_aware_mode:
             effective_model = model or self.default_model
-            native_url = self.base_url.rstrip("/")
-            if native_url.endswith("/v1"):
-                native_url = native_url[:-3]
+            native_url = _native_url(self.base_url)
             warm = await is_model_warm_cached(effective_model, native_url)
             if not warm:
                 await asyncio.sleep(0.5)
@@ -192,7 +222,7 @@ class OllamaClient(LLMClient):
         """Check if Ollama is available"""
         try:
             # Use base URL without /v1 for Ollama-specific endpoint
-            base = self.base_url.replace("/v1", "")
+            base = _native_url(self.base_url)
             async with httpx.AsyncClient() as client:
                 response = await client.get(f"{base}/api/tags", timeout=5.0)
                 return response.status_code == 200

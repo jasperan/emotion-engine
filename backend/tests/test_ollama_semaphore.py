@@ -8,7 +8,7 @@ async def test_semaphore_limits_concurrency():
     from app.llm.ollama import get_llm_semaphore, reset_llm_semaphore
     reset_llm_semaphore()
 
-    with patch("app.core.config.get_settings") as mock_settings:
+    with patch("app.llm.ollama.get_settings") as mock_settings:
         mock_settings.return_value.max_concurrent_llm_calls = 1
         mock_settings.return_value.vram_aware_mode = False
         mock_settings.return_value.ollama_base_url = "http://localhost:11434/v1"
@@ -24,7 +24,7 @@ async def test_semaphore_queues_concurrent_requests():
     from app.llm.ollama import get_llm_semaphore, reset_llm_semaphore
     reset_llm_semaphore()
 
-    with patch("app.core.config.get_settings") as mock_settings:
+    with patch("app.llm.ollama.get_settings") as mock_settings:
         mock_settings.return_value.max_concurrent_llm_calls = 1
         mock_settings.return_value.vram_aware_mode = False
         mock_settings.return_value.ollama_base_url = "http://localhost:11434/v1"

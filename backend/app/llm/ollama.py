@@ -15,7 +15,6 @@ def get_llm_semaphore() -> asyncio.Semaphore:
     """Get (or lazily create) the global LLM semaphore."""
     global _llm_semaphore
     if _llm_semaphore is None:
-        from app.core.config import get_settings
         size = get_settings().max_concurrent_llm_calls
         _llm_semaphore = asyncio.Semaphore(size)
     return _llm_semaphore

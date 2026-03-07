@@ -1,5 +1,6 @@
 """Ollama LLM client using OpenAI-compatible API"""
 import asyncio
+import time
 import httpx
 from typing import Any, Callable, Awaitable
 from openai import AsyncOpenAI
@@ -24,6 +25,35 @@ def reset_llm_semaphore() -> None:
     """Reset the semaphore (for testing only)."""
     global _llm_semaphore
     _llm_semaphore = None
+
+
+_vram_cache: dict[str, tuple[bool, float]] = {}  # model -> (is_warm, timestamp)
+_VRAM_CACHE_TTL = 5.0  # seconds
+
+
+async def check_model_warm(model: str, native_url: str) -> bool:
+    """Return True if model is currently loaded in Ollama (warm = low cold-start risk)."""
+    try:
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            resp = await client.get(f"{native_url}/api/ps")
+            if resp.status_code != 200:
+                return True  # assume warm on error (fail-open)
+            running = resp.json().get("models", [])
+            return any(model in m.get("name", "") for m in running)
+    except Exception:
+        return True  # fail-open: assume warm, don't block agents
+
+
+async def is_model_warm_cached(model: str, native_url: str) -> bool:
+    """Cached version of check_model_warm with 5-second TTL."""
+    now = time.monotonic()
+    if model in _vram_cache:
+        warm, ts = _vram_cache[model]
+        if now - ts < _VRAM_CACHE_TTL:
+            return warm
+    warm = await check_model_warm(model, native_url)
+    _vram_cache[model] = (warm, now)
+    return warm
 
 
 class OllamaClient(LLMClient):
@@ -64,8 +94,21 @@ class OllamaClient(LLMClient):
         json_mode: bool = False,
         stream_callback: Callable[[str], Awaitable[None]] | None = None,
     ) -> LLMResponse:
-        """Generate response using Ollama — semaphore-gated."""
+        """Generate response — semaphore-gated, optionally VRAM-aware."""
+        settings = get_settings()
         sem = get_llm_semaphore()
+
+        # VRAM-aware: if model is cold, add a small delay before queuing
+        # so any in-flight request can finish loading the model first
+        if settings.vram_aware_mode:
+            effective_model = model or self.default_model
+            native_url = self.base_url.rstrip("/")
+            if native_url.endswith("/v1"):
+                native_url = native_url[:-3]
+            warm = await is_model_warm_cached(effective_model, native_url)
+            if not warm:
+                await asyncio.sleep(0.5)
+
         async with sem:
             return await self._generate_inner(
                 messages, model, temperature, max_tokens, system, json_mode, stream_callback

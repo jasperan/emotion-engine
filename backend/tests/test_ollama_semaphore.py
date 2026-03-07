@@ -47,3 +47,35 @@ async def test_semaphore_queues_concurrent_requests():
 
         await asyncio.gather(hold_then_release(), wait_and_enter())
         assert order == ["first_in", "first_out", "second_in"]
+
+
+@pytest.mark.asyncio
+async def test_vram_check_warm_model():
+    """check_model_warm returns True when model is in /api/ps response."""
+    from app.llm.ollama import check_model_warm
+    with patch("app.llm.ollama.httpx.AsyncClient") as mock_cls:
+        mock_client = AsyncMock()
+        mock_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_cls.return_value.__aexit__ = AsyncMock(return_value=False)
+        mock_client.get = AsyncMock(return_value=MagicMock(
+            status_code=200,
+            json=lambda: {"models": [{"name": "qwen3.5:9b"}]}
+        ))
+        result = await check_model_warm("qwen3.5:9b", "http://localhost:11434")
+    assert result is True
+
+
+@pytest.mark.asyncio
+async def test_vram_check_cold_model():
+    """check_model_warm returns False when model is NOT in /api/ps response."""
+    from app.llm.ollama import check_model_warm
+    with patch("app.llm.ollama.httpx.AsyncClient") as mock_cls:
+        mock_client = AsyncMock()
+        mock_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_cls.return_value.__aexit__ = AsyncMock(return_value=False)
+        mock_client.get = AsyncMock(return_value=MagicMock(
+            status_code=200,
+            json=lambda: {"models": []}
+        ))
+        result = await check_model_warm("qwen3.5:9b", "http://localhost:11434")
+    assert result is False

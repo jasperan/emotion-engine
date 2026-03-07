@@ -345,7 +345,7 @@ def create_rising_flood_scenario(num_agents: int = 10) -> ScenarioCreate:
             "water_rise_per_tick": 0.3,
             "bridge_deterioration": 0.05,
         },
-        max_steps=10,
+        max_steps=100,
         tick_delay=1.0,
     )
     

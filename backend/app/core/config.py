@@ -49,6 +49,13 @@ class Settings(BaseSettings):
     default_max_steps: int | None = None  # None means infinite until consensus
     default_tick_delay: float = 0.5  # seconds between ticks
 
+    # Parallelism & VRAM control
+    max_concurrent_llm_calls: int = 1    # semaphore size (1 = fully sequential)
+    vram_aware_mode: bool = True          # poll Ollama /api/ps to gate cold starts
+    # Cinematic scene model
+    scene_mode: bool = True               # enable scene-based tick processing
+    scene_max_turns: int = 3              # max dialogue turns per scene per tick
+
     # Engine V2: Heartbeat
     heartbeat_enabled: bool = False  # Use V2 engine
 

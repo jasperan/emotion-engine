@@ -1,10 +1,30 @@
 """Ollama LLM client using OpenAI-compatible API"""
+import asyncio
 import httpx
 from typing import Any, Callable, Awaitable
 from openai import AsyncOpenAI
 
 from app.llm.base import LLMClient, LLMMessage, LLMResponse
 from app.core.config import get_settings
+
+# Module-level semaphore — one per process, shared across all agents
+_llm_semaphore: asyncio.Semaphore | None = None
+
+
+def get_llm_semaphore() -> asyncio.Semaphore:
+    """Get (or lazily create) the global LLM semaphore."""
+    global _llm_semaphore
+    if _llm_semaphore is None:
+        from app.core.config import get_settings
+        size = get_settings().max_concurrent_llm_calls
+        _llm_semaphore = asyncio.Semaphore(size)
+    return _llm_semaphore
+
+
+def reset_llm_semaphore() -> None:
+    """Reset the semaphore (for testing only)."""
+    global _llm_semaphore
+    _llm_semaphore = None
 
 
 class OllamaClient(LLMClient):
@@ -45,7 +65,24 @@ class OllamaClient(LLMClient):
         json_mode: bool = False,
         stream_callback: Callable[[str], Awaitable[None]] | None = None,
     ) -> LLMResponse:
-        """Generate response using Ollama"""
+        """Generate response using Ollama — semaphore-gated."""
+        sem = get_llm_semaphore()
+        async with sem:
+            return await self._generate_inner(
+                messages, model, temperature, max_tokens, system, json_mode, stream_callback
+            )
+
+    async def _generate_inner(
+        self,
+        messages: list[LLMMessage],
+        model: str | None = None,
+        temperature: float = 0.7,
+        max_tokens: int = 8192,
+        system: str | None = None,
+        json_mode: bool = False,
+        stream_callback: Callable[[str], Awaitable[None]] | None = None,
+    ) -> LLMResponse:
+        """Generate response using Ollama (inner, unsemaphored)"""
         model = model or self.default_model
         
         # Build message list

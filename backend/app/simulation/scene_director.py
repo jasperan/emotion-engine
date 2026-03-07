@@ -43,14 +43,21 @@ class SceneDirector:
         for agent_id, agent in agents.items():
             if agent.role != "human":
                 continue
-            loc = agent_locations.get(agent_id) or agent.dynamic_state.get("location", "unknown")
+            loc = agent_locations.get(agent_id)
+            if loc is None:
+                loc = agent.dynamic_state.get("location", "unknown")
             groups.setdefault(loc, []).append(agent_id)
         return groups
 
     def pick_initiator(self, agent_ids: list[str], agents: dict[str, Any]) -> str:
         """Pick scene initiator: agent with highest extraversion score."""
+        if not agent_ids:
+            raise ValueError("pick_initiator called with empty agent_ids list")
+
         def extraversion(aid: str) -> int:
-            agent = agents[aid]
+            agent = agents.get(aid)
+            if agent is None:
+                return 5
             if hasattr(agent, "persona") and hasattr(agent.persona, "extraversion"):
                 return agent.persona.extraversion
             return 5
@@ -67,7 +74,9 @@ class SceneDirector:
         for aid in agent_ids:
             if aid == exclude_id:
                 continue
-            agent = agents[aid]
+            agent = agents.get(aid)
+            if agent is None:
+                continue
             stress = agent.dynamic_state.get("stress_level", 5)
             emotion = "desperate" if stress >= 8 else "tense" if stress >= 6 else "focused" if stress >= 4 else "calm"
             lines.append(f"  - {agent.name} — {emotion}")

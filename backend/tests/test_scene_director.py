@@ -1,5 +1,6 @@
 import pytest
 from unittest.mock import MagicMock
+from app.simulation.scene_director import SceneDirector
 
 
 def make_agent(agent_id, name, location, extraversion=5):
@@ -14,7 +15,6 @@ def make_agent(agent_id, name, location, extraversion=5):
 
 
 def test_group_by_location_basic():
-    from app.simulation.scene_director import SceneDirector
     sd = SceneDirector(max_turns=3)
     agents = {
         "a1": make_agent("a1", "Alice", "shelter"),
@@ -28,7 +28,6 @@ def test_group_by_location_basic():
 
 
 def test_group_by_location_skips_non_human():
-    from app.simulation.scene_director import SceneDirector
     sd = SceneDirector(max_turns=3)
     env_agent = MagicMock()
     env_agent.id = "env"
@@ -45,7 +44,6 @@ def test_group_by_location_skips_non_human():
 
 
 def test_pick_scene_initiator_highest_extraversion():
-    from app.simulation.scene_director import SceneDirector
     sd = SceneDirector(max_turns=3)
     agents = {
         "a1": make_agent("a1", "Alice", "shelter", extraversion=3),
@@ -56,7 +54,6 @@ def test_pick_scene_initiator_highest_extraversion():
 
 
 def test_pick_initiator_single_agent():
-    from app.simulation.scene_director import SceneDirector
     sd = SceneDirector(max_turns=3)
     agents = {"a1": make_agent("a1", "Alice", "shelter", extraversion=5)}
     initiator = sd.pick_initiator(["a1"], agents)
@@ -64,7 +61,6 @@ def test_pick_initiator_single_agent():
 
 
 def test_build_scene_participants_summary_excludes_self():
-    from app.simulation.scene_director import SceneDirector
     sd = SceneDirector(max_turns=3)
     agents = {
         "a1": make_agent("a1", "Alice", "shelter"),
@@ -75,3 +71,33 @@ def test_build_scene_participants_summary_excludes_self():
     summary = sd.build_scene_participants_summary(["a1", "a2"], agents, exclude_id="a1")
     assert "Bob" in summary
     assert "Alice" not in summary
+
+
+def test_pick_initiator_empty_list_raises():
+    sd = SceneDirector(max_turns=3)
+    with pytest.raises(ValueError, match="empty"):
+        sd.pick_initiator([], {})
+
+
+def test_build_participants_summary_unknown_agent_id():
+    sd = SceneDirector(max_turns=3)
+    agents = {"a1": make_agent("a1", "Alice", "shelter")}
+    agents["a1"].dynamic_state = {"location": "shelter", "stress_level": 5}
+    # "a2" is not in agents dict — should not crash
+    summary = sd.build_scene_participants_summary(["a1", "a2"], agents, exclude_id="none")
+    assert "Alice" in summary
+
+
+def test_group_by_location_empty_inputs():
+    sd = SceneDirector(max_turns=3)
+    groups = sd.group_agents_by_location({}, {})
+    assert groups == {}
+
+
+def test_group_by_location_agent_with_no_location_in_dict():
+    sd = SceneDirector(max_turns=3)
+    agent = make_agent("a1", "Alice", "shelter")
+    # agent_locations is empty — falls back to dynamic_state
+    groups = sd.group_agents_by_location({"a1": agent}, {})
+    assert "shelter" in groups
+    assert "a1" in groups["shelter"]

@@ -99,14 +99,20 @@ class HumanAgent(Agent):
             personality_lines.append("You observe before you act. Words cost you something.")
         if p.conscientiousness >= 7:
             personality_lines.append("You make plans and you keep them. Chaos is your enemy.")
+        elif p.conscientiousness <= 3:
+            personality_lines.append("Plans fall apart. You improvise and adapt.")
         if p.agreeableness >= 7:
             personality_lines.append("You pull people together. Conflict sits badly in your chest.")
         elif p.agreeableness <= 3:
             personality_lines.append("You say what you mean. Feelings can wait.")
         if p.neuroticism >= 7:
             personality_lines.append("Your emotions run close to the surface. You feel everything first.")
+        elif p.neuroticism <= 3:
+            personality_lines.append("You stay level under pressure. Panic is for other people.")
         if hasattr(p, 'leadership') and p.leadership >= 7:
             personality_lines.append("You lead naturally. People look to you and you feel it.")
+        elif hasattr(p, 'leadership') and p.leadership <= 3:
+            personality_lines.append("You follow, not lead. You trust others to make the calls.")
         personality_str = "\n".join(personality_lines) or "You do what needs to be done."
 
         stress = self.dynamic_state.get("stress_level", getattr(p, 'stress_level', 5))
@@ -146,19 +152,6 @@ Rules:
 - move_to is a valid nearby location name, or null
 - Be decisive. No hedging. No "maybe we should." Act."""
     
-    def _format_nearby(self, nearby: list[str], locations: dict[str, Any]) -> str:
-        """Format nearby locations with hazard status indicators."""
-        if not nearby:
-            return "None"
-        parts = []
-        for loc_name in nearby:
-            loc_data = locations.get(loc_name, {})
-            if loc_data.get("hazard_affected", False):
-                parts.append(f"{loc_name} (hazardous)")
-            else:
-                parts.append(f"{loc_name} (safe)")
-        return ", ".join(parts)
-
     def build_context(
         self,
         world_state: dict[str, Any],
@@ -191,7 +184,7 @@ Rules:
         recent_speech = []
         for msg in (step_messages or [])[-5:]:
             from_name = msg.get("from_agent_name", "?")
-            content = msg.get("content", "")[:150]
+            content = (msg.get("content") or "")[:150]
             mtype = msg.get("message_type", "direct")
             if mtype == "broadcast":
                 recent_speech.append(f'  {from_name} (to all): "{content}"')

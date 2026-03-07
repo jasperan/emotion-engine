@@ -131,6 +131,11 @@ class SimulationEngine:
             "reactive": settings.model_route_reactive or settings.ollama_fallback_model,
         })
 
+        # SceneDirector: groups co-located human agents into dramatic scenes
+        from app.simulation.scene_director import SceneDirector
+        self.scene_director = SceneDirector(max_turns=settings.scene_max_turns)
+        self.scene_mode = settings.scene_mode
+
     async def load_from_db(self) -> None:
         """Load simulation state from database for resumption"""
         self.state = SimulationState.INITIALIZING
@@ -651,171 +656,288 @@ class SimulationEngine:
         self.world_state["agent_plans"] = agent_plans
         self.world_state["agent_trust"] = agent_trust
 
-        # Phase 2: Process human agents sequentially
-        # Get all human agents, shuffled for variety
+        # Phase 2: Process human agents — scene-based or sequential depending on config
+        if self.scene_mode:
+            await self._process_agents_as_scenes(step_actions, step_messages, step_events, stream_callback)
+        else:
+            await self._process_human_agents_sequential(step_actions, step_messages, step_events, stream_callback)
+
+    async def _tick_single_agent(
+        self,
+        agent_id: str,
+        agent: Agent,
+        step_actions: list[dict[str, Any]],
+        step_messages: list[dict[str, Any]],
+        step_events: list[str],
+        stream_callback: Callable[[str, str], Awaitable[None]] | None = None,
+    ) -> None:
+        """Execute a single human agent tick with full context enrichment.
+
+        This is the shared implementation used by both sequential and scene modes.
+        """
+        # L1: Check supervisor availability
+        if not self.supervisor.is_agent_available(agent_id):
+            return
+
+        # Check if agent is in a conversation and it's their turn
+        in_conversation = False
+        conversation = None
+
+        agent_conversations = self.conversation_manager.get_agent_conversations(agent_id)
+        for conv in agent_conversations:
+            if conv.should_continue() and conv.get_next_speaker() == agent_id:
+                in_conversation = True
+                conversation = conv
+                break
+
+        # For human agents not in conversations, check if they should respond
+        if isinstance(agent, HumanAgent) and not in_conversation:
+            agent_location = self._agent_locations.get(agent_id, agent.dynamic_state.get("location", "unknown"))
+            location_activity = len([
+                aid for aid, loc in self._agent_locations.items()
+                if loc == agent_location and aid != agent_id
+            ])
+            has_events = len(step_events) > 0
+            has_messages = len(step_messages) > 0
+
+            # Also force response if agent has pending proposals (L2)
+            has_pending_proposals = len(self.negotiation.get_pending_proposals_for_agent(agent_id)) > 0
+
+            if not has_pending_proposals and not agent.should_respond(has_events, has_messages, location_activity):
+                return
+
+        # Get messages for this agent
+        messages = self.message_bus.get_messages(agent_id)
+
+        # Build world state with all context
+        agent_world_state = self.world_state.copy()
+
+        # Add cooperation context
+        agent_world_state["cooperation"] = self.coordinator.get_cooperation_context()
+
+        # Add suggestions if agent is stuck
+        if self.coordinator.is_stuck_in_loop(agent_id):
+            agent_world_state["suggestions"] = self.coordinator.get_suggestions_for_agent(agent_id)
+
+        # Add agent's assigned tasks
+        agent_tasks_list = self.coordinator.agent_tasks.get(agent_id, [])
+        agent_world_state["my_tasks"] = [
+            {
+                "id": self.coordinator.tasks[tid].id,
+                "description": self.coordinator.tasks[tid].description,
+                "priority": self.coordinator.tasks[tid].priority,
+                "status": self.coordinator.tasks[tid].status,
+            }
+            for tid in agent_tasks_list
+            if tid in self.coordinator.tasks
+        ]
+
+        # L2: Add negotiation context
+        agent_world_state["negotiations"] = self.negotiation.get_negotiation_context(agent_id)
+
+        # L5: Add trust signals
+        trust_context = self.trust_network.get_trust_context(agent_id)
+        if trust_context:
+            agent_world_state["trust_signals"] = trust_context
+        # Consume signals after building context
+        self.trust_network.get_pending_signals(agent_id, clear=True)
+
+        # L6: Add recent conversation outcomes
+        recent_outcomes = self.outcome_extractor.get_agent_recent_outcomes(agent_id, limit=2)
+        if recent_outcomes:
+            agent_world_state["recent_conversation_outcomes"] = [
+                o.to_context_string() for o in recent_outcomes
+            ]
+
+        # L8: Add world state diff
+        agent_names = {aid: a.name for aid, a in self.agents.items()}
+        diff_context = self.diff_tracker.get_current_diff().to_context_string(agent_id, agent_names)
+        if diff_context:
+            agent_world_state["world_state_diff"] = diff_context
+
+        if in_conversation and conversation:
+            conversation_context = conversation.get_context_for_agent(agent_id)
+            messages = conversation_context + messages
+            agent_world_state["active_conversation"] = {
+                "id": conversation.id,
+                "location": conversation.location,
+                "participants": [
+                    self.agents[pid].name if pid in self.agents else pid
+                    for pid in conversation.participants
+                ],
+                "is_my_turn": True,
+            }
+
+        # L1: Use supervisor for fault-isolated tick
+        agent_callback = None
+        if stream_callback:
+            async def _cb(token: str, _aid=agent_id):
+                await stream_callback(_aid, token)
+            agent_callback = _cb
+
+        response = await self.supervisor.supervised_tick(
+            agent, agent_world_state, messages,
+            step_actions, step_messages, step_events,
+            stream_callback=agent_callback,
+        )
+        agent.last_reasoning = response.reasoning or None
+
+        # Process actions
+        for action in response.actions:
+            await self._process_agent_action(
+                agent_id, agent, action, step_actions, step_messages,
+                in_conversation, conversation,
+            )
+
+        # Process message
+        if response.message and response.message.content.strip():
+            msg = response.message
+            stored_msg = self._route_message(
+                agent_id, agent, msg, in_conversation, conversation,
+            )
+            step_messages.append(stored_msg)
+            self.diff_tracker.record_message()
+            await self._persist_message(agent_id, msg, conversation.id if in_conversation else None)
+
+            self.on_event("message", {
+                "type": "message",
+                "data": stored_msg,
+                "timestamp": datetime.utcnow().strftime("%H:%M:%S")
+            })
+            await asyncio.sleep(0)
+        elif in_conversation and conversation:
+            conversation.advance_turn(spoke=False)
+
+        # Track for loop detection
+        if response.message and response.message.content.strip():
+            topic = self._extract_topic(response.message.content)
+            self.coordinator.track_conversation(agent_id, topic)
+
+        # L5: Poll pending trust changes from HumanAgent and feed into TrustNetwork
+        if isinstance(agent, HumanAgent) and hasattr(agent, '_pending_trust_changes'):
+            for tc in agent._pending_trust_changes:
+                self.trust_network.record_trust_change(
+                    from_agent=agent_id,
+                    to_agent=tc["to_agent"],
+                    old_trust=tc["old_trust"],
+                    new_trust=tc["new_trust"],
+                    reason=tc["reason"],
+                    step=self.current_step,
+                )
+            agent._pending_trust_changes.clear()
+
+        self._update_agents_in_world_state()
+
+    async def _process_human_agents_sequential(
+        self,
+        step_actions: list[dict[str, Any]],
+        step_messages: list[dict[str, Any]],
+        step_events: list[str],
+        stream_callback: Callable[[str, str], Awaitable[None]] | None = None,
+    ) -> None:
+        """Process all human agents sequentially in shuffled order (original behaviour)."""
         human_agents = [
             (agent_id, agent)
             for agent_id, agent in self.agents.items()
             if agent.role == "human"
         ]
         random.shuffle(human_agents)
-        
+
         for agent_id, agent in human_agents:
-            # L1: Check supervisor availability
-            if not self.supervisor.is_agent_available(agent_id):
-                continue
+            await self._tick_single_agent(agent_id, agent, step_actions, step_messages, step_events, stream_callback)
 
-            # Check if agent is in a conversation and it's their turn
-            in_conversation = False
-            conversation = None
+    async def _process_agents_as_scenes(
+        self,
+        step_actions: list[dict[str, Any]],
+        step_messages: list[dict[str, Any]],
+        step_events: list[str],
+        stream_callback: Callable[[str, str], Awaitable[None]] | None = None,
+    ) -> None:
+        """Process human agents as dramatic scenes grouped by location."""
+        # Build agent_locations dict from current tracking
+        agent_locations = {
+            agent_id: self._agent_locations.get(agent_id, agent.dynamic_state.get("location", "unknown"))
+            for agent_id, agent in self.agents.items()
+            if hasattr(agent, 'dynamic_state')
+        }
 
-            agent_conversations = self.conversation_manager.get_agent_conversations(agent_id)
-            for conv in agent_conversations:
-                if conv.should_continue() and conv.get_next_speaker() == agent_id:
-                    in_conversation = True
-                    conversation = conv
-                    break
+        groups = self.scene_director.group_agents_by_location(self.agents, agent_locations)
 
-            # For human agents not in conversations, check if they should respond
-            if isinstance(agent, HumanAgent) and not in_conversation:
-                agent_location = self._agent_locations.get(agent_id, agent.dynamic_state.get("location", "unknown"))
-                location_activity = len([
-                    aid for aid, loc in self._agent_locations.items()
-                    if loc == agent_location and aid != agent_id
-                ])
-                has_events = len(step_events) > 0
-                has_messages = len(step_messages) > 0
-
-                # Also force response if agent has pending proposals (L2)
-                has_pending_proposals = len(self.negotiation.get_pending_proposals_for_agent(agent_id)) > 0
-
-                if not has_pending_proposals and not agent.should_respond(has_events, has_messages, location_activity):
-                    continue
-
-            # Get messages for this agent
-            messages = self.message_bus.get_messages(agent_id)
-
-            # Build world state with all context
-            agent_world_state = self.world_state.copy()
-
-            # Add cooperation context
-            agent_world_state["cooperation"] = self.coordinator.get_cooperation_context()
-
-            # Add suggestions if agent is stuck
-            if self.coordinator.is_stuck_in_loop(agent_id):
-                agent_world_state["suggestions"] = self.coordinator.get_suggestions_for_agent(agent_id)
-
-            # Add agent's assigned tasks
-            agent_tasks_list = self.coordinator.agent_tasks.get(agent_id, [])
-            agent_world_state["my_tasks"] = [
-                {
-                    "id": self.coordinator.tasks[tid].id,
-                    "description": self.coordinator.tasks[tid].description,
-                    "priority": self.coordinator.tasks[tid].priority,
-                    "status": self.coordinator.tasks[tid].status,
-                }
-                for tid in agent_tasks_list
-                if tid in self.coordinator.tasks
+        for location, agent_ids in groups.items():
+            # Filter to available agents
+            available = [
+                aid for aid in agent_ids
+                if self.supervisor.is_agent_available(aid)
             ]
 
-            # L2: Add negotiation context
-            agent_world_state["negotiations"] = self.negotiation.get_negotiation_context(agent_id)
+            if not available:
+                continue
 
-            # L5: Add trust signals
-            trust_context = self.trust_network.get_trust_context(agent_id)
-            if trust_context:
-                agent_world_state["trust_signals"] = trust_context
-            # Consume signals after building context
-            self.trust_network.get_pending_signals(agent_id, clear=True)
+            if len(available) == 1:
+                # Solo agent — run a standard single tick
+                aid = available[0]
+                agent = self.agents[aid]
+                await self._tick_single_agent(aid, agent, step_actions, step_messages, step_events, stream_callback)
+                continue
 
-            # L6: Add recent conversation outcomes
-            recent_outcomes = self.outcome_extractor.get_agent_recent_outcomes(agent_id, limit=2)
-            if recent_outcomes:
-                agent_world_state["recent_conversation_outcomes"] = [
-                    o.to_context_string() for o in recent_outcomes
-                ]
+            # Multi-agent scene: pick initiator by extraversion, order turns
+            try:
+                initiator_id = self.scene_director.pick_initiator(available, self.agents)
+            except ValueError:
+                continue
+            ordered = [initiator_id] + [a for a in available if a != initiator_id]
+            turn_ids = ordered[:self.scene_director.max_turns]
 
-            # L8: Add world state diff
-            agent_names = {aid: a.name for aid, a in self.agents.items()}
-            diff_context = self.diff_tracker.get_current_diff().to_context_string(agent_id, agent_names)
-            if diff_context:
-                agent_world_state["world_state_diff"] = diff_context
+            # Inject scene context into world state so agents know who is present
+            self.world_state["_scene_location"] = location
+            self.world_state["_scene_participants"] = [
+                self.agents[aid].name for aid in available if aid in self.agents
+            ]
 
-            if in_conversation and conversation:
-                conversation_context = conversation.get_context_for_agent(agent_id)
-                messages = conversation_context + messages
-                agent_world_state["active_conversation"] = {
-                    "id": conversation.id,
-                    "location": conversation.location,
-                    "participants": [
-                        self.agents[pid].name if pid in self.agents else pid
-                        for pid in conversation.participants
-                    ],
-                    "is_my_turn": True,
-                }
+            last_speech: dict[str, str | None] = {}
+            for agent_id in turn_ids:
+                agent = self.agents[agent_id]
+                msg_count_before = len(step_messages)
 
-            # L1: Use supervisor for fault-isolated tick
-            agent_callback = None
-            if stream_callback:
-                async def _cb(token: str, _aid=agent_id):
-                    await stream_callback(_aid, token)
-                agent_callback = _cb
-
-            response = await self.supervisor.supervised_tick(
-                agent, agent_world_state, messages,
-                step_actions, step_messages, step_events,
-                stream_callback=agent_callback,
-            )
-            agent.last_reasoning = response.reasoning or None
-
-            # Process actions
-            for action in response.actions:
-                await self._process_agent_action(
-                    agent_id, agent, action, step_actions, step_messages,
-                    in_conversation, conversation,
+                await self._tick_single_agent(
+                    agent_id, agent, step_actions, step_messages, step_events, stream_callback
                 )
 
-            # Process message
-            if response.message and response.message.content.strip():
-                msg = response.message
-                stored_msg = self._route_message(
-                    agent_id, agent, msg, in_conversation, conversation,
-                )
-                step_messages.append(stored_msg)
-                self.diff_tracker.record_message()
-                await self._persist_message(agent_id, msg, conversation.id if in_conversation else None)
+                # Capture speech from any message sent during this turn
+                speech: str | None = None
+                if len(step_messages) > msg_count_before:
+                    newest = step_messages[-1]
+                    speech = newest.get("content")
+                last_speech[agent_id] = speech
 
-                self.on_event("message", {
-                    "type": "message",
-                    "data": stored_msg,
-                    "timestamp": datetime.utcnow().strftime("%H:%M:%S")
+                # Emit per-turn scene event
+                self.on_event("scene_turn", {
+                    "location": location,
+                    "agent_id": agent_id,
+                    "agent_name": agent.name,
+                    "action": getattr(agent, '_last_cinematic', {}).get("action", ""),
+                    "speech": speech,
+                    "thought": getattr(agent, '_last_cinematic', {}).get("thought", ""),
+                    "emotion": getattr(agent, '_last_cinematic', {}).get("emotion", ""),
+                    "step": self.current_step,
                 })
-                await asyncio.sleep(0)
-            elif in_conversation and conversation:
-                conversation.advance_turn(spoke=False)
 
-            # Track for loop detection
-            if response.message and response.message.content.strip():
-                topic = self._extract_topic(response.message.content)
-                self.coordinator.track_conversation(agent_id, topic)
+                # Update world state after each turn so next agent sees latest position
+                self._update_agents_in_world_state()
 
-            # L5: Poll pending trust changes from HumanAgent and feed into TrustNetwork
-            if isinstance(agent, HumanAgent) and hasattr(agent, '_pending_trust_changes'):
-                for tc in agent._pending_trust_changes:
-                    self.trust_network.record_trust_change(
-                        from_agent=agent_id,
-                        to_agent=tc["to_agent"],
-                        old_trust=tc["old_trust"],
-                        new_trust=tc["new_trust"],
-                        reason=tc["reason"],
-                        step=self.current_step,
-                    )
-                agent._pending_trust_changes.clear()
+            # Emit scene_completed event
+            self.on_event("scene_completed", {
+                "location": location,
+                "participants": [self.agents[aid].name for aid in available if aid in self.agents],
+                "turn_count": len(turn_ids),
+                "step": self.current_step,
+            })
 
-            self._update_agents_in_world_state()
-                    
+        # Clean up scene context keys
+        self.world_state.pop("_scene_location", None)
+        self.world_state.pop("_scene_participants", None)
 
-    
+
     async def _process_agent_action(
         self,
         agent_id: str,

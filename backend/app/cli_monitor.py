@@ -552,6 +552,7 @@ class SimpleEventLogger:
     def __init__(self, console: Console | None = None):
         self.console = console or Console()
         self.last_stream_agent: str | None = None
+        self._current_scene_location: str | None = None
     
     def log_event(self, event_type: str, data: dict[str, Any]) -> None:
         """Log an event to console"""
@@ -618,6 +619,44 @@ class SimpleEventLogger:
         if "metadata" in message and "context_size" in message["metadata"]:
             self.console.print(f"    [dim]Context size: {message['metadata']['context_size']} chars[/dim]")
             
+    def log_scene_boundary(self, location: str, participant_names: list[str]) -> None:
+        """Print scene header separator."""
+        names_str = ", ".join(participant_names)
+        header = f"━━ SCENE: {location} — {names_str} "
+        padding = max(0, 60 - len(header))
+        self.console.print(f"\n[cyan]{header}{'━' * padding}[/cyan]")
+
+    def log_scene_turn(self, data: dict) -> None:
+        """Render a single cinematic scene turn to console."""
+        location = data.get("location", "")
+        # Print scene boundary header when a new scene location begins
+        if location and location != self._current_scene_location:
+            self._current_scene_location = location
+            participants = data.get("participants", [])
+            self.log_scene_boundary(location, participants)
+
+        name = data.get("agent_name", "?")
+        action = data.get("action", "")
+        speech = data.get("speech")
+        emotion = data.get("emotion", "")
+
+        if action:
+            self.console.print(f"  [dim italic]{action}[/dim italic]")
+        if speech:
+            self.console.print(
+                f"  [bold cyan]{name.upper():<12}[/bold cyan] "
+                f'[white]"{speech}"[/white]  [dim][{emotion}][/dim]'
+            )
+        elif action:
+            self.console.print(
+                f"  [bold cyan]{name.upper():<12}[/bold cyan] [dim]...[/dim]  [dim][{emotion}][/dim]"
+            )
+
+    def log_scene_end(self) -> None:
+        """Print scene footer separator."""
+        self.console.print(f"[dim]{'━' * 62}[/dim]\n")
+        self._current_scene_location = None
+
     def log_token(self, agent_id: str, token: str, agent_name: str | None = None) -> None:
         """Log a streaming token"""
         if self.last_stream_agent != agent_id:

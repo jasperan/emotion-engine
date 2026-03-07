@@ -373,11 +373,20 @@ async def _run_standalone(
             logger = SimpleEventLogger(console)
             
             def on_event(event_type: str, data: dict[str, Any]):
-                logger.log_event(event_type, data)
-                # Log messages from step events
-                if event_type == "step_completed":
-                    for msg in data.get("messages", []):
-                        logger.log_message(msg)
+                if event_type == "scene_turn":
+                    logger.log_scene_turn(data)
+                elif event_type == "scene_completed":
+                    logger.log_scene_end()
+                elif event_type == "message":
+                    # Suppress duplicate message events when scene mode is active
+                    # (speech is already rendered by log_scene_turn)
+                    pass
+                else:
+                    logger.log_event(event_type, data)
+                    # Log messages from step events
+                    if event_type == "step_completed":
+                        for msg in data.get("messages", []):
+                            logger.log_message(msg)
         else:
             renderer = EventRenderer(console)
             renderer.max_steps = run_record.max_steps
@@ -1298,8 +1307,13 @@ async def _execute_existing_run(run_id: str, simple: bool = True):
         if simple:
             logger = SimpleEventLogger(console)
             def on_event(event_type: str, data: dict[str, Any]):
-                if event_type == "message":
-                    logger.log_message(data["data"])
+                if event_type == "scene_turn":
+                    logger.log_scene_turn(data)
+                elif event_type == "scene_completed":
+                    logger.log_scene_end()
+                elif event_type == "message":
+                    # Suppress duplicate message events; speech rendered by log_scene_turn
+                    pass
                 else:
                     logger.log_event(event_type, data)
         else:
@@ -1307,9 +1321,9 @@ async def _execute_existing_run(run_id: str, simple: bool = True):
             def on_event(event_type: str, data: dict[str, Any]):
                 if event_type == "message":
                      renderer.add_message(data["data"])
-                else:
+                elif event_type not in ("scene_turn", "scene_completed"):
                     renderer.add_event(event_type, data)
-        
+
         # Initialize Engine with existing run
         sim_engine = SimulationEngine(
             run_id=run_id,

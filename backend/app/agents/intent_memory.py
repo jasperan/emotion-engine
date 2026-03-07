@@ -14,6 +14,7 @@ class Plan:
     fallback: str | None
     deadline_step: int | None
     retry_count: int
+    goal_id: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -25,6 +26,7 @@ class Plan:
             "fallback": self.fallback,
             "deadline_step": self.deadline_step,
             "retry_count": self.retry_count,
+            "goal_id": self.goal_id,
         }
 
     @classmethod

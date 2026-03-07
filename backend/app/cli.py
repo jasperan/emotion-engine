@@ -115,13 +115,14 @@ def cli(ctx):
 @click.option("--seed", type=int, default=None, help="Random seed for reproducibility")
 @click.option("--tick-delay", "-d", type=float, default=None, help="Delay between steps (seconds)")
 @click.option("--simple", is_flag=True, help="Use simple log output instead of rich UI")
-def run(scenario: str | None, max_steps: int | None, seed: int | None, tick_delay: float | None, simple: bool):
+@click.option("--engine-v2", is_flag=True, default=False, help="Use V2 engine (heartbeat + goals + governance)")
+def run(scenario: str | None, max_steps: int | None, seed: int | None, tick_delay: float | None, simple: bool, engine_v2: bool):
     """Run a simulation in standalone mode (no server required).
-    
+
     Example:
         emotionsim run --scenario "Rising Flood" --max-steps 50 --seed 42
     """
-    asyncio.run(_run_standalone(scenario, max_steps, seed, tick_delay, simple))
+    asyncio.run(_run_standalone(scenario, max_steps, seed, tick_delay, simple, engine_v2=engine_v2))
 
 
 async def _run_standalone(
@@ -130,6 +131,7 @@ async def _run_standalone(
     seed: int | None,
     tick_delay: float | None,
     simple: bool,
+    engine_v2: bool = False,
 ):
     """Run simulation in standalone mode"""
     from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
@@ -413,6 +415,22 @@ async def _run_standalone(
         # Initialize
         await engine_sim.initialize(config)
         console.print(f"[green]✓[/green] Initialized {len(engine_sim.agents)} agents")
+
+        # V2 engine opt-in
+        if engine_v2:
+            from app.simulation.engine_v2 import SimulationEngineV2
+            v2 = SimulationEngineV2()
+            # Set mission from scenario config if available
+            scenario_data = scenario.config if isinstance(scenario.config, dict) else {}
+            config_data = scenario_data.get("config", {})
+            mission = config_data.get("mission_goal")
+            if mission:
+                v2.setup_mission(mission)
+            # Register agents
+            v2.register_agents_v2(engine_sim.agents)
+            engine_sim._v2 = v2  # Attach for progressive integration
+            console.print(f"[green]✓[/green] Engine V2 activated (heartbeat + goals + governance)")
+
         console.print()
         
         # Handle Ctrl+C gracefully

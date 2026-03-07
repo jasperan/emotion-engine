@@ -392,12 +392,14 @@ async def _run_standalone(
             renderer.max_steps = run_record.max_steps
             
             def on_event(event_type: str, data: dict[str, Any]):
+                if event_type in ("scene_turn", "scene_completed"):
+                    return  # handled by simple logger or ignored in rich mode
                 if event_type == "message":
                      # Handle real-time message addition
                      renderer.add_message(data["data"])
                 else:
                     renderer.add_event(event_type, data)
-                
+
                 # Note: We no longer add messages from step_completed to avoid duplicates
                 # and ensure real-time logging via the 'message' event above.
         

@@ -7,6 +7,7 @@ from rich.columns import Columns
 from rich.console import Console, Group
 from rich.layout import Layout
 from rich.live import Live
+from rich.markup import escape
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
 from rich.table import Table
@@ -621,8 +622,9 @@ class SimpleEventLogger:
             
     def log_scene_boundary(self, location: str, participant_names: list[str]) -> None:
         """Print scene header separator."""
-        names_str = ", ".join(participant_names)
-        header = f"━━ SCENE: {location} — {names_str} "
+        names_str = escape(", ".join(participant_names))
+        location_safe = escape(location)
+        header = f"━━ SCENE: {location_safe} — {names_str} "
         padding = max(0, 60 - len(header))
         self.console.print(f"\n[cyan]{header}{'━' * padding}[/cyan]")
 
@@ -631,14 +633,15 @@ class SimpleEventLogger:
         location = data.get("location", "")
         # Print scene boundary header when a new scene location begins
         if location and location != self._current_scene_location:
-            self._current_scene_location = location
-            participants = data.get("participants", [])
+            participants = data.get("participants", [location])
             self.log_scene_boundary(location, participants)
+            self._current_scene_location = location
 
-        name = data.get("agent_name", "?")
-        action = data.get("action", "")
-        speech = data.get("speech")
-        emotion = data.get("emotion", "")
+        name = escape(data.get("agent_name", "?"))
+        action = escape(data.get("action", ""))
+        speech_raw = data.get("speech")
+        speech = escape(speech_raw) if speech_raw else None
+        emotion = escape(data.get("emotion", ""))
 
         if action:
             self.console.print(f"  [dim italic]{action}[/dim italic]")

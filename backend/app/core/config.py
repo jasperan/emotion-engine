@@ -48,6 +48,16 @@ class Settings(BaseSettings):
     # Simulation defaults
     default_max_steps: int | None = None  # None means infinite until consensus
     default_tick_delay: float = 0.5  # seconds between ticks
+
+    # Engine V2: Heartbeat
+    heartbeat_enabled: bool = False  # Use V2 engine
+
+    # Engine V2: Governance
+    governance_enabled: bool = True
+    governance_threshold: float = 0.7
+    governance_timeout_seconds: float = 60.0
+    governance_timeout_action: str = "deny"
+    governance_use_llm_scorer: bool = False
     
     class Config:
         env_file = ".env"

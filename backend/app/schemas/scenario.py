@@ -22,6 +22,10 @@ class WorldConfig(BaseModel):
     # Object definitions
     objects: dict[str, Any] = Field(default_factory=dict, description="Definitions of items and interactables")
 
+    # Engine V2 fields
+    engine_version: int = 1  # 1 = V1 (default), 2 = V2 heartbeat+goals+governance
+    mission_goal: str | None = None  # Mission-level goal for V2 goal tree
+
 
 class ScenarioCreate(BaseModel):
     """Schema for creating a scenario"""

@@ -889,53 +889,53 @@ class SimulationEngine:
             turn_ids = ordered[:self.scene_director.max_turns]
 
             # Inject scene context into world state so agents know who is present
-            self.world_state["_scene_location"] = location
-            self.world_state["_scene_participants"] = [
-                self.agents[aid].name for aid in available if aid in self.agents
-            ]
+            try:
+                self.world_state["_scene_location"] = location
+                self.world_state["_scene_participants"] = [
+                    self.agents[aid].name for aid in available if aid in self.agents
+                ]
 
-            last_speech: dict[str, str | None] = {}
-            for agent_id in turn_ids:
-                agent = self.agents[agent_id]
-                msg_count_before = len(step_messages)
+                last_speech: dict[str, str | None] = {}
+                for agent_id in turn_ids:
+                    agent = self.agents[agent_id]
+                    msg_count_before = len(step_messages)
 
-                await self._tick_single_agent(
-                    agent_id, agent, step_actions, step_messages, step_events, stream_callback
-                )
+                    await self._tick_single_agent(
+                        agent_id, agent, step_actions, step_messages, step_events, stream_callback
+                    )
 
-                # Capture speech from any message sent during this turn
-                speech: str | None = None
-                if len(step_messages) > msg_count_before:
-                    newest = step_messages[-1]
-                    speech = newest.get("content")
-                last_speech[agent_id] = speech
+                    # Capture speech from any message sent during this turn
+                    speech: str | None = None
+                    if len(step_messages) > msg_count_before:
+                        newest = step_messages[-1]
+                        speech = newest.get("content")
+                    last_speech[agent_id] = speech
 
-                # Emit per-turn scene event
-                self.on_event("scene_turn", {
+                    # Emit per-turn scene event
+                    self.on_event("scene_turn", {
+                        "location": location,
+                        "agent_id": agent_id,
+                        "agent_name": agent.name,
+                        "action": getattr(agent, '_last_cinematic', {}).get("action", ""),
+                        "speech": speech,
+                        "thought": getattr(agent, '_last_cinematic', {}).get("thought", ""),
+                        "emotion": getattr(agent, '_last_cinematic', {}).get("emotion", ""),
+                        "step": self.current_step,
+                    })
+
+                    # Update world state after each turn so next agent sees latest position
+                    self._update_agents_in_world_state()
+
+                # Emit scene_completed event
+                self.on_event("scene_completed", {
                     "location": location,
-                    "agent_id": agent_id,
-                    "agent_name": agent.name,
-                    "action": getattr(agent, '_last_cinematic', {}).get("action", ""),
-                    "speech": speech,
-                    "thought": getattr(agent, '_last_cinematic', {}).get("thought", ""),
-                    "emotion": getattr(agent, '_last_cinematic', {}).get("emotion", ""),
+                    "participants": [self.agents[aid].name for aid in available if aid in self.agents],
+                    "turn_count": len(turn_ids),
                     "step": self.current_step,
                 })
-
-                # Update world state after each turn so next agent sees latest position
-                self._update_agents_in_world_state()
-
-            # Emit scene_completed event
-            self.on_event("scene_completed", {
-                "location": location,
-                "participants": [self.agents[aid].name for aid in available if aid in self.agents],
-                "turn_count": len(turn_ids),
-                "step": self.current_step,
-            })
-
-        # Clean up scene context keys
-        self.world_state.pop("_scene_location", None)
-        self.world_state.pop("_scene_participants", None)
+            finally:
+                self.world_state.pop("_scene_location", None)
+                self.world_state.pop("_scene_participants", None)
 
 
     async def _process_agent_action(

@@ -1,14 +1,29 @@
 <script lang="ts">
 	import type { Message, Agent } from '$lib/api';
+	import { afterUpdate } from 'svelte';
 
 	export let messages: Message[] = [];
 	export let agents: Agent[] = [];
 
 	const WINDOW_SIZE = 50;
 	let showAll = false;
+	let logContainer: HTMLDivElement;
+	let autoScroll = true;
 
 	$: visibleMessages = showAll ? messages : messages.slice(-WINDOW_SIZE);
 	$: hasMore = messages.length > WINDOW_SIZE && !showAll;
+
+	afterUpdate(() => {
+		if (autoScroll && logContainer) {
+			logContainer.scrollTop = logContainer.scrollHeight;
+		}
+	});
+
+	function onScroll() {
+		if (!logContainer) return;
+		const atBottom = logContainer.scrollHeight - logContainer.scrollTop - logContainer.clientHeight < 40;
+		autoScroll = atBottom;
+	}
 
 	function getAgentName(agentId: string | null): string {
 		if (!agentId) return 'System';
@@ -54,10 +69,23 @@
 <div class="card h-full flex flex-col">
 	<div class="flex items-center justify-between mb-4">
 		<h3 class="text-lg font-semibold font-display">Message Log</h3>
-		<span class="text-xs text-storm-400">{messages.length} messages</span>
+		<div class="flex items-center gap-3">
+			{#if !autoScroll}
+				<button
+					class="text-xs text-flood-400 hover:text-flood-300 underline"
+					on:click={() => { autoScroll = true; if (logContainer) logContainer.scrollTop = logContainer.scrollHeight; }}
+				>↓ Jump to latest</button>
+			{/if}
+			<span class="text-xs text-storm-400">{messages.length} messages</span>
+		</div>
 	</div>
 
-	<div class="flex-1 overflow-y-auto space-y-3 max-h-[600px] scrollbar-thin" style="scrollbar-color: #2f30a9 transparent;">
+	<div
+		class="flex-1 overflow-y-auto space-y-3 max-h-[600px] scrollbar-thin"
+		style="scrollbar-color: #2f30a9 transparent;"
+		bind:this={logContainer}
+		on:scroll={onScroll}
+	>
 		{#if messages.length === 0}
 			<div class="text-center py-12 text-storm-400">
 				<p>No messages yet. Start the simulation to see agent interactions.</p>

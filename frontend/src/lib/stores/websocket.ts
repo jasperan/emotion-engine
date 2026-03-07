@@ -1,6 +1,6 @@
 import { writable } from 'svelte/store';
 
-interface WebSocketEvent {
+export interface WebSocketEvent {
 	event: string;
 	data: Record<string, unknown>;
 	timestamp?: string;
@@ -9,12 +9,16 @@ interface WebSocketEvent {
 interface WebSocketState {
 	connected: boolean;
 	lastEvent: WebSocketEvent | null;
+	events: WebSocketEvent[];
 }
+
+const MAX_EVENTS = 200;
 
 function createWebSocketStore() {
 	const { subscribe, set, update } = writable<WebSocketState>({
 		connected: false,
 		lastEvent: null,
+		events: [],
 	});
 
 	let ws: WebSocket | null = null;
@@ -48,10 +52,11 @@ function createWebSocketStore() {
 			ws.onmessage = (event) => {
 				try {
 					const message: WebSocketEvent = JSON.parse(event.data);
-					update((state) => ({
-						...state,
-						lastEvent: message,
-					}));
+					update((state) => {
+						const events = [...state.events, message];
+						if (events.length > MAX_EVENTS) events.splice(0, events.length - MAX_EVENTS);
+						return { ...state, lastEvent: message, events };
+					});
 				} catch (e) {
 					console.error('Failed to parse WebSocket message:', e);
 				}
@@ -104,6 +109,7 @@ function createWebSocketStore() {
 			...state,
 			connected: false,
 			lastEvent: null,
+			events: [],
 		}));
 	}
 

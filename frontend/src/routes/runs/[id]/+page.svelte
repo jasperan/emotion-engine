@@ -5,6 +5,7 @@
 	import { websocket } from '$lib/stores/websocket';
 	import AgentCard from '$lib/components/AgentCard.svelte';
 	import MessageLog from '$lib/components/MessageLog.svelte';
+	import LiveEventStream from '$lib/components/LiveEventStream.svelte';
 	import SimulationControls from '$lib/components/SimulationControls.svelte';
 	import { setHeader, resetHeader } from '$lib/stores/header';
 
@@ -200,9 +201,10 @@
 				</div>
 			</div>
 
-			<!-- Right: Message Log -->
-			<div class="lg:col-span-2">
+			<!-- Right: Message Log + Live Event Stream -->
+			<div class="lg:col-span-2 space-y-6">
 				<MessageLog {messages} {agents} />
+				<LiveEventStream events={wsState.events} />
 			</div>
 		</div>
 

@@ -1,10 +1,28 @@
 """Database connection and session management — Oracle DB 26ai Free"""
+import json
 import oracledb
+from sqlalchemy import TypeDecorator, Text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.pool import NullPool
 
 from app.core.config import get_settings
+
+
+class OracleJSON(TypeDecorator):
+    """JSON type that stores as CLOB text in Oracle (which lacks native JSON column support in SQLAlchemy)."""
+    impl = Text
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        if value is not None:
+            return json.dumps(value)
+        return None
+
+    def process_result_value(self, value, dialect):
+        if value is not None:
+            return json.loads(value)
+        return None
 
 # Enable oracledb thin mode (no Oracle Client required)
 oracledb.defaults.fetch_lobs = False

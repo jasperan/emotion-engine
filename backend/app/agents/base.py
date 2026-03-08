@@ -334,7 +334,7 @@ class Agent(ABC):
             model=self.model_id,
             system=system_prompt,
             temperature=0.8,  # Increased for more creative responses
-            max_tokens=8192,  # Increased to prevent truncated sentences
+            max_tokens=2048,  # Balanced: enough for complete JSON, fast enough for 9b
             json_mode=True,
             stream_callback=stream_callback,
         )

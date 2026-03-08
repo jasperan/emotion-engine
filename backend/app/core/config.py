@@ -54,8 +54,12 @@ class Settings(BaseSettings):
     negotiation_default_expiry_steps: int = 5
 
     # Simulation defaults
-    default_max_steps: int | None = None  # None means infinite until consensus
+    default_max_steps: int = 10  # default ticks per simulation
     default_tick_delay: float = 0.5  # seconds between ticks
+    default_num_agents: int = 10  # default agents per simulation
+
+    # Context compaction
+    max_context_chars: int = 3000  # max chars for agent context prompt (prevents timeout on smaller models)
 
     # Parallelism & VRAM control
     max_concurrent_llm_calls: int = 1    # semaphore size (1 = fully sequential)

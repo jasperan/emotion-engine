@@ -38,7 +38,11 @@ class CognitiveEngine:
         """Decide which cognitive phases to run this tick.
 
         Returns [THINK, PLAN, ACT] if replanning is needed, [ACT] otherwise.
+        Step 0 always skips THINK+PLAN (react instinctively first, plan later).
         """
+        if current_step == 0:
+            return [CognitivePhase.ACT]
+
         needs_full = (
             intent.current_plan is None
             or intent.plan_needs_replan(current_step)

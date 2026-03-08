@@ -160,7 +160,16 @@ Rules:
         step_messages: list[dict[str, Any]] | None = None,
         step_events: list[str] | None = None,
     ) -> str:
-        """Build cinematic scene context for the agent."""
+        """Build cinematic scene context with intelligent compaction.
+
+        Assembles context sections within a character budget. When the full
+        context would exceed ``max_context_chars``, older / lower-priority
+        sections are progressively compacted so the agent never runs out of
+        available context window.
+        """
+        from app.core.config import get_settings
+        max_chars = get_settings().max_context_chars
+
         hazard = world_state.get("hazard_level", 0)
         current_step = world_state.get("current_step", 0)
         locations = world_state.get("locations", {})
@@ -169,28 +178,14 @@ Rules:
         loc_info = locations.get(current_loc, {})
 
         # Who else is here
-        agents_here = []
+        agents_here: list[str] = []
+        agent_ids_here: list[str] = []
         for aid, info in agents_state.items():
             if info.get("location") == current_loc and aid != self.id:
                 stress = info.get("stress_level", 5)
                 emotion = "desperate" if stress >= 8 else "tense" if stress >= 6 else "focused"
                 agents_here.append(f"{info.get('name', aid)} — {emotion}")
-
-        # Recent events as story beats
-        events = step_events or []
-        event_bullets = "\n".join(f"  • {e}" for e in events[-4:]) if events else "  • Nothing new."
-
-        # Recent speech from messages
-        recent_speech = []
-        for msg in (step_messages or [])[-5:]:
-            from_name = msg.get("from_agent_name", "?")
-            content = (msg.get("content") or "")[:150]
-            mtype = msg.get("message_type", "direct")
-            if mtype == "broadcast":
-                recent_speech.append(f'  {from_name} (to all): "{content}"')
-            elif mtype in ("direct", "conversation"):
-                to = msg.get("to_agent_name", msg.get("to_target", "someone"))
-                recent_speech.append(f'  {from_name} → {to}: "{content}"')
+                agent_ids_here.append(aid)
 
         # Nearby locations
         nearby = loc_info.get("nearby", [])
@@ -215,43 +210,101 @@ Rules:
         else:
             hazard_str = "manageable — but escalating"
 
-        context = f"""━━ Scene: {current_loc} (Step {current_step}) ━━
+        # ── Core scene header (always included, never compacted) ──
+        core = f"""━━ Scene: {current_loc} (Step {current_step}) ━━
 Threat level: {hazard_str}
 
 With you:
 {chr(10).join('  - ' + a for a in agents_here) if agents_here else '  (you are alone)'}
 
-Recent events:
-{event_bullets}
-
-Recent words spoken:
-{chr(10).join(recent_speech) if recent_speech else '  (silence)'}
-
 You can move to: {nearby_str}
 Your inventory: {inv_str}
 """
-
-        # Memory
-        memory_ctx = self.get_conversation_context()
-        if memory_ctx:
-            context += f"\nWhat you remember:\n{memory_ctx}\n"
-
-        # Relationships with people here
-        if agents_here:
-            agent_ids_here = [aid for aid, info in agents_state.items()
-                             if info.get("location") == current_loc and aid != self.id]
-            rel_ctx = self.get_relationship_context(agent_ids_here)
-            if rel_ctx:
-                context += f"\nYour read on the people here:\n{rel_ctx}\n"
-
-        # Active conversation
+        # Active conversation marker (always included)
+        conv_suffix = ""
         active_conv = world_state.get("active_conversation")
         if active_conv:
             participants = active_conv.get("participants", [])
-            context += f"\n[You are in a conversation with: {', '.join(participants)}. It is your turn.]\n"
+            conv_suffix = f"\n[You are in a conversation with: {', '.join(participants)}. It is your turn.]\n"
 
-        context += "\nWhat do you do?"
-        return context
+        tail = conv_suffix + "\nWhat do you do?"
+
+        # ── Budget for compactable sections ──
+        budget = max_chars - len(core) - len(tail)
+
+        # Build compactable sections at multiple detail levels
+        events = step_events or []
+        all_step_msgs = step_messages or []
+
+        def _build_events(max_items: int, max_len: int) -> str:
+            items = events[-max_items:] if events else []
+            if not items:
+                return "Recent events:\n  • Nothing new.\n"
+            bullets = "\n".join(f"  • {e[:max_len]}" for e in items)
+            return f"Recent events:\n{bullets}\n"
+
+        def _build_speech(max_items: int, max_len: int) -> str:
+            lines: list[str] = []
+            for msg in all_step_msgs[-max_items:]:
+                from_name = msg.get("from_agent_name", "?")
+                content = (msg.get("content") or "")[:max_len]
+                mtype = msg.get("message_type", "direct")
+                if mtype == "broadcast":
+                    lines.append(f'  {from_name} (to all): "{content}"')
+                elif mtype in ("direct", "conversation"):
+                    to = msg.get("to_agent_name", msg.get("to_target", "someone"))
+                    lines.append(f'  {from_name} → {to}: "{content}"')
+            if not lines:
+                return "Recent words spoken:\n  (silence)\n"
+            return f"Recent words spoken:\n{chr(10).join(lines)}\n"
+
+        def _build_memory(max_episodic: int, max_fact_len: int) -> str:
+            ctx = self.agent_memory.get_conversation_context(
+                max_recent=5, max_episodic=max_episodic
+            )
+            if not ctx:
+                return ""
+            # Truncate individual lines if needed
+            if max_fact_len < 100:
+                lines = ctx.split("\n")
+                lines = [line[:max_fact_len] + ("..." if len(line) > max_fact_len else "") for line in lines]
+                ctx = "\n".join(lines)
+            return f"\nWhat you remember:\n{ctx}\n"
+
+        def _build_relationships() -> str:
+            if not agents_here:
+                return ""
+            rel_ctx = self.get_relationship_context(agent_ids_here)
+            return f"\nYour read on the people here:\n{rel_ctx}\n" if rel_ctx else ""
+
+        # ── Progressive compaction levels ──
+        # Level 0: Full detail
+        # Level 1: Fewer messages/events, shorter content
+        # Level 2: Minimal memory, very short messages
+        # Level 3: No memory, no relationships, bare minimum
+        compaction_levels = [
+            # (events_n, event_len, speech_n, speech_len, episodic_n, fact_len, include_rels)
+            (4, 200, 5, 150, 3, 100, True),   # L0: full
+            (3, 150, 3, 100, 2, 80, True),     # L1: trimmed
+            (2, 100, 2, 80, 1, 60, False),     # L2: compact
+            (1, 80, 1, 60, 0, 0, False),       # L3: bare minimum
+        ]
+
+        for level_params in compaction_levels:
+            ev_n, ev_len, sp_n, sp_len, ep_n, f_len, inc_rels = level_params
+
+            section_events = _build_events(ev_n, ev_len)
+            section_speech = _build_speech(sp_n, sp_len)
+            section_memory = _build_memory(ep_n, f_len) if ep_n > 0 else ""
+            section_rels = _build_relationships() if inc_rels else ""
+
+            total = len(section_events) + len(section_speech) + len(section_memory) + len(section_rels)
+            if total <= budget:
+                return core + section_events + section_speech + section_memory + section_rels + tail
+
+        # If even L3 doesn't fit, hard-truncate to budget
+        minimal = _build_events(1, 60) + _build_speech(1, 40)
+        return core + minimal[:max(budget, 200)] + tail
     
     async def tick(
         self,

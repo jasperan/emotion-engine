@@ -3,10 +3,10 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String, DateTime, JSON, ForeignKey, Text
+from sqlalchemy import String, DateTime, ForeignKey, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.database import Base
+from app.core.database import Base, OracleJSON
 
 if TYPE_CHECKING:
     from app.models.run import Run
@@ -33,7 +33,7 @@ class ConversationModel(Base):
     conversation_type: Mapped[str] = mapped_column(String(50), default="location")
     
     # Participants (list of agent IDs)
-    participants: Mapped[list] = mapped_column(JSON, default=list)
+    participants: Mapped[list] = mapped_column(OracleJSON, default=list)
     
     # State
     state: Mapped[str] = mapped_column(String(50), default="active")
@@ -42,7 +42,7 @@ class ConversationModel(Base):
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     
     # Key facts extracted from conversation
-    key_facts: Mapped[list] = mapped_column(JSON, default=list)
+    key_facts: Mapped[list] = mapped_column(OracleJSON, default=list)
     
     # Timing
     started_at: Mapped[datetime] = mapped_column(
@@ -59,7 +59,7 @@ class ConversationModel(Base):
     end_step: Mapped[int | None] = mapped_column(nullable=True)
     
     # Metadata (using conv_metadata to avoid SQLAlchemy reserved name)
-    conv_metadata: Mapped[dict] = mapped_column(JSON, default=dict)
+    conv_metadata: Mapped[dict] = mapped_column(OracleJSON, default=dict)
     
     # Relationships
     run: Mapped["Run"] = relationship(

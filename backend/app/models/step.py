@@ -3,10 +3,10 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String, Integer, DateTime, JSON, ForeignKey
+from sqlalchemy import String, Integer, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.database import Base
+from app.core.database import Base, OracleJSON
 
 if TYPE_CHECKING:
     from app.models.run import Run
@@ -32,13 +32,13 @@ class Step(Base):
     step_index: Mapped[int] = mapped_column(Integer, nullable=False)
     
     # Complete world state snapshot at this step
-    state_snapshot: Mapped[dict] = mapped_column(JSON, default=dict)
+    state_snapshot: Mapped[dict] = mapped_column(OracleJSON, default=dict)
     
     # Actions taken by agents in this step
-    actions: Mapped[list] = mapped_column(JSON, default=list)
+    actions: Mapped[list] = mapped_column(OracleJSON, default=list)
     
     # Metrics computed at this step
-    step_metrics: Mapped[dict] = mapped_column(JSON, default=dict)
+    step_metrics: Mapped[dict] = mapped_column(OracleJSON, default=dict)
     
     # Timestamp
     timestamp: Mapped[datetime] = mapped_column(

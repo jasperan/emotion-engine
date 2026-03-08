@@ -64,7 +64,7 @@ class AgentSupervisor:
 
     def __init__(
         self,
-        tick_timeout: float = 120.0,
+        tick_timeout: float = 90.0,
         max_backoff: float = 300.0,
         initial_backoff: float = 10.0,
         max_consecutive_failures: int = 5,

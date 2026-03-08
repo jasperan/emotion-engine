@@ -4,10 +4,10 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from enum import Enum
 
-from sqlalchemy import String, Integer, Text, DateTime, JSON, ForeignKey, Enum as SQLEnum
+from sqlalchemy import String, Integer, Text, DateTime, ForeignKey, Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.database import Base
+from app.core.database import Base, OracleJSON
 
 if TYPE_CHECKING:
     from app.models.run import Run
@@ -50,7 +50,7 @@ class Message(Base):
     content: Mapped[str] = mapped_column(Text, nullable=False)
     
     # Additional metadata (using msg_metadata to avoid SQLAlchemy reserved name)
-    msg_metadata: Mapped[dict] = mapped_column(JSON, default=dict)
+    msg_metadata: Mapped[dict] = mapped_column(OracleJSON, default=dict)
     
     # Step context
     step_index: Mapped[int] = mapped_column(Integer, nullable=False)

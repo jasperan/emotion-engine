@@ -5,10 +5,10 @@ from __future__ import annotations
 import uuid
 from typing import Optional
 
-from sqlalchemy import String, Integer, Float, Boolean, JSON, ForeignKey
+from sqlalchemy import String, Integer, Float, Boolean, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.core.database import Base
+from app.core.database import Base, OracleJSON
 
 
 class GovernanceAuditModel(Base):
@@ -27,12 +27,12 @@ class GovernanceAuditModel(Base):
         nullable=False,
         index=True,
     )
-    agent_id: Mapped[str] = mapped_column(String, nullable=False)
-    action: Mapped[str] = mapped_column(String, nullable=False)
-    reasoning: Mapped[str] = mapped_column(String, nullable=False)
+    agent_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    action: Mapped[str] = mapped_column(String(500), nullable=False)
+    reasoning: Mapped[str] = mapped_column(String(2000), nullable=False)
     step: Mapped[int] = mapped_column(Integer, nullable=False)
-    status: Mapped[str] = mapped_column(String, nullable=False)
-    categories: Mapped[list] = mapped_column(JSON, default=list)
+    status: Mapped[str] = mapped_column(String(50), nullable=False)
+    categories: Mapped[list] = mapped_column(OracleJSON, default=list)
     significance: Mapped[float] = mapped_column(Float, default=0.0)
     approved: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True)
-    researcher_note: Mapped[str] = mapped_column(String, default="")
+    researcher_note: Mapped[str] = mapped_column(String(2000), default="")

@@ -3,10 +3,10 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String, DateTime, JSON, ForeignKey, Boolean
+from sqlalchemy import String, DateTime, ForeignKey, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.database import Base
+from app.core.database import Base, OracleJSON
 
 if TYPE_CHECKING:
     from app.models.run import Run
@@ -37,16 +37,16 @@ class AgentModel(Base):
     provider: Mapped[str] = mapped_column(String(50), default="ollama")
     
     # Persona configuration (for HumanAgent)
-    persona: Mapped[dict] = mapped_column(JSON, default=dict)
+    persona: Mapped[dict] = mapped_column(OracleJSON, default=dict)
     
     # Dynamic state that changes during simulation
-    dynamic_state: Mapped[dict] = mapped_column(JSON, default=dict)
+    dynamic_state: Mapped[dict] = mapped_column(OracleJSON, default=dict)
     
     # Memory snapshot (episodic memories, relationships)
-    memory_snapshot: Mapped[dict] = mapped_column(JSON, default=dict)
+    memory_snapshot: Mapped[dict] = mapped_column(OracleJSON, default=dict)
     
     # Relationship memory (tracked relationships with other agents)
-    relationship_memory: Mapped[dict] = mapped_column(JSON, default=dict)
+    relationship_memory: Mapped[dict] = mapped_column(OracleJSON, default=dict)
     
     # Agent status
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)

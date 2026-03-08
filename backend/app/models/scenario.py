@@ -3,10 +3,10 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String, Text, DateTime, JSON
+from sqlalchemy import String, Text, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.database import Base
+from app.core.database import Base, OracleJSON
 
 if TYPE_CHECKING:
     from app.models.run import Run
@@ -26,10 +26,10 @@ class Scenario(Base):
     description: Mapped[str] = mapped_column(Text, nullable=True)
     
     # Configuration JSON containing world parameters
-    config: Mapped[dict] = mapped_column(JSON, default=dict)
+    config: Mapped[dict] = mapped_column(OracleJSON, default=dict)
     
     # Agent templates for this scenario
-    agent_templates: Mapped[list] = mapped_column(JSON, default=list)
+    agent_templates: Mapped[list] = mapped_column(OracleJSON, default=list)
     
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(

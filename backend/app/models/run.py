@@ -4,10 +4,10 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from enum import Enum
 
-from sqlalchemy import String, Integer, DateTime, JSON, ForeignKey, Enum as SQLEnum
+from sqlalchemy import String, Integer, DateTime, ForeignKey, Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.database import Base
+from app.core.database import Base, OracleJSON
 
 if TYPE_CHECKING:
     from app.models.scenario import Scenario
@@ -55,11 +55,11 @@ class Run(Base):
     seed: Mapped[int] = mapped_column(Integer, nullable=True)
     
     # World state JSON
-    world_state: Mapped[dict] = mapped_column(JSON, default=dict)
+    world_state: Mapped[dict] = mapped_column(OracleJSON, default=dict)
     
     # Metrics and evaluation results
-    metrics: Mapped[dict] = mapped_column(JSON, default=dict)
-    evaluation: Mapped[dict] = mapped_column(JSON, default=dict)
+    metrics: Mapped[dict] = mapped_column(OracleJSON, default=dict)
+    evaluation: Mapped[dict] = mapped_column(OracleJSON, default=dict)
     
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(

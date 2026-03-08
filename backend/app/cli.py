@@ -4,6 +4,7 @@ import asyncio
 import json
 import signal
 import sys
+from datetime import datetime
 from typing import Any
 
 import click
@@ -115,14 +116,15 @@ def cli(ctx):
 @click.option("--seed", type=int, default=None, help="Random seed for reproducibility")
 @click.option("--tick-delay", "-d", type=float, default=None, help="Delay between steps (seconds)")
 @click.option("--simple", is_flag=True, help="Use simple log output instead of rich UI")
+@click.option("--verbose", "-v", is_flag=True, default=False, help="Verbose: timestamp every LLM call, token counts, context sizes")
 @click.option("--engine-v2", is_flag=True, default=False, help="Use V2 engine (heartbeat + goals + governance)")
-def run(scenario: str | None, max_steps: int | None, seed: int | None, tick_delay: float | None, simple: bool, engine_v2: bool):
+def run(scenario: str | None, max_steps: int | None, seed: int | None, tick_delay: float | None, simple: bool, verbose: bool, engine_v2: bool):
     """Run a simulation in standalone mode (no server required).
 
     Example:
         emotionsim run --scenario "Rising Flood" --max-steps 50 --seed 42
     """
-    asyncio.run(_run_standalone(scenario, max_steps, seed, tick_delay, simple, engine_v2=engine_v2))
+    asyncio.run(_run_standalone(scenario, max_steps, seed, tick_delay, simple, engine_v2=engine_v2, verbose=verbose))
 
 
 async def _run_standalone(
@@ -132,6 +134,7 @@ async def _run_standalone(
     tick_delay: float | None,
     simple: bool,
     engine_v2: bool = False,
+    verbose: bool = False,
 ):
     """Run simulation in standalone mode"""
     from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
@@ -359,7 +362,7 @@ async def _run_standalone(
         run_record = Run(
             scenario_id=scenario.id,
             seed=seed,
-            max_steps=max_steps or scenario.config.get("max_steps", 100),
+            max_steps=max_steps or scenario.config.get("max_steps", get_settings().default_max_steps),
             status=RunStatus.PENDING,
         )
         db.add(run_record)
@@ -458,15 +461,92 @@ async def _run_standalone(
         
         signal.signal(signal.SIGINT, signal_handler)
         
+        # Verbose mode: track per-agent LLM call timing
+        if verbose:
+            import time as _time
+
+            _verbose_state: dict[str, float] = {}  # agent_id -> call_start_time
+            _verbose_token_counts: dict[str, int] = {}  # agent_id -> token_count
+
+            def _verbose_on_event(event_type: str, data: dict[str, Any]):
+                ts = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+                if event_type == "step_completed":
+                    step = data.get("step", "?")
+                    console.print(f"\n[bold green]{ts}[/bold green] ══ STEP {step} COMPLETED ══")
+                    # Print agent telemetry summary
+                    telemetry = engine_sim.supervisor.get_all_telemetry()
+                    for aid, t in telemetry.items():
+                        if t.get("tick_count", 0) > 0:
+                            console.print(
+                                f"  [dim]{t.get('agent_name', aid):<20}[/dim] "
+                                f"ticks={t['tick_count']} "
+                                f"avg={t.get('avg_tick_duration_ms', 0):.0f}ms "
+                                f"tokens={t.get('llm_tokens_used', 0)} "
+                                f"status=[{'green' if t['status'] == 'healthy' else 'red'}]{t['status']}[/{'green' if t['status'] == 'healthy' else 'red'}]"
+                            )
+
+            original_on_event = on_event
+            def on_event_verbose(event_type: str, data: dict[str, Any]):
+                original_on_event(event_type, data)
+                _verbose_on_event(event_type, data)
+
+            engine_sim.on_event = on_event_verbose
+
         # Run with live display or simple output
         if simple:
             console.print("[cyan]Starting simulation...[/cyan]\n")
-            
+
             async def simple_stream_callback(agent_id: str, token: str):
                 agent = engine_sim.agents.get(agent_id)
                 name = agent.name if agent else agent_id
+                if verbose:
+                    # Track token generation start
+                    if agent_id not in _verbose_state:
+                        _verbose_state[agent_id] = _time.time()
+                        _verbose_token_counts[agent_id] = 0
+                        ts = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+                        console.print(f"\n[yellow]{ts}[/yellow] [bold]{name}[/bold] ▶ LLM generating...", end="")
+                    _verbose_token_counts[agent_id] = _verbose_token_counts.get(agent_id, 0) + 1
                 logger.log_token(agent_id, token, name)
-                
+
+            # Patch supervisor to log per-tick timing in verbose mode
+            if verbose:
+                _orig_supervised_tick = engine_sim.supervisor.supervised_tick
+                async def _verbose_supervised_tick(agent, *args, **kwargs):
+                    ts_start = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+                    t_start = _time.time()
+                    agent_name = getattr(agent, 'name', agent.id)
+                    console.print(f"\n[yellow]{ts_start}[/yellow] [bold cyan]{agent_name}[/bold cyan] ⏱ tick started")
+
+                    # Clear streaming state for this agent
+                    _verbose_state.pop(agent.id, None)
+                    _verbose_token_counts.pop(agent.id, None)
+
+                    result = await _orig_supervised_tick(agent, *args, **kwargs)
+
+                    elapsed = _time.time() - t_start
+                    ts_end = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+                    tokens = _verbose_token_counts.get(agent.id, 0)
+                    tps = tokens / elapsed if elapsed > 0 else 0
+
+                    # Get context size from result metadata
+                    ctx_size = 0
+                    if result.message and result.message.metadata:
+                        ctx_size = result.message.metadata.get("context_size", 0)
+
+                    status = "✓" if result.reasoning and "recovering" not in result.reasoning else "✗"
+                    console.print(
+                        f"\n[yellow]{ts_end}[/yellow] [bold cyan]{agent_name}[/bold cyan] {status} "
+                        f"[dim]{elapsed:.1f}s | {tokens} tokens ({tps:.1f} t/s) | ctx={ctx_size} chars[/dim]"
+                    )
+
+                    # Clear streaming state
+                    _verbose_state.pop(agent.id, None)
+                    _verbose_token_counts.pop(agent.id, None)
+
+                    return result
+                engine_sim.supervisor.supervised_tick = _verbose_supervised_tick
+
             await engine_sim.start(stream_callback=simple_stream_callback)
             
             # Ensure newline after last stream
@@ -1245,7 +1325,7 @@ async def _run_auto_loop(count: int | None):
                 new_run = Run(
                     scenario_id=scenario.id,
                     status=RunStatus.PENDING,
-                    max_steps=scenario.config.get("max_steps", 50),
+                    max_steps=scenario.config.get("max_steps", get_settings().default_max_steps),
                     seed=random.randint(1, 10000)
                 )
                 db.add(new_run)

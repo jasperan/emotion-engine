@@ -17,14 +17,13 @@ from rich import box
 import httpx
 import questionary
 
-from app.cli_monitor import EventRenderer, SimpleEventLogger
+from app.tui.theme import PI_THEME
+from app.tui.renderer import PiStyleRenderer, PiStyleLogger
+from app.tui.components import startup_banner, dynamic_border
 from app.core.config import get_settings
 
 def print_header():
-    console.print(Panel.fit(
-        "[bold cyan]Emotion Engine CLI[/bold cyan]\n[dim]Autonomous Agent Simulation System[/dim]",
-        border_style="cyan"
-    ))
+    startup_banner(console, version="0.1.0")
 
 async def check_model_selection():
     """Ensure a valid model is selected and available"""
@@ -87,7 +86,7 @@ async def check_model_selection():
         console.print(f"[dim]Model check failed: {e}[/dim]")
 
 
-console = Console()
+console = Console(theme=PI_THEME)
 
 
 # ============================================================================
@@ -150,7 +149,7 @@ async def _run_standalone(
     settings = get_settings()
     
     print_header()
-    console.print("[dim]Standalone Mode[/dim]\n")
+    console.print("[pi.dim]Standalone Mode[/pi.dim]\n")
     
     # Check model
     await check_model_selection()
@@ -373,8 +372,9 @@ async def _run_standalone(
         
         # Setup renderer
         if simple:
-            logger = SimpleEventLogger(console)
-            
+            logger = PiStyleLogger(console)
+            logger._max_steps = run_record.max_steps
+
             def on_event(event_type: str, data: dict[str, Any]):
                 if event_type == "scene_turn":
                     logger.log_scene_turn(data)
@@ -391,9 +391,11 @@ async def _run_standalone(
                         for msg in data.get("messages", []):
                             logger.log_message(msg)
         else:
-            renderer = EventRenderer(console)
+            renderer = PiStyleRenderer(console)
             renderer.max_steps = run_record.max_steps
-            
+            renderer.scenario_name = scenario.name
+            renderer.model_name = settings.ollama_default_model
+
             def on_event(event_type: str, data: dict[str, Any]):
                 if event_type in ("scene_turn", "scene_completed"):
                     return  # handled by simple logger or ignored in rich mode
@@ -554,30 +556,30 @@ async def _run_standalone(
                 console.print()
                 logger.last_stream_agent = None
         else:
-            console.print("[cyan]Starting simulation (press Ctrl+C to stop)...[/cyan]\n")
-            # Increase refresh rate for smooth streaming
-            with Live(renderer.render_layout(), console=console, refresh_per_second=15) as live:
-                
+            console.print("[pi.accent]Starting simulation (press Ctrl+C to stop)...[/pi.accent]\n")
+            # Pi-style: scrolling output with Live footer
+            with Live(renderer.get_footer(), console=console, refresh_per_second=4, vertical_overflow="visible") as live:
+
                 async def stream_callback(agent_id: str, token: str):
                     renderer.update_stream(agent_id, token)
-                    live.refresh()
-                
+                    live.update(renderer.get_footer())
+
                 # Start simulation in background
                 task = asyncio.create_task(engine_sim.start(stream_callback=stream_callback))
-                
-                # Update display while running
+
+                # Update footer while running
                 while not task.done() and not stop_requested:
-                    live.update(renderer.render_layout())
-                    await asyncio.sleep(0.25)
-                
+                    live.update(renderer.get_footer())
+                    await asyncio.sleep(0.5)
+
                 # Wait for task to complete
                 try:
                     await task
                 except asyncio.CancelledError:
                     pass
-                
+
                 # Final update
-                live.update(renderer.render_layout())
+                live.update(renderer.get_footer())
         
         console.print()
         console.print(f"[green]✓[/green] Simulation complete. Final step: {engine_sim.current_step}")
@@ -624,9 +626,9 @@ async def _monitor_websocket(base_url: str, run_id: str, simple: bool):
     console.print(f"Connecting to: [dim]{ws_url}[/dim]\n")
     
     if simple:
-        logger = SimpleEventLogger(console)
+        logger = PiStyleLogger(console)
     else:
-        renderer = EventRenderer(console)
+        renderer = PiStyleRenderer(console)
     
     try:
         async with websockets.connect(ws_url) as ws:
@@ -654,22 +656,22 @@ async def _monitor_websocket(base_url: str, run_id: str, simple: bool):
                     except json.JSONDecodeError:
                         console.print(f"[red]Invalid JSON:[/red] {message[:100]}")
             else:
-                # Rich live display mode
-                with Live(renderer.render_layout(), console=console, refresh_per_second=4) as live:
+                # Pi-style: scrolling output with Live footer
+                with Live(renderer.get_footer(), console=console, refresh_per_second=4, vertical_overflow="visible") as live:
                     async for message in ws:
                         try:
                             data = json.loads(message)
                             event_type = data.get("event", "unknown")
                             event_data = data.get("data", {})
-                            
+
                             renderer.add_event(event_type, event_data)
-                            
+
                             # Add messages
                             if event_type == "step_completed":
                                 for msg in event_data.get("messages", []):
                                     renderer.add_message(msg)
-                            
-                            live.update(renderer.render_layout())
+
+                            live.update(renderer.get_footer())
                             
                             # Exit on completion
                             if event_type in ("run_completed", "run_stopped"):
@@ -880,7 +882,7 @@ async def _interactive_wizard():
     from app.scenarios.defaults import DEFAULT_SCENARIOS
     
     print_header()
-    console.print("[dim]Interactive Simulation Wizard[/dim]\n")
+    console.print("[pi.dim]Interactive Simulation Wizard[/pi.dim]\n")
     
     settings = get_settings()
     engine = create_async_engine(settings.database_url, echo=False)
@@ -1372,7 +1374,7 @@ async def _execute_existing_run(run_id: str, simple: bool = True):
     from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
     from app.core.config import get_settings
     from app.simulation.engine import SimulationEngine
-    from app.cli_monitor import SimpleEventLogger, EventRenderer
+    from app.tui.renderer import PiStyleLogger, PiStyleRenderer
     from rich.live import Live
     
     from sqlalchemy import select
@@ -1386,7 +1388,7 @@ async def _execute_existing_run(run_id: str, simple: bool = True):
     async with async_session() as db:
         
         if simple:
-            logger = SimpleEventLogger(console)
+            logger = PiStyleLogger(console)
             def on_event(event_type: str, data: dict[str, Any]):
                 if event_type == "scene_turn":
                     logger.log_scene_turn(data)
@@ -1398,7 +1400,7 @@ async def _execute_existing_run(run_id: str, simple: bool = True):
                 else:
                     logger.log_event(event_type, data)
         else:
-            renderer = EventRenderer(console)
+            renderer = PiStyleRenderer(console)
             def on_event(event_type: str, data: dict[str, Any]):
                 if event_type == "message":
                      renderer.add_message(data["data"])
@@ -1454,30 +1456,30 @@ async def _execute_existing_run(run_id: str, simple: bool = True):
             console.print("[cyan]Starting simulation...[/cyan]\n")
             await sim_engine.start()
         else:
-            console.print("[cyan]Starting simulation (auto-mode)...[/cyan]\n")
-            # Rich Live Display Logic
-            with Live(renderer.render_layout(), console=console, refresh_per_second=15) as live:
-                
+            console.print("[pi.accent]Starting simulation (auto-mode)...[/pi.accent]\n")
+            # Pi-style: scrolling output with Live footer
+            with Live(renderer.get_footer(), console=console, refresh_per_second=4, vertical_overflow="visible") as live:
+
                 async def stream_callback(agent_id: str, token: str):
                     renderer.update_stream(agent_id, token)
-                    live.refresh()
-                
+                    live.update(renderer.get_footer())
+
                 # Start simulation in background
                 task = asyncio.create_task(sim_engine.start(stream_callback=stream_callback))
-                
-                # Update display while running
+
+                # Update footer while running
                 while not task.done():
-                    live.update(renderer.render_layout())
-                    await asyncio.sleep(0.25)
-                
+                    live.update(renderer.get_footer())
+                    await asyncio.sleep(0.5)
+
                 # Wait for task to complete and handle exceptions
                 try:
                     await task
                 except asyncio.CancelledError:
                     pass
-                
+
                 # Final update
-                live.update(renderer.render_layout())
+                live.update(renderer.get_footer())
         
         console.print(f"[green]✓[/green] Simulation finished.")
 

@@ -22,6 +22,8 @@ from app.tui.renderer import PiStyleRenderer, PiStyleLogger
 from app.tui.components import startup_banner, dynamic_border
 from app.core.config import get_settings
 
+console = Console(theme=PI_THEME)
+
 def print_header():
     startup_banner(console, version="0.1.0")
 
@@ -85,8 +87,6 @@ async def check_model_selection():
     except Exception as e:
         console.print(f"[dim]Model check failed: {e}[/dim]")
 
-
-console = Console(theme=PI_THEME)
 
 
 # ============================================================================
@@ -401,7 +401,7 @@ async def _run_standalone(
                     return  # handled by simple logger or ignored in rich mode
                 if event_type == "message":
                      # Handle real-time message addition
-                     renderer.add_message(data["data"])
+                     renderer.add_message(data.get("data", data))
                 else:
                     renderer.add_event(event_type, data)
 
@@ -1403,7 +1403,7 @@ async def _execute_existing_run(run_id: str, simple: bool = True):
             renderer = PiStyleRenderer(console)
             def on_event(event_type: str, data: dict[str, Any]):
                 if event_type == "message":
-                     renderer.add_message(data["data"])
+                     renderer.add_message(data.get("data", data))
                 elif event_type not in ("scene_turn", "scene_completed"):
                     renderer.add_event(event_type, data)
 

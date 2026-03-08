@@ -17,7 +17,6 @@ from rich.text import Text
 
 from app.tui.theme import (
     PI_COLORS,
-    PI_BACKGROUNDS,
     EVENT_ICONS,
     MESSAGE_ICONS,
 )
@@ -387,6 +386,7 @@ def render_footer(
     event_count: int = 0,
     model: str = "",
     elapsed_seconds: float = 0,
+    width: int = 0,
 ) -> Text:
     """Build the 2-line footer renderable for Rich Live.
 
@@ -431,7 +431,8 @@ def render_footer(
 
     if model:
         # Right-align model name
-        padding = max(2, 80 - len(stats_left) - len(model))
+        term_width = width or os.get_terminal_size(fallback=(80, 24)).columns
+        padding = max(2, term_width - len(stats_left) - len(model))
         line2.append(" " * padding, style="pi.dim")
         line2.append(model, style="pi.dim")
 

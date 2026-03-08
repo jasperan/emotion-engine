@@ -7,23 +7,15 @@ PiStyleLogger: Replaces SimpleEventLogger (simple streaming mode).
     Uses scrolling console.print() with pi-styled components.
 """
 
-import re
 import time
 from datetime import datetime
 from typing import Any
 
-from rich import box
 from rich.console import Console
-from rich.live import Live
 from rich.markup import escape
 from rich.text import Text
 
-from app.tui.theme import (
-    PI_THEME,
-    PI_COLORS,
-    EVENT_ICONS,
-    MESSAGE_ICONS,
-)
+from app.tui.theme import PI_THEME
 from app.tui.components import (
     dynamic_border,
     step_border,
@@ -161,6 +153,7 @@ class PiStyleRenderer:
             event_count=len(self.events),
             model=self.model_name,
             elapsed_seconds=time.time() - self.start_time,
+            width=self.console.width,
         )
 
     # Backward compat: old code calls render_layout()

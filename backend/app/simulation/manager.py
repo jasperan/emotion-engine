@@ -238,9 +238,10 @@ class SimulationManager:
         seed: int | None = None,
         run_config: dict | None = None,
     ) -> None:
-        """Attach a datalake logger to a run if datalake is enabled."""
+        """Attach a datalake logger to a run (logs analytics to Oracle)."""
         settings = get_settings()
         if not settings.datalake_enabled:
+            logger.debug("Datalake disabled, skipping logger for run %s", run_id)
             return
 
         try:

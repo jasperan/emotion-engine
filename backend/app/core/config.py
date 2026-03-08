@@ -10,9 +10,25 @@ class Settings(BaseSettings):
     app_name: str = "EmotionSim"
     debug: bool = True
     
-    # Database
-    database_url: str = "sqlite+aiosqlite:///./emotionsim.db"
-    
+    # Database (Oracle DB 26ai Free — primary)
+    oracle_db_host: str = "localhost"
+    oracle_db_port: int = 1522
+    oracle_db_service: str = "FREEPDB1"
+    oracle_db_user: str = "emotionsim"
+    oracle_db_password: str = "emotionsim"
+
+    @property
+    def database_url(self) -> str:
+        """Build Oracle async connection URL from individual settings."""
+        return (
+            f"oracle+oracledb://{self.oracle_db_user}:{self.oracle_db_password}"
+            f"@{self.oracle_db_host}:{self.oracle_db_port}"
+            f"/?service_name={self.oracle_db_service}"
+        )
+
+    # Datalake (analytics tables in the same Oracle instance)
+    datalake_enabled: bool = True
+
     # Ollama (default LLM provider)
     ollama_base_url: str = "http://localhost:11434/v1"
     ollama_api_key: str = "ollama"
@@ -20,18 +36,10 @@ class Settings(BaseSettings):
     ollama_fallback_model: str = "qwen3.5:4b"
     ollama_timeout: int = 60
     ollama_auto_fallback: bool = True
-    
+
     # Claude (optional, for future use)
     anthropic_api_key: str = ""
     anthropic_default_model: str = "claude-3-sonnet-20240229"
-    
-    # Oracle Datalake (optional — logs everything to Oracle 26ai Free)
-    datalake_enabled: bool = False
-    oracle_db_host: str = "localhost"
-    oracle_db_port: int = 1522
-    oracle_db_service: str = "FREEPDB1"
-    oracle_db_user: str = "emotionsim"
-    oracle_db_password: str = "emotionsim"
 
     # Per-agent-type model routing (Pi-inspired: different models for different roles)
     model_route_environment: str | None = None  # None = use fallback model

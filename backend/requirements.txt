@@ -4,9 +4,8 @@ uvicorn[standard]
 websockets
 python-multipart
 
-# Database
+# Database (Oracle DB 26ai Free)
 sqlalchemy
-aiosqlite
 oracledb
 
 # Pydantic

@@ -1050,8 +1050,7 @@ async def _show_best_runs(limit: int):
     
     async with async_session() as db:
         # Get completed runs logic
-        # Since JSON metrics querying depends on DB type (SQLite vs PG), we'll fetch completed runs 
-        # and sort in Python for simplicity and compatibility
+        # Fetch completed runs and sort in Python for simplicity
         result = await db.execute(
             select(Run)
             .where(Run.status == RunStatus.COMPLETED)

@@ -1,15 +1,23 @@
-"""Database connection and session management"""
+"""Database connection and session management — Oracle DB 26ai Free"""
+import oracledb
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.pool import NullPool
 
 from app.core.config import get_settings
+
+# Enable oracledb thin mode (no Oracle Client required)
+oracledb.defaults.fetch_lobs = False
 
 settings = get_settings()
 
 engine = create_async_engine(
     settings.database_url,
     echo=settings.debug,
-    future=True,
+    pool_size=5,
+    max_overflow=10,
+    pool_pre_ping=True,
+    pool_recycle=3600,
 )
 
 async_session_maker = async_sessionmaker(
@@ -38,7 +46,6 @@ async def get_db() -> AsyncSession:
 
 
 async def init_db() -> None:
-    """Initialize database tables"""
+    """Initialize database tables in Oracle"""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-

@@ -1,4 +1,5 @@
 """Pytest configuration and fixtures"""
+import os
 import pytest
 import asyncio
 from typing import AsyncGenerator
@@ -10,8 +11,11 @@ from app.core.database import Base
 from app.llm.base import LLMClient, LLMMessage, LLMResponse
 
 
-# Use in-memory SQLite for tests
-TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+# Use in-memory SQLite for unit tests (fast, no Oracle dependency needed)
+# Integration tests against Oracle should use a separate test config
+TEST_DATABASE_URL = os.environ.get(
+    "TEST_DATABASE_URL", "sqlite+aiosqlite:///:memory:"
+)
 
 
 @pytest.fixture(scope="session")
@@ -26,20 +30,20 @@ def event_loop():
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
     """Create a test database session"""
     engine = create_async_engine(TEST_DATABASE_URL, echo=False)
-    
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
+
     async_session = async_sessionmaker(
         engine, class_=AsyncSession, expire_on_commit=False
     )
-    
+
     async with async_session() as session:
         yield session
-    
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
-    
+
     await engine.dispose()
 
 
@@ -47,7 +51,7 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
 def mock_llm_client() -> LLMClient:
     """Create a mock LLM client for testing"""
     client = MagicMock(spec=LLMClient)
-    
+
     async def mock_generate(
         messages: list[LLMMessage],
         model: str | None = None,
@@ -63,10 +67,10 @@ def mock_llm_client() -> LLMClient:
             raw_response={"choices": [{"message": {"content": "test"}}]},
             usage={"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30},
         )
-    
+
     client.generate = AsyncMock(side_effect=mock_generate)
     client.health_check = AsyncMock(return_value=True)
-    
+
     return client
 
 
@@ -74,7 +78,7 @@ def mock_llm_client() -> LLMClient:
 def sample_persona():
     """Create a sample persona for testing"""
     from app.schemas.persona import Persona
-    
+
     return Persona(
         name="Test Agent",
         age=30,
@@ -94,4 +98,3 @@ def sample_persona():
         health=10,
         location="test_location",
     )
-

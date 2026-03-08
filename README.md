@@ -9,7 +9,7 @@
 > **"The Great Flood" in your terminal.**
 > A local-first multi-agent simulation system for running complex disaster scenarios with diverse human personas.
 
-![CLI Monitor](img/cli.png)
+![CLI Monitor](assets/cli.png)
 
 ## Overview
 

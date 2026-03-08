@@ -15,16 +15,16 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Create data directory for SQLite
-RUN mkdir -p /app/data
-
-# Set environment variables
+# Set environment variables (Oracle DB 26ai Free)
 ENV PYTHONPATH=/app
-ENV DATABASE_URL=sqlite+aiosqlite:///./data/emotionsim.db
+ENV ORACLE_DB_HOST=oracle-db
+ENV ORACLE_DB_PORT=1521
+ENV ORACLE_DB_SERVICE=FREEPDB1
+ENV ORACLE_DB_USER=emotionsim
+ENV ORACLE_DB_PASSWORD=emotionsim
 
 # Expose port
 EXPOSE 8000
 
 # Run the application
 CMD ["python", "-m", "app.main"]
-

@@ -28,9 +28,38 @@ def print_header():
     startup_banner(console, version="0.1.0")
 
 async def check_model_selection():
-    """Ensure a valid model is selected and available"""
+    """Ensure a valid model is selected and available.
+
+    Checks vLLM first (if configured), then falls back to Ollama.
+    """
     settings = get_settings()
-    # Use native Ollama API for model listing (strip /v1 suffix if present)
+
+    # --- vLLM backend check ---
+    if settings.llm_backend == "vllm":
+        vllm_url = settings.vllm_base_url.rstrip("/")
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(f"{vllm_url}/v1/models", timeout=3.0)
+                if response.status_code == 200:
+                    models_data = response.json()
+                    models = [m["id"] for m in models_data.get("data", [])]
+                    if models:
+                        console.print(f"[green]vLLM backend:[/green] {vllm_url}")
+                        console.print(f"[green]Model:[/green] {', '.join(models)} [dim](parallel inference enabled)[/dim]\n")
+                        return
+                    else:
+                        console.print(f"[yellow]vLLM at {vllm_url} has no models loaded[/yellow]")
+                else:
+                    console.print(f"[yellow]vLLM at {vllm_url} returned {response.status_code}[/yellow]")
+        except httpx.ConnectError:
+            console.print(f"[yellow]Cannot connect to vLLM at {vllm_url}[/yellow]")
+        except Exception as e:
+            console.print(f"[yellow]vLLM check failed: {e}[/yellow]")
+
+        console.print("[yellow]Falling back to Ollama backend...[/yellow]")
+        settings.llm_backend = "ollama"
+
+    # --- Ollama backend check ---
     base_url = settings.ollama_base_url.rstrip("/")
     if base_url.endswith("/v1"):
         native_url = base_url[:-3]
@@ -41,29 +70,26 @@ async def check_model_selection():
     try:
         async with httpx.AsyncClient() as client:
             try:
-                # List models via native Ollama API
                 response = await client.get(f"{native_url}/api/tags", timeout=2.0)
                 if response.status_code != 200:
                     console.print(f"[yellow]Warning: Could not connect to Ollama at {base_url}[/yellow]")
                     console.print(f"Using configured default: [bold]{default_model}[/bold]")
                     return
-                
+
                 models_data = response.json()
                 models = [m["name"] for m in models_data.get("models", [])]
-                
+
                 if not models:
                     console.print("[red]No models found in Ollama![/red]")
                     console.print("Please pull a model, e.g.: [bold]ollama pull gemma3[/bold]")
                     sys.exit(1)
-                
-                # Check if default model exists
+
                 if default_model not in models and f"{default_model}:latest" not in models:
                     console.print(f"[yellow]Default model '{default_model}' not found in Ollama.[/yellow]")
                     console.print("\n[bold]Available Models:[/bold]")
                     for i, m in enumerate(models, 1):
                         console.print(f"  {i}. {m}")
-                    
-                    console.print()
+
                     console.print()
                     choice = questionary.select(
                         "Select a model to use",
@@ -72,18 +98,16 @@ async def check_model_selection():
                     ).ask()
                     selected_model = choice
 
-                    
-                    # Update settings (in memory for this session)
                     settings.ollama_default_model = selected_model
                     console.print(f"[green]Using model: {selected_model}[/green]\n")
                 else:
-                    # Model exists, all good
-                    pass
-                    
+                    console.print(f"[green]Ollama backend:[/green] {native_url}")
+                    console.print(f"[green]Model:[/green] {default_model}\n")
+
             except httpx.ConnectError:
                 console.print(f"[yellow]Warning: Could not connect to Ollama at {base_url}[/yellow]")
                 console.print(f"Using configured default: [bold]{default_model}[/bold]")
-                
+
     except Exception as e:
         console.print(f"[dim]Model check failed: {e}[/dim]")
 
@@ -102,7 +126,8 @@ def cli(ctx):
     Monitor simulations in real-time or run them directly from the CLI.
     """
     if ctx.invoked_subcommand is None:
-        asyncio.run(main_menu_async())
+        # Show help when invoked without a subcommand
+        click.echo(ctx.get_help())
 
 
 # ============================================================================

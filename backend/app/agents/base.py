@@ -57,8 +57,8 @@ class Agent(ABC):
         self._action_feedback: list[str] = []
 
         
-        # LLM client
-        self._llm_client = LLMRouter.get_client(provider)  # type: ignore
+        # LLM client — auto-select backend from settings.llm_backend
+        self._llm_client = LLMRouter.get_client()  # type: ignore
     
     @abstractmethod
     def get_system_prompt(self) -> str:

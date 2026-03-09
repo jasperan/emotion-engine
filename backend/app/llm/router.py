@@ -1,9 +1,18 @@
-"""LLM Router for selecting providers with per-agent-type model routing"""
+"""LLM Router for selecting providers with per-agent-type model routing.
+
+Supports two backends:
+- **vllm**: True parallel inference via continuous batching (preferred)
+- **ollama**: Single-slot inference with semaphore gating (fallback)
+
+Enhanced with retry-at-fallback level: tries primary model, then fallback,
+with logging of which model/attempt succeeded or failed.
+"""
+import logging
 from typing import Literal, Callable, Awaitable
 
 from app.llm.base import LLMClient, LLMMessage, LLMResponse
-from app.llm.ollama import OllamaClient
 
+logger = logging.getLogger(__name__)
 
 # Per-agent-type model routing (Pi-inspired: different models for different agent roles)
 # Maps agent role -> model override. None means use default.
@@ -27,29 +36,35 @@ def configure_model_routing(routing: dict[str, str | None]) -> None:
 
 
 class LLMRouter:
-    """Routes LLM requests to appropriate providers"""
+    """Routes LLM requests to appropriate providers.
+
+    Supports 'ollama' and 'vllm' backends. The active backend is
+    determined by settings.llm_backend.
+    """
 
     _clients: dict[str, LLMClient] = {}
 
     @classmethod
-    def get_client(cls, provider: Literal["ollama", "anthropic"] = "ollama") -> LLMClient:
-        """
-        Get an LLM client for the specified provider.
+    def get_client(cls, provider: Literal["ollama", "vllm", "anthropic"] | None = None) -> LLMClient:
+        """Get an LLM client for the specified provider.
 
-        Args:
-            provider: The LLM provider to use
-
-        Returns:
-            LLMClient instance for the provider
+        If provider is None, uses settings.llm_backend to auto-select.
         """
+        if provider is None:
+            from app.core.config import get_settings
+            provider = get_settings().llm_backend  # type: ignore
+
         if provider not in cls._clients:
             if provider == "ollama":
+                from app.llm.ollama import OllamaClient
                 cls._clients[provider] = OllamaClient()
+            elif provider == "vllm":
+                from app.llm.vllm import VLLMClient
+                cls._clients[provider] = VLLMClient()
             elif provider == "anthropic":
-                # Placeholder for future Claude integration
                 raise NotImplementedError(
                     "Anthropic/Claude provider not yet implemented. "
-                    "Use 'ollama' provider for now."
+                    "Use 'ollama' or 'vllm' provider for now."
                 )
             else:
                 raise ValueError(f"Unknown provider: {provider}")
@@ -72,35 +87,31 @@ class LLMRouter:
         model_override: str | None = None,
         agent_role: str | None = None,
     ) -> LLMResponse:
-        """
-        Generate a response with automatic fallback to a smaller model.
+        """Generate a response with automatic fallback.
 
-        Tries the primary model first, then falls back to a smaller model
-        if the primary fails and auto_fallback is enabled.
+        Both OllamaClient and VLLMClient handle retries internally.
+        This method adds model-level fallback on top.
 
-        Args:
-            messages: Conversation history
-            system: System prompt
-            json_mode: Whether to request JSON output
-            temperature: Sampling temperature
-            max_tokens: Maximum tokens in response
-            stream_callback: Optional streaming callback
-            model_override: Override the primary model
+        For vLLM: primary and fallback use the same model (single vLLM
+        server), so fallback means retrying the same model after the
+        internal retries are exhausted — effectively a last-chance attempt.
 
-        Returns:
-            LLMResponse from whichever model succeeds
-
-        Raises:
-            The original primary error if both models fail or fallback is disabled
+        For Ollama: tries primary, then falls back to the configured
+        fallback model (e.g., smaller model on OOM).
         """
         from app.core.config import get_settings
 
         settings = get_settings()
-        client = LLMRouter.get_client("ollama")
+        client = LLMRouter.get_client()  # auto-selects based on settings.llm_backend
 
-        # Per-agent-type model routing (Pi-inspired)
+        # Per-agent-type model routing
         role_model = get_model_for_role(agent_role) if agent_role else None
-        primary_model = model_override or role_model or settings.ollama_default_model
+
+        # Choose primary model based on backend
+        if settings.llm_backend == "vllm":
+            primary_model = model_override or role_model or settings.vllm_default_model
+        else:
+            primary_model = model_override or role_model or settings.ollama_default_model
 
         try:
             return await client.generate(
@@ -116,10 +127,40 @@ class LLMRouter:
             if not settings.ollama_auto_fallback:
                 raise
 
+            # For vLLM, try Ollama as fallback backend
+            if settings.llm_backend == "vllm":
+                logger.warning(
+                    f"vLLM failed after retries, falling back to Ollama: {primary_error}"
+                )
+                try:
+                    from app.llm.ollama import OllamaClient
+                    fallback_client = LLMRouter.get_client("ollama")
+                    return await fallback_client.generate(
+                        messages=messages,
+                        model=settings.ollama_fallback_model,
+                        system=system,
+                        json_mode=json_mode,
+                        temperature=temperature,
+                        max_tokens=max_tokens,
+                        stream_callback=stream_callback,
+                    )
+                except Exception:
+                    raise primary_error
+
+            # For Ollama, try the fallback model
+            fallback_model = settings.ollama_fallback_model
+            if fallback_model == primary_model:
+                raise
+
+            logger.warning(
+                f"Primary model {primary_model} failed, "
+                f"falling back to {fallback_model}: {primary_error}"
+            )
+
             try:
                 return await client.generate(
                     messages=messages,
-                    model=settings.ollama_fallback_model,
+                    model=fallback_model,
                     system=system,
                     json_mode=json_mode,
                     temperature=temperature,
@@ -128,4 +169,3 @@ class LLMRouter:
                 )
             except Exception:
                 raise primary_error
-

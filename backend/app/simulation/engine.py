@@ -656,9 +656,13 @@ class SimulationEngine:
         self.world_state["agent_plans"] = agent_plans
         self.world_state["agent_trust"] = agent_trust
 
-        # Phase 2: Process human agents — scene-based or sequential depending on config
+        # Phase 2: Process human agents — scene-based, parallel, or sequential
+        from app.core.config import get_settings as _get_settings
+        _settings = _get_settings()
         if self.scene_mode:
             await self._process_agents_as_scenes(step_actions, step_messages, step_events, stream_callback)
+        elif _settings.max_concurrent_llm_calls > 1:
+            await self._process_human_agents_parallel(step_actions, step_messages, step_events, stream_callback)
         else:
             await self._process_human_agents_sequential(step_actions, step_messages, step_events, stream_callback)
 
@@ -845,6 +849,76 @@ class SimulationEngine:
 
         for agent_id, agent in human_agents:
             await self._tick_single_agent(agent_id, agent, step_actions, step_messages, step_events, stream_callback)
+
+    async def _process_human_agents_parallel(
+        self,
+        step_actions: list[dict[str, Any]],
+        step_messages: list[dict[str, Any]],
+        step_events: list[str],
+        stream_callback: Callable[[str, str], Awaitable[None]] | None = None,
+    ) -> None:
+        """Process human agents in parallel batches (ORBR-inspired).
+
+        Agents are grouped by location and processed concurrently within
+        each batch. The LLM semaphore in OllamaClient gates actual GPU
+        concurrency, so this safely issues requests that queue at the
+        semaphore boundary.
+
+        Thread-safe collection: each coroutine gets its own local lists,
+        which are merged into the shared lists after all tasks complete.
+        """
+        from app.core.config import get_settings
+        settings = get_settings()
+        max_parallel = settings.max_concurrent_llm_calls
+
+        human_agents = [
+            (agent_id, agent)
+            for agent_id, agent in self.agents.items()
+            if agent.role == "human"
+        ]
+        random.shuffle(human_agents)
+
+        if max_parallel <= 1 or len(human_agents) <= 1:
+            # Fall back to sequential if parallelism disabled or only one agent
+            for agent_id, agent in human_agents:
+                await self._tick_single_agent(
+                    agent_id, agent, step_actions, step_messages, step_events, stream_callback
+                )
+            return
+
+        # Process all agents concurrently — the semaphore gates GPU access
+        async def _tick_one(agent_id: str, agent: Agent):
+            """Tick a single agent, collecting results in local lists."""
+            local_actions: list[dict[str, Any]] = []
+            local_messages: list[dict[str, Any]] = []
+            local_events: list[str] = []
+            try:
+                await self._tick_single_agent(
+                    agent_id, agent, local_actions, local_messages, local_events, stream_callback
+                )
+            except Exception as e:
+                logger.error(f"Parallel tick failed for {agent.name}: {e}")
+                self.on_event("agent_error", {
+                    "agent_id": agent_id,
+                    "agent_name": agent.name,
+                    "error": str(e),
+                    "step": self.current_step,
+                    "context": "parallel_tick",
+                })
+            return local_actions, local_messages, local_events
+
+        tasks = [_tick_one(aid, agent) for aid, agent in human_agents]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        # Merge results back into shared lists
+        for result in results:
+            if isinstance(result, Exception):
+                logger.error(f"Parallel agent task raised: {result}")
+                continue
+            local_actions, local_messages, local_events = result
+            step_actions.extend(local_actions)
+            step_messages.extend(local_messages)
+            step_events.extend(local_events)
 
     async def _process_agents_as_scenes(
         self,

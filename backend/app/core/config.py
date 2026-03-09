@@ -32,10 +32,15 @@ class Settings(BaseSettings):
     # Ollama (default LLM provider)
     ollama_base_url: str = "http://localhost:11434/v1"
     ollama_api_key: str = "ollama"
-    ollama_default_model: str = "qwen3.5:9b"
+    ollama_default_model: str = "qwen3.5:4b"
     ollama_fallback_model: str = "qwen3.5:4b"
     ollama_timeout: int = 60
     ollama_auto_fallback: bool = True
+
+    # vLLM (parallel inference backend — preferred for concurrent agent ticks)
+    llm_backend: str = "vllm"  # "ollama" or "vllm"
+    vllm_base_url: str = "http://localhost:8010"
+    vllm_default_model: str = "Qwen/Qwen3.5-4B"
 
     # Claude (optional, for future use)
     anthropic_api_key: str = ""
@@ -62,7 +67,7 @@ class Settings(BaseSettings):
     max_context_chars: int = 3000  # max chars for agent context prompt (prevents timeout on smaller models)
 
     # Parallelism & VRAM control
-    max_concurrent_llm_calls: int = 1    # semaphore size (1 = fully sequential)
+    max_concurrent_llm_calls: int = 3    # semaphore size (3 = parallel agent ticks, GPU-gated)
     vram_aware_mode: bool = True          # poll Ollama /api/ps to gate cold starts
     # Cinematic scene model
     scene_mode: bool = True               # enable scene-based tick processing

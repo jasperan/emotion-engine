@@ -244,3 +244,5 @@ docs/*.md
 *_FEATURES.md
 *_ENHANCEMENTS.md
 *_REPORT.md
+logs/
+.serena/

@@ -1511,7 +1511,32 @@ async def _execute_existing_run(run_id: str, simple: bool = True):
 
 
 # ============================================================================
-# Status Command
+# Viewer Command — Real-time admin dashboard (ORBR-style)
+# ============================================================================
+
+@cli.command()
+@click.option("--log-dir", "-l", default=None, help="Log directory (default: backend/logs)")
+@click.option("--max-agents", "-n", default=10, type=int, help="Max agent panes to display")
+def viewer(log_dir: str | None, max_agents: int):
+    """Launch the real-time admin dashboard (ORBR-style token viewer)."""
+    from app.tui.admin_viewer import AdminViewer
+    from pathlib import Path
+
+    if log_dir:
+        ld = Path(log_dir)
+    else:
+        ld = Path(__file__).resolve().parent.parent / "logs"
+
+    console.print(f"[cyan]Launching admin viewer...[/cyan]  log_dir={ld}")
+    console.print("[dim]Press q to quit, f to toggle follow mode[/dim]\n")
+
+    v = AdminViewer(log_dir=ld, max_agents=max_agents)
+    try:
+        v.run()
+    except KeyboardInterrupt:
+        console.print("\n[dim]Viewer stopped.[/dim]")
+
+
 # ============================================================================
 # Entry Point
 # ============================================================================

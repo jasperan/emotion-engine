@@ -2,6 +2,7 @@
 import asyncio
 import logging
 import random
+import time
 from datetime import datetime
 from typing import Any, Callable, Awaitable
 from enum import Enum
@@ -363,14 +364,20 @@ class SimulationEngine:
         self.state = SimulationState.RUNNING
         self._stop_requested = False
         self._pause_requested = False
-        
+
+        # Clear logs from previous run
+        from app.llm.pipeline_logger import clear_pipeline_log, log_pipeline_event
+        clear_pipeline_log()
+        await log_pipeline_event(f"🚀 Simulation started  run={self.run_id[:8]}  max_steps={self.max_steps}")
+        await log_pipeline_event(f"👥 {len(self.agents)} agents loaded")
+
         # Update run status in DB
         run = await self.db.get(Run, self.run_id)
         if run:
             run.status = RunStatus.RUNNING
             run.started_at = run.started_at or datetime.utcnow()
             await self.db.commit()
-        
+
         self.on_event("run_started", {"step": self.current_step})
         
         # Main simulation loop
@@ -413,6 +420,9 @@ class SimulationEngine:
         """Execute a single simulation step with sequential agent processing"""
         self.current_step += 1
         self.world_state["current_step"] = self.current_step
+
+        from app.llm.pipeline_logger import log_pipeline_event
+        await log_pipeline_event(f"📍 Step {self.current_step}/{self.max_steps or '∞'}")
 
         step_actions = []
         step_messages = []
@@ -500,6 +510,11 @@ class SimulationEngine:
         
         await self.db.commit()
         
+        await log_pipeline_event(
+            f"✅ Step {self.current_step} done  "
+            f"actions={len(step_actions)}  messages={len(step_messages)}  events={len(step_events)}"
+        )
+
         # Emit step event with telemetry (L3)
         self.on_event("step_completed", {
             "step": self.current_step,
@@ -773,17 +788,46 @@ class SimulationEngine:
             }
 
         # L1: Use supervisor for fault-isolated tick
+        # Wire token logger + pipeline logger into stream callback
+        from app.llm.token_logger import get_token_logger
+        from app.llm.pipeline_logger import log_pipeline_event
+        token_logger = await get_token_logger()
+        await token_logger.log_start(agent_id, agent.name, self.current_step)
+        await log_pipeline_event(f"🤖 {agent.name} thinking...")
+
         agent_callback = None
         if stream_callback:
-            async def _cb(token: str, _aid=agent_id):
+            async def _cb(token: str, _aid=agent_id, _aname=agent.name):
                 await stream_callback(_aid, token)
+                await token_logger.log_token(_aid, _aname, token)
+            agent_callback = _cb
+        else:
+            async def _cb(token: str, _aid=agent_id, _aname=agent.name):
+                await token_logger.log_token(_aid, _aname, token)
             agent_callback = _cb
 
+        _tick_start = time.time()
         response = await self.supervisor.supervised_tick(
             agent, agent_world_state, messages,
             step_actions, step_messages, step_events,
             stream_callback=agent_callback,
         )
+        _tick_ms = (time.time() - _tick_start) * 1000
+
+        # Log completion — token counts estimated from stream tokens logged
+        if response.actions or response.message:
+            await token_logger.log_done(
+                agent_id, agent.name,
+                prompt_tokens=0,  # not available from supervisor response
+                completion_tokens=0,
+                latency_ms=_tick_ms,
+            )
+        else:
+            # Supervisor returned empty response (likely error/backoff)
+            await token_logger.log_error(
+                agent_id, agent.name,
+                error=f"Empty response after {_tick_ms:.0f}ms",
+            )
         agent.last_reasoning = response.reasoning or None
 
         # Process actions
@@ -2494,6 +2538,13 @@ class SimulationEngine:
             await self.db.commit()
         
         self.state = SimulationState.IDLE
+
+        from app.llm.pipeline_logger import log_pipeline_event
+        await log_pipeline_event(
+            f"🏁 Simulation completed  steps={self.current_step}  "
+            f"messages={len(all_messages)}  agents={len(self.agents)}"
+        )
+
         self.on_event("run_completed", {
             "step": self.current_step,
             "evaluation": evaluation,

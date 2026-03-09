@@ -95,7 +95,7 @@ async def check_model_selection():
                         "Select a model to use",
                         choices=models,
                         use_arrow_keys=True
-                    ).ask()
+                    ).unsafe_ask()
                     selected_model = choice
 
                     settings.ollama_default_model = selected_model
@@ -238,7 +238,7 @@ async def _run_standalone(
                 "Select a Scenario:",
                 choices=choices,
                 use_arrow_keys=True
-            ).ask()
+            ).unsafe_ask()
             
             if not scenario_name:
                 return
@@ -990,7 +990,7 @@ async def _interactive_wizard():
             "Select scenario",
             choices=q_choices,
             use_arrow_keys=True
-        ).ask()
+        ).unsafe_ask()
         
         if choice_idx is None:
              return
@@ -1621,7 +1621,7 @@ async def select_active_run() -> str | None:
             "Select run to monitor",
             choices=run_choices,
             use_arrow_keys=True
-        ).ask()
+        ).unsafe_ask()
         
         return run_id
 
@@ -1676,7 +1676,7 @@ async def generate_scenario_task():
             "Select a Task:",
             choices=menu_choices,
             use_arrow_keys=True
-        ).ask()
+        ).unsafe_ask()
         
         if choice == "1":
             await generate_scenario_task()

@@ -39,9 +39,11 @@
   <aside class="w-64 flex flex-col border-r border-outline/30 bg-surface fixed inset-y-0 left-0 z-40 transform transition-all duration-300 ease-out md:relative md:translate-x-0 {sidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}">
     <!-- Header -->
     <div class="h-16 flex items-center px-4 border-b border-outline/30">
-      <div class="font-bold text-lg tracking-tight flex items-center gap-2">
-        <div class="w-6 h-6 rounded-full bg-gradient-to-br from-accent-blue to-accent-purple"></div>
-        <span>Emotion Engine</span>
+      <div class="flex items-center gap-2.5">
+        <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-accent-blue via-accent-purple to-accent-teal flex items-center justify-center shadow-lg shadow-accent-blue/20">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+        </div>
+        <span class="font-bold text-lg tracking-tight">Emotion Engine</span>
       </div>
 
       <!-- Close button (mobile) -->
@@ -80,7 +82,7 @@
   </aside>
 
   <!-- Main Content -->
-  <main id="main-content" class="flex-1 flex flex-col relative overflow-hidden" tabindex="-1">
+  <main id="main-content" class="flex-1 flex flex-col relative overflow-hidden bg-ambient-glow" tabindex="-1">
     <!-- Top Bar -->
     <header class="h-14 md:h-16 border-b border-outline/30 flex items-center justify-between px-4 md:px-6 bg-background/80 backdrop-blur-sm z-20 transition-all duration-300">
        <div class="flex items-center gap-3">

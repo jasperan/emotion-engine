@@ -60,7 +60,7 @@
 <div class="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] max-w-6xl mx-auto px-6 relative">
   
   <div class="text-center mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-     <h1 class="text-5xl font-medium tracking-tighter mb-4 bg-clip-text text-transparent bg-gradient-to-r from-accent-blue via-accent-purple to-accent-teal">
+     <h1 class="text-6xl font-display font-semibold tracking-tight mb-4 bg-clip-text text-transparent bg-gradient-to-r from-accent-blue via-accent-purple to-accent-teal">
        Hello, User
      </h1>
      <p class="text-xl text-on-surface">

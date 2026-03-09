@@ -91,11 +91,11 @@ async def check_model_selection():
                         console.print(f"  {i}. {m}")
 
                     console.print()
-                    choice = questionary.select(
+                    choice = await questionary.select(
                         "Select a model to use",
                         choices=models,
                         use_arrow_keys=True
-                    ).unsafe_ask()
+                    ).unsafe_ask_async()
                     selected_model = choice
 
                     settings.ollama_default_model = selected_model
@@ -234,11 +234,11 @@ async def _run_standalone(
                 console.print("[red]No scenarios found![/red]")
                 return
 
-            scenario_name = questionary.select(
+            scenario_name = await questionary.select(
                 "Select a Scenario:",
                 choices=choices,
                 use_arrow_keys=True
-            ).unsafe_ask()
+            ).unsafe_ask_async()
             
             if not scenario_name:
                 return
@@ -986,11 +986,11 @@ async def _interactive_wizard():
              ))
         
         # Select scenario
-        choice_idx = questionary.select(
+        choice_idx = await questionary.select(
             "Select scenario",
             choices=q_choices,
             use_arrow_keys=True
-        ).unsafe_ask()
+        ).unsafe_ask_async()
         
         if choice_idx is None:
              return
@@ -1617,11 +1617,11 @@ async def select_active_run() -> str | None:
                  value=r.id
              ))
              
-        run_id = questionary.select(
+        run_id = await questionary.select(
             "Select run to monitor",
             choices=run_choices,
             use_arrow_keys=True
-        ).unsafe_ask()
+        ).unsafe_ask_async()
         
         return run_id
 
@@ -1672,11 +1672,11 @@ async def generate_scenario_task():
             questionary.Choice("Exit", value="0")
         ]
         
-        choice = questionary.select(
+        choice = await questionary.select(
             "Select a Task:",
             choices=menu_choices,
             use_arrow_keys=True
-        ).unsafe_ask()
+        ).unsafe_ask_async()
         
         if choice == "1":
             await generate_scenario_task()

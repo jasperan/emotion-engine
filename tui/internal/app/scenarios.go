@@ -139,6 +139,10 @@ func (m ScenarioModel) Update(msg tea.Msg) (ScenarioModel, tea.Cmd) {
 					}
 				}
 			}
+		case "h":
+			return m, func() tea.Msg {
+				return SwitchScreenMsg{Screen: ScreenHistory}
+			}
 		case "q", "esc":
 			return m, func() tea.Msg {
 				return SwitchScreenMsg{Screen: ScreenSplash}

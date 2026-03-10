@@ -132,7 +132,7 @@ func (c *Client) DeleteRun(id string) error {
 
 // Ping checks if the backend is reachable.
 func (c *Client) Ping() error {
-	return c.get("/api/health", nil)
+	return c.get("/health", nil)
 }
 
 // --- Internal helpers ---

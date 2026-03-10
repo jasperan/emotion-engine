@@ -102,7 +102,7 @@ func (m LauncherModel) Update(msg tea.Msg) (LauncherModel, tea.Cmd) {
 			if msg.String() == "tab" {
 				m.focusIndex = (m.focusIndex + 1) % 2
 			} else {
-				m.focusIndex = (m.focusIndex + 1) % 2
+				m.focusIndex = (m.focusIndex - 1 + 2) % 2
 			}
 			if m.focusIndex == 0 {
 				m.maxStepsInput.Focus()

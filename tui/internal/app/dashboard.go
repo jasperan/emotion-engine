@@ -146,10 +146,11 @@ func (m *DashboardModel) handleWSEvent(evt api.WSMessage) {
 			m.run.WorldState = ws
 			m.updateWorldState(ws)
 		}
-		// Update stream step counters
+		// Update stream step counters and clear completed token buffers
 		for _, s := range m.streams {
 			s.step = int(step)
 		}
+		m.clearCompletedStreams()
 
 	case "message", "scene_turn":
 		agentName, _ := evt.Data["agent_name"].(string)

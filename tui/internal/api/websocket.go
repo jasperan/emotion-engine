@@ -36,7 +36,7 @@ func (ws *WSClient) Connect(runID string, handler WSEventHandler) error {
 	wsURL := ws.serverURL
 	wsURL = strings.Replace(wsURL, "https://", "wss://", 1)
 	wsURL = strings.Replace(wsURL, "http://", "ws://", 1)
-	wsURL = wsURL + "/api/websocket?run_id=" + runID
+	wsURL = wsURL + "/api/ws/" + runID
 
 	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
 	if err != nil {

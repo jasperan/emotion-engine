@@ -170,6 +170,11 @@ func (a App) View() string {
 
 // switchScreen creates a fresh sub-model for the target screen and initialises it.
 func (a App) switchScreen(msg SwitchScreenMsg) (tea.Model, tea.Cmd) {
+	// Close WS connection when leaving the dashboard screen.
+	if a.screen == ScreenDashboard {
+		a.wsClient.Close()
+	}
+
 	a.screen = msg.Screen
 
 	switch msg.Screen {

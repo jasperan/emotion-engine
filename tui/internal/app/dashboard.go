@@ -36,6 +36,8 @@ type dashboardLoadedMsg struct {
 	err    error
 }
 
+type controlErrorMsg struct{ err error }
+
 // --- DashboardModel ---
 
 // DashboardModel is the live simulation dashboard.
@@ -55,7 +57,8 @@ type DashboardModel struct {
 	hazardLevel float64
 	locations   []components.LocationInfo
 
-	err error
+	err    error
+	errMsg string
 }
 
 // NewDashboardModel creates a dashboard for the given run.
@@ -105,11 +108,16 @@ func (m DashboardModel) Update(msg tea.Msg) (DashboardModel, tea.Cmd) {
 		}
 		return m, nil
 
+	case controlErrorMsg:
+		m.errMsg = msg.err.Error()
+		return m, nil
+
 	case WSEventMsg:
 		m.handleWSEvent(msg.Event)
 		return m, nil
 
 	case tea.KeyMsg:
+		m.errMsg = "" // clear error on next keypress
 		return m.handleKey(msg)
 	}
 
@@ -140,11 +148,11 @@ func (m *DashboardModel) handleWSEvent(evt api.WSMessage) {
 		step, _ := evt.Data["step_index"].(float64)
 		if m.run != nil {
 			m.run.CurrentStep = int(step)
-		}
-		// Update world state if present
-		if ws, ok := evt.Data["world_state"].(map[string]interface{}); ok {
-			m.run.WorldState = ws
-			m.updateWorldState(ws)
+			// Update world state if present
+			if ws, ok := evt.Data["world_state"].(map[string]interface{}); ok {
+				m.run.WorldState = ws
+				m.updateWorldState(ws)
+			}
 		}
 		// Update stream step counters and clear completed token buffers
 		for _, s := range m.streams {
@@ -225,7 +233,9 @@ func (m DashboardModel) handleKey(msg tea.KeyMsg) (DashboardModel, tea.Cmd) {
 			client := m.client
 			runID := m.runID
 			return m, func() tea.Msg {
-				_ = client.ControlRun(runID, action)
+				if err := client.ControlRun(runID, action); err != nil {
+					return controlErrorMsg{err: err}
+				}
 				return nil
 			}
 		}
@@ -235,7 +245,9 @@ func (m DashboardModel) handleKey(msg tea.KeyMsg) (DashboardModel, tea.Cmd) {
 			client := m.client
 			runID := m.runID
 			return m, func() tea.Msg {
-				_ = client.ControlRun(runID, "stop")
+				if err := client.ControlRun(runID, "stop"); err != nil {
+					return controlErrorMsg{err: err}
+				}
 				return nil
 			}
 		}
@@ -307,6 +319,10 @@ func (m DashboardModel) View(width, height int) string {
 		hints = append(hints, components.KeyHint{Key: "Space", Desc: "pause"})
 	}
 	hints = append(hints, components.KeyHint{Key: "q", Desc: "back"})
+
+	if m.errMsg != "" {
+		hints = append([]components.KeyHint{{Key: "!", Desc: m.errMsg}}, hints...)
+	}
 
 	bar := components.RenderStatusBar(components.StatusBarData{
 		Connected: true,

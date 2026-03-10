@@ -46,14 +46,16 @@ type SplashModel struct {
 	velocity       float64
 	spring         harmonica.Spring
 	done           bool
+	version        string
 }
 
 // NewSplashModel creates a fresh splash screen model.
-func NewSplashModel(client *api.Client) SplashModel {
+func NewSplashModel(client *api.Client, version string) SplashModel {
 	return SplashModel{
 		client:  client,
 		opacity: 0,
 		spring:  harmonica.NewSpring(harmonica.FPS(60), 5.0, 0.4),
+		version: version,
 	}
 }
 
@@ -145,12 +147,16 @@ func (m SplashModel) View(width, height int) string {
 			"  " + theme.KeyName.Render("q") + theme.KeyHint.Render(" quit")
 	}
 
+	versionLine := theme.MutedText.Render("v" + m.version)
+
 	content := lipgloss.JoinVertical(lipgloss.Center,
 		renderedBanner,
 		"",
 		status,
 		"",
 		hints,
+		"",
+		versionLine,
 	)
 
 	return lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, content)

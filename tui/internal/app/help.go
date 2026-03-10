@@ -27,7 +27,7 @@ func (h HelpModel) Overlay(bg string, w, h2 int, screen Screen) string {
 	}
 
 	b.WriteString("\n" + theme.MutedText.Render("── Global ──") + "\n")
-	b.WriteString("  " + theme.KeyName.Render(padRight("?", 10)) + theme.MutedText.Render("Toggle help") + "\n")
+	b.WriteString("  " + theme.KeyName.Render(padRight("F1", 10)) + theme.MutedText.Render("Toggle help") + "\n")
 	b.WriteString("  " + theme.KeyName.Render(padRight("Ctrl+C", 10)) + theme.MutedText.Render("Quit") + "\n")
 
 	helpContent := lipgloss.NewStyle().
@@ -87,6 +87,7 @@ func (h HelpModel) bindingsForScreen(screen Screen) []keyBinding {
 	case ScreenHistory:
 		return []keyBinding{
 			{"Enter", "View run"},
+			{"r", "Replay run"},
 			{"↑/↓", "Navigate"},
 			{"q", "Back"},
 		}

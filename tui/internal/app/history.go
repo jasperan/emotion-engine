@@ -146,6 +146,15 @@ func (m HistoryModel) Update(msg tea.Msg) (HistoryModel, tea.Cmd) {
 					}
 				}
 			}
+		case "r":
+			if item, ok := m.list.SelectedItem().(runItem); ok {
+				return m, func() tea.Msg {
+					return SwitchScreenMsg{
+						Screen: ScreenDashboard,
+						Data:   item.run.ID,
+					}
+				}
+			}
 		case "q", "esc":
 			return m, func() tea.Msg {
 				return SwitchScreenMsg{Screen: ScreenScenarios}
@@ -174,6 +183,7 @@ func (m HistoryModel) View(width, height int) string {
 	m.list.SetSize(width, height-2)
 
 	hints := theme.KeyName.Render("Enter") + theme.KeyHint.Render(" view") +
+		"  " + theme.KeyName.Render("r") + theme.KeyHint.Render(" replay") +
 		"  " + theme.KeyName.Render("↑/↓") + theme.KeyHint.Render(" navigate") +
 		"  " + theme.KeyName.Render("q") + theme.KeyHint.Render(" back")
 

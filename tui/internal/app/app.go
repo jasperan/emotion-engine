@@ -51,6 +51,8 @@ type App struct {
 	dashboard DashboardModel
 	history   HistoryModel
 
+	Version string
+
 	showHelp bool
 	help     HelpModel
 
@@ -59,7 +61,7 @@ type App struct {
 }
 
 // NewApp creates the root application model.
-func NewApp(serverURL string, readOnly bool) App {
+func NewApp(serverURL string, readOnly bool, version string) App {
 	client := api.NewClient(serverURL)
 	wsClient := api.NewWSClient(serverURL)
 	tp := components.NewThroughputTracker()
@@ -70,7 +72,8 @@ func NewApp(serverURL string, readOnly bool) App {
 		readOnly:   readOnly,
 		screen:     ScreenSplash,
 		throughput: tp,
-		splash:     NewSplashModel(client),
+		Version:    version,
+		splash:     NewSplashModel(client, version),
 		programRef: &ProgramRef{},
 	}
 }
@@ -98,7 +101,7 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c":
 			a.wsClient.Close()
 			return a, tea.Quit
-		case "?":
+		case "f1":
 			a.showHelp = !a.showHelp
 			return a, nil
 		}
@@ -179,7 +182,7 @@ func (a App) switchScreen(msg SwitchScreenMsg) (tea.Model, tea.Cmd) {
 
 	switch msg.Screen {
 	case ScreenSplash:
-		a.splash = NewSplashModel(a.client)
+		a.splash = NewSplashModel(a.client, a.Version)
 		return a, a.splash.Init()
 
 	case ScreenScenarios:

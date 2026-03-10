@@ -14,6 +14,7 @@ import (
 var (
 	serverURL string
 	sshPort   int
+	Version   string
 )
 
 var rootCmd = &cobra.Command{
@@ -24,13 +25,13 @@ var rootCmd = &cobra.Command{
 		// Start SSH server if requested.
 		if sshPort > 0 {
 			go func() {
-				if err := sshsrv.ListenAndServe(sshPort, serverURL); err != nil {
+				if err := sshsrv.ListenAndServe(sshPort, serverURL, Version); err != nil {
 					log.Printf("SSH server error: %v", err)
 				}
 			}()
 		}
 
-		a := app.NewApp(serverURL, false)
+		a := app.NewApp(serverURL, false, Version)
 
 		p := tea.NewProgram(a, tea.WithAltScreen())
 		a.SetProgram(p)

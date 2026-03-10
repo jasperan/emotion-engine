@@ -12,12 +12,12 @@ import (
 
 // ListenAndServe starts a Wish SSH server on the given port.
 // Each connection gets its own read-only Bubble Tea program.
-func ListenAndServe(port int, serverURL string) error {
+func ListenAndServe(port int, serverURL string, version string) error {
 	s, err := wish.NewServer(
 		wish.WithAddress(fmt.Sprintf(":%d", port)),
 		wish.WithMiddleware(
 			bm.Middleware(func(sess ssh.Session) (tea.Model, []tea.ProgramOption) {
-				a := app.NewApp(serverURL, true)
+				a := app.NewApp(serverURL, true, version)
 				return a, []tea.ProgramOption{tea.WithAltScreen()}
 			}),
 		),

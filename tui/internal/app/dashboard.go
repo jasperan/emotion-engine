@@ -264,7 +264,9 @@ func (m DashboardModel) handleKey(msg tea.KeyMsg) (DashboardModel, tea.Cmd) {
 			m.feedScroll--
 		}
 	case "down", "j":
-		m.feedScroll++
+		if m.feedScroll < len(m.feedEntries) {
+			m.feedScroll++
+		}
 
 	case "left", "h":
 		if m.selectedIdx > 0 {
@@ -301,7 +303,8 @@ func (m DashboardModel) View(width, height int) string {
 	}
 
 	statusBarHeight := 1
-	mainHeight := height - statusBarHeight
+	sparklineHeight := 1
+	mainHeight := height - statusBarHeight - sparklineHeight
 
 	var main string
 	if m.mode == ModeFocus {
@@ -313,7 +316,7 @@ func (m DashboardModel) View(width, height int) string {
 	// Status bar
 	hints := []components.KeyHint{
 		{Key: "Tab", Desc: "mode"},
-		{Key: "?", Desc: "help"},
+		{Key: "F1", Desc: "help"},
 	}
 	if !m.readOnly {
 		hints = append(hints, components.KeyHint{Key: "Space", Desc: "pause"})
@@ -333,7 +336,9 @@ func (m DashboardModel) View(width, height int) string {
 		Hints:     hints,
 	}, width)
 
-	return lipgloss.JoinVertical(lipgloss.Left, main, bar)
+	sparkline := components.RenderThroughput(m.throughput, width)
+
+	return lipgloss.JoinVertical(lipgloss.Left, main, sparkline, bar)
 }
 
 // renderFocusMode renders the two-column focus layout.

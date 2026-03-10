@@ -20,6 +20,7 @@ from app.simulation.negotiation import NegotiationManager, ProposalState
 from app.simulation.trust_network import TrustNetwork
 from app.simulation.world_state_diff import WorldStateDiffTracker
 from app.simulation.conversation_outcomes import ConversationOutcomeExtractor
+from app.simulation.emotion_contagion import EmotionContagion
 from app.models.run import Run, RunStatus
 from app.models.agent import AgentModel
 from app.models.step import Step
@@ -141,6 +142,13 @@ class SimulationEngine:
         from app.simulation.scene_director import SceneDirector
         self.scene_director = SceneDirector(max_turns=settings.scene_max_turns)
         self.scene_mode = settings.scene_mode
+
+        # L10: Emotion Contagion Network (Phase 2.5 — stress propagation between co-located agents)
+        self.emotion_contagion = EmotionContagion(
+            spread_rate=0.3,
+            max_delta_per_step=2,
+            calm_factor=0.5,
+        )
 
     async def load_from_db(self) -> None:
         """Load simulation state from database for resumption"""
@@ -461,6 +469,9 @@ class SimulationEngine:
             stream_callback
         )
 
+        # L10: Phase 2.5 — Emotion contagion (stress propagation between co-located agents)
+        await self._execute_emotion_contagion(step_events)
+
         # L4: Intra-step reaction round
         await self._execute_reaction_round(step_actions, step_messages, step_events, stream_callback)
 
@@ -530,6 +541,7 @@ class SimulationEngine:
             "agent_telemetry": self.supervisor.get_all_telemetry(),
             "world_state_diff": self.diff_tracker.get_current_diff().to_dict(),
             "negotiations": self.negotiation.to_dict(),
+            "emotion_contagion": self.emotion_contagion.to_dict(),
         })
     
     def _update_agents_in_world_state(self) -> None:
@@ -544,6 +556,105 @@ class SimulationEngine:
                 **agent.dynamic_state,
             }
         self.world_state["agents"] = agents_state
+
+    async def _execute_emotion_contagion(self, step_events: list[str]) -> None:
+        """Phase 2.5: Propagate emotional stress between co-located agents.
+
+        After all agents have acted this step, compute contagion effects
+        per scene (location group) and apply stress deltas.
+        """
+        from app.llm.pipeline_logger import log_pipeline_event
+
+        # Group human agents by location (reuse SceneDirector)
+        agent_locations = {
+            aid: self._agent_locations.get(aid, agent.dynamic_state.get("location", "unknown"))
+            for aid, agent in self.agents.items()
+        }
+        groups = self.scene_director.group_agents_by_location(self.agents, agent_locations)
+
+        # Trust lookup function using agent memory
+        def trust_fn(source_id: str, target_id: str) -> int:
+            target_agent = self.agents.get(target_id)
+            if target_agent and hasattr(target_agent, "agent_memory"):
+                rel = target_agent.agent_memory.get_relationship(source_id)
+                if rel:
+                    return rel.trust_level
+            return 5
+
+        total_events = []
+        for location, agent_ids in groups.items():
+            if len(agent_ids) < 2:
+                continue
+
+            events = self.emotion_contagion.propagate(
+                scene_agent_ids=agent_ids,
+                agents=self.agents,
+                trust_fn=trust_fn,
+                step=self.current_step,
+                location=location,
+            )
+
+            for event in events:
+                agent = self.agents.get(event.target_id)
+                if agent is None or not isinstance(agent, HumanAgent):
+                    continue
+
+                # Apply stress change via the canonical method
+                # Use actual pre/post values (not event snapshot) for accuracy
+                # when multiple contagion sources affect the same agent in one step.
+                stress_before = agent.dynamic_state.get("stress_level", 5)
+                agent.update_stress(event.delta)
+                stress_after = agent.dynamic_state.get("stress_level", 5)
+                actual_delta = stress_after - stress_before
+
+                if actual_delta == 0:
+                    continue
+
+                # Update V2 heartbeat scheduler if available
+                if hasattr(self, "engine_v2") and self.engine_v2 is not None:
+                    self.engine_v2.update_agent_stress(event.target_id, stress_after)
+
+                # Record in diff tracker
+                self.diff_tracker.record_event(
+                    f"emotion_contagion: {event.target_name} stress "
+                    f"{stress_before}→{stress_after} "
+                    f"({event.mechanism} from {event.source_name})"
+                )
+
+                # Create episodic memory for the affected agent
+                if hasattr(agent, "agent_memory"):
+                    if event.mechanism == "panic_spread":
+                        observation = (
+                            f"Felt {event.source_name}'s fear spreading — "
+                            f"stress rose from {stress_before} to {stress_after}"
+                        )
+                    else:
+                        observation = (
+                            f"{event.source_name}'s composure steadied me — "
+                            f"stress eased from {stress_before} to {stress_after}"
+                        )
+                    agent.agent_memory.add_observation(observation, step_index=self.current_step)
+
+                # Emit WebSocket event (use actual values, not stale snapshot)
+                event_data = event.to_dict()
+                event_data["target_stress_before"] = stress_before
+                event_data["target_stress_after"] = stress_after
+                event_data["delta"] = actual_delta
+                self.on_event("emotion_contagion", event_data)
+
+                step_events.append(
+                    f"Contagion: {event.source_name}→{event.target_name} "
+                    f"stress {stress_before}→{stress_after}"
+                )
+
+            total_events.extend(events)
+
+        # Refresh world state after contagion changes
+        if total_events:
+            self._update_agents_in_world_state()
+            await log_pipeline_event(
+                f"🧠 Emotion contagion: {len(total_events)} agents affected"
+            )
 
     def _calculate_hop_distance(self, agent_id_1: str, agent_id_2: str) -> int:
         """Calculate hop distance between two agents using BFS. Cached per step."""
@@ -765,6 +876,13 @@ class SimulationEngine:
             agent_world_state["trust_signals"] = trust_context
         # Consume signals after building context
         self.trust_network.get_pending_signals(agent_id, clear=True)
+
+        # L10: Add emotion contagion context
+        contagion_context = self.emotion_contagion.get_contagion_context(agent_id)
+        if contagion_context:
+            agent_world_state["emotion_contagion"] = contagion_context
+        # Consume contagion events after building context (mirror trust pattern)
+        self.emotion_contagion.consume_agent_events(agent_id)
 
         # L6: Add recent conversation outcomes
         recent_outcomes = self.outcome_extractor.get_agent_recent_outcomes(agent_id, limit=2)

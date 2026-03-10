@@ -13,6 +13,7 @@ from app.simulation.negotiation import NegotiationManager, Proposal, ProposalSta
 from app.simulation.trust_network import TrustNetwork, TrustSignal
 from app.simulation.world_state_diff import WorldStateDiff, WorldStateDiffTracker
 from app.simulation.conversation_outcomes import ConversationOutcomeExtractor, ConversationOutcome
+from app.simulation.emotion_contagion import EmotionContagion, ContagionEvent
 
 __all__ = [
     "MessageBus",
@@ -35,4 +36,6 @@ __all__ = [
     "WorldStateDiffTracker",
     "ConversationOutcomeExtractor",
     "ConversationOutcome",
+    "EmotionContagion",
+    "ContagionEvent",
 ]

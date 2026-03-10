@@ -280,6 +280,10 @@ func (m DashboardModel) View(width, height int) string {
 	}
 
 	if m.run == nil {
+		if m.readOnly {
+			return lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center,
+				theme.MutedText.Render("Live streaming unavailable in SSH mode — browse scenarios and history instead"))
+		}
 		return lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center,
 			theme.MutedText.Render("Loading dashboard..."))
 	}

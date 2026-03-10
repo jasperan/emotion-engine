@@ -103,7 +103,8 @@ func (ws *WSClient) pingLoop() {
 				ws.mu.Unlock()
 				return
 			}
-			err := ws.conn.WriteMessage(websocket.PingMessage, nil)
+			pingData, _ := json.Marshal(WSCommand{Type: "ping"})
+			err := ws.conn.WriteMessage(websocket.TextMessage, pingData)
 			ws.mu.Unlock()
 			if err != nil {
 				log.Printf("websocket ping error: %v", err)

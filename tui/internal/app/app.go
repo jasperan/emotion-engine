@@ -2,10 +2,8 @@ package app
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/jasperan/emotion-engine/tui/internal/api"
 	"github.com/jasperan/emotion-engine/tui/internal/components"
-	"github.com/jasperan/emotion-engine/tui/internal/theme"
 )
 
 // ProgramRef holds a shared reference to the tea.Program.
@@ -51,8 +49,10 @@ type App struct {
 	scenarios ScenarioModel
 	launcher  LauncherModel
 	dashboard DashboardModel
+	history   HistoryModel
 
 	showHelp bool
+	help     HelpModel
 
 	// programRef holds a shared reference to tea.Program for WS bridge.
 	programRef *ProgramRef
@@ -133,6 +133,10 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		var cmd tea.Cmd
 		a.dashboard, cmd = a.dashboard.Update(msg)
 		return a, cmd
+	case ScreenHistory:
+		var cmd tea.Cmd
+		a.history, cmd = a.history.Update(msg)
+		return a, cmd
 	}
 
 	return a, nil
@@ -151,6 +155,8 @@ func (a App) View() string {
 		content = a.launcher.View(a.width, a.height)
 	case ScreenDashboard:
 		content = a.dashboard.View(a.width, a.height)
+	case ScreenHistory:
+		content = a.history.View(a.width, a.height)
 	default:
 		content = "Unknown screen"
 	}
@@ -197,6 +203,10 @@ func (a App) switchScreen(msg SwitchScreenMsg) (tea.Model, tea.Cmd) {
 		}
 
 		return a, cmd
+
+	case ScreenHistory:
+		a.history = NewHistoryModel(a.client)
+		return a, a.history.Init()
 	}
 
 	return a, nil
@@ -204,30 +214,5 @@ func (a App) switchScreen(msg SwitchScreenMsg) (tea.Model, tea.Cmd) {
 
 // renderHelpOverlay draws a centered help panel on top of the current view.
 func (a App) renderHelpOverlay(background string) string {
-	helpContent := lipgloss.NewStyle().
-		Width(50).
-		Padding(1, 2).
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(theme.Primary).
-		Foreground(theme.Text).
-		Render(
-			theme.Title.Render("Keyboard Shortcuts") + "\n\n" +
-				"  " + theme.KeyName.Render("?") + "       Toggle this help\n" +
-				"  " + theme.KeyName.Render("Tab") + "     Toggle Focus/Grid mode\n" +
-				"  " + theme.KeyName.Render("Space") + "   Pause/Resume run\n" +
-				"  " + theme.KeyName.Render("s") + "       Stop run\n" +
-				"  " + theme.KeyName.Render("1-9") + "     Select agent\n" +
-				"  " + theme.KeyName.Render("h/l") + "     Cycle agents\n" +
-				"  " + theme.KeyName.Render("j/k") + "     Scroll feed\n" +
-				"  " + theme.KeyName.Render("q/Esc") + "   Back / Quit\n" +
-				"  " + theme.KeyName.Render("Ctrl+C") + "  Force quit\n",
-		)
-
-	return lipgloss.Place(
-		a.width, a.height,
-		lipgloss.Center, lipgloss.Center,
-		helpContent,
-		lipgloss.WithWhitespaceChars(" "),
-		lipgloss.WithWhitespaceForeground(lipgloss.Color("#000000")),
-	)
+	return a.help.Overlay(background, a.width, a.height, a.screen)
 }

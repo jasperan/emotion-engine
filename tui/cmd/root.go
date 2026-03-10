@@ -2,10 +2,12 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/jasperan/emotion-engine/tui/internal/app"
+	sshsrv "github.com/jasperan/emotion-engine/tui/internal/ssh"
 	"github.com/spf13/cobra"
 )
 
@@ -19,6 +21,15 @@ var rootCmd = &cobra.Command{
 	Short: "EmotionSim Terminal Dashboard",
 	Long:  "A Bubble Tea TUI for monitoring EmotionSim multi-agent simulations in real time.",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// Start SSH server if requested.
+		if sshPort > 0 {
+			go func() {
+				if err := sshsrv.ListenAndServe(sshPort, serverURL); err != nil {
+					log.Printf("SSH server error: %v", err)
+				}
+			}()
+		}
+
 		a := app.NewApp(serverURL, false)
 
 		p := tea.NewProgram(a, tea.WithAltScreen())

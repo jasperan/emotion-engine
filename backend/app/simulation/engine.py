@@ -91,6 +91,11 @@ class SimulationEngine:
         # Hop distance cache (cleared each step)
         self._hop_cache: dict[tuple[str, str], int] = {}
 
+        # Agent conclusion enforcement: per-agent token tracking & stagnation
+        self._agent_token_counts: dict[str, int] = {}  # cumulative tokens per agent
+        self._agent_stagnant_steps: dict[str, int] = {}  # consecutive stuck steps
+        self._agent_concluded: set[str] = set()  # agents that have been forced to conclude
+
         # Control
         self._stop_requested = False
         self._pause_requested = False
@@ -795,16 +800,73 @@ class SimulationEngine:
         await token_logger.log_start(agent_id, agent.name, self.current_step)
         await log_pipeline_event(f"🤖 {agent.name} thinking...")
 
-        agent_callback = None
-        if stream_callback:
-            async def _cb(token: str, _aid=agent_id, _aname=agent.name):
+        # Always stream tokens: log to file + broadcast via on_event for WebSocket
+        _token_buffer: list[str] = []
+        _tick_token_count = [0]  # mutable counter for this tick
+        _last_flush = [time.time()]
+        FLUSH_INTERVAL = 0.05  # 50ms batching to avoid flooding WebSocket
+
+        async def _flush_tokens(_aid=agent_id, _aname=agent.name):
+            if _token_buffer:
+                chunk = "".join(_token_buffer)
+                _token_buffer.clear()
+                self.on_event("token_stream", {
+                    "agent_id": _aid,
+                    "agent_name": _aname,
+                    "tokens": chunk,
+                    "step": self.current_step,
+                })
+
+        async def _cb(token: str, _aid=agent_id, _aname=agent.name):
+            if stream_callback:
                 await stream_callback(_aid, token)
-                await token_logger.log_token(_aid, _aname, token)
-            agent_callback = _cb
+            await token_logger.log_token(_aid, _aname, token)
+            _tick_token_count[0] += len(token)
+            # Buffer tokens for batched WebSocket broadcast
+            _token_buffer.append(token)
+            now = time.time()
+            if now - _last_flush[0] >= FLUSH_INTERVAL:
+                _last_flush[0] = now
+                await _flush_tokens()
+
+        agent_callback = _cb
+
+        # --- Conclusion enforcement: inject directives if near budget or stagnant ---
+        _settings = get_settings()
+        budget = _settings.agent_max_tokens_per_run
+        conclude_pct = _settings.agent_conclude_at_pct
+        max_stagnant = _settings.agent_max_stagnant_steps
+        cumulative = self._agent_token_counts.get(agent_id, 0)
+        stagnant = self._agent_stagnant_steps.get(agent_id, 0)
+
+        if agent_id not in self._agent_concluded:
+            if budget > 0 and cumulative >= budget:
+                # Agent has exhausted token budget — skip tick entirely
+                await log_pipeline_event(f"⛔ {agent.name} token budget exhausted ({cumulative}/{budget})")
+                self._agent_concluded.add(agent_id)
+                return
+            elif budget > 0 and cumulative >= budget * conclude_pct:
+                remaining = budget - cumulative
+                agent_world_state["_conclusion_directive"] = (
+                    f"IMPORTANT: You are running low on generation budget ({remaining} tokens remaining). "
+                    f"Wrap up your current activity and reach a clear conclusion or decision. "
+                    f"Be concise and decisive."
+                )
+                await log_pipeline_event(
+                    f"⚠️ {agent.name} nearing token budget ({cumulative}/{budget}, {remaining} left)"
+                )
+            if stagnant >= max_stagnant > 0:
+                agent_world_state["_conclusion_directive"] = (
+                    agent_world_state.get("_conclusion_directive", "") +
+                    f" You have been repeating similar actions for {stagnant} consecutive steps. "
+                    f"You MUST take a decisively different action now or explicitly conclude your task."
+                )
+                await log_pipeline_event(
+                    f"🔄 {agent.name} stagnant for {stagnant} steps — forcing new direction"
+                )
         else:
-            async def _cb(token: str, _aid=agent_id, _aname=agent.name):
-                await token_logger.log_token(_aid, _aname, token)
-            agent_callback = _cb
+            # Agent already concluded — skip
+            return
 
         _tick_start = time.time()
         response = await self.supervisor.supervised_tick(
@@ -813,6 +875,21 @@ class SimulationEngine:
             stream_callback=agent_callback,
         )
         _tick_ms = (time.time() - _tick_start) * 1000
+
+        # Update cumulative token count
+        self._agent_token_counts[agent_id] = cumulative + _tick_token_count[0]
+
+        # Flush any remaining buffered tokens
+        await _flush_tokens()
+        # Emit generation-complete event for this agent
+        self.on_event("token_done", {
+            "agent_id": agent_id,
+            "agent_name": agent.name,
+            "step": self.current_step,
+            "latency_ms": round(_tick_ms),
+            "tokens_this_tick": _tick_token_count[0],
+            "tokens_cumulative": self._agent_token_counts[agent_id],
+        })
 
         # Log completion — token counts estimated from stream tokens logged
         if response.actions or response.message:
@@ -860,6 +937,12 @@ class SimulationEngine:
         if response.message and response.message.content.strip():
             topic = self._extract_topic(response.message.content)
             self.coordinator.track_conversation(agent_id, topic)
+
+        # Update stagnation counter using existing loop detection
+        if self.coordinator.is_stuck_in_loop(agent_id):
+            self._agent_stagnant_steps[agent_id] = self._agent_stagnant_steps.get(agent_id, 0) + 1
+        else:
+            self._agent_stagnant_steps[agent_id] = 0
 
         # L5: Poll pending trust changes from HumanAgent and feed into TrustNetwork
         if isinstance(agent, HumanAgent) and hasattr(agent, '_pending_trust_changes'):
@@ -964,6 +1047,79 @@ class SimulationEngine:
             step_messages.extend(local_messages)
             step_events.extend(local_events)
 
+    async def _run_single_scene(
+        self,
+        location: str,
+        available: list[str],
+        local_actions: list[dict[str, Any]],
+        local_messages: list[dict[str, Any]],
+        local_events: list[str],
+        stream_callback: Callable[[str, str], Awaitable[None]] | None = None,
+    ) -> None:
+        """Run a single scene at a location. Turns within are sequential."""
+        if len(available) == 1:
+            aid = available[0]
+            agent = self.agents[aid]
+            await self._tick_single_agent(aid, agent, local_actions, local_messages, local_events, stream_callback)
+            return
+
+        # Multi-agent scene: pick initiator by extraversion, order turns
+        try:
+            initiator_id = self.scene_director.pick_initiator(available, self.agents)
+        except ValueError:
+            return
+        ordered = [initiator_id] + [a for a in available if a != initiator_id]
+        turn_ids = ordered[:self.scene_director.max_turns]
+
+        # Inject scene context into world state so agents know who is present
+        try:
+            self.world_state["_scene_location"] = location
+            self.world_state["_scene_participants"] = [
+                self.agents[aid].name for aid in available if aid in self.agents
+            ]
+
+            last_speech: dict[str, str | None] = {}
+            for agent_id in turn_ids:
+                agent = self.agents[agent_id]
+                msg_count_before = len(local_messages)
+
+                await self._tick_single_agent(
+                    agent_id, agent, local_actions, local_messages, local_events, stream_callback
+                )
+
+                # Capture speech from any message sent during this turn
+                speech: str | None = None
+                if len(local_messages) > msg_count_before:
+                    newest = local_messages[-1]
+                    speech = newest.get("content")
+                last_speech[agent_id] = speech
+
+                # Emit per-turn scene event
+                self.on_event("scene_turn", {
+                    "location": location,
+                    "agent_id": agent_id,
+                    "agent_name": agent.name,
+                    "action": getattr(agent, '_last_cinematic', {}).get("action", ""),
+                    "speech": speech,
+                    "thought": getattr(agent, '_last_cinematic', {}).get("thought", ""),
+                    "emotion": getattr(agent, '_last_cinematic', {}).get("emotion", ""),
+                    "step": self.current_step,
+                })
+
+                # Update world state after each turn so next agent sees latest position
+                self._update_agents_in_world_state()
+
+            # Emit scene_completed event
+            self.on_event("scene_completed", {
+                "location": location,
+                "participants": [self.agents[aid].name for aid in available if aid in self.agents],
+                "turn_count": len(turn_ids),
+                "step": self.current_step,
+            })
+        finally:
+            self.world_state.pop("_scene_location", None)
+            self.world_state.pop("_scene_participants", None)
+
     async def _process_agents_as_scenes(
         self,
         step_actions: list[dict[str, Any]],
@@ -971,7 +1127,16 @@ class SimulationEngine:
         step_events: list[str],
         stream_callback: Callable[[str, str], Awaitable[None]] | None = None,
     ) -> None:
-        """Process human agents as dramatic scenes grouped by location."""
+        """Process human agents as dramatic scenes grouped by location.
+
+        Independent scenes at different locations run in parallel via
+        asyncio.gather, leveraging vLLM's continuous batching for higher
+        throughput. Within each scene, turns remain sequential so agents
+        can react to prior speech.
+        """
+        from app.core.config import get_settings
+        settings = get_settings()
+
         # Build agent_locations dict from current tracking
         agent_locations = {
             agent_id: self._agent_locations.get(agent_id, agent.dynamic_state.get("location", "unknown"))
@@ -981,79 +1146,58 @@ class SimulationEngine:
 
         groups = self.scene_director.group_agents_by_location(self.agents, agent_locations)
 
+        # Collect scenes to process
+        scenes: list[tuple[str, list[str]]] = []
         for location, agent_ids in groups.items():
-            # Filter to available agents
             available = [
                 aid for aid in agent_ids
                 if self.supervisor.is_agent_available(aid)
             ]
+            if available:
+                scenes.append((location, available))
 
-            if not available:
-                continue
+        if not scenes:
+            return
 
-            if len(available) == 1:
-                # Solo agent — run a standard single tick
-                aid = available[0]
-                agent = self.agents[aid]
-                await self._tick_single_agent(aid, agent, step_actions, step_messages, step_events, stream_callback)
-                continue
+        # Decide: parallel scenes if vLLM backend, sequential otherwise
+        parallel_scenes = settings.llm_backend == "vllm" and len(scenes) > 1
 
-            # Multi-agent scene: pick initiator by extraversion, order turns
-            try:
-                initiator_id = self.scene_director.pick_initiator(available, self.agents)
-            except ValueError:
-                continue
-            ordered = [initiator_id] + [a for a in available if a != initiator_id]
-            turn_ids = ordered[:self.scene_director.max_turns]
-
-            # Inject scene context into world state so agents know who is present
-            try:
-                self.world_state["_scene_location"] = location
-                self.world_state["_scene_participants"] = [
-                    self.agents[aid].name for aid in available if aid in self.agents
-                ]
-
-                last_speech: dict[str, str | None] = {}
-                for agent_id in turn_ids:
-                    agent = self.agents[agent_id]
-                    msg_count_before = len(step_messages)
-
-                    await self._tick_single_agent(
-                        agent_id, agent, step_actions, step_messages, step_events, stream_callback
+        if parallel_scenes:
+            # Run independent location-scenes concurrently
+            async def _run_scene_isolated(location: str, available: list[str]):
+                local_actions: list[dict[str, Any]] = []
+                local_messages: list[dict[str, Any]] = []
+                local_events: list[str] = []
+                try:
+                    await self._run_single_scene(
+                        location, available, local_actions, local_messages, local_events, stream_callback
                     )
-
-                    # Capture speech from any message sent during this turn
-                    speech: str | None = None
-                    if len(step_messages) > msg_count_before:
-                        newest = step_messages[-1]
-                        speech = newest.get("content")
-                    last_speech[agent_id] = speech
-
-                    # Emit per-turn scene event
-                    self.on_event("scene_turn", {
-                        "location": location,
-                        "agent_id": agent_id,
-                        "agent_name": agent.name,
-                        "action": getattr(agent, '_last_cinematic', {}).get("action", ""),
-                        "speech": speech,
-                        "thought": getattr(agent, '_last_cinematic', {}).get("thought", ""),
-                        "emotion": getattr(agent, '_last_cinematic', {}).get("emotion", ""),
+                except Exception as e:
+                    logger.error(f"Scene at {location} failed: {e}")
+                    self.on_event("agent_error", {
+                        "error": f"Scene at {location} failed: {e}",
                         "step": self.current_step,
+                        "context": "parallel_scene",
                     })
+                return local_actions, local_messages, local_events
 
-                    # Update world state after each turn so next agent sees latest position
-                    self._update_agents_in_world_state()
+            tasks = [_run_scene_isolated(loc, avail) for loc, avail in scenes]
+            results = await asyncio.gather(*tasks, return_exceptions=True)
 
-                # Emit scene_completed event
-                self.on_event("scene_completed", {
-                    "location": location,
-                    "participants": [self.agents[aid].name for aid in available if aid in self.agents],
-                    "turn_count": len(turn_ids),
-                    "step": self.current_step,
-                })
-            finally:
-                self.world_state.pop("_scene_location", None)
-                self.world_state.pop("_scene_participants", None)
+            for result in results:
+                if isinstance(result, Exception):
+                    logger.error(f"Parallel scene raised: {result}")
+                    continue
+                local_actions, local_messages, local_events = result
+                step_actions.extend(local_actions)
+                step_messages.extend(local_messages)
+                step_events.extend(local_events)
+        else:
+            # Sequential fallback (Ollama or single scene)
+            for location, available in scenes:
+                await self._run_single_scene(
+                    location, available, step_actions, step_messages, step_events, stream_callback
+                )
 
 
     async def _process_agent_action(

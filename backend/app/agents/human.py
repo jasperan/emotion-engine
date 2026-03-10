@@ -227,6 +227,11 @@ Your inventory: {inv_str}
             participants = active_conv.get("participants", [])
             conv_suffix = f"\n[You are in a conversation with: {', '.join(participants)}. It is your turn.]\n"
 
+        # Conclusion enforcement directive (injected by engine when near budget/stagnant)
+        conclusion_directive = world_state.get("_conclusion_directive", "")
+        if conclusion_directive:
+            conv_suffix += f"\n⚠️ {conclusion_directive}\n"
+
         tail = conv_suffix + "\nWhat do you do?"
 
         # ── Budget for compactable sections ──

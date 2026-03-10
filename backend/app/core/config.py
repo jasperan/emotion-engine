@@ -73,6 +73,11 @@ class Settings(BaseSettings):
     scene_mode: bool = True               # enable scene-based tick processing
     scene_max_turns: int = 3              # max dialogue turns per scene per tick
 
+    # Agent conclusion enforcement
+    agent_max_tokens_per_run: int = 50000   # per-agent token budget across the run (0 = unlimited)
+    agent_conclude_at_pct: float = 0.85     # inject "conclude" prompt at this % of budget
+    agent_max_stagnant_steps: int = 5       # force conclusion after N consecutive stuck steps
+
     # Engine V2: Heartbeat
     heartbeat_enabled: bool = False  # Use V2 engine
 

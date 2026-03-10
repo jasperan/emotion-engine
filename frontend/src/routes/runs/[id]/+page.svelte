@@ -6,6 +6,7 @@
 	import AgentCard from '$lib/components/AgentCard.svelte';
 	import MessageLog from '$lib/components/MessageLog.svelte';
 	import LiveEventStream from '$lib/components/LiveEventStream.svelte';
+	import TokenStream from '$lib/components/TokenStream.svelte';
 	import SimulationControls from '$lib/components/SimulationControls.svelte';
 	import { setHeader, resetHeader } from '$lib/stores/header';
 
@@ -201,8 +202,11 @@
 				</div>
 			</div>
 
-			<!-- Right: Message Log + Live Event Stream -->
+			<!-- Right: Token Stream + Message Log + Live Event Stream -->
 			<div class="lg:col-span-2 space-y-6">
+				{#if run.status === 'running'}
+					<TokenStream events={wsState.events} />
+				{/if}
 				<MessageLog {messages} {agents} />
 				<LiveEventStream events={wsState.events} />
 			</div>

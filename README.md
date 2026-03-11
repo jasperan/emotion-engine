@@ -26,6 +26,29 @@ EmotionSim is a research-grade simulation engine designed to analyze emergent co
 
 ## Quick Start
 
+<!-- one-command-install -->
+> **One-command install** — clone, configure, and run in a single step:
+>
+> ```bash
+> curl -fsSL https://raw.githubusercontent.com/jasperan/emotion-engine/main/install.sh | bash
+> ```
+>
+> <details><summary>Advanced options</summary>
+>
+> Override install location:
+> ```bash
+> PROJECT_DIR=/opt/myapp curl -fsSL https://raw.githubusercontent.com/jasperan/emotion-engine/main/install.sh | bash
+> ```
+>
+> Or install manually:
+> ```bash
+> git clone https://github.com/jasperan/emotion-engine.git
+> cd emotion-engine
+> # See below for setup instructions
+> ```
+> </details>
+
+
 The fastest way to get started is using the CLI tool.
 
 ### 1. Prerequisites
@@ -243,12 +266,12 @@ class PersonalityProfile:
     extraversion: int = 5
     agreeableness: int = 5
     neuroticism: int = 5
-    
+
     # Extended traits
     risk_tolerance: int = 5
     empathy_level: int = 5
     leadership: int = 5
-    
+
     # Dynamic state
     stress: int = 0
     confidence: float = 0.5
@@ -323,10 +346,10 @@ Centralized tracking of all agents in the simulation:
 class AgentRegistry:
     def register(self, identity: AgentIdentity) -> None:
         """Register a new agent"""
-        
+
     def get(self, name: str) -> AgentIdentity | None:
         """Get agent by name"""
-        
+
     def detect_stuck_agents(self, threshold: float = 300.0) -> list[str]:
         """Find agents inactive for > threshold seconds"""
 ```
@@ -439,24 +462,24 @@ def build_context(
 ) -> str:
     """Build comprehensive context from multiple sources"""
     context_parts = []
-    
+
     # World state
     context_parts.append(self._format_world_state(world_state))
-    
+
     # Recent messages
     context_parts.append(self._format_recent_messages(messages))
-    
+
     # Relationship context
     if relevant_agents:
         context_parts.append(self.get_relationship_context(relevant_agents))
-    
+
     # Episodic context
     context_parts.append(self.get_conversation_context())
-    
+
     # Arrival context (why am I here?)
     if self.agent_memory.arrival_context:
         context_parts.append(self._format_arrival_context())
-    
+
     return "\n\n".join(context_parts)
 ```
 
@@ -481,7 +504,7 @@ class GroupDecisionMixin:
     ) -> VoteResult:
         """
         Tally votes with personality and trust weighting.
-        
+
         Weight modifiers:
         - Leadership: Higher leadership = more influence
         - Stress: High stress reduces voting weight
@@ -526,7 +549,7 @@ class CooperationCoordinator:
         """Detect if agent is repeating the same action"""
         recent_actions = self._action_history[agent_id][-5:]
         return recent_actions.count(action) >= 3
-    
+
     def suggest_alternative(self, agent_id: str, current_action: str) -> str | None:
         """Suggest alternative action to break loop"""
         if self.detect_behavioral_loop(agent_id, current_action):
@@ -600,12 +623,12 @@ class SimulationEngine:
         self.message_bus = MessageBus()
         self.conversation_manager = ConversationManager()
         self.coordinator = CooperationCoordinator()
-        
+
         # ACP components
         self.acp_registry = AgentRegistry()
         self.acp_coordination = CoordinationController(level="moderate")
         self.group_voting = GroupDecisionMixin()
-        
+
         # State
         self.world_state: dict[str, Any] = {}
         self._agent_locations: dict[str, str] = {}
@@ -620,13 +643,13 @@ async def run_simulation(self):
         # Phase 1: Environment agents generate events
         for agent in environment_agents:
             await agent.tick(self.world_state, [])
-        
+
         # Phase 2: Human agents act (shuffled for fairness)
         random.shuffle(human_agents)
         for agent in human_agents:
             # Get relevant messages
             messages = self.message_bus.get_messages(agent.id)
-            
+
             # Build context
             context = agent.build_context(
                 world_state=self.world_state,
@@ -634,14 +657,14 @@ async def run_simulation(self):
                 step_actions=step_actions,
                 step_messages=step_messages,
             )
-            
+
             # Agent decides and acts
             response = await agent.tick(self.world_state, messages)
-            
+
             # Process actions
             for action in response.actions:
                 await self._process_action(agent, action)
-            
+
             # Send messages if any
             if response.message:
                 self.message_bus.send(
@@ -649,14 +672,14 @@ async def run_simulation(self):
                     to_target=response.message.to_agent,
                     content=response.message.content,
                 )
-        
+
         # Persist state
         await self._save_step()
-        
+
         # Check for consensus/completion
         if self._check_consensus():
             break
-        
+
         self.current_step += 1
         await asyncio.sleep(self.tick_delay)
 ```

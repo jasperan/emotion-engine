@@ -7,6 +7,9 @@ set -euo pipefail
 #
 # Usage:
 #   curl -fsSL https://raw.githubusercontent.com/jasperan/emotion-engine/main/install.sh | bash
+#
+# Override install location:
+#   PROJECT_DIR=/opt/myapp curl -fsSL ... | bash
 # ============================================================
 
 REPO_URL="https://github.com/jasperan/emotion-engine.git"
@@ -58,7 +61,7 @@ check_prereqs() {
     command_exists docker || fail "Docker is required — https://docs.docker.com/get-docker/"
     success "Docker $(docker --version | cut -d' ' -f3 | tr -d ',')"
 
-    if command_exists "docker compose" 2>/dev/null || docker compose version &>/dev/null; then
+    if docker compose version &>/dev/null; then
         success "Docker Compose available"
     elif command_exists docker-compose; then
         success "Docker Compose (standalone) available"

@@ -247,5 +247,11 @@ docs/*.md
 logs/
 .serena/
 
+# Agent/skill directories (never track)
+.agents/
+.claude/
+.crush/
+.openhands/
+
 # Generated content (local only, never push)
 content/

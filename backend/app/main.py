@@ -18,16 +18,38 @@ async def lifespan(app: FastAPI):
     print(f"Starting {settings.app_name}...")
     await init_db() # Keep database initialization
 
-    # Auto-resume simulations
+    # Auto-seed default scenarios if none exist
     from app.core.database import async_session_maker as AsyncSessionLocal
-    from app.simulation.manager import SimulationManager
-    
+    from app.models.scenario import Scenario
+    from sqlalchemy import select, func
+
     async with AsyncSessionLocal() as db:
+        count = (await db.execute(select(func.count()).select_from(Scenario))).scalar()
+        if count == 0:
+            print("No scenarios found. Seeding built-in scenarios...")
+            from app.scenarios.defaults import DEFAULT_SCENARIOS
+            for name, creator in DEFAULT_SCENARIOS.items():
+                sc = creator()
+                scenario = Scenario(
+                    name=sc.name,
+                    description=sc.description,
+                    config=sc.config.model_dump(),
+                    agent_templates=[t.model_dump() for t in sc.agent_templates],
+                )
+                db.add(scenario)
+            await db.commit()
+            print(f"Seeded {len(DEFAULT_SCENARIOS)} built-in scenarios.")
+        else:
+            print(f"Found {count} existing scenarios.")
+
+    # Auto-resume simulations
+    async with AsyncSessionLocal() as db:
+        from app.simulation.manager import SimulationManager
         manager = SimulationManager.get_instance()
         resumed_count = await manager.resume_all_active_runs(db)
         if resumed_count > 0:
             print(f"Resumed {resumed_count} simulations.")
-            
+
     yield
     # Shutdown
     print(f"Shutting down {settings.app_name}...")
@@ -68,4 +90,3 @@ if __name__ == "__main__":
         port=8000,
         reload=settings.debug,
     )
-

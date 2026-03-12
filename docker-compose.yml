@@ -1,6 +1,24 @@
 version: "3.8"
 
 services:
+  oracle-db:
+    image: gvenzl/oracle-free:latest-faststart
+    ports:
+      - "1522:1521"
+    environment:
+      - ORACLE_PASSWORD=oracle
+      - APP_USER=emotionsim
+      - APP_USER_PASSWORD=emotionsim
+    volumes:
+      - oracle_data:/opt/oracle/oradata
+    healthcheck:
+      test: ["CMD-SHELL", "healthcheck.sh"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 90s
+    restart: unless-stopped
+
   backend:
     build:
       context: ./backend
@@ -10,12 +28,20 @@ services:
     volumes:
       - backend_data:/app/data
     environment:
-      - DATABASE_URL=sqlite+aiosqlite:///./data/emotionsim.db
+      - ORACLE_DB_HOST=oracle-db
+      - ORACLE_DB_PORT=1521
+      - ORACLE_DB_SERVICE=FREEPDB1
+      - ORACLE_DB_USER=emotionsim
+      - ORACLE_DB_PASSWORD=emotionsim
       - OLLAMA_BASE_URL=http://host.docker.internal:11434/v1
       - OLLAMA_API_KEY=ollama
+      - LLM_BACKEND=ollama
       - DEBUG=false
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    depends_on:
+      oracle-db:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -37,8 +63,5 @@ services:
     restart: unless-stopped
 
 volumes:
+  oracle_data:
   backend_data:
-
-# Note: Ollama should be running on the host machine at http://localhost:11434
-# The backend connects to it via host.docker.internal
-

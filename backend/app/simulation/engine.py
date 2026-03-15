@@ -48,7 +48,7 @@ class SimulationEngine:
     Main simulation engine that orchestrates runs.
     Manages agent lifecycle, tick loop, conversations, and state persistence.
     """
-    
+
     def __init__(
         self,
         run_id: str,
@@ -58,12 +58,12 @@ class SimulationEngine:
         self.run_id = run_id
         self.db = db_session
         self.on_event = on_event or (lambda t, d: None)
-        
+
         self.state = SimulationState.IDLE
         self.current_step = 0
         self.max_steps = 100
         self.tick_delay = 0.5
-        
+
         # World state
         self.world_state: dict[str, Any] = {
             "hazard_level": 0,
@@ -71,18 +71,18 @@ class SimulationEngine:
             "resources": [],
             "events": [],
         }
-        
+
         # Agents
         self.agents: dict[str, Agent] = {}
         self.message_bus = MessageBus()
-        
+
         # Conversation management
         self.conversation_manager = ConversationManager()
-        
+
         # Cooperation coordinator
         from app.agents.coordinator import CooperationCoordinator
         self.coordinator = CooperationCoordinator()
-        
+
         # Real-time agent locations (updated during steps)
         self._agent_locations: dict[str, str] = {}
 
@@ -153,12 +153,12 @@ class SimulationEngine:
     async def load_from_db(self) -> None:
         """Load simulation state from database for resumption"""
         self.state = SimulationState.INITIALIZING
-        
+
         # Get run record
         run = await self.db.get(Run, self.run_id)
         if not run:
             raise ValueError(f"Run {self.run_id} not found in database")
-            
+
         # Restore basic state
         self.current_step = run.current_step
         self.max_steps = run.max_steps
@@ -168,13 +168,13 @@ class SimulationEngine:
             "resources": [],
             "events": [],
         }
-        
+
         # Restore agents
         result = await self.db.execute(
             select(AgentModel).where(AgentModel.run_id == self.run_id)
         )
         agent_models = result.scalars().all()
-        
+
         for model in agent_models:
             # Recreate agent instance based on role
             config = {
@@ -185,15 +185,15 @@ class SimulationEngine:
                 "persona": model.persona,
                 "goals": model.persona.get("goals", []) if model.persona else [],
             }
-            
+
             agent = self._create_agent(config)
             agent.id = model.id
             agent.dynamic_state = model.dynamic_state or {}
-            
+
             # Restore memory if available
             if hasattr(model, 'memory_snapshot') and model.memory_snapshot:
                 agent.restore_memory(model.memory_snapshot)
-                
+
             self.agents[agent.id] = agent
             self.message_bus.register_agent(agent.id, agent.name)
             self.acp_registry.register(agent.get_acp_identity())
@@ -204,7 +204,7 @@ class SimulationEngine:
             self._agent_locations[agent.id] = location
             self.conversation_manager.update_agent_location(agent.id, location)
             self.message_bus.join_room(agent.id, location)
-            
+
         # Restore message history to message bus for context
         result = await self.db.execute(
             select(Message)
@@ -212,7 +212,7 @@ class SimulationEngine:
             .order_by(Message.timestamp)
         )
         db_messages = result.scalars().all()
-        
+
         for msg in db_messages:
             # Reconstruct the message object as expected by message bus
             bus_msg = {
@@ -227,47 +227,47 @@ class SimulationEngine:
                 "timestamp": msg.timestamp.isoformat(),
             }
             self.message_bus._message_history.append(bus_msg)
-            
+
             # If it was a conversation message, add to conversation history
             if "conversation_id" in bus_msg["metadata"]:
                 conv_id = bus_msg["metadata"]["conversation_id"]
                 self.message_bus._conversation_messages[conv_id].append(bus_msg)
-                
+
         # Initialize coordinator with shared goals
         all_goals = set()
         for agent in self.agents.values():
             if agent.role == "human" and hasattr(agent, 'goals'):
                 all_goals.update(agent.goals)
-        
+
         for goal in all_goals:
             self.coordinator.add_shared_goal(goal)
-            
+
         # Restore coordinator context
         self.world_state["shared_goals"] = self.coordinator.shared_goals
         self.world_state["cooperation"] = self.coordinator.get_cooperation_context()
-        
+
         self.state = SimulationState.IDLE
         self.on_event("resumed", {"step": self.current_step, "agent_count": len(self.agents)})
 
     async def initialize(self, scenario_config: dict[str, Any]) -> None:
         """Initialize the simulation from scenario config"""
         self.state = SimulationState.INITIALIZING
-        
+
         # Set world parameters
         world_config = scenario_config.get("config", {})
         # Default to None (infinite) unless explicitly set
         self.max_steps = world_config.get("max_steps", None)
         self.tick_delay = world_config.get("tick_delay", 0.5)
-        
-        
+
+
         self.world_state.update(world_config.get("initial_state", {}))
         self.world_state["objects"] = world_config.get("objects", {})
-        
+
         # Initialize seed if provided
         seed = scenario_config.get("seed")
         if seed is not None:
             random.seed(seed)
-        
+
         # Create agents from templates
         agent_templates = scenario_config.get("agent_templates", [])
         for template in agent_templates:
@@ -283,7 +283,7 @@ class SimulationEngine:
             self.conversation_manager.update_agent_location(agent.id, agent_location)
             # Subscribe agent to location room for room messages
             self.message_bus.join_room(agent.id, agent_location)
-            
+
             # Persist agent to database
             agent_model = AgentModel(
                 id=agent.id,
@@ -296,76 +296,94 @@ class SimulationEngine:
                 dynamic_state=agent.dynamic_state,
             )
             self.db.add(agent_model)
-        
+
         await self.db.commit()
-        
+
         # Initialize shared goals from agent goals
         all_goals = set()
         for agent in self.agents.values():
             if agent.role == "human" and hasattr(agent, 'goals'):
                 all_goals.update(agent.goals)
-        
+
         for goal in all_goals:
             self.coordinator.add_shared_goal(goal)
-        
+
         # Add cooperation context to world state
         self.world_state["shared_goals"] = self.coordinator.shared_goals
         self.world_state["cooperation"] = self.coordinator.get_cooperation_context()
-        
+
         # Update agents in world state for initial display
         self._update_agents_in_world_state()
-        
+
         self.state = SimulationState.IDLE
         self.on_event("initialized", {
             "agent_count": len(self.agents),
             "world_state": self.world_state,
             "conversations": [],
         })
-    
+
     def _create_agent(self, config: dict[str, Any]) -> Agent:
         """Create an agent from configuration"""
         role = config.get("role", "human")
-        
+
+        # Resolve model_id and provider based on active LLM backend.
+        # Scenario configs typically store Ollama-style model names; when the
+        # user selects a different backend (vLLM, OpenAI) we override.
+        from app.core.config import get_settings as _get_settings
+        _settings = _get_settings()
+
+        if _settings.llm_backend == "openai":
+            from app.llm.openai_client import get_codex_defaults
+            codex = get_codex_defaults()
+            default_model = _settings.openai_model or codex.get("model", "gpt-4o")
+            default_provider = "openai"
+        elif _settings.llm_backend == "vllm":
+            default_model = _settings.vllm_default_model
+            default_provider = "vllm"
+        else:
+            default_model = config.get("model_id", "qwen3.5:27b")
+            default_provider = config.get("provider", "ollama")
+
         if role == "environment":
             return EnvironmentAgent(
                 name=config.get("name", "Environment"),
-                model_id=config.get("model_id", "qwen3.5:27b"),
-                provider=config.get("provider", "ollama"),
+                model_id=default_model,
+                provider=default_provider,
                 environment_type=config.get("environment_type", "flood"),
                 dynamics_config=config.get("dynamics_config"),
             )
         elif role == "designer":
             return DesignerAgent(
                 name=config.get("name", "Director"),
-                model_id=config.get("model_id", "qwen3.5:27b"),
-                provider=config.get("provider", "ollama"),
+                model_id=default_model,
+                provider=default_provider,
                 scenario_goals=config.get("goals"),
             )
         elif role == "evaluator":
             return EvaluationAgent(
                 name=config.get("name", "Evaluator"),
-                model_id=config.get("model_id", "qwen3.5:27b"),
-                provider=config.get("provider", "ollama"),
+                model_id=default_model,
+                provider=default_provider,
             )
         else:  # human
             persona_data = config.get("persona", {})
             if persona_data and "inventory" not in persona_data and config.get("inventory"):
                 # Update persona with initial inventory if provided in agent config
                 persona_data["inventory"] = [
-                    item.get("name") if isinstance(item, dict) else item.name 
+                    item.get("name") if isinstance(item, dict) else item.name
                     for item in config.get("inventory", [])
                 ]
-                
+
             persona = Persona(**persona_data) if persona_data else None
-            
+
             return HumanAgent(
                 name=config.get("name", "Human"),
-                model_id=config.get("model_id", "qwen3.5:27b"),
-                provider=config.get("provider", "ollama"),
+                model_id=default_model,
+                provider=default_provider,
                 persona=persona,
                 goals=config.get("goals"),
             )
-    
+
     async def start(
         self,
         stream_callback: Callable[[str, str], Awaitable[None]] | None = None,
@@ -373,7 +391,7 @@ class SimulationEngine:
         """Start the simulation run"""
         if self.state not in (SimulationState.IDLE, SimulationState.PAUSED):
             return
-        
+
         self.state = SimulationState.RUNNING
         self._stop_requested = False
         self._pause_requested = False
@@ -392,10 +410,10 @@ class SimulationEngine:
             await self.db.commit()
 
         self.on_event("run_started", {"step": self.current_step})
-        
+
         # Main simulation loop
         await self._run_loop(stream_callback)
-    
+
     async def _run_loop(
         self,
         stream_callback: Callable[[str, str], Awaitable[None]] | None = None,
@@ -403,7 +421,7 @@ class SimulationEngine:
         """Main simulation loop"""
         # Safety limit to prevent infinite runs
         MAX_SAFETY_STEPS = 1000
-        
+
         while (
             (self.max_steps is None or self.current_step < self.max_steps)
             and self.current_step < MAX_SAFETY_STEPS
@@ -416,16 +434,16 @@ class SimulationEngine:
                 self._pause_requested = False
                 self.on_event("run_paused", {"step": self.current_step})
                 return
-            
+
             await self._execute_step(stream_callback)
-            
+
             # Wait between ticks - minimal delay for yielding to event loop
             await asyncio.sleep(0.01)
-        
+
         # Run completed
         if not self._stop_requested:
             await self._complete_run()
-    
+
     async def _execute_step(
         self,
         stream_callback: Callable[[str, str], Awaitable[None]] | None = None,
@@ -507,7 +525,7 @@ class SimulationEngine:
 
         # L8: End diff tracking
         self.diff_tracker.end_step(self.world_state)
-        
+
         # Persist step
         step = Step(
             run_id=self.run_id,
@@ -517,15 +535,15 @@ class SimulationEngine:
             step_metrics=self._compute_step_metrics(),
         )
         self.db.add(step)
-        
+
         # Update run
         run = await self.db.get(Run, self.run_id)
         if run:
             run.current_step = self.current_step
             run.world_state = self.world_state.copy()
-        
+
         await self.db.commit()
-        
+
         await log_pipeline_event(
             f"✅ Step {self.current_step} done  "
             f"actions={len(step_actions)}  messages={len(step_messages)}  events={len(step_events)}"
@@ -543,7 +561,7 @@ class SimulationEngine:
             "negotiations": self.negotiation.to_dict(),
             "emotion_contagion": self.emotion_contagion.to_dict(),
         })
-    
+
     def _update_agents_in_world_state(self) -> None:
         """Update world state with current agent information"""
         agents_state = {}
@@ -760,7 +778,7 @@ class SimulationEngine:
                 await asyncio.sleep(0)
 
             self._update_agents_in_world_state()
-        
+
         # Build agent_plans and agent_trust for plan visibility
         agent_plans = {}
         agent_trust = {}
@@ -950,7 +968,8 @@ class SimulationEngine:
         agent_callback = _cb
 
         # --- Conclusion enforcement: inject directives if near budget or stagnant ---
-        _settings = get_settings()
+        from app.core.config import get_settings as _get_conclusion_settings
+        _settings = _get_conclusion_settings()
         budget = _settings.agent_max_tokens_per_run
         conclude_pct = _settings.agent_conclude_at_pct
         max_stagnant = _settings.agent_max_stagnant_steps
@@ -1806,9 +1825,9 @@ class SimulationEngine:
         for agent_id, agent in self.agents.items():
             if agent.role != "environment":
                 continue
-            
+
             messages = self.message_bus.get_messages(agent_id)
-            
+
             try:
                 response = await agent.tick(self.world_state.copy(), messages)
                 agent.last_reasoning = response.reasoning or None
@@ -1819,12 +1838,12 @@ class SimulationEngine:
                         "agent_name": agent.name,
                         **action.model_dump(),
                     })
-                    
+
                     if action.action_type == "environment_update":
                         self._apply_environment_update(action.parameters)
                     elif action.action_type == "affect_agent":
                         self._apply_agent_effect(action.target, action.parameters)
-                
+
                 if response.message:
                     msg = response.message
                     stored_msg = self.message_bus.broadcast(
@@ -1832,7 +1851,7 @@ class SimulationEngine:
                     )
                     step_messages.append(stored_msg)
                     await self._persist_message(agent_id, msg)
-                    
+
             except Exception as e:
                 agent = self.agents.get(agent_id)
                 agent_name = agent.name if agent else agent_id
@@ -1843,7 +1862,7 @@ class SimulationEngine:
                     "step": self.current_step,
                     "context": "environment_agent_tick",
                 })
-    
+
     async def _process_conversations(
         self,
         step_actions: list[dict[str, Any]],
@@ -1852,29 +1871,29 @@ class SimulationEngine:
         """Process multi-turn conversations until they conclude"""
         max_conversation_rounds = 10  # Safety limit
         round_count = 0
-        
+
         while round_count < max_conversation_rounds:
             round_count += 1
-            
+
             # Get all conversations that need processing
             active_conversations = self.conversation_manager.get_conversations_needing_turns()
-            
+
             if not active_conversations:
                 break
-            
+
             # Process each conversation
             any_activity = False
-            
+
             for conv in active_conversations:
                 activity = await self._process_single_conversation(
                     conv, step_actions, step_messages
                 )
                 any_activity = any_activity or activity
-            
+
             # If no conversation had activity, we're done
             if not any_activity:
                 break
-    
+
     async def _process_single_conversation(
         self,
         conversation: Conversation,
@@ -1884,27 +1903,27 @@ class SimulationEngine:
         """Process a single conversation turn. Returns True if there was activity."""
         if not conversation.should_continue():
             return False
-        
+
         # Get the next speaker
         speaker_id = conversation.get_next_speaker()
         if not speaker_id or speaker_id not in self.agents:
             conversation.advance_turn(spoke=False)
             return False
-        
+
         agent = self.agents[speaker_id]
-        
+
         # Skip non-human agents in conversations (they're handled separately)
         if agent.role != "human":
             conversation.advance_turn(spoke=False)
             return False
-        
+
         # Build context for this agent including conversation history
         conversation_context = conversation.get_context_for_agent(speaker_id)
         pending_messages = self.message_bus.get_messages(speaker_id)
-        
+
         # Combine conversation history with any pending messages
         all_messages = conversation_context + pending_messages
-        
+
         # Add conversation metadata to world state
         conv_world_state = self.world_state.copy()
         conv_world_state["active_conversation"] = {
@@ -1916,7 +1935,7 @@ class SimulationEngine:
             ],
             "is_my_turn": True,
         }
-        
+
         try:
             response = await agent.tick(conv_world_state, all_messages)
             agent.last_reasoning = response.reasoning or None
@@ -1928,15 +1947,15 @@ class SimulationEngine:
                     "agent_name": agent.name,
                     **action.model_dump(),
                 })
-                
+
                 # Handle movement within the step
                 if action.action_type == "move":
                     await self._handle_movement(speaker_id, action.target, action.parameters)
-            
+
             # Process message
             if response.message and response.message.content.strip():
                 msg = response.message
-                
+
                 # Send to conversation participants
                 stored_msg = self.message_bus.send_to_conversation(
                     from_agent_id=speaker_id,
@@ -1946,21 +1965,21 @@ class SimulationEngine:
                     step_index=self.current_step,
                     location=conversation.location,
                 )
-                
+
                 # Add to conversation history
                 conversation.add_message(stored_msg)
                 step_messages.append(stored_msg)
-                
+
                 # Persist to database
                 await self._persist_message(speaker_id, msg, conversation.id)
-                
+
                 conversation.advance_turn(spoke=True)
                 return True
             else:
                 # Agent chose not to speak
                 conversation.advance_turn(spoke=False)
                 return False
-                
+
         except Exception as e:
             agent = self.agents.get(speaker_id)
             agent_name = agent.name if agent else speaker_id
@@ -1974,28 +1993,28 @@ class SimulationEngine:
             })
             conversation.advance_turn(spoke=False)
             return False
-    
+
     def _find_path(self, start_loc: str, target_loc: str, locations: dict[str, Any]) -> list[str] | None:
         """Find the shortest path between locations using BFS"""
         if start_loc == target_loc:
             return [start_loc]
-            
+
         queue = [(start_loc, [start_loc])]
         visited = {start_loc}
-        
+
         while queue:
             current, path = queue.pop(0)
-            
+
             # check neighbors
             nearby = locations.get(current, {}).get("nearby", [])
             for neighbor in nearby:
                 if neighbor == target_loc:
                     return path + [neighbor]
-                
+
                 if neighbor not in visited and neighbor in locations:
                     visited.add(neighbor)
                     queue.append((neighbor, path + [neighbor]))
-                    
+
         return None
 
     def _fuzzy_match_location(self, target: str, nearby: list[str]) -> str | None:
@@ -2025,7 +2044,7 @@ class SimulationEngine:
         """Handle agent movement between locations. Returns True if successfully initiated or completed."""
         if not target_location:
             return False
-            
+
         # Ensure target_location is a string
         if isinstance(target_location, list):
             # This handles the "unhashable type: list" bug where LLM returns a list
@@ -2035,34 +2054,34 @@ class SimulationEngine:
                 return False
         elif not isinstance(target_location, str):
             target_location = str(target_location)
-        
+
         # Check if this agent already failed to move to this location in this step
         if agent_id not in self._agent_failed_movements:
             self._agent_failed_movements[agent_id] = set()
-        
+
         if target_location in self._agent_failed_movements[agent_id]:
             # Already tried and failed this step - silently skip to prevent duplicate errors
             return False
-            
+
         # Get agent
         agent = self.agents.get(agent_id)
         if not agent:
             return False
-        
+
         current_location = self._agent_locations.get(agent_id, "unknown")
-        
+
         # Prevent redundant moves
         if current_location == target_location:
             return True # Successfully "stayed" at location, no event emitted
 
-        
+
         # Check if already travelling
         travel_state = agent.dynamic_state.get("travel", None)
         if travel_state and travel_state.get("target") == target_location:
             # Continue travel
             travel_state["progress"] += 1
             distance = travel_state["distance"]
-            
+
             if travel_state["progress"] >= distance:
                 # Arrived!
                 del agent.dynamic_state["travel"]
@@ -2082,12 +2101,12 @@ class SimulationEngine:
              # Changing target mid-travel? Reset or disallow?
              # For now, allow changing target, reset progress
              pass
-        
+
         # Validate movement (target must be nearby)
         locations = self.world_state.get("locations", {})
         current_loc_data = locations.get(current_location, {})
         nearby = current_loc_data.get("nearby", [])
-        
+
         # Check if target location exists
         if target_location not in locations:
             # Try fuzzy match against ALL known locations
@@ -2110,7 +2129,7 @@ class SimulationEngine:
                     "nearby_locations": nearby,
                 })
                 return False
-        
+
         if target_location not in nearby and target_location != current_location:
             # Try fuzzy match against nearby
             fuzzy = self._fuzzy_match_location(target_location, nearby)
@@ -2120,14 +2139,14 @@ class SimulationEngine:
         if target_location not in nearby and target_location != current_location:
             # Try to find a path for multi-step movement
             path = self._find_path(current_location, target_location, locations)
-            
+
             if path and len(path) > 1:
                 # Path found! Route via the next stop
                 next_stop = path[1]
-                
+
                 agent = self.agents.get(agent_id)
                 agent_name = agent.name if agent else agent_id
-                
+
                 self.on_event("agent_rerouted", {
                     "agent_id": agent_id,
                     "agent_name": agent_name,
@@ -2136,7 +2155,7 @@ class SimulationEngine:
                     "full_path": path,
                     "step": self.current_step,
                 })
-                
+
                 # Update target to the next stop for this specific move action
                 target_location = next_stop
                 # Current location's nearby list already contains next_stop by definition of path
@@ -2163,11 +2182,11 @@ class SimulationEngine:
                     "nearby_locations": nearby,
                 })
                 return False
-            
+
         # Check distance for new travel
         target_info = locations.get(target_location, {})
         distance = target_info.get("distance", 1)
-        
+
         if distance > 1 and not (travel_state and travel_state.get("target") == target_location):
              # Start multi-step travel
              agent.dynamic_state["travel"] = {
@@ -2176,7 +2195,7 @@ class SimulationEngine:
                  "distance": distance,
                  "progress": 1 # First step taken
              }
-             
+
              if distance > 1:
                  self.on_event("travel_started", {
                     "agent_id": agent_id,
@@ -2187,10 +2206,10 @@ class SimulationEngine:
                     "step": self.current_step,
                  })
                  return True # Started travel
-        
+
         # Update location (Arrived)
         self._agent_locations[agent_id] = target_location
-        
+
         # Update agent's dynamic state
         agent = self.agents.get(agent_id)
         if agent:
@@ -2198,16 +2217,16 @@ class SimulationEngine:
             # Clear travel state if it existed
             if "travel" in agent.dynamic_state:
                 del agent.dynamic_state["travel"]
-        
+
         # Subscribe agent to location room for room messages
         self.message_bus.join_room(agent_id, target_location)
-        
+
         # Update conversation manager (handles join/leave of location conversations)
         self.conversation_manager.update_agent_location(agent_id, target_location)
-        
+
         # Update world state
         self._update_agents_in_world_state()
-        
+
         agent = self.agents.get(agent_id)
         agent_name = agent.name if agent else agent_id
         self.on_event("agent_moved", {
@@ -2218,7 +2237,7 @@ class SimulationEngine:
             "step": self.current_step,
         })
         return True
-    
+
     async def _persist_message(
         self,
         agent_id: str,
@@ -2230,13 +2249,13 @@ class SimulationEngine:
         msg_type = msg.message_type if hasattr(msg, 'message_type') else "broadcast"
         if conversation_id:
             msg_type = "conversation"
-        
+
         # Map to MessageType enum
         try:
             db_msg_type = MessageType(msg_type)
         except ValueError:
             db_msg_type = MessageType.BROADCAST
-        
+
         db_message = Message(
             run_id=self.run_id,
             from_agent_id=agent_id,
@@ -2247,32 +2266,32 @@ class SimulationEngine:
             metadata={"conversation_id": conversation_id} if conversation_id else {},
         )
         self.db.add(db_message)
-    
+
     def _apply_environment_update(self, params: dict[str, Any]) -> None:
         """Apply environment agent updates to world state"""
         if "hazard_level" in params:
             self.world_state["hazard_level"] = params["hazard_level"]
-        
+
         if "events" in params:
             self.world_state.setdefault("events", []).extend(params["events"])
-        
+
         if "new_resources" in params:
             self.world_state.setdefault("resources", []).extend(params["new_resources"])
-        
+
         if "affected_locations" in params:
             for loc in params["affected_locations"]:
                 self.world_state.setdefault("locations", {})[loc] = {
                     "hazard_affected": True,
                 }
-        
+
         # Apply location-based health effects
         self._apply_location_health_effects()
-    
+
     def _apply_agent_effect(self, target_agent_id: str | None, params: dict[str, Any]) -> None:
         """Apply direct health/stress effects to a specific agent"""
         if not target_agent_id:
             return
-        
+
         # Try to find agent by ID first, then by name
         agent = self.agents.get(target_agent_id)
         if not agent:
@@ -2281,44 +2300,44 @@ class SimulationEngine:
                 if a.name == target_agent_id:
                     agent = a
                     break
-        
+
         if not agent:
             return
-            
+
         current_health = agent.dynamic_state.get("health", 100.0) # Default to 100 if missing
         current_stress = agent.dynamic_state.get("stress", 0.0)   # Default to 0 if missing
-        
+
         # Ensure they are floats
         if current_health is None: current_health = 100.0
         if current_stress is None: current_stress = 0.0
-        
+
         if "health_delta" in params:
             delta = params["health_delta"]
             if delta is not None:
                 agent.dynamic_state["health"] = max(0.0, min(100.0, current_health + float(delta)))
-        
+
         if "stress_delta" in params:
             new_stress = max(1, min(10, current_stress + params["stress_delta"]))
             agent.dynamic_state["stress_level"] = new_stress
-        
+
         if "stress_level" in params:
             agent.dynamic_state["stress_level"] = max(1, min(10, params["stress_level"]))
-    
+
     def _apply_location_health_effects(self) -> None:
         """Apply health effects based on agent locations and location properties"""
         locations = self.world_state.get("locations", {})
         hazard_level = self.world_state.get("hazard_level", 0)
-        
+
         for agent_id, agent in self.agents.items():
             if agent.role != "human":
                 continue
-            
+
             location = agent.dynamic_state.get("location", "unknown")
             if location not in locations:
                 continue
-            
+
             loc_data = locations[location]
-            
+
             # Apply location effects
             location_effects = loc_data.get("location_effects", {})
             if "health_per_tick" in location_effects:
@@ -2330,7 +2349,7 @@ class SimulationEngine:
                     current_health = 10
                 new_health = max(0, min(10, current_health + location_effects["health_per_tick"]))
                 agent.dynamic_state["health"] = new_health
-            
+
             if "stress_per_tick" in location_effects:
                 current_stress = agent.dynamic_state.get("stress_level", 1)
                 # Convert to float in case it's stored as string
@@ -2340,7 +2359,7 @@ class SimulationEngine:
                     current_stress = 1
                 new_stress = max(1, min(10, current_stress + location_effects["stress_per_tick"]))
                 agent.dynamic_state["stress_level"] = new_stress
-            
+
             # Apply item-based effects
             items = loc_data.get("items", [])
             for item in items:
@@ -2349,24 +2368,24 @@ class SimulationEngine:
                     current_health = agent.dynamic_state.get("health", 10)
                     if current_health < 10:
                         agent.dynamic_state["health"] = min(10, current_health + 0.5)
-                
+
                 # Contaminated items reduce health
                 if "contaminated" in item.lower() or "toxic" in item.lower():
                     current_health = agent.dynamic_state.get("health", 10)
                     agent.dynamic_state["health"] = max(0, current_health - 0.5)
-            
+
             # Apply hazard-based effects if location is hazard-affected
             if loc_data.get("hazard_affected", False) and hazard_level > 0:
                 # Higher hazard levels cause more health loss
                 health_loss = (hazard_level / 10.0) * 0.3
                 current_health = agent.dynamic_state.get("health", 10)
                 agent.dynamic_state["health"] = max(0, current_health - health_loss)
-                
+
                 # Hazard also increases stress
                 stress_gain = (hazard_level / 10.0) * 0.2
                 current_stress = agent.dynamic_state.get("stress_level", 1)
                 agent.dynamic_state["stress_level"] = min(10, current_stress + stress_gain)
-    
+
     def _extract_topic(self, message: str) -> str:
         """Extract a topic/keyword from a message for loop detection"""
         # Simple keyword extraction
@@ -2379,13 +2398,13 @@ class SimulationEngine:
             if keyword in message_lower:
                 return keyword
         return "general"
-    
+
     def _handle_propose_task(self, agent_id: str, params: dict[str, Any]) -> None:
         """Handle task proposal from an agent"""
         description = params.get("description", "")
         priority = params.get("priority", 5)
         assigned_to = params.get("assigned_to")
-        
+
         if description:
             task_id = self.coordinator.create_task(description, priority, assigned_to)
             self.on_event("task_proposed", {
@@ -2394,7 +2413,7 @@ class SimulationEngine:
                 "description": description,
                 "priority": priority,
             })
-    
+
     def _handle_accept_task(self, agent_id: str, task_id: str | None, params: dict[str, Any]) -> None:
         """Handle task acceptance by an agent"""
         if not task_id:
@@ -2404,7 +2423,7 @@ class SimulationEngine:
                 if task.description == description and task.status == "pending":
                     task_id = tid
                     break
-        
+
         if task_id and self.coordinator.assign_task(task_id, agent_id):
             agent = self.agents.get(agent_id)
             agent_name = agent.name if agent else agent_id
@@ -2413,32 +2432,32 @@ class SimulationEngine:
                 "agent_name": agent_name,
                 "task_id": task_id,
             })
-    
+
     def _handle_report_progress(self, agent_id: str, params: dict[str, Any]) -> None:
         """Handle progress report from an agent"""
         task_id = params.get("task_id")
         progress = params.get("progress", 0.0)
         goal = params.get("goal")
-        
+
         if task_id and task_id in self.coordinator.tasks:
             task = self.coordinator.tasks[task_id]
             task.progress = max(0.0, min(1.0, progress))
             if progress >= 1.0:
                 self.coordinator.complete_task(task_id)
-        
+
         if goal:
             goal_progress = params.get("goal_progress", 0.0)
             self.coordinator.update_goal_progress(goal, goal_progress)
-    
+
     def _handle_call_for_vote(self, agent_id: str, params: dict[str, Any]) -> None:
         """Handle vote call from an agent (for consensus detection)"""
         topic = params.get("topic", "general")
         vote = params.get("vote", "continue")  # continue, end, pause
-        
+
         # Store vote in world state for consensus detection
         if "votes" not in self.world_state:
             self.world_state["votes"] = {}
-        
+
         self.world_state["votes"][agent_id] = {
             "topic": topic,
             "vote": vote,
@@ -2449,23 +2468,23 @@ class SimulationEngine:
         """Handle agent taking an item"""
         if not item_name:
             return False
-            
+
         agent = self.agents.get(agent_id)
         if not agent:
             return False
-            
+
         location = agent.dynamic_state.get("location")
         if not location:
             return False
-            
+
         loc_data = self.world_state["locations"].get(location, {})
         if "items" not in loc_data:
             loc_data["items"] = []
-            
+
         # Find item in location
         found_idx = -1
         item_obj = None
-        
+
         for idx, item in enumerate(loc_data["items"]):
             # Normalize item (string or dict)
             iname = item.get("name") if isinstance(item, dict) else item
@@ -2473,23 +2492,23 @@ class SimulationEngine:
                 found_idx = idx
                 item_obj = item
                 break
-        
+
         if found_idx == -1:
             return False
-            
+
         # Remove from location and add to agent inventory
         loc_data["items"].pop(found_idx)
-        
+
         if "inventory" not in agent.dynamic_state:
             agent.dynamic_state["inventory"] = []
-            
+
         # Add to dynamic state inventory
         agent.dynamic_state["inventory"].append(item_obj)
-        
+
         # Sync Python object inventory list if applicable
         if hasattr(agent, "inventory"):
              agent.inventory.append(item_obj if isinstance(item_obj, dict) else {"name": item_obj})
-        
+
         self.message_bus.broadcast(agent_id, f"Taken {item_name}", self.current_step)
         return True
 
@@ -2497,35 +2516,35 @@ class SimulationEngine:
         """Handle agent dropping an item"""
         if not item_name:
             return False
-            
+
         agent = self.agents.get(agent_id)
         if not agent:
             return False
-            
+
         location = agent.dynamic_state.get("location")
         if not location:
             return False
-            
+
         if "inventory" not in agent.dynamic_state:
             return False
-            
+
         # Find item in inventory
         found_idx = -1
         item_obj = None
-        
+
         for idx, item in enumerate(agent.dynamic_state["inventory"]):
             iname = item.get("name") if isinstance(item, dict) else item
             if iname.lower() == item_name.lower():
                 found_idx = idx
                 item_obj = item
                 break
-        
+
         if found_idx == -1:
             return False
-            
+
         # Remove from inventory and add to location
         agent.dynamic_state["inventory"].pop(found_idx)
-        
+
         # Sync Python object inventory
         if hasattr(agent, "inventory"):
             # Simple rebuild to avoid mismatch
@@ -2540,9 +2559,9 @@ class SimulationEngine:
         loc_data = self.world_state["locations"].get(location, {})
         if "items" not in loc_data:
             loc_data["items"] = []
-            
+
         loc_data["items"].append(item_obj)
-        
+
         self.message_bus.broadcast(agent_id, f"Dropped {item_name}", self.current_step)
         return True
 
@@ -2550,16 +2569,16 @@ class SimulationEngine:
         """Handle agent using an item"""
         if not item_name:
             return False
-            
+
         agent = self.agents.get(agent_id)
         if not agent:
             return False
-            
+
         # Check inventory first
         inventory = agent.dynamic_state.get("inventory", [])
         has_item = False
         used_item = None
-        
+
         for idx, item in enumerate(inventory):
              iname = item.get("name") if isinstance(item, dict) else item
              if iname.lower() == item_name.lower():
@@ -2572,26 +2591,26 @@ class SimulationEngine:
                        if len(agent.inventory) > idx:
                             agent.inventory.pop(idx)
                  break
-        
+
         if not has_item:
             return False
-            
+
         # Apply effects
         objects = self.world_state.get("objects", {})
         obj_def = objects.get(item_name, {})
         # If item was dict in inventory, maybe it has effects?
         if not obj_def and isinstance(used_item, dict):
              obj_def = used_item
-             
+
         effects = obj_def.get("effects", [])
-        
+
         # Default fallback logic
         if not effects:
             if "med" in item_name.lower() or "first aid" in item_name.lower():
                 effects = [{"target_attribute": "health", "value": 3}]
             elif "water" in item_name.lower() or "food" in item_name.lower():
                 effects = [{"target_attribute": "stress_level", "value": -1}]
-        
+
         applied_msg = []
         for effect in effects:
              attr = effect.get("target_attribute")
@@ -2608,9 +2627,9 @@ class SimulationEngine:
         msg = f"Used {item_name}"
         if applied_msg:
              msg += f" ({', '.join(applied_msg)})"
-             
+
         self.message_bus.broadcast(agent_id, msg, self.current_step)
-                 
+
         return True
 
     async def _handle_search(self, agent_id: str) -> list[str]:
@@ -2618,25 +2637,25 @@ class SimulationEngine:
         agent = self.agents.get(agent_id)
         if not agent:
             return []
-            
+
         location = agent.dynamic_state.get("location")
         if not location:
             return []
-            
+
         loc_data = self.world_state["locations"].get(location, {})
-        
+
         # For now, just return visible items as "found" to confirm
         found = []
         items = loc_data.get("items", [])
         for item in items:
              name = item.get("name") if isinstance(item, dict) else item
              found.append(name)
-             
+
         if found:
              self.message_bus.broadcast(agent_id, f"Searched and found: {', '.join(found)}", self.current_step)
         else:
              self.message_bus.broadcast(agent_id, "Searched but found nothing.", self.current_step)
-             
+
         return found
 
     async def _handle_interact(self, agent_id: str, target: str, params: dict) -> tuple[bool, str]:
@@ -2644,22 +2663,22 @@ class SimulationEngine:
         self.message_bus.broadcast(agent_id, f"Interacted with {target}", self.current_step)
         return True, f"Interacted with {target}"
 
-    
+
     def _check_consensus(self) -> bool:
         """Check if agents have reached consensus to end the simulation"""
         votes = self.world_state.get("votes", {})
         if not votes:
             return False
-        
+
         # Get human agents
         human_agents = [aid for aid, agent in self.agents.items() if agent.role == "human"]
         if len(human_agents) < 2:
             return False
-        
+
         # Count votes to end
         end_votes = sum(1 for v in votes.values() if v.get("vote") == "end")
         total_votes = len(votes)
-        
+
         # Need majority (50%+) of agents who voted to agree to end
         # Or if we have votes from majority of all agents, check if majority want to end
         if total_votes >= len(human_agents) * 0.5:  # At least 50% of agents voted
@@ -2671,7 +2690,7 @@ class SimulationEngine:
                     "total_agents": len(human_agents),
                 })
                 return True
-        
+
         # Unanimous agreement (all voters want to end)
         if total_votes >= len(human_agents) * 0.8 and end_votes == total_votes:
             self.on_event("consensus_reached", {
@@ -2681,15 +2700,15 @@ class SimulationEngine:
                 "total_agents": len(human_agents),
             })
             return True
-        
+
         return False
-    
+
     def _compute_step_metrics(self) -> dict[str, Any]:
         """Compute metrics for the current step"""
         total_health = 0
         total_stress = 0
         human_count = 0
-        
+
         for agent in self.agents.values():
             if agent.role == "human":
                 human_count += 1
@@ -2702,7 +2721,7 @@ class SimulationEngine:
                 except (ValueError, TypeError):
                     total_health += 10
                     total_stress += 5
-        
+
         return {
             "avg_health": total_health / max(human_count, 1),
             "avg_stress": total_stress / max(human_count, 1),
@@ -2710,7 +2729,7 @@ class SimulationEngine:
             "message_count": len(self.message_bus._message_history),
             "active_conversations": len(self.conversation_manager.get_all_active_conversations()),
         }
-    
+
     def start_explicit_conversation(
         self,
         initiator_id: str,
@@ -2721,7 +2740,7 @@ class SimulationEngine:
         return self.conversation_manager.start_explicit_conversation(
             initiator_id, target_agent_ids, initiator_location
         )
-    
+
     def get_agents_at_location(self, location: str) -> list[str]:
         """Get all agent IDs at a specific location"""
         return [
@@ -2729,49 +2748,49 @@ class SimulationEngine:
             for agent_id, loc in self._agent_locations.items()
             if loc == location
         ]
-    
+
     async def pause(self) -> None:
         """Pause the simulation"""
         if self.state == SimulationState.RUNNING:
             self._pause_requested = True
-    
+
     async def resume(self) -> None:
         """Resume a paused simulation"""
         if self.state == SimulationState.PAUSED:
             await self.start()
-    
+
     async def stop(self) -> None:
         """Stop the simulation"""
         self._stop_requested = True
-        
+
         run = await self.db.get(Run, self.run_id)
         if run:
             run.status = RunStatus.CANCELLED
             run.completed_at = datetime.utcnow()
             await self.db.commit()
-        
+
         self.state = SimulationState.IDLE
         self.on_event("run_stopped", {"step": self.current_step})
-    
+
     async def step_once(self) -> None:
         """Execute a single step (manual stepping)"""
         if self.state in (SimulationState.IDLE, SimulationState.PAUSED):
             await self._execute_step()
-    
+
     async def _complete_run(self) -> None:
         """Complete the run and trigger evaluation"""
         self.state = SimulationState.COMPLETING
-        
+
         # Run evaluation
         evaluator = EvaluationAgent()
-        
+
         run_summary = {
             "total_steps": self.current_step,
             "hazard_level": self.world_state.get("hazard_level", 0),
             "outcome": "completed",
             "agents_summary": {},
         }
-        
+
         for agent_id, agent in self.agents.items():
             run_summary["agents_summary"][agent.name] = {
                 **agent.dynamic_state,
@@ -2782,14 +2801,14 @@ class SimulationEngine:
                     m for m in agent.memory if m.get("type") == "message"
                 ]),
             }
-        
+
         all_messages = self.message_bus.get_history()
-        
+
         try:
             evaluation = await evaluator.evaluate_run(run_summary, all_messages)
         except Exception as e:
             evaluation = {"error": str(e)}
-        
+
         # Update run in DB
         run = await self.db.get(Run, self.run_id)
         if run:
@@ -2798,7 +2817,7 @@ class SimulationEngine:
             run.metrics = self._compute_step_metrics()
             run.evaluation = evaluation
             await self.db.commit()
-        
+
         self.state = SimulationState.IDLE
 
         from app.llm.pipeline_logger import log_pipeline_event

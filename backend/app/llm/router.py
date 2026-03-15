@@ -115,8 +115,18 @@ class LLMRouter:
         if settings.llm_backend == "openai":
             from app.llm.openai_client import get_codex_defaults
             codex = get_codex_defaults()
+            # Ignore model_override if it looks like a local model name
+            # (contains ":" for Ollama like qwen3.5:27b, or "/" for vLLM
+            # like Qwen/Qwen3.5-4B). These don't exist on remote endpoints.
+            effective_override = model_override
+            if effective_override and (":" in effective_override or "/" in effective_override):
+                logger.debug(
+                    "Ignoring local model_override %r for OpenAI backend",
+                    effective_override,
+                )
+                effective_override = None
             primary_model = (
-                model_override or role_model
+                effective_override or role_model
                 or settings.openai_model
                 or codex.get("model", "gpt-4o")
             )

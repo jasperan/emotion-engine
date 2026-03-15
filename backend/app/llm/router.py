@@ -1,8 +1,9 @@
 """LLM Router for selecting providers with per-agent-type model routing.
 
-Supports two backends:
+Supports three backends:
 - **vllm**: True parallel inference via continuous batching (preferred)
 - **ollama**: Single-slot inference with semaphore gating (fallback)
+- **openai**: Remote OpenAI-compatible endpoint (OCA / litellm / OpenAI)
 
 Enhanced with retry-at-fallback level: tries primary model, then fallback,
 with logging of which model/attempt succeeded or failed.
@@ -38,14 +39,14 @@ def configure_model_routing(routing: dict[str, str | None]) -> None:
 class LLMRouter:
     """Routes LLM requests to appropriate providers.
 
-    Supports 'ollama' and 'vllm' backends. The active backend is
+    Supports 'ollama', 'vllm', and 'openai' backends. The active backend is
     determined by settings.llm_backend.
     """
 
     _clients: dict[str, LLMClient] = {}
 
     @classmethod
-    def get_client(cls, provider: Literal["ollama", "vllm", "anthropic"] | None = None) -> LLMClient:
+    def get_client(cls, provider: Literal["ollama", "vllm", "openai", "anthropic"] | None = None) -> LLMClient:
         """Get an LLM client for the specified provider.
 
         If provider is None, uses settings.llm_backend to auto-select.
@@ -61,10 +62,13 @@ class LLMRouter:
             elif provider == "vllm":
                 from app.llm.vllm import VLLMClient
                 cls._clients[provider] = VLLMClient()
+            elif provider == "openai":
+                from app.llm.openai_client import OpenAIClient
+                cls._clients[provider] = OpenAIClient()
             elif provider == "anthropic":
                 raise NotImplementedError(
                     "Anthropic/Claude provider not yet implemented. "
-                    "Use 'ollama' or 'vllm' provider for now."
+                    "Use 'ollama', 'vllm', or 'openai' provider."
                 )
             else:
                 raise ValueError(f"Unknown provider: {provider}")
@@ -108,7 +112,15 @@ class LLMRouter:
         role_model = get_model_for_role(agent_role) if agent_role else None
 
         # Choose primary model based on backend
-        if settings.llm_backend == "vllm":
+        if settings.llm_backend == "openai":
+            from app.llm.openai_client import get_codex_defaults
+            codex = get_codex_defaults()
+            primary_model = (
+                model_override or role_model
+                or settings.openai_model
+                or codex.get("model", "gpt-4o")
+            )
+        elif settings.llm_backend == "vllm":
             primary_model = model_override or role_model or settings.vllm_default_model
         else:
             primary_model = model_override or role_model or settings.ollama_default_model
@@ -127,13 +139,12 @@ class LLMRouter:
             if not settings.ollama_auto_fallback:
                 raise
 
-            # For vLLM, try Ollama as fallback backend
-            if settings.llm_backend == "vllm":
+            # For vLLM or OpenAI, try Ollama as fallback backend
+            if settings.llm_backend in ("vllm", "openai"):
                 logger.warning(
-                    f"vLLM failed after retries, falling back to Ollama: {primary_error}"
+                    f"{settings.llm_backend} failed after retries, falling back to Ollama: {primary_error}"
                 )
                 try:
-                    from app.llm.ollama import OllamaClient
                     fallback_client = LLMRouter.get_client("ollama")
                     return await fallback_client.generate(
                         messages=messages,

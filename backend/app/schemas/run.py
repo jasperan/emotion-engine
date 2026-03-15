@@ -9,6 +9,7 @@ class RunCreate(BaseModel):
     scenario_id: str
     seed: int | None = None
     max_steps: int | None = None  # Override scenario default
+    llm_backend: Literal["ollama", "vllm", "openai"] | None = None  # Override default provider
 
 
 class RunResponse(BaseModel):
@@ -25,7 +26,7 @@ class RunResponse(BaseModel):
     created_at: datetime
     started_at: datetime | None
     completed_at: datetime | None
-    
+
     class Config:
         from_attributes = True
 
@@ -44,7 +45,7 @@ class StepResponse(BaseModel):
     actions: list[dict[str, Any]]
     step_metrics: dict[str, Any]
     timestamp: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -60,7 +61,7 @@ class MessageResponse(BaseModel):
     metadata: dict[str, Any] = Field(validation_alias='msg_metadata')
     step_index: int
     timestamp: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -70,4 +71,3 @@ class WebSocketEvent(BaseModel):
     event_type: Literal["step", "message", "agent_action", "state_change", "run_status", "error"]
     data: dict[str, Any]
     timestamp: datetime = Field(default_factory=datetime.utcnow)
-

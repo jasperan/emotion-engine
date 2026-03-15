@@ -5,11 +5,11 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables"""
-    
+
     # Application
     app_name: str = "EmotionSim"
     debug: bool = True
-    
+
     # Database (Oracle DB 26ai Free — primary)
     oracle_db_host: str = "localhost"
     oracle_db_port: int = 1522
@@ -38,9 +38,15 @@ class Settings(BaseSettings):
     ollama_auto_fallback: bool = True
 
     # vLLM (parallel inference backend — preferred for concurrent agent ticks)
-    llm_backend: str = "vllm"  # "ollama" or "vllm"
+    llm_backend: str = "vllm"  # "ollama", "vllm", or "openai"
     vllm_base_url: str = "http://localhost:8010"
     vllm_default_model: str = "Qwen/Qwen3.5-4B"
+
+    # OpenAI-compatible remote endpoint (OCA / litellm / OpenAI)
+    # Empty strings = auto-read from ~/.codex/config.toml at runtime
+    openai_base_url: str = ""
+    openai_model: str = ""
+    openai_api_key: str = ""  # falls back to OPENAI_API_KEY env var
 
     # Claude (optional, for future use)
     anthropic_api_key: str = ""
@@ -87,7 +93,7 @@ class Settings(BaseSettings):
     governance_timeout_seconds: float = 60.0
     governance_timeout_action: str = "deny"
     governance_use_llm_scorer: bool = False
-    
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
@@ -98,4 +104,3 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """Get cached settings instance"""
     return Settings()
-

@@ -1,6 +1,34 @@
 package api
 
-import "time"
+import (
+	"strings"
+	"time"
+)
+
+// FlexTime handles timestamps with or without timezone info.
+type FlexTime struct {
+	time.Time
+}
+
+func (ft *FlexTime) UnmarshalJSON(b []byte) error {
+	s := strings.Trim(string(b), "\"")
+	if s == "null" || s == "" {
+		return nil
+	}
+	for _, layout := range []string{
+		time.RFC3339,
+		"2006-01-02T15:04:05",
+		"2006-01-02 15:04:05",
+	} {
+		if t, err := time.Parse(layout, s); err == nil {
+			ft.Time = t
+			return nil
+		}
+	}
+	t, err := time.Parse(time.RFC3339, s)
+	ft.Time = t
+	return err
+}
 
 // --- Scenarios ---
 
@@ -10,8 +38,8 @@ type ScenarioResponse struct {
 	Description    string                   `json:"description"`
 	Config         map[string]interface{}   `json:"config"`
 	AgentTemplates []map[string]interface{} `json:"agent_templates"`
-	CreatedAt      time.Time                `json:"created_at"`
-	UpdatedAt      time.Time                `json:"updated_at"`
+	CreatedAt      FlexTime                 `json:"created_at"`
+	UpdatedAt      FlexTime                 `json:"updated_at"`
 }
 
 type ScenarioFileResponse struct {
@@ -26,9 +54,10 @@ type ScenarioFileResponse struct {
 // --- Runs ---
 
 type RunCreate struct {
-	ScenarioID string `json:"scenario_id"`
-	Seed       *int   `json:"seed,omitempty"`
-	MaxSteps   *int   `json:"max_steps,omitempty"`
+	ScenarioID string  `json:"scenario_id"`
+	Seed       *int    `json:"seed,omitempty"`
+	MaxSteps   *int    `json:"max_steps,omitempty"`
+	LLMBackend *string `json:"llm_backend,omitempty"`
 }
 
 type RunResponse struct {
@@ -41,9 +70,9 @@ type RunResponse struct {
 	WorldState  map[string]interface{} `json:"world_state"`
 	Metrics     map[string]interface{} `json:"metrics"`
 	Evaluation  map[string]interface{} `json:"evaluation"`
-	CreatedAt   time.Time              `json:"created_at"`
-	StartedAt   *time.Time             `json:"started_at,omitempty"`
-	CompletedAt *time.Time             `json:"completed_at,omitempty"`
+	CreatedAt   FlexTime               `json:"created_at"`
+	StartedAt   *FlexTime              `json:"started_at,omitempty"`
+	CompletedAt *FlexTime              `json:"completed_at,omitempty"`
 }
 
 type RunControl struct {
@@ -82,7 +111,7 @@ type MessageResponse struct {
 	Content     string                 `json:"content"`
 	Metadata    map[string]interface{} `json:"metadata"`
 	StepIndex   int                    `json:"step_index"`
-	Timestamp   time.Time              `json:"timestamp"`
+	Timestamp   FlexTime               `json:"timestamp"`
 }
 
 // --- Steps ---
@@ -94,7 +123,7 @@ type StepResponse struct {
 	StateSnapshot map[string]interface{}   `json:"state_snapshot"`
 	Actions       []map[string]interface{} `json:"actions"`
 	StepMetrics   map[string]interface{}   `json:"step_metrics"`
-	Timestamp     time.Time                `json:"timestamp"`
+	Timestamp     FlexTime                 `json:"timestamp"`
 }
 
 // --- WebSocket ---

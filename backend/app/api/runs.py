@@ -28,13 +28,14 @@ async def create_run(
 ):
     """Create a new run for a scenario"""
     manager = SimulationManager.get_instance()
-    
+
     try:
         run = await manager.create_run(
             db=db,
             scenario_id=data.scenario_id,
             seed=data.seed,
             max_steps=data.max_steps,
+            llm_backend=data.llm_backend,
         )
         return run
     except ValueError as e:
@@ -50,10 +51,10 @@ async def list_runs(
 ):
     """List runs, optionally filtered by scenario"""
     query = select(Run).order_by(Run.created_at.desc())
-    
+
     if scenario_id:
         query = query.where(Run.scenario_id == scenario_id)
-    
+
     result = await db.execute(query.offset(skip).limit(limit))
     return result.scalars().all()
 
@@ -78,11 +79,11 @@ async def control_run(
 ):
     """Control a run (start, pause, resume, stop, step)"""
     manager = SimulationManager.get_instance()
-    
+
     run = await db.get(Run, run_id)
     if not run:
         raise HTTPException(status_code=404, detail="Run not found")
-    
+
     try:
         if control.action == "start":
             await manager.start_run(db, run_id)
@@ -94,7 +95,7 @@ async def control_run(
             await manager.stop_run(run_id)
         elif control.action == "step":
             await manager.step_run(run_id)
-        
+
         return {"status": "ok", "action": control.action, "run_id": run_id}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -214,12 +215,12 @@ async def get_run_messages(
 ):
     """Get messages for a run, optionally filtered by agent"""
     query = select(Message).where(Message.run_id == run_id)
-    
+
     if agent_id:
         query = query.where(
             (Message.from_agent_id == agent_id) | (Message.to_target == agent_id)
         )
-    
+
     result = await db.execute(
         query.order_by(Message.step_index, Message.timestamp)
         .offset(skip)
@@ -238,13 +239,12 @@ async def delete_run(
     manager = SimulationManager.get_instance()
     await manager.stop_run(run_id)
     manager.cleanup_run(run_id)
-    
+
     run = await db.get(Run, run_id)
     if not run:
         raise HTTPException(status_code=404, detail="Run not found")
-    
+
     await db.delete(run)
     await db.commit()
-    
-    return {"status": "deleted", "id": run_id}
 
+    return {"status": "deleted", "id": run_id}

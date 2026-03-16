@@ -85,15 +85,16 @@ class TestTickCreatesPlanOnFirstCall:
         persona = _make_persona()
         agent = HumanAgent(name="Test Agent", persona=persona)
 
-        # Mock the LLM client to return think, plan, act responses in order
+        # Mock LLMRouter.generate_with_fallback to return think, plan, act responses in order
         mock_generate = AsyncMock(
             side_effect=[_think_response(), _plan_response(), _act_response()]
         )
-        agent._llm_client = MagicMock()
-        agent._llm_client.generate = mock_generate
 
         world_state = _make_world_state(current_step=1)
-        result = await agent.tick(world_state, messages=[])
+
+        with patch("app.agents.human.LLMRouter.generate_with_fallback", mock_generate), \
+             patch("app.agents.base.LLMRouter.generate_with_fallback", mock_generate):
+            result = await agent.tick(world_state, messages=[])
 
         # Should have called LLM 3 times: think, plan, act
         assert mock_generate.call_count == 3
@@ -132,11 +133,12 @@ class TestSecondTickReusesPlan:
 
         # Mock LLM - should only be called once (ACT phase)
         mock_generate = AsyncMock(return_value=_act_response())
-        agent._llm_client = MagicMock()
-        agent._llm_client.generate = mock_generate
 
         world_state = _make_world_state(current_step=2)
-        result = await agent.tick(world_state, messages=[])
+
+        with patch("app.agents.human.LLMRouter.generate_with_fallback", mock_generate), \
+             patch("app.agents.base.LLMRouter.generate_with_fallback", mock_generate):
+            result = await agent.tick(world_state, messages=[])
 
         # Should have called LLM only once (ACT only)
         assert mock_generate.call_count == 1

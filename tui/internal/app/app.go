@@ -1,6 +1,8 @@
 package app
 
 import (
+	"fmt"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/jasperan/emotion-engine/tui/internal/api"
 	"github.com/jasperan/emotion-engine/tui/internal/components"
@@ -22,6 +24,7 @@ const (
 	ScreenLauncher
 	ScreenDashboard
 	ScreenHistory
+	ScreenReplay
 )
 
 // SwitchScreenMsg requests a transition to a different screen.
@@ -33,6 +36,11 @@ type SwitchScreenMsg struct {
 // WSEventMsg wraps a WebSocket event for the Bubble Tea update loop.
 type WSEventMsg struct {
 	Event api.WSMessage
+}
+
+// WSErrorMsg signals a WebSocket connection failure.
+type WSErrorMsg struct {
+	Err error
 }
 
 // App is the root Bubble Tea model.
@@ -50,6 +58,7 @@ type App struct {
 	launcher  LauncherModel
 	dashboard DashboardModel
 	history   HistoryModel
+	replay    ReplayModel
 
 	Version string
 
@@ -116,6 +125,12 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return a, cmd
 		}
 		return a, nil
+
+	case WSErrorMsg:
+		if a.screen == ScreenDashboard {
+			a.dashboard.errMsg = "WebSocket: " + msg.Err.Error()
+		}
+		return a, nil
 	}
 
 	// Delegate to current screen
@@ -140,6 +155,10 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		var cmd tea.Cmd
 		a.history, cmd = a.history.Update(msg)
 		return a, cmd
+	case ScreenReplay:
+		var cmd tea.Cmd
+		a.replay, cmd = a.replay.Update(msg)
+		return a, cmd
 	}
 
 	return a, nil
@@ -160,6 +179,8 @@ func (a App) View() string {
 		content = a.dashboard.View(a.width, a.height)
 	case ScreenHistory:
 		content = a.history.View(a.width, a.height)
+	case ScreenReplay:
+		content = a.replay.View(a.width, a.height)
 	default:
 		content = "Unknown screen"
 	}
@@ -203,10 +224,16 @@ func (a App) switchScreen(msg SwitchScreenMsg) (tea.Model, tea.Cmd) {
 		if a.programRef != nil && a.programRef.P != nil {
 			prog := a.programRef.P
 			wsClient := a.wsClient
+			wsClient.SetDisconnectHandler(func() {
+				prog.Send(WSErrorMsg{Err: fmt.Errorf("connection lost")})
+			})
 			go func() {
-				_ = wsClient.Connect(runID, func(wsMsg api.WSMessage) {
+				err := wsClient.Connect(runID, func(wsMsg api.WSMessage) {
 					prog.Send(WSEventMsg{Event: wsMsg})
 				})
+				if err != nil {
+					prog.Send(WSErrorMsg{Err: err})
+				}
 			}()
 		}
 
@@ -215,6 +242,11 @@ func (a App) switchScreen(msg SwitchScreenMsg) (tea.Model, tea.Cmd) {
 	case ScreenHistory:
 		a.history = NewHistoryModel(a.client)
 		return a, a.history.Init()
+
+	case ScreenReplay:
+		runID, _ := msg.Data.(string)
+		a.replay = NewReplayModel(a.client, runID)
+		return a, a.replay.Init()
 	}
 
 	return a, nil

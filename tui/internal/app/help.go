@@ -92,6 +92,18 @@ func (h HelpModel) bindingsForScreen(screen Screen) []keyBinding {
 			{"↑/↓", "Navigate"},
 			{"q", "Back"},
 		}
+	case ScreenReplay:
+		return []keyBinding{
+			{"left/h", "Previous step"},
+			{"right/l", "Next step"},
+			{"H/L", "Back/forward 5 steps"},
+			{"Home/End", "First/last step"},
+			{"Space", "Play/pause"},
+			{"+/-", "Speed up/slow down"},
+			{"d", "Toggle diff view"},
+			{"e", "Jump to evaluation"},
+			{"q", "Back to history"},
+		}
 	default:
 		return nil
 	}

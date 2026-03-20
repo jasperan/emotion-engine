@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -112,6 +113,13 @@ func (c *Client) GetRunMessages(id string, limit int) ([]MessageResponse, error)
 	return result, nil
 }
 
+// GetRunSteps returns steps for a given run with pagination.
+func (c *Client) GetRunSteps(runID string, skip, limit int) ([]StepResponse, error) {
+	var steps []StepResponse
+	err := c.get(fmt.Sprintf("/api/runs/%s/steps?skip=%d&limit=%d", runID, skip, limit), &steps)
+	return steps, err
+}
+
 // DeleteRun deletes a run by ID.
 func (c *Client) DeleteRun(id string) error {
 	req, err := http.NewRequest(http.MethodDelete, c.baseURL+"/api/runs/"+id, nil)
@@ -130,9 +138,27 @@ func (c *Client) DeleteRun(id string) error {
 	return nil
 }
 
-// Ping checks if the backend is reachable.
+// Ping checks if the backend is reachable with a short timeout.
 func (c *Client) Ping() error {
-	return c.get("/health", nil)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL+"/health", nil)
+	if err != nil {
+		return fmt.Errorf("creating health request: %w", err)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("GET /health: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("health check HTTP %d: %s", resp.StatusCode, string(body))
+	}
+	return nil
 }
 
 // --- Internal helpers ---

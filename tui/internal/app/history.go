@@ -139,20 +139,22 @@ func (m HistoryModel) Update(msg tea.Msg) (HistoryModel, tea.Cmd) {
 		switch msg.String() {
 		case "enter":
 			if item, ok := m.list.SelectedItem().(runItem); ok {
+				targetScreen := ScreenDashboard
+				if item.run.Status == "completed" || item.run.Status == "failed" || item.run.Status == "cancelled" {
+					targetScreen = ScreenReplay
+				}
 				return m, func() tea.Msg {
-					return SwitchScreenMsg{
-						Screen: ScreenDashboard,
-						Data:   item.run.ID,
-					}
+					return SwitchScreenMsg{Screen: targetScreen, Data: item.run.ID}
 				}
 			}
 		case "r":
 			if item, ok := m.list.SelectedItem().(runItem); ok {
+				targetScreen := ScreenDashboard
+				if item.run.Status == "completed" || item.run.Status == "failed" || item.run.Status == "cancelled" {
+					targetScreen = ScreenReplay
+				}
 				return m, func() tea.Msg {
-					return SwitchScreenMsg{
-						Screen: ScreenDashboard,
-						Data:   item.run.ID,
-					}
+					return SwitchScreenMsg{Screen: targetScreen, Data: item.run.ID}
 				}
 			}
 		case "q", "esc":

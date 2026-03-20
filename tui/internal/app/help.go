@@ -66,6 +66,7 @@ func (h HelpModel) bindingsForScreen(screen Screen) []keyBinding {
 			{"↑/↓", "Navigate"},
 			{"/", "Filter"},
 			{"h", "History"},
+			{"a", "Analytics"},
 			{"q", "Back"},
 		}
 	case ScreenLauncher:
@@ -90,6 +91,14 @@ func (h HelpModel) bindingsForScreen(screen Screen) []keyBinding {
 			{"Enter", "View run"},
 			{"r", "Replay run"},
 			{"↑/↓", "Navigate"},
+			{"a", "Analytics"},
+			{"q", "Back"},
+		}
+	case ScreenAnalytics:
+		return []keyBinding{
+			{"s", "Cycle scenario filter"},
+			{"j/k", "Select run"},
+			{"Enter", "Open in Replay"},
 			{"q", "Back"},
 		}
 	case ScreenReplay:

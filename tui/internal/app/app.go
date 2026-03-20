@@ -25,6 +25,7 @@ const (
 	ScreenDashboard
 	ScreenHistory
 	ScreenReplay
+	ScreenAnalytics
 )
 
 // SwitchScreenMsg requests a transition to a different screen.
@@ -59,6 +60,7 @@ type App struct {
 	dashboard DashboardModel
 	history   HistoryModel
 	replay    ReplayModel
+	analytics AnalyticsModel
 
 	Version string
 
@@ -159,6 +161,10 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		var cmd tea.Cmd
 		a.replay, cmd = a.replay.Update(msg)
 		return a, cmd
+	case ScreenAnalytics:
+		var cmd tea.Cmd
+		a.analytics, cmd = a.analytics.Update(msg)
+		return a, cmd
 	}
 
 	return a, nil
@@ -181,6 +187,8 @@ func (a App) View() string {
 		content = a.history.View(a.width, a.height)
 	case ScreenReplay:
 		content = a.replay.View(a.width, a.height)
+	case ScreenAnalytics:
+		content = a.analytics.View(a.width, a.height)
 	default:
 		content = "Unknown screen"
 	}
@@ -247,6 +255,10 @@ func (a App) switchScreen(msg SwitchScreenMsg) (tea.Model, tea.Cmd) {
 		runID, _ := msg.Data.(string)
 		a.replay = NewReplayModel(a.client, runID)
 		return a, a.replay.Init()
+
+	case ScreenAnalytics:
+		a.analytics = NewAnalyticsModel(a.client)
+		return a, a.analytics.Init()
 	}
 
 	return a, nil

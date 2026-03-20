@@ -157,6 +157,10 @@ func (m HistoryModel) Update(msg tea.Msg) (HistoryModel, tea.Cmd) {
 					return SwitchScreenMsg{Screen: targetScreen, Data: item.run.ID}
 				}
 			}
+		case "a":
+			return m, func() tea.Msg {
+				return SwitchScreenMsg{Screen: ScreenAnalytics}
+			}
 		case "q", "esc":
 			return m, func() tea.Msg {
 				return SwitchScreenMsg{Screen: ScreenScenarios}

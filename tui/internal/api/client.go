@@ -138,6 +138,26 @@ func (c *Client) DeleteRun(id string) error {
 	return nil
 }
 
+// --- Datalake ---
+
+// DatalakeStats returns aggregated statistics from the datalake.
+func (c *Client) DatalakeStats() (map[string]interface{}, error) {
+	var stats map[string]interface{}
+	err := c.get("/api/datalake/stats", &stats)
+	return stats, err
+}
+
+// DatalakeRuns returns runs from the datalake, optionally filtered by scenario name.
+func (c *Client) DatalakeRuns(scenarioName string, limit int) ([]map[string]interface{}, error) {
+	path := fmt.Sprintf("/api/datalake/runs?limit=%d", limit)
+	if scenarioName != "" {
+		path += "&scenario_name=" + scenarioName
+	}
+	var runs []map[string]interface{}
+	err := c.get(path, &runs)
+	return runs, err
+}
+
 // Ping checks if the backend is reachable with a short timeout.
 func (c *Client) Ping() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

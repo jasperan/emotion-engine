@@ -11,7 +11,8 @@ var (
 	Muted   = lipgloss.Color("#636366")
 	Surface = lipgloss.Color("#1C1C1E")
 	Text    = lipgloss.Color("#E5E5EA")
-	Dim     = lipgloss.Color("#48484A")
+	Dim       = lipgloss.Color("#48484A")
+	Secondary = lipgloss.Color("#3A3A9E") // dimmer Primary for unfocused selections
 )
 
 // Panel styles.

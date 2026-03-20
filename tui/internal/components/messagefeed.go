@@ -8,6 +8,20 @@ import (
 	"github.com/jasperan/emotion-engine/tui/internal/theme"
 )
 
+// FeedFilter controls which message types are shown in the feed.
+type FeedFilter int
+
+const (
+	FilterAll FeedFilter = iota
+	FilterSpeech
+	FilterNegotiations
+	FilterMovement
+)
+
+var feedFilterNames = [...]string{"All", "Speech", "Negotiations", "Movement"}
+
+func (f FeedFilter) String() string { return feedFilterNames[f] }
+
 // FeedEntry represents a single message in the feed.
 type FeedEntry struct {
 	AgentName   string
@@ -20,6 +34,7 @@ type FeedEntry struct {
 // MessageFeedData holds data for rendering the message feed.
 type MessageFeedData struct {
 	Entries   []FeedEntry
+	Filter    FeedFilter
 	ScrollPos int
 	Height    int
 	Width     int
@@ -31,6 +46,33 @@ func RenderMessageFeed(d MessageFeedData) string {
 		return theme.MutedText.Render("No messages yet...")
 	}
 
+	entries := d.Entries
+	if d.Filter != FilterAll {
+		var filtered []FeedEntry
+		for _, e := range entries {
+			switch d.Filter {
+			case FilterSpeech:
+				if e.MessageType == "" || e.MessageType == "direct" || e.MessageType == "room" ||
+					e.MessageType == "broadcast" || e.MessageType == "conversation" || e.MessageType == "message" {
+					filtered = append(filtered, e)
+				}
+			case FilterNegotiations:
+				if e.MessageType == "negotiation" || e.MessageType == "proposal" {
+					filtered = append(filtered, e)
+				}
+			case FilterMovement:
+				if e.MessageType == "movement" {
+					filtered = append(filtered, e)
+				}
+			}
+		}
+		entries = filtered
+	}
+
+	if len(entries) == 0 {
+		return theme.MutedText.Render("No messages matching filter...")
+	}
+
 	contentWidth := d.Width - 4 // padding
 	if contentWidth < 1 {
 		contentWidth = 1
@@ -39,7 +81,7 @@ func RenderMessageFeed(d MessageFeedData) string {
 	var rendered []string
 	currentLocation := ""
 
-	for _, entry := range d.Entries {
+	for _, entry := range entries {
 		// Location header when location changes
 		if entry.Location != currentLocation {
 			currentLocation = entry.Location

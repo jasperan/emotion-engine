@@ -82,6 +82,7 @@ type DashboardModel struct {
 
 	negotiations []components.NegotiationEntry
 	negScroll    int
+	feedFilter   components.FeedFilter
 
 	refreshNeeded bool
 
@@ -280,6 +281,12 @@ func (m *DashboardModel) handleWSEvent(evt api.WSMessage) {
 		to, _ := evt.Data["to"].(string)
 		m.updateMapAgentLocation(agentName, from, to)
 		m.removeTravel(agentName)
+		m.feedEntries = append(m.feedEntries, components.FeedEntry{
+			AgentName:   agentName,
+			Content:     fmt.Sprintf("Moved from %s to %s", from, to),
+			MessageType: "movement",
+			Step:        int(safeFloat(evt.Data, "step")),
+		})
 
 	case "agent_travelling":
 		agentName, _ := evt.Data["agent_name"].(string)
@@ -293,6 +300,12 @@ func (m *DashboardModel) handleWSEvent(evt api.WSMessage) {
 		from, _ := evt.Data["from"].(string)
 		to, _ := evt.Data["to"].(string)
 		m.updateTravel(agentName, from, to, 0.0)
+		m.feedEntries = append(m.feedEntries, components.FeedEntry{
+			AgentName:   agentName,
+			Content:     fmt.Sprintf("Started travelling from %s to %s", from, to),
+			MessageType: "movement",
+			Step:        int(safeFloat(evt.Data, "step")),
+		})
 
 	case "location_discovered":
 		locName, _ := evt.Data["location"].(string)
@@ -371,6 +384,12 @@ func (m *DashboardModel) handleWSEvent(evt api.WSMessage) {
 			Terms:      terms,
 			Status:     components.NegPending,
 			Step:       step,
+		})
+		m.feedEntries = append(m.feedEntries, components.FeedEntry{
+			AgentName:   proposer,
+			Content:     fmt.Sprintf("Proposed: %s", terms),
+			MessageType: "negotiation",
+			Step:        step,
 		})
 
 	case "counter_proposal":
@@ -552,6 +571,11 @@ func (m DashboardModel) handleKey(msg tea.KeyMsg) (DashboardModel, tea.Cmd) {
 	case "tab":
 		m.panelMode = (m.panelMode + 1) % 4
 
+	case "f":
+		if m.panelMode == PanelFeed {
+			m.feedFilter = (m.feedFilter + 1) % 4
+		}
+
 	case "g":
 		if m.mode == ModeFocus {
 			m.mode = ModeGrid
@@ -708,6 +732,7 @@ func (m DashboardModel) renderFocusMode(width, height int) string {
 
 		feed := components.RenderMessageFeed(components.MessageFeedData{
 			Entries:   m.feedEntries,
+			Filter:    m.feedFilter,
 			ScrollPos: m.feedScroll,
 			Height:    feedHeight - 2,
 			Width:     rightWidth - 2,

@@ -16,6 +16,7 @@ type StatusBarData struct {
 	MaxSteps  int
 	TokPerSec float64
 	Hints     []KeyHint
+	PanelName string
 }
 
 // KeyHint represents a keyboard shortcut hint.
@@ -36,6 +37,9 @@ func RenderStatusBar(d StatusBarData, width int) string {
 
 	statusStyle := lipgloss.NewStyle().Foreground(theme.StatusColor(d.RunStatus))
 	left := fmt.Sprintf(" %s %s", connDot, statusStyle.Render(d.RunStatus))
+	if d.PanelName != "" {
+		left += "  " + theme.Subtitle.Render("["+d.PanelName+"]")
+	}
 
 	// Center: step counter
 	center := fmt.Sprintf("Step %d/%d", d.Step, d.MaxSteps)

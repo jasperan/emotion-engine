@@ -76,7 +76,8 @@ func (h HelpModel) bindingsForScreen(screen Screen) []keyBinding {
 		}
 	case ScreenDashboard:
 		return []keyBinding{
-			{"Tab", "Toggle Focus/Grid"},
+			{"Tab", "Panel mode"},
+			{"g", "Grid toggle"},
 			{"Space", "Pause/Resume"},
 			{"s", "Stop run"},
 			{"1-9", "Select agent"},

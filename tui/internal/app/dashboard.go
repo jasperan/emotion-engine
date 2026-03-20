@@ -19,6 +19,20 @@ const (
 	ModeGrid
 )
 
+// PanelMode selects which panel is shown in the right column of Focus mode.
+type PanelMode int
+
+const (
+	PanelFeed PanelMode = iota
+	PanelMap
+	PanelRelationships
+	PanelNegotiations
+)
+
+var panelModeNames = [...]string{"Feed", "Map", "Relationships", "Negotiations"}
+
+func (p PanelMode) String() string { return panelModeNames[p] }
+
 // agentStream tracks per-agent token streaming state.
 type agentStream struct {
 	name      string
@@ -37,6 +51,7 @@ type dashboardLoadedMsg struct {
 }
 
 type controlErrorMsg struct{ err error }
+type agentsRefreshedMsg struct{ agents []api.AgentStatus }
 
 // --- DashboardModel ---
 
@@ -48,6 +63,7 @@ type DashboardModel struct {
 	runID      string
 
 	mode        DashboardMode
+	panelMode   PanelMode
 	run         *api.RunResponse
 	agents      []api.AgentStatus
 	streams     map[string]*agentStream
@@ -56,6 +72,8 @@ type DashboardModel struct {
 	selectedIdx int
 	hazardLevel float64
 	locations   []components.LocationInfo
+
+	refreshNeeded bool
 
 	err    error
 	errMsg string
@@ -114,6 +132,32 @@ func (m DashboardModel) Update(msg tea.Msg) (DashboardModel, tea.Cmd) {
 
 	case WSEventMsg:
 		m.handleWSEvent(msg.Event)
+		if m.refreshNeeded {
+			m.refreshNeeded = false
+			client := m.client
+			runID := m.runID
+			return m, func() tea.Msg {
+				agents, err := client.GetRunAgents(runID)
+				if err != nil {
+					return nil
+				}
+				return agentsRefreshedMsg{agents: agents}
+			}
+		}
+		return m, nil
+
+	case agentsRefreshedMsg:
+		m.agents = msg.agents
+		// Ensure streams exist for all agents (handles late-joining agents)
+		for _, a := range m.agents {
+			if _, ok := m.streams[a.ID]; !ok {
+				m.streams[a.ID] = &agentStream{name: a.Name}
+			}
+		}
+		// Re-derive locations from refreshed agent data
+		if m.run != nil && m.run.WorldState != nil {
+			m.updateWorldState(m.run.WorldState)
+		}
 		return m, nil
 
 	case tea.KeyMsg:
@@ -129,12 +173,21 @@ func (m *DashboardModel) handleWSEvent(evt api.WSMessage) {
 	switch evt.Event {
 	case "token_stream":
 		agentID, _ := evt.Data["agent_id"].(string)
-		token, _ := evt.Data["token"].(string)
+		// Backend sends "tokens" (plural, buffered chunks)
+		token, _ := evt.Data["tokens"].(string)
+		if token == "" {
+			// Fallback to singular "token" for compatibility
+			token, _ = evt.Data["token"].(string)
+		}
 		if s, ok := m.streams[agentID]; ok {
+			if !s.active {
+				// New generation starting — clear previous step's output
+				s.tokens.Reset()
+			}
 			s.active = true
 			s.tokens.WriteString(token)
 		}
-		m.throughput.Add(1)
+		m.throughput.Add(len(token))
 
 	case "token_done":
 		agentID, _ := evt.Data["agent_id"].(string)
@@ -145,7 +198,11 @@ func (m *DashboardModel) handleWSEvent(evt api.WSMessage) {
 		}
 
 	case "step_completed":
-		step, _ := evt.Data["step_index"].(float64)
+		// Backend sends "step" for step_completed events; fall back to "step_index"
+		step, ok := evt.Data["step"].(float64)
+		if !ok {
+			step, _ = evt.Data["step_index"].(float64)
+		}
 		if m.run != nil {
 			m.run.CurrentStep = int(step)
 			// Update world state if present
@@ -154,11 +211,12 @@ func (m *DashboardModel) handleWSEvent(evt api.WSMessage) {
 				m.updateWorldState(ws)
 			}
 		}
-		// Update stream step counters and clear completed token buffers
+		// Update stream step counters (tokens preserved until next generation starts)
 		for _, s := range m.streams {
 			s.step = int(step)
 		}
-		m.clearCompletedStreams()
+		// Refresh agent data to get updated dynamic_state (locations, health, etc.)
+		m.refreshNeeded = true
 
 	case "message", "scene_turn":
 		agentName, _ := evt.Data["agent_name"].(string)
@@ -181,6 +239,10 @@ func (m *DashboardModel) handleWSEvent(evt api.WSMessage) {
 			Location:    location,
 			Step:        int(step),
 		})
+		// Cap feed size to prevent sluggish rendering on long runs
+		if len(m.feedEntries) > 500 {
+			m.feedEntries = m.feedEntries[len(m.feedEntries)-500:]
+		}
 
 	case "run_completed", "run_stopped", "run_paused", "run_started":
 		status := strings.TrimPrefix(evt.Event, "run_")
@@ -196,21 +258,32 @@ func (m *DashboardModel) updateWorldState(ws map[string]interface{}) {
 		m.hazardLevel = hl
 	}
 
+	// Build location list from world_state.locations keys
+	locAgents := make(map[string][]string) // location_name -> agent names
+
 	if locs, ok := ws["locations"].(map[string]interface{}); ok {
-		m.locations = nil
-		for name, v := range locs {
-			loc := components.LocationInfo{Name: name}
-			if locData, ok := v.(map[string]interface{}); ok {
-				if agents, ok := locData["agents"].([]interface{}); ok {
-					for _, a := range agents {
-						if aName, ok := a.(string); ok {
-							loc.AgentNames = append(loc.AgentNames, aName)
-						}
-					}
-				}
+		for name := range locs {
+			if _, exists := locAgents[name]; !exists {
+				locAgents[name] = nil
 			}
-			m.locations = append(m.locations, loc)
 		}
+	}
+
+	// Populate agent positions from their dynamic_state.location
+	for _, a := range m.agents {
+		if ds := a.DynamicState; ds != nil {
+			if loc, ok := ds["location"].(string); ok && loc != "" {
+				locAgents[loc] = append(locAgents[loc], a.Name)
+			}
+		}
+	}
+
+	m.locations = nil
+	for name, agents := range locAgents {
+		m.locations = append(m.locations, components.LocationInfo{
+			Name:       name,
+			AgentNames: agents,
+		})
 	}
 }
 
@@ -218,6 +291,9 @@ func (m *DashboardModel) updateWorldState(ws map[string]interface{}) {
 func (m DashboardModel) handleKey(msg tea.KeyMsg) (DashboardModel, tea.Cmd) {
 	switch msg.String() {
 	case "tab":
+		m.panelMode = (m.panelMode + 1) % 4
+
+	case "g":
 		if m.mode == ModeFocus {
 			m.mode = ModeGrid
 		} else {
@@ -315,7 +391,8 @@ func (m DashboardModel) View(width, height int) string {
 
 	// Status bar
 	hints := []components.KeyHint{
-		{Key: "Tab", Desc: "mode"},
+		{Key: "Tab", Desc: "panel"},
+		{Key: "g", Desc: "grid"},
 		{Key: "F1", Desc: "help"},
 	}
 	if !m.readOnly {
@@ -334,6 +411,7 @@ func (m DashboardModel) View(width, height int) string {
 		MaxSteps:  m.run.MaxSteps,
 		TokPerSec: m.throughput.CurrentRate(),
 		Hints:     hints,
+		PanelName: m.panelMode.String(),
 	}, width)
 
 	sparkline := components.RenderThroughput(m.throughput, width)
@@ -351,26 +429,40 @@ func (m DashboardModel) renderFocusMode(width, height int) string {
 	left := lipgloss.JoinVertical(lipgloss.Left, agentPanes...)
 	left = lipgloss.NewStyle().Width(leftWidth).Height(height).Render(left)
 
-	// Right: message feed (top 2/3) + world state (bottom 1/3)
-	feedHeight := height * 2 / 3
-	worldHeight := height - feedHeight
+	// Right: panel mode dispatch
+	rightHeight := height
+	var right string
+	switch m.panelMode {
+	case PanelFeed:
+		feedHeight := rightHeight * 2 / 3
+		worldHeight := rightHeight - feedHeight
 
-	feed := components.RenderMessageFeed(components.MessageFeedData{
-		Entries:   m.feedEntries,
-		ScrollPos: m.feedScroll,
-		Height:    feedHeight - 2,
-		Width:     rightWidth - 2,
-	})
-	feedPanel := theme.Panel.Width(rightWidth - 2).Height(feedHeight - 2).Render(feed)
+		feed := components.RenderMessageFeed(components.MessageFeedData{
+			Entries:   m.feedEntries,
+			ScrollPos: m.feedScroll,
+			Height:    feedHeight - 2,
+			Width:     rightWidth - 2,
+		})
+		feedPanel := theme.Panel.Width(rightWidth - 2).Height(feedHeight - 2).Render(feed)
 
-	world := components.RenderWorldState(components.WorldStateData{
-		HazardLevel: m.hazardLevel,
-		Locations:   m.locations,
-		Width:       rightWidth - 2,
-	})
-	worldPanel := theme.Panel.Width(rightWidth - 2).Height(worldHeight - 2).Render(world)
+		world := components.RenderWorldState(components.WorldStateData{
+			HazardLevel: m.hazardLevel,
+			Locations:   m.locations,
+			Width:       rightWidth - 2,
+		})
+		worldPanel := theme.Panel.Width(rightWidth - 2).Height(worldHeight - 2).Render(world)
 
-	right := lipgloss.JoinVertical(lipgloss.Left, feedPanel, worldPanel)
+		right = lipgloss.JoinVertical(lipgloss.Left, feedPanel, worldPanel)
+	case PanelMap:
+		right = theme.Panel.Width(rightWidth - 2).Height(rightHeight - 2).Render(
+			theme.MutedText.Render("Spatial Map (coming soon...)"))
+	case PanelRelationships:
+		right = theme.Panel.Width(rightWidth - 2).Height(rightHeight - 2).Render(
+			theme.MutedText.Render("Relationship Web (coming soon...)"))
+	case PanelNegotiations:
+		right = theme.Panel.Width(rightWidth - 2).Height(rightHeight - 2).Render(
+			theme.MutedText.Render("Negotiation Theater (coming soon...)"))
+	}
 	right = lipgloss.NewStyle().Width(rightWidth).Height(height).Render(right)
 
 	return lipgloss.JoinHorizontal(lipgloss.Top, left, right)
@@ -445,14 +537,4 @@ func (m DashboardModel) buildSingleAgentPane(idx int, width, height int) string 
 	}
 
 	return components.RenderAgentPane(data, width, height)
-}
-
-// --- Utility: step_completed handler clears completed streams ---
-
-func (m *DashboardModel) clearCompletedStreams() {
-	for _, s := range m.streams {
-		if !s.active {
-			s.tokens.Reset()
-		}
-	}
 }

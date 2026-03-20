@@ -536,5 +536,34 @@ func (m DashboardModel) buildSingleAgentPane(idx int, width, height int) string 
 		data.Step = stream.step
 	}
 
+	// Extract persona fields
+	if persona := agent.Persona; persona != nil {
+		if occ, ok := persona["occupation"].(string); ok {
+			data.Occupation = occ
+		}
+		if age, ok := persona["age"].(float64); ok {
+			data.Age = int(age)
+		}
+	}
+
+	// Extract dynamic state
+	if ds := agent.DynamicState; ds != nil {
+		if h, ok := ds["health"].(float64); ok {
+			data.Health = int(h)
+		}
+		if s, ok := ds["stress_level"].(float64); ok {
+			data.Stress = int(s)
+		}
+		if loc, ok := ds["location"].(string); ok {
+			data.Location = loc
+		}
+	}
+
+	// Extract plan
+	if plan := agent.CurrentPlan; plan != nil {
+		data.PlanGoal = plan.Goal
+		data.PlanProgress = plan.StepProgress
+	}
+
 	return components.RenderAgentPane(data, width, height)
 }

@@ -68,10 +68,11 @@ func RenderAgentPane(d AgentPaneData, width, height int) string {
 	var extraLines []string
 
 	// Line 2: HP / Stress / Location
-	hasStats := d.Health > 0 || d.Stress > 0 || d.Location != ""
-	if hasStats {
+	hasEnrichment := d.Occupation != "" || d.Age > 0 || d.Location != "" || d.Health > 0 || d.Stress > 0
+	if hasEnrichment {
 		var statParts []string
-		if d.Health > 0 {
+		// Always show HP/ST when enrichment data is present (HP:0 = dead is valid)
+		{
 			var hpColor lipgloss.Color
 			switch {
 			case d.Health >= 50:
@@ -83,7 +84,7 @@ func RenderAgentPane(d AgentPaneData, width, height int) string {
 			}
 			statParts = append(statParts, lipgloss.NewStyle().Foreground(hpColor).Render(fmt.Sprintf("HP:%d", d.Health)))
 		}
-		if d.Stress > 0 {
+		{
 			var stColor lipgloss.Color
 			switch {
 			case d.Stress <= 60:

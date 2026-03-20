@@ -77,6 +77,9 @@ type DashboardModel struct {
 	mapLocations []components.MapLocation
 	mapTravels   []components.MapTravel
 
+	relAgents []components.RelAgent
+	relEdges  []components.RelEdge
+
 	refreshNeeded bool
 
 	err    error
@@ -133,6 +136,13 @@ func (m DashboardModel) Update(msg tea.Msg) (DashboardModel, tea.Cmd) {
 			m.mapLocations = append(m.mapLocations, components.MapLocation{
 				Name:   loc.Name,
 				Agents: loc.AgentNames,
+			})
+		}
+		// Initialize relationship web nodes from agent list
+		for _, agent := range m.agents {
+			m.relAgents = append(m.relAgents, components.RelAgent{
+				ID:   agent.ID,
+				Name: agent.Name,
 			})
 		}
 		return m, nil
@@ -296,6 +306,30 @@ func (m *DashboardModel) handleWSEvent(evt api.WSMessage) {
 			MessageType: "error",
 			Step:        int(step),
 		})
+
+	case "vouch_for":
+		voucher, _ := evt.Data["voucher"].(string)
+		subject, _ := evt.Data["subject"].(string)
+		m.addOrUpdateRelEdge(voucher, subject, components.RelTrust, 0.7, "vouched")
+
+	case "proposal_accepted":
+		// Try to extract parties from agreement and create alliance edge
+		if agreement, ok := evt.Data["agreement"].(map[string]interface{}); ok {
+			if parties, ok := agreement["parties"].([]interface{}); ok && len(parties) >= 2 {
+				a, _ := parties[0].(string)
+				b, _ := parties[1].(string)
+				if a != "" && b != "" {
+					m.addOrUpdateRelEdge(a, b, components.RelAlliance, 0.8, "agreement")
+				}
+			}
+		}
+
+	case "proposal_rejected":
+		agentID, _ := evt.Data["agent_id"].(string)
+		_ = m.agentNameByID(agentID) // limited info available
+
+	case "emotion_contagion":
+		// Placeholder: could update relationship edges based on emotional spread
 	}
 }
 
@@ -402,6 +436,36 @@ func removeStr(ss []string, s string) []string {
 		}
 	}
 	return ss
+}
+
+// addOrUpdateRelEdge upserts a relationship edge between two agents by name.
+func (m *DashboardModel) addOrUpdateRelEdge(a, b string, edgeType components.RelEdgeType, strength float64, label string) {
+	for i, e := range m.relEdges {
+		if (e.AgentA == a && e.AgentB == b) || (e.AgentA == b && e.AgentB == a) {
+			m.relEdges[i].Type = edgeType
+			m.relEdges[i].Strength = strength
+			if label != "" {
+				m.relEdges[i].Label = label
+			}
+			return
+		}
+	}
+	m.relEdges = append(m.relEdges, components.RelEdge{
+		AgentA: a, AgentB: b, Type: edgeType, Strength: strength, Label: label,
+	})
+}
+
+// agentNameByID resolves an agent ID to its display name.
+func (m *DashboardModel) agentNameByID(id string) string {
+	for _, a := range m.agents {
+		if a.ID == id {
+			return a.Name
+		}
+	}
+	if len(id) > 8 {
+		return id[:8]
+	}
+	return id
 }
 
 // handleKey processes keyboard input for the dashboard.
@@ -579,8 +643,13 @@ func (m DashboardModel) renderFocusMode(width, height int) string {
 		})
 		right = lipgloss.NewStyle().Width(rightWidth - 2).Height(rightHeight - 2).Render(rightContent)
 	case PanelRelationships:
-		right = theme.Panel.Width(rightWidth - 2).Height(rightHeight - 2).Render(
-			theme.MutedText.Render("Relationship Web (coming soon...)"))
+		rightContent := components.RenderRelationshipWeb(components.RelationshipWebData{
+			Agents: m.relAgents,
+			Edges:  m.relEdges,
+			Width:  rightWidth,
+			Height: rightHeight,
+		})
+		right = lipgloss.NewStyle().Width(rightWidth - 2).Height(rightHeight - 2).Render(rightContent)
 	case PanelNegotiations:
 		right = theme.Panel.Width(rightWidth - 2).Height(rightHeight - 2).Render(
 			theme.MutedText.Render("Negotiation Theater (coming soon...)"))

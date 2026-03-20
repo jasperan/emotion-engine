@@ -1,744 +1,269 @@
-# EmotionSim - Multi-Agent Simulation System
+# Emotion Engine — Multi-Agent Simulation System
 
 ![Status](https://img.shields.io/badge/Status-Active-success?style=for-the-badge)
 ![Python](https://img.shields.io/badge/Python-3.11+-blue.svg?style=for-the-badge)
+![Go](https://img.shields.io/badge/TUI-Go_1.24-00ADD8.svg?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
-![Code Style](https://img.shields.io/badge/Code%20Style-Black-000000.svg?style=for-the-badge)
-![Ollama](https://img.shields.io/badge/backend-Ollama-black?style=for-the-badge)
 
-> **"The Great Flood" in your terminal.**
-> A local-first multi-agent simulation system for running complex disaster scenarios with diverse human personas.
+> A local-first multi-agent simulation engine for analyzing emergent cooperative behaviors in AI agent swarms. Simulates disaster scenarios with diverse LLM-driven personas that interact, make decisions, and cooperate based on personality traits and emotional states.
 
 ![CLI Monitor](assets/cli.png)
 
-## Overview
-
-EmotionSim is a research-grade simulation engine designed to analyze emergent cooperative behaviors in AI agent swarms. It combines a robust discrete-event simulation kernel with rich LLM-driven agent personas to create high-fidelity social simulations.
-
 ## Key Features
 
-- **🧠 Deep Agent Roleplay**: Agents have rich personas with demographics, Big Five personality traits, and dynamic emotional states.
-- **⚡ Real-time CLI Monitor**: A beautiful, terminal-based dashboard for watching your simulation unfold in real-time.
-- **🔄 Discrete Event Simulation**: Deterministic step-by-step execution for reproducible research.
-- **📡 Modern Architecture**: FastAPI backend + SvelteKit frontend, connected via WebSockets.
-- **🔌 LLM Agnostic**: Built for Ollama (local) but extensible to Claude/GPT-4.
-- **📊 Auto-Evaluation**: Built-in evaluator agents that analyze run performance and narrative arcs.
+- **Deep Agent Roleplay** — Big Five personality traits, dynamic stress/health, episodic memory, and relationship tracking
+- **Real-time TUI Dashboard** — Go-based terminal UI with live token streaming, spatial maps, relationship webs, negotiation theater, agent mind views, replay, and cross-run analytics
+- **Discrete Event Simulation** — Deterministic, seedable, step-by-step execution for reproducible research
+- **Scene-based Parallelism** — Agents grouped by location; independent scenes run concurrently via vLLM
+- **Cognitive Engine** — Think → Plan → Act → Reflect pipeline with intent memory
+- **Auto-Evaluation** — Built-in evaluator agents that analyze run performance and narrative arcs
+- **Modern Stack** — FastAPI + SvelteKit + Oracle DB 26ai Free + vLLM/Ollama
 
 ## Quick Start
 
 <!-- one-command-install -->
-> **One-command install** — clone, configure, and run in a single step:
->
+> **One-command install:**
 > ```bash
 > curl -fsSL https://raw.githubusercontent.com/jasperan/emotion-engine/main/install.sh | bash
 > ```
->
-> <details><summary>Advanced options</summary>
->
-> Override install location:
-> ```bash
-> PROJECT_DIR=/opt/myapp curl -fsSL https://raw.githubusercontent.com/jasperan/emotion-engine/main/install.sh | bash
-> ```
->
-> Or install manually:
-> ```bash
-> git clone https://github.com/jasperan/emotion-engine.git
-> cd emotion-engine
-> # See below for setup instructions
-> ```
-> </details>
 
+### Prerequisites
 
-The fastest way to get started is using the CLI tool.
+- Python 3.11+, Go 1.24+ (for TUI)
+- [vLLM](https://docs.vllm.ai/) (recommended) or [Ollama](https://ollama.ai/) for local inference
+- Oracle DB 26ai Free (localhost:1522)
 
-### 1. Prerequisites
-
-- Python 3.11+
-- [Ollama](https://ollama.ai/) running locally (e.g., `ollama serve`)
-- An LLM model pulled (e.g., `ollama pull gemma2`)
-
-### 2. Installation
+### Backend
 
 ```bash
 cd backend
 pip install -e .
+emotionsim run --scenario "Rising Flood" --max-steps 50 --seed 42
 ```
 
-### 3. Run a Simulation
-
-The `emotionsim` CLI is the main interface. Start a simulation immediately:
+### TUI Dashboard
 
 ```bash
-# Run the built-in "Rising Flood" scenario
-emotionsim run --scenario "Rising Flood"
+cd tui
+go build -o emotionsim-tui .
+./emotionsim-tui              # auto-starts backend if not running
+./emotionsim-tui --no-backend # connect to existing backend
 ```
 
-This launches the **Interactive CLI Monitor**, where you can watch:
-- 🌍 **World State**: Water levels, temperature, time.
-- 👥 **Agents**: Real-time health, stress, and current actions.
-- 💬 **Live Stream**: The raw thought process of the LLM agents.
+The TUI has 7 screens and multiple panel modes. See [TUI Guide](#tui-guide) below for the full walkthrough.
 
-### Other Running Modes
+### Web Dashboard
 
-**Automated Batch Testing**
-Run multiple simulations in sequence without supervision:
 ```bash
-emotionsim auto --count 5
+cd frontend && npm run dev    # starts both backend + SvelteKit frontend
 ```
-
-**Full Client-Server Mode**
-If you prefer the web dashboard:
-```bash
-# Start the full stack
-cd frontend
-npm run dev
-```
-
-This will:
-1. Start the Python backend (API + Simulation Engine)
-2. Start the SvelteKit frontend dashboard
-3. Launch the browser automatically
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    SvelteKit Dashboard                       │
-│  ┌───────────┐  ┌───────────┐  ┌──────────────────────┐    │
-│  │ Scenarios │  │ Run View  │  │  Agent Chat Logs     │    │
-│  └───────────┘  └───────────┘  └──────────────────────┘    │
-└────────────────────────┬────────────────────────────────────┘
-                         │ WebSocket / REST
-┌────────────────────────┴────────────────────────────────────┐
-│                    FastAPI Backend                           │
-│  ┌──────────┐  ┌─────────────────┐  ┌─────────────────┐    │
-│  │   API    │  │ SimulationEngine │  │   LLM Router   │    │
-│  └──────────┘  └─────────────────┘  └─────────────────┘    │
-│        │               │                     │              │
-│  ┌─────┴─────┐  ┌─────┴─────┐        ┌─────┴─────┐        │
-│  │  SQLite   │  │  Agents   │        │  Ollama   │        │
-│  └───────────┘  └───────────┘        └───────────┘        │
-└─────────────────────────────────────────────────────────────┘
+SvelteKit Dashboard / Go TUI
+    ↓ WebSocket + REST
+FastAPI Backend (:8000)
+    ├─ SimulationEngine (orchestrator, tick loop, scene director)
+    ├─ Agents: Human, Environment, Designer, Evaluator
+    ├─ MessageBus → ConversationManager → CooperationCoordinator
+    ├─ TrustNetwork, NegotiationManager, WorldStateDiffTracker
+    └─ CognitiveEngine (think → plan → act → reflect)
+    ↓
+LLM Router (vLLM :8010 primary, Ollama fallback)
+    ↓
+Oracle DB 26ai Free (runs, agents, steps, messages, scenarios)
 ```
+
+### Simulation Flow
+
+1. **Phase 1** — Environment agents generate world events and update hazard levels
+2. **Phase 2** — Human agents process in parallel scenes (by location) or sequentially
+3. **Phase 3** — Reaction round for intra-step responses
+4. **Persist** — State snapshot saved, WebSocket events emitted, consensus check
 
 ## Project Structure
 
 ```
 emotion-engine/
 ├── backend/
-│   ├── app/
-│   │   ├── agents/         # Agent classes (Human, Environment, Designer, Evaluator)
-│   │   ├── api/            # FastAPI routes and WebSocket
-│   │   ├── llm/            # LLM client abstraction
-│   │   ├── models/         # SQLAlchemy database models
-│   │   ├── schemas/        # Pydantic schemas
-│   │   ├── scenarios/      # Pre-built scenarios (Rising Flood)
-│   │   └── simulation/     # Simulation engine and message bus
-│   └── tests/              # Pytest tests
-├── frontend/
-│   ├── src/
-│   │   ├── lib/            # Components, stores, API client
-│   │   └── routes/         # SvelteKit pages
-│   └── static/
+│   └── app/
+│       ├── agents/        # Human, Environment, Designer, Evaluator
+│       ├── api/           # FastAPI routes + WebSocket
+│       ├── llm/           # vLLM/Ollama router, token logger
+│       ├── models/        # SQLAlchemy ORM (Oracle DB)
+│       ├── schemas/       # Pydantic validation
+│       ├── scenarios/     # Built-in scenario templates
+│       └── simulation/    # Engine, message bus, conversations, scenes
+├── tui/                   # Go Bubble Tea terminal dashboard
+│   ├── cmd/               # CLI entry point
+│   └── internal/          # App screens, API client, components, theme
+├── frontend/              # SvelteKit web dashboard
 └── docker-compose.yml
 ```
 
-## Example Scenario: Rising Flood
+## Agent System
 
-The included "Rising Flood" scenario features 8 diverse human agents:
+Each human agent maintains:
 
-| Character | Age | Occupation | Key Traits |
-|-----------|-----|------------|------------|
-| Dr. Sarah Chen | 42 | ER Doctor | High empathy, calm under pressure |
-| Marcus Thompson | 28 | Construction Worker | Risk-taker, physically strong |
-| Elena Rodriguez | 67 | Retired Teacher | Wise, limited mobility |
-| Jake Miller | 16 | Student | Impulsive, athletic swimmer |
-| Aisha Patel | 35 | Software Engineer | Analytical, introverted |
-| Bobby Williams | 55 | Retired Firefighter | Natural leader, some injuries |
-| Mei-Lin Wu | 8 | Child | Scared, needs protection |
-| Victor Kozlov | 45 | Unemployed | Bitter, unpredictable |
+- **Persona** — Demographics, occupation, skills, Big Five traits (immutable)
+- **Dynamic State** — Health, stress, location, inventory, relationships (mutable per step)
+- **Episodic Memory** — Significant events with emotional valence, auto-summarized
+- **Relationship Tracking** — Trust levels and sentiment per agent pair
+- **Cognitive Pipeline** — Context building → LLM call (JSON mode) → action parsing → state update
 
-## CLI Monitor Tool
+Agents communicate through a structured protocol with direct, broadcast, and room-scoped channels. A coordination controller modulates communication frequency based on personality traits.
 
-### Installation
+### Built-in Scenario: Rising Flood
+
+Eight diverse personas navigate a flooding disaster — from an ER doctor and retired firefighter to a scared 8-year-old child. The environment agent escalates hazard levels while human agents cooperate (or don't) based on their personality profiles.
+
+## CLI Commands
+
+| Command | Description |
+|---------|-------------|
+| `emotionsim run --scenario "Rising Flood"` | Run simulation with live monitor |
+| `emotionsim auto --count 5` | Batch run multiple simulations |
+| `emotionsim scenarios --create-builtin` | Create built-in scenario templates |
+| `emotionsim interactive` | Guided wizard mode |
+| `emotionsim status` | Check backend health |
+
+## Configuration
+
+Environment variables via `.env` in `backend/`:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `LLM_BACKEND` | `vllm` | `vllm` or `ollama` |
+| `VLLM_BASE_URL` | `http://localhost:8010` | vLLM server address |
+| `VLLM_DEFAULT_MODEL` | `Qwen/Qwen3.5-4B` | Model for inference |
+| `ORACLE_DB_HOST` | `localhost` | Oracle DB host |
+| `ORACLE_DB_PORT` | `1522` | Oracle DB port |
+| `DEFAULT_MAX_STEPS` | `10` | Default simulation length |
+
+## TUI Guide
+
+The Go TUI is a full-featured terminal interface for running, monitoring, and analyzing simulations. Built with [Bubble Tea](https://github.com/charmbracelet/bubbletea) and [Lipgloss](https://github.com/charmbracelet/lipgloss).
+
+### Building
 
 ```bash
-cd backend
-pip install -e .  # Install CLI entry point
+cd tui
+go build -o emotionsim-tui .
+./emotionsim-tui                        # auto-starts backend + vLLM
+./emotionsim-tui --no-backend           # connect to running backend
+./emotionsim-tui --ssh --ssh-port 2222  # serve over SSH (read-only)
 ```
 
-### Interactive Menu
-Run `python backend/cli.py` (or just `emotionsim` if installed) to see the new dashboard:
+### Screens
 
-```
-```text
-╭───────────────────────────────────────────╮
-│ Emotion Engine CLI                        │
-│ Autonomous Agent Simulation System         │
-╰───────────────────────────────────────────╯
+The TUI has 7 screens, navigated by keyboard:
 
-? Select a Task:
-  Generate New Scenario
-  Browse Scenarios
-  Run Scenario (Standalone)
-  Monitor Simulation
-  Interactive Wizard
-  Exit
-```
-```
+| Screen | Entry | Purpose |
+|--------|-------|---------|
+| **Splash** | Launch | Animated banner, backend health check |
+| **Scenarios** | From Splash | Browse and select scenarios |
+| **Launcher** | Enter on scenario | Configure max steps, seed, inference provider |
+| **Dashboard** | After launch | Live simulation monitoring |
+| **History** | `h` from Scenarios | Browse past runs |
+| **Replay** | Enter on completed run | Step-by-step playback with diffs |
+| **Analytics** | `a` from Scenarios/History | Cross-run datalake analysis |
 
-### Commands
+### Dashboard
 
-**Run Simulation (Standalone Mode)**
-```bash
-emotionsim run --scenario "Rising Flood" --max-steps 50 --seed 42
-emotionsim run --scenario "Rising Flood" --simple  # Log output
-```
+The main monitoring screen. Left side shows up to 4 agent panes with live token streaming. Right side cycles between 4 panel modes with `Tab`.
 
-**Monitor Running Simulation (Client Mode)**
-```bash
-emotionsim monitor --run-id <uuid>
-emotionsim monitor --run-id <uuid> --simple
-```
+![Dashboard](docs/images/tui-dashboard.png)
 
-**Scenario Management**
-```bash
-emotionsim scenarios                    # List scenarios
-emotionsim scenarios --create-builtin   # Create built-in scenarios
-```
+Each agent pane shows: name, occupation, age, health (HP), stress (ST), location, current plan goal with progress, and the live token stream from the LLM.
 
-**Interactive Mode**
-```bash
-emotionsim interactive  # Wizard to configure and run
-```
+**Panel Modes** (cycle with `Tab`):
 
-**Server Status**
-```bash
-emotionsim status  # Check if backend is running
-```
+#### Feed Mode
+The default. Shows a scrollable message feed grouped by location, plus a world state panel with hazard gauge and location summary. Press `f` to filter messages: All, Speech only, Negotiations only, or Movement only.
 
-### CLI Features
+#### Spatial Map
+Live map of all locations with agent positions and travel progress.
 
-- **Rich UI Mode**: Live-updating panels with world state, agent status, conversations, and event log
-- **Simple Mode**: Clean streaming logs for piping/grepping
-- **Dual Modes**: Standalone (no server) or Client (WebSocket to backend)
-- **Real-time Monitoring**: See all agent conversations, movements, and events as they happen
+![Spatial Map](docs/images/tui-spatial-map.png)
 
----
+Locations show agent count and names. Hazard zones are highlighted in red. Agents in transit show progress bars. Updates live from movement events.
 
-# ANNEX: Agent Harness Implementation
+#### Relationship Web
+Shows trust, conflict, alliance, and pending relationships between agents.
 
-This section documents the advanced reasoning strategies and communication mechanisms implemented in the EmotionEngine agent harness.
+![Relationship Web](docs/images/tui-relationships.png)
 
-## Agent Communication Protocol (ACP)
+Edges are color-coded: green for trust/alliance, red for conflict, yellow for pending negotiations. Strength bars show relationship intensity. Updates live from vouch and proposal events.
 
-The EmotionEngine implements a sophisticated Agent Communication Protocol (ACP) that enables structured, context-aware agent interactions.
+#### Negotiation Theater
+Timeline of proposals, counter-proposals, and their resolution.
 
-### Core Components
+![Negotiation Theater](docs/images/tui-negotiations.png)
 
-#### 1. Agent Identity System
+Each proposal shows: proposer, target, terms, and status. Responses are indented below with accept/reject/counter actions. Scrollable with `j`/`k`.
 
-Each agent maintains a rich identity profile:
+### Agent Mind View
 
-```python
-@dataclass
-class AgentIdentity:
-    name: str
-    role: str
-    status: str = "active"  # active, idle, stuck, away
-    personality: PersonalityProfile | None = None
-    capabilities: list[str] = field(default_factory=list)
-    last_active: float = field(default_factory=time.time)
-```
+Press `Enter` on any selected agent to expand a full-screen detail view.
 
-**Status Tracking**: Agents automatically transition between states based on activity, enabling the system to detect stuck or disengaged agents.
+![Mind View](docs/images/tui-mindview.png)
 
-#### 2. Personality-Driven Behavior
+Shows the agent's complete cognitive state:
+- **Personality** — Big Five traits as bar charts (1-10 scale)
+- **Plan** — Current goal, step, progress, deadline
+- **Inventory** — Items the agent is carrying
+- **Relationships** — Per-agent trust bars with descriptions
+- **Last Reasoning** — The agent's most recent internal reasoning
+- **Recent Actions** — Last 4 actions with emotional state
 
-The `PersonalityProfile` implements the Big Five personality model with extensions:
+Press `Esc` to return. `h`/`l` cycles between agents while expanded.
 
-```python
-@dataclass
-class PersonalityProfile:
-    # Big Five traits (1-10 scale)
-    openness: int = 5
-    conscientiousness: int = 5
-    extraversion: int = 5
-    agreeableness: int = 5
-    neuroticism: int = 5
+### Replay Screen
 
-    # Extended traits
-    risk_tolerance: int = 5
-    empathy_level: int = 5
-    leadership: int = 5
+For completed runs, the History screen opens Replay instead of the live dashboard. Step through the simulation frame by frame.
 
-    # Dynamic state
-    stress: int = 0
-    confidence: float = 0.5
-    engagement: int = 5
-    communication_style: str = "balanced"
-```
+**Controls:**
+- `left`/`right` or `h`/`l` — step backward/forward
+- `H`/`L` — jump 5 steps
+- `Space` — auto-play (toggle)
+- `+`/`-` — adjust playback speed (250ms to 5s)
+- `d` — toggle diff view (shows what changed each step in green/yellow/red)
+- `e` — jump to evaluation (last step)
 
-**Personality Modulation**: Personality traits directly influence agent behavior:
-- **Extraversion** affects communication frequency and initiative
-- **Neuroticism** modulates stress responses and emotional reactions
-- **Leadership** impacts decision-making weight in group scenarios
-- **Empathy** shapes cooperative behaviors and relationship building
+### Analytics Screen
 
-#### 3. Structured Messaging
+Press `a` from Scenarios or History to open cross-run analytics. Requires `DATALAKE_ENABLED=true` in `.env`.
 
-ACP messages carry rich metadata:
+- Browse all runs with status indicators
+- Filter by scenario with `s`
+- View aggregate datalake stats
+- Press `Enter` on any run to open it in Replay
 
-```python
-@dataclass
-class ACPMessage:
-    sender: AgentIdentity
-    channel: str  # direct, broadcast, room:location
-    msg_type: str
-    payload: dict[str, Any]
-    recipient: str | None = None
-    coordination_level: str = "moderate"
-    metadata: dict[str, Any] = field(default_factory=dict)
-    id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    timestamp: float = field(default_factory=time.time)
-```
+### Keyboard Reference
 
-**Channel Types**:
-- **Direct**: One-to-one agent communication
-- **Broadcast**: System-wide announcements
-- **Room**: Location-based group communication (e.g., `room:hospital`)
-
-### Communication Mechanisms
-
-#### 1. Coordination Controller
-
-Manages agent communication frequency and depth:
-
-```python
-class CoordinationController:
-    LEVELS = {
-        "none": {"probability": 0.0, "max_messages": 0},
-        "minimal": {"probability": 0.3, "max_messages": 2},
-        "moderate": {"probability": 0.6, "max_messages": 5},
-        "chatty": {"probability": 0.9, "max_messages": 10},
-    }
-```
-
-**Personality-Weighted Communication**:
-- Base probability set by coordination level
-- Modified by agent's extraversion score
-- Tracks message counts per round to prevent spam
-- Dynamically adjusts based on context and stress levels
-
-**Usage**:
-```python
-if coordinator.should_communicate(agent, context):
-    if coordinator.can_send_more(agent.name, round_id):
-        # Agent can send message
-        coordinator.record_message(agent.name, round_id)
-```
-
-#### 2. Agent Registry
-
-Centralized tracking of all agents in the simulation:
-
-```python
-class AgentRegistry:
-    def register(self, identity: AgentIdentity) -> None:
-        """Register a new agent"""
-
-    def get(self, name: str) -> AgentIdentity | None:
-        """Get agent by name"""
-
-    def detect_stuck_agents(self, threshold: float = 300.0) -> list[str]:
-        """Find agents inactive for > threshold seconds"""
-```
-
-**Stuck Agent Detection**: Automatically identifies agents that haven't responded within a configurable time window, enabling intervention or reassignment.
-
-#### 3. Wave-Based Task Execution
-
-Implements dependency-aware task scheduling:
-
-```python
-class WaveController:
-    async def execute_waves(self, tasks: list[Task]) -> AsyncIterator[WaveResult]:
-        """
-        Execute tasks in waves based on dependencies.
-        Tasks with no dependencies run in wave 1.
-        Tasks depending on wave 1 tasks run in wave 2, etc.
-        """
-```
-
-**Features**:
-- Automatic dependency resolution
-- Concurrent execution within waves
-- Maximum wave limit to prevent infinite loops
-- Real-time progress reporting via async iterator
-
-**Example**:
-```python
-# Task A and B have no dependencies (wave 1)
-# Task C depends on A (wave 2)
-# Task D depends on B and C (wave 3)
-
-wave_controller.add_dependency("C", "A")
-wave_controller.add_dependency("D", "B")
-wave_controller.add_dependency("D", "C")
-
-async for wave_result in wave_controller.execute_waves(tasks):
-    print(f"Wave {wave_result.wave} completed")
-```
-
-## Reasoning Strategies
-
-### 1. Multi-Level Memory System
-
-Agents maintain sophisticated memory with multiple layers:
-
-```python
-class AgentMemory:
-    def __init__(self, agent_id: str, sliding_window_size: int = 50):
-        self.sliding_window_size = sliding_window_size
-        self.events: deque[dict] = deque(maxlen=sliding_window_size)
-        self.episodic_memories: list[EpisodicMemory] = []
-        self.relationships: dict[str, RelationshipMemory] = {}
-        self.arrival_context: dict | None = None
-```
-
-**Memory Components**:
-
-#### A. Sliding Window (Short-Term)
-- Fixed-size queue of recent events
-- Automatically evicts oldest entries
-- Provides immediate context for decision-making
-
-#### B. Episodic Memory (Long-Term)
-- Significant events and interactions
-- Auto-summarization when threshold reached
-- Enables learning from past experiences
-
-```python
-@dataclass
-class EpisodicMemory:
-    event_type: str
-    description: str
-    participants: list[str]
-    emotional_valence: float  # -1 to 1
-    importance: float  # 0 to 1
-    timestamp: float
-    summary: str | None = None  # Generated during consolidation
-```
-
-#### C. Relationship Tracking
-- Tracks interactions with other agents
-- Maintains trust levels and sentiment
-- Stores notes about each relationship
-
-```python
-@dataclass
-class RelationshipMemory:
-    agent_id: str
-    agent_name: str
-    interaction_count: int = 0
-    trust_level: float = 5.0  # 0-10 scale
-    sentiment: str = "neutral"  # positive, neutral, negative
-    notes: list[str] = field(default_factory=list)
-    last_interaction: float = field(default_factory=time.time)
-```
-
-### 2. Contextual Decision Making
-
-Agents build rich context before each decision:
-
-```python
-def build_context(
-    self,
-    world_state: dict[str, Any],
-    messages: list[dict[str, Any]],
-    step_actions: list[dict[str, Any]] | None = None,
-    step_messages: list[dict[str, Any]] | None = None,
-    step_events: list[str] | None = None,
-) -> str:
-    """Build comprehensive context from multiple sources"""
-    context_parts = []
-
-    # World state
-    context_parts.append(self._format_world_state(world_state))
-
-    # Recent messages
-    context_parts.append(self._format_recent_messages(messages))
-
-    # Relationship context
-    if relevant_agents:
-        context_parts.append(self.get_relationship_context(relevant_agents))
-
-    # Episodic context
-    context_parts.append(self.get_conversation_context())
-
-    # Arrival context (why am I here?)
-    if self.agent_memory.arrival_context:
-        context_parts.append(self._format_arrival_context())
-
-    return "\n\n".join(context_parts)
-```
-
-**Context Layers**:
-1. **World State**: Current environment, hazards, resources
-2. **Message History**: Recent communications
-3. **Relationship Context**: Trust and sentiment with nearby agents
-4. **Episodic Context**: Relevant past experiences
-5. **Arrival Context**: Reason for being at current location
-
-### 3. Group Decision Making (Voting)
-
-Implements weighted democratic decision-making:
-
-```python
-class GroupDecisionMixin:
-    def tally_votes(
-        self,
-        votes: dict[str, dict],  # {agent_name: {choice, weight}}
-        personalities: dict[str, PersonalityProfile] | None = None,
-        trust_levels: dict[tuple[str, str], float] | None = None,
-    ) -> VoteResult:
-        """
-        Tally votes with personality and trust weighting.
-
-        Weight modifiers:
-        - Leadership: Higher leadership = more influence
-        - Stress: High stress reduces voting weight
-        - Trust: Agents trusted by others have more weight
-        """
-```
-
-**Weight Calculation**:
-```python
-base_weight = vote_data["weight"]
-
-# Leadership modifier
-leadership_mod = personality.leadership / 5.0
-
-# Stress penalty
-stress_penalty = 1.0 - (personality.stress / 20.0)
-
-# Trust modifier
-avg_trust = calculate_average_trust_from_others(agent_name)
-trust_mod = 0.5 + avg_trust
-
-effective_weight = base_weight * leadership_mod * stress_penalty * trust_mod
-```
-
-**Result Structure**:
-```python
-@dataclass
-class VoteResult:
-    winner: str
-    confidence: float  # 0-1, how strong the consensus
-    breakdown: dict  # Vote distribution with weights
-    total_votes: int
-```
-
-### 4. Behavioral Loop Detection & Breaking
-
-The CooperationCoordinator prevents agents from getting stuck:
-
-```python
-class CooperationCoordinator:
-    def detect_behavioral_loop(self, agent_id: str, action: str) -> bool:
-        """Detect if agent is repeating the same action"""
-        recent_actions = self._action_history[agent_id][-5:]
-        return recent_actions.count(action) >= 3
-
-    def suggest_alternative(self, agent_id: str, current_action: str) -> str | None:
-        """Suggest alternative action to break loop"""
-        if self.detect_behavioral_loop(agent_id, current_action):
-            return random.choice([
-                "seek_help",
-                "change_location",
-                "rest",
-                "communicate",
-            ])
-        return None
-```
-
-**Loop Prevention Strategies**:
-1. **Pattern Detection**: Identifies repeated actions
-2. **Intervention**: Suggests alternative behaviors
-3. **Goal Reassignment**: Redirects to different objectives
-4. **Resource Reallocation**: Adjusts available resources
-
-### 5. Adaptive LLM Prompting
-
-Agents construct context-aware prompts:
-
-```python
-def get_system_prompt(self) -> str:
-    """Generate role-specific system prompt"""
-    return f"""You are {self.name}, a {self.persona.age}-year-old {self.persona.occupation}.
-
-Personality:
-- Openness: {self.persona.openness}/10
-- Conscientiousness: {self.persona.conscientiousness}/10
-- Extraversion: {self.persona.extraversion}/10
-- Agreeableness: {self.persona.agreeableness}/10
-- Neuroticism: {self.persona.neuroticism}/10
-
-Current State:
-- Health: {self.dynamic_state.get('health', 100)}%
-- Stress: {self.dynamic_state.get('stress', 0)}%
-- Location: {self.dynamic_state.get('location', 'unknown')}
-
-Goals: {', '.join(self.goals)}
-
-Remember:
-- Stay in character based on your personality
-- React emotionally based on your neuroticism and current stress
-- Cooperate with others based on your agreeableness
-- Take initiative based on your extraversion
-- Adapt your communication style to your personality
-
-Respond in JSON format with your action and optional message.
-"""
-```
-
-**Prompt Engineering Principles**:
-1. **Role Consistency**: Explicit personality reminders
-2. **State Awareness**: Current health, stress, location
-3. **Goal Orientation**: Clear objectives
-4. **Behavioral Guidelines**: How to embody the personality
-5. **Structured Output**: JSON response format for reliability
-
-## Integration Architecture
-
-### Simulation Engine Orchestration
-
-The `SimulationEngine` coordinates all components:
-
-```python
-class SimulationEngine:
-    def __init__(self, run_id: str, db_session: AsyncSession):
-        # Core systems
-        self.agents: dict[str, Agent] = {}
-        self.message_bus = MessageBus()
-        self.conversation_manager = ConversationManager()
-        self.coordinator = CooperationCoordinator()
-
-        # ACP components
-        self.acp_registry = AgentRegistry()
-        self.acp_coordination = CoordinationController(level="moderate")
-        self.group_voting = GroupDecisionMixin()
-
-        # State
-        self.world_state: dict[str, Any] = {}
-        self._agent_locations: dict[str, str] = {}
-```
-
-### Tick Loop Implementation
-
-```python
-async def run_simulation(self):
-    """Main simulation loop"""
-    while not self._stop_requested and self.current_step < self.max_steps:
-        # Phase 1: Environment agents generate events
-        for agent in environment_agents:
-            await agent.tick(self.world_state, [])
-
-        # Phase 2: Human agents act (shuffled for fairness)
-        random.shuffle(human_agents)
-        for agent in human_agents:
-            # Get relevant messages
-            messages = self.message_bus.get_messages(agent.id)
-
-            # Build context
-            context = agent.build_context(
-                world_state=self.world_state,
-                messages=messages,
-                step_actions=step_actions,
-                step_messages=step_messages,
-            )
-
-            # Agent decides and acts
-            response = await agent.tick(self.world_state, messages)
-
-            # Process actions
-            for action in response.actions:
-                await self._process_action(agent, action)
-
-            # Send messages if any
-            if response.message:
-                self.message_bus.send(
-                    from_agent=agent.id,
-                    to_target=response.message.to_agent,
-                    content=response.message.content,
-                )
-
-        # Persist state
-        await self._save_step()
-
-        # Check for consensus/completion
-        if self._check_consensus():
-            break
-
-        self.current_step += 1
-        await asyncio.sleep(self.tick_delay)
-```
-
-## Key Design Principles
-
-### 1. Separation of Concerns
-- **Agent**: Decision-making and role-playing
-- **MessageBus**: Communication routing
-- **ConversationManager**: Dialogue coordination
-- **CooperationCoordinator**: Goal tracking and loop prevention
-- **SimulationEngine**: Orchestration and persistence
-
-### 2. Extensibility
-- New agent types inherit from `Agent` base class
-- Custom coordination strategies implement `CoordinationController` interface
-- Additional memory layers can extend `AgentMemory`
-
-### 3. Determinism
-- Seedable random number generation
-- Ordered agent processing (environment first, then shuffled humans)
-- Explicit state snapshots for reproducibility
-
-### 4. Resilience
-- Automatic stuck agent detection
-- Behavioral loop breaking
-- Graceful degradation under LLM failures
-- State persistence for resumption
-
-### 5. Observability
-- Rich logging at every layer
-- Real-time WebSocket events
-- Database persistence for post-hoc analysis
-- CLI monitor for live inspection
-
-## Performance Characteristics
-
-- **Memory**: O(N × M) where N = agents, M = memory window size
-- **Communication**: O(M) per agent per step (bounded by coordination limits)
-- **Decision Latency**: Dominated by LLM inference time (typically 1-5 seconds)
-- **Scalability**: Tested up to 20 concurrent agents on single Ollama instance
-
-## Future Enhancements
-
-1. **Distributed Simulation**: Multi-node deployment for larger agent counts
-2. **Hierarchical Agents**: Agents that can spawn sub-agents for complex tasks
-3. **Learning from Feedback**: Episodic memory influences future decisions
-4. **Emotion Contagion**: Agents' emotional states affect nearby agents
-5. **Coalition Formation**: Dynamic group formation based on goals and trust
-
----
+| Key | Dashboard | Replay | Analytics |
+|-----|-----------|--------|-----------|
+| `Tab` | Cycle panel mode | — | — |
+| `Enter` | Agent Mind View | — | Open run |
+| `g` | Grid/Focus toggle | — | — |
+| `f` | Filter messages | — | — |
+| `Space` | Pause/Resume | Play/Pause | — |
+| `s` | Stop run | — | Cycle scenario |
+| `d` | — | Toggle diff | — |
+| `j`/`k` | Scroll feed | — | Select run |
+| `h`/`l` | Cycle agents | Step back/fwd | — |
+| `1-9` | Select agent | — | — |
+| `q` | Back | Back | Back |
+| `F1` | Help overlay | Help overlay | Help overlay |
 
 ## License
 
-MIT License - see LICENSE file for details.
+MIT License — see LICENSE file for details.
 
 ## Acknowledgments
 
-Inspired by the Emotion Engine concept from Netflix's "The Great Flood" - where AI agents run through thousands of disaster simulations to develop emotional intelligence and moral reasoning.
+Inspired by the Emotion Engine concept — where AI agents run through disaster simulations to develop emotional intelligence and moral reasoning.
 
 ---
 

@@ -80,6 +80,9 @@ type DashboardModel struct {
 	relAgents []components.RelAgent
 	relEdges  []components.RelEdge
 
+	negotiations []components.NegotiationEntry
+	negScroll    int
+
 	refreshNeeded bool
 
 	err    error
@@ -323,10 +326,77 @@ func (m *DashboardModel) handleWSEvent(evt api.WSMessage) {
 				}
 			}
 		}
+		// Update negotiation entry
+		proposalID, _ := evt.Data["proposal_id"].(string)
+		for i, n := range m.negotiations {
+			if n.ProposalID == proposalID {
+				m.negotiations[i].Status = components.NegAccepted
+				break
+			}
+		}
 
 	case "proposal_rejected":
 		agentID, _ := evt.Data["agent_id"].(string)
 		_ = m.agentNameByID(agentID) // limited info available
+		// Update negotiation entry
+		proposalID2, _ := evt.Data["proposal_id"].(string)
+		agentID2, _ := evt.Data["agent_id"].(string)
+		agentName2 := m.agentNameByID(agentID2)
+		step2 := int(safeFloat(evt.Data, "step"))
+		for i, n := range m.negotiations {
+			if n.ProposalID == proposalID2 {
+				m.negotiations[i].Responses = append(m.negotiations[i].Responses, components.NegotiationResponse{
+					AgentName: agentName2, Action: "rejected", Step: step2,
+				})
+				break
+			}
+		}
+
+	case "proposal_created":
+		proposal, _ := evt.Data["proposal"].(map[string]interface{})
+		proposalID, _ := proposal["id"].(string)
+		proposer, _ := proposal["proposer"].(string)
+		target, _ := proposal["target"].(string)
+		terms, _ := proposal["terms"].(string)
+		if terms == "" {
+			if desc, ok := proposal["description"].(string); ok {
+				terms = desc
+			}
+		}
+		step := int(safeFloat(evt.Data, "step"))
+		m.negotiations = append(m.negotiations, components.NegotiationEntry{
+			ProposalID: proposalID,
+			Proposer:   proposer,
+			Target:     target,
+			Terms:      terms,
+			Status:     components.NegPending,
+			Step:       step,
+		})
+
+	case "counter_proposal":
+		proposalID, _ := evt.Data["proposal_id"].(string)
+		agentID, _ := evt.Data["agent_id"].(string)
+		agentName := m.agentNameByID(agentID)
+		counterTerms, _ := evt.Data["counter_terms"].(string)
+		step := int(safeFloat(evt.Data, "step"))
+		for i, n := range m.negotiations {
+			if n.ProposalID == proposalID {
+				m.negotiations[i].Status = components.NegCountered
+				m.negotiations[i].Responses = append(m.negotiations[i].Responses, components.NegotiationResponse{
+					AgentName: agentName, Action: "countered", Detail: counterTerms, Step: step,
+				})
+				break
+			}
+		}
+
+	case "proposal_expired":
+		proposalID, _ := evt.Data["proposal_id"].(string)
+		for i, n := range m.negotiations {
+			if n.ProposalID == proposalID {
+				m.negotiations[i].Status = components.NegExpired
+				break
+			}
+		}
 
 	case "emotion_contagion":
 		// Placeholder: could update relationship edges based on emotional spread
@@ -455,6 +525,14 @@ func (m *DashboardModel) addOrUpdateRelEdge(a, b string, edgeType components.Rel
 	})
 }
 
+// safeFloat safely extracts a float64 from a map by key.
+func safeFloat(data map[string]interface{}, key string) float64 {
+	if v, ok := data[key].(float64); ok {
+		return v
+	}
+	return 0
+}
+
 // agentNameByID resolves an agent ID to its display name.
 func (m *DashboardModel) agentNameByID(id string) string {
 	for _, a := range m.agents {
@@ -517,12 +595,22 @@ func (m DashboardModel) handleKey(msg tea.KeyMsg) (DashboardModel, tea.Cmd) {
 		}
 
 	case "up", "k":
-		if m.feedScroll > 0 {
-			m.feedScroll--
+		if m.panelMode == PanelNegotiations {
+			if m.negScroll > 0 {
+				m.negScroll--
+			}
+		} else {
+			if m.feedScroll > 0 {
+				m.feedScroll--
+			}
 		}
 	case "down", "j":
-		if m.feedScroll < len(m.feedEntries) {
-			m.feedScroll++
+		if m.panelMode == PanelNegotiations {
+			m.negScroll++
+		} else {
+			if m.feedScroll < len(m.feedEntries) {
+				m.feedScroll++
+			}
 		}
 
 	case "left", "h":
@@ -651,8 +739,13 @@ func (m DashboardModel) renderFocusMode(width, height int) string {
 		})
 		right = lipgloss.NewStyle().Width(rightWidth - 2).Height(rightHeight - 2).Render(rightContent)
 	case PanelNegotiations:
-		right = theme.Panel.Width(rightWidth - 2).Height(rightHeight - 2).Render(
-			theme.MutedText.Render("Negotiation Theater (coming soon...)"))
+		rightContent := components.RenderNegotiationTheater(components.NegotiationTheaterData{
+			Entries:   m.negotiations,
+			ScrollPos: m.negScroll,
+			Width:     rightWidth,
+			Height:    rightHeight,
+		})
+		right = lipgloss.NewStyle().Width(rightWidth - 2).Height(rightHeight - 2).Render(rightContent)
 	}
 	right = lipgloss.NewStyle().Width(rightWidth).Height(height).Render(right)
 

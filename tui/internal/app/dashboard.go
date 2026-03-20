@@ -167,7 +167,7 @@ func (m DashboardModel) Update(msg tea.Msg) (DashboardModel, tea.Cmd) {
 			return m, func() tea.Msg {
 				agents, err := client.GetRunAgents(runID)
 				if err != nil {
-					return nil
+					return agentsRefreshedMsg{}
 				}
 				return agentsRefreshedMsg{agents: agents}
 			}
@@ -633,11 +633,11 @@ func (m DashboardModel) handleKey(msg tea.KeyMsg) (DashboardModel, tea.Cmd) {
 		}
 	case "down", "j":
 		if m.panelMode == PanelNegotiations {
-			m.negScroll++
-		} else {
-			if m.feedScroll < len(m.feedEntries) {
-				m.feedScroll++
+			if m.negScroll < len(m.negotiations)*4 {
+				m.negScroll++
 			}
+		} else {
+			m.feedScroll++
 		}
 
 	case "enter":
@@ -646,22 +646,22 @@ func (m DashboardModel) handleKey(msg tea.KeyMsg) (DashboardModel, tea.Cmd) {
 		}
 
 	case "left", "h":
-		if m.expandedAgent >= 0 {
+		if m.expandedAgent >= 0 && len(m.agents) > 0 {
 			m.expandedAgent--
 			if m.expandedAgent < 0 {
 				m.expandedAgent = len(m.agents) - 1
 			}
 			m.selectedIdx = m.expandedAgent
-		} else {
+		} else if m.expandedAgent < 0 {
 			if m.selectedIdx > 0 {
 				m.selectedIdx--
 			}
 		}
 	case "right", "l":
-		if m.expandedAgent >= 0 {
+		if m.expandedAgent >= 0 && len(m.agents) > 0 {
 			m.expandedAgent = (m.expandedAgent + 1) % len(m.agents)
 			m.selectedIdx = m.expandedAgent
-		} else {
+		} else if m.expandedAgent < 0 {
 			if m.selectedIdx < len(m.agents)-1 {
 				m.selectedIdx++
 			}

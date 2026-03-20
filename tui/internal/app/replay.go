@@ -326,9 +326,11 @@ func (m ReplayModel) renderTransportBar(width int) string {
 	if total == 0 {
 		total = 1
 	}
-	pct := float64(m.currentStep) / float64(total-1)
-	if total == 1 {
+	var pct float64
+	if total <= 1 {
 		pct = 0
+	} else {
+		pct = float64(m.currentStep) / float64(total-1)
 	}
 
 	const barWidth = 30

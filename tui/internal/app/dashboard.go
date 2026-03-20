@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -73,6 +74,9 @@ type DashboardModel struct {
 	hazardLevel float64
 	locations   []components.LocationInfo
 
+	mapLocations []components.MapLocation
+	mapTravels   []components.MapTravel
+
 	refreshNeeded bool
 
 	err    error
@@ -123,6 +127,13 @@ func (m DashboardModel) Update(msg tea.Msg) (DashboardModel, tea.Cmd) {
 			m.streams[a.ID] = &agentStream{
 				name: a.Name,
 			}
+		}
+		// Populate initial map locations from agent data
+		for _, loc := range m.locations {
+			m.mapLocations = append(m.mapLocations, components.MapLocation{
+				Name:   loc.Name,
+				Agents: loc.AgentNames,
+			})
 		}
 		return m, nil
 
@@ -249,6 +260,42 @@ func (m *DashboardModel) handleWSEvent(evt api.WSMessage) {
 		if m.run != nil {
 			m.run.Status = status
 		}
+
+	case "agent_moved":
+		agentName, _ := evt.Data["agent_name"].(string)
+		from, _ := evt.Data["from"].(string)
+		to, _ := evt.Data["to"].(string)
+		m.updateMapAgentLocation(agentName, from, to)
+		m.removeTravel(agentName)
+
+	case "agent_travelling":
+		agentName, _ := evt.Data["agent_name"].(string)
+		target, _ := evt.Data["target"].(string)
+		progress, _ := evt.Data["progress"].(float64)
+		from, _ := evt.Data["from"].(string)
+		m.updateTravel(agentName, from, target, progress)
+
+	case "travel_started":
+		agentName, _ := evt.Data["agent_name"].(string)
+		from, _ := evt.Data["from"].(string)
+		to, _ := evt.Data["to"].(string)
+		m.updateTravel(agentName, from, to, 0.0)
+
+	case "location_discovered":
+		locName, _ := evt.Data["location"].(string)
+		connectedTo, _ := evt.Data["connected_to"].(string)
+		m.addMapLocation(locName, connectedTo)
+
+	case "movement_failed":
+		agentName, _ := evt.Data["agent_name"].(string)
+		reason, _ := evt.Data["reason"].(string)
+		step, _ := evt.Data["step"].(float64)
+		m.feedEntries = append(m.feedEntries, components.FeedEntry{
+			AgentName:   agentName,
+			Content:     fmt.Sprintf("Movement failed: %s", reason),
+			MessageType: "error",
+			Step:        int(step),
+		})
 	}
 }
 
@@ -285,6 +332,76 @@ func (m *DashboardModel) updateWorldState(ws map[string]interface{}) {
 			AgentNames: agents,
 		})
 	}
+}
+
+// updateMapAgentLocation moves an agent from one location to another on the map.
+func (m *DashboardModel) updateMapAgentLocation(agent, from, to string) {
+	for i, loc := range m.mapLocations {
+		if loc.Name == from {
+			m.mapLocations[i].Agents = removeStr(loc.Agents, agent)
+		}
+		if loc.Name == to {
+			m.mapLocations[i].Agents = append(m.mapLocations[i].Agents, agent)
+			return
+		}
+	}
+	m.mapLocations = append(m.mapLocations, components.MapLocation{
+		Name:   to,
+		Agents: []string{agent},
+	})
+}
+
+// removeTravel removes a completed travel entry for an agent.
+func (m *DashboardModel) removeTravel(agent string) {
+	for i, t := range m.mapTravels {
+		if t.AgentName == agent {
+			m.mapTravels = append(m.mapTravels[:i], m.mapTravels[i+1:]...)
+			return
+		}
+	}
+}
+
+// updateTravel adds or updates a travel entry for an agent.
+func (m *DashboardModel) updateTravel(agent, from, to string, progress float64) {
+	for i, t := range m.mapTravels {
+		if t.AgentName == agent {
+			m.mapTravels[i].Progress = progress
+			return
+		}
+	}
+	m.mapTravels = append(m.mapTravels, components.MapTravel{
+		AgentName: agent,
+		From:      from,
+		To:        to,
+		Progress:  progress,
+	})
+}
+
+// addMapLocation adds a new location or appends a connection to an existing one.
+func (m *DashboardModel) addMapLocation(name, connectedTo string) {
+	for i, loc := range m.mapLocations {
+		if loc.Name == name {
+			if connectedTo != "" {
+				m.mapLocations[i].ConnectedTo = append(loc.ConnectedTo, connectedTo)
+			}
+			return
+		}
+	}
+	loc := components.MapLocation{Name: name}
+	if connectedTo != "" {
+		loc.ConnectedTo = []string{connectedTo}
+	}
+	m.mapLocations = append(m.mapLocations, loc)
+}
+
+// removeStr removes the first occurrence of s from ss.
+func removeStr(ss []string, s string) []string {
+	for i, v := range ss {
+		if v == s {
+			return append(ss[:i], ss[i+1:]...)
+		}
+	}
+	return ss
 }
 
 // handleKey processes keyboard input for the dashboard.
@@ -454,8 +571,13 @@ func (m DashboardModel) renderFocusMode(width, height int) string {
 
 		right = lipgloss.JoinVertical(lipgloss.Left, feedPanel, worldPanel)
 	case PanelMap:
-		right = theme.Panel.Width(rightWidth - 2).Height(rightHeight - 2).Render(
-			theme.MutedText.Render("Spatial Map (coming soon...)"))
+		rightContent := components.RenderSpatialMap(components.SpatialMapData{
+			Locations: m.mapLocations,
+			Travels:   m.mapTravels,
+			Width:     rightWidth,
+			Height:    rightHeight,
+		})
+		right = lipgloss.NewStyle().Width(rightWidth - 2).Height(rightHeight - 2).Render(rightContent)
 	case PanelRelationships:
 		right = theme.Panel.Width(rightWidth - 2).Height(rightHeight - 2).Render(
 			theme.MutedText.Render("Relationship Web (coming soon...)"))

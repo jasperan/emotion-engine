@@ -86,6 +86,8 @@ type DashboardModel struct {
 
 	refreshNeeded bool
 
+	expandedAgent int // -1 = not expanded; 0+ = agent index shown in mind view
+
 	err    error
 	errMsg string
 }
@@ -93,12 +95,13 @@ type DashboardModel struct {
 // NewDashboardModel creates a dashboard for the given run.
 func NewDashboardModel(client *api.Client, tp *components.ThroughputTracker, readOnly bool, runID string) DashboardModel {
 	return DashboardModel{
-		client:     client,
-		throughput: tp,
-		readOnly:   readOnly,
-		runID:      runID,
-		mode:       ModeFocus,
-		streams:    make(map[string]*agentStream),
+		client:        client,
+		throughput:    tp,
+		readOnly:      readOnly,
+		runID:         runID,
+		mode:          ModeFocus,
+		streams:       make(map[string]*agentStream),
+		expandedAgent: -1,
 	}
 }
 
@@ -637,16 +640,38 @@ func (m DashboardModel) handleKey(msg tea.KeyMsg) (DashboardModel, tea.Cmd) {
 			}
 		}
 
+	case "enter":
+		if m.expandedAgent < 0 && len(m.agents) > 0 && m.selectedIdx < len(m.agents) {
+			m.expandedAgent = m.selectedIdx
+		}
+
 	case "left", "h":
-		if m.selectedIdx > 0 {
-			m.selectedIdx--
+		if m.expandedAgent >= 0 {
+			m.expandedAgent--
+			if m.expandedAgent < 0 {
+				m.expandedAgent = len(m.agents) - 1
+			}
+			m.selectedIdx = m.expandedAgent
+		} else {
+			if m.selectedIdx > 0 {
+				m.selectedIdx--
+			}
 		}
 	case "right", "l":
-		if m.selectedIdx < len(m.agents)-1 {
-			m.selectedIdx++
+		if m.expandedAgent >= 0 {
+			m.expandedAgent = (m.expandedAgent + 1) % len(m.agents)
+			m.selectedIdx = m.expandedAgent
+		} else {
+			if m.selectedIdx < len(m.agents)-1 {
+				m.selectedIdx++
+			}
 		}
 
 	case "q", "esc":
+		if m.expandedAgent >= 0 {
+			m.expandedAgent = -1
+			return m, nil
+		}
 		return m, func() tea.Msg {
 			return SwitchScreenMsg{Screen: ScreenScenarios}
 		}
@@ -716,6 +741,62 @@ func (m DashboardModel) View(width, height int) string {
 func (m DashboardModel) renderFocusMode(width, height int) string {
 	leftWidth := width * 60 / 100
 	rightWidth := width - leftWidth
+
+	// Mind view replaces the left panel when an agent is expanded.
+	if m.expandedAgent >= 0 && m.expandedAgent < len(m.agents) {
+		leftContent := m.renderMindView(m.expandedAgent, leftWidth, height)
+		left := lipgloss.NewStyle().Width(leftWidth).Height(height).Render(leftContent)
+
+		// Right panel renders as normal (fall through to right-panel block below).
+		rightHeight := height
+		var right string
+		switch m.panelMode {
+		case PanelFeed:
+			feedHeight := rightHeight * 2 / 3
+			worldHeight := rightHeight - feedHeight
+			feed := components.RenderMessageFeed(components.MessageFeedData{
+				Entries:   m.feedEntries,
+				Filter:    m.feedFilter,
+				ScrollPos: m.feedScroll,
+				Height:    feedHeight - 2,
+				Width:     rightWidth - 2,
+			})
+			feedPanel := theme.Panel.Width(rightWidth - 2).Height(feedHeight - 2).Render(feed)
+			world := components.RenderWorldState(components.WorldStateData{
+				HazardLevel: m.hazardLevel,
+				Locations:   m.locations,
+				Width:       rightWidth - 2,
+			})
+			worldPanel := theme.Panel.Width(rightWidth - 2).Height(worldHeight - 2).Render(world)
+			right = lipgloss.JoinVertical(lipgloss.Left, feedPanel, worldPanel)
+		case PanelMap:
+			right = lipgloss.NewStyle().Width(rightWidth - 2).Height(rightHeight - 2).Render(
+				components.RenderSpatialMap(components.SpatialMapData{
+					Locations: m.mapLocations,
+					Travels:   m.mapTravels,
+					Width:     rightWidth,
+					Height:    rightHeight,
+				}))
+		case PanelRelationships:
+			right = lipgloss.NewStyle().Width(rightWidth - 2).Height(rightHeight - 2).Render(
+				components.RenderRelationshipWeb(components.RelationshipWebData{
+					Agents: m.relAgents,
+					Edges:  m.relEdges,
+					Width:  rightWidth,
+					Height: rightHeight,
+				}))
+		case PanelNegotiations:
+			right = lipgloss.NewStyle().Width(rightWidth - 2).Height(rightHeight - 2).Render(
+				components.RenderNegotiationTheater(components.NegotiationTheaterData{
+					Entries:   m.negotiations,
+					ScrollPos: m.negScroll,
+					Width:     rightWidth,
+					Height:    rightHeight,
+				}))
+		}
+		right = lipgloss.NewStyle().Width(rightWidth).Height(height).Render(right)
+		return lipgloss.JoinHorizontal(lipgloss.Top, left, right)
+	}
 
 	// Left: up to 4 agent panes stacked
 	agentPanes := m.buildAgentPanes(leftWidth, height, 4)
@@ -821,6 +902,88 @@ func (m DashboardModel) buildAgentPanes(width, totalHeight, maxPanes int) []stri
 		panes = append(panes, m.buildSingleAgentPane(i, width, paneHeight))
 	}
 	return panes
+}
+
+// renderMindView builds a MindViewData from agent state and renders the full mind view.
+func (m DashboardModel) renderMindView(idx, width, height int) string {
+	agent := m.agents[idx]
+	d := components.MindViewData{
+		Name:   agent.Name,
+		Width:  width,
+		Height: height,
+	}
+
+	// Extract from Persona map
+	if p := agent.Persona; p != nil {
+		if v, ok := p["occupation"].(string); ok {
+			d.Occupation = v
+		}
+		if v, ok := p["age"].(float64); ok {
+			d.Age = int(v)
+		}
+		if v, ok := p["openness"].(float64); ok {
+			d.Openness = int(v)
+		}
+		if v, ok := p["conscientiousness"].(float64); ok {
+			d.Conscientiousness = int(v)
+		}
+		if v, ok := p["extraversion"].(float64); ok {
+			d.Extraversion = int(v)
+		}
+		if v, ok := p["agreeableness"].(float64); ok {
+			d.Agreeableness = int(v)
+		}
+		if v, ok := p["neuroticism"].(float64); ok {
+			d.Neuroticism = int(v)
+		}
+		if v, ok := p["risk_tolerance"].(float64); ok {
+			d.RiskTolerance = int(v)
+		}
+		if v, ok := p["empathy_level"].(float64); ok {
+			d.Empathy = int(v)
+		}
+		if v, ok := p["leadership"].(float64); ok {
+			d.Leadership = int(v)
+		}
+	}
+
+	// Extract from DynamicState map
+	if ds := agent.DynamicState; ds != nil {
+		if v, ok := ds["health"].(float64); ok {
+			d.Health = int(v)
+		}
+		if v, ok := ds["stress_level"].(float64); ok {
+			d.Stress = int(v)
+		}
+		if v, ok := ds["location"].(string); ok {
+			d.Location = v
+		}
+		if v, ok := ds["current_emotion"].(string); ok {
+			d.Emotion = v
+		}
+		if v, ok := ds["last_reasoning"].(string); ok {
+			d.LastReasoning = v
+		}
+		if inv, ok := ds["inventory"].([]interface{}); ok {
+			for _, item := range inv {
+				if s, ok := item.(string); ok {
+					d.Inventory = append(d.Inventory, s)
+				}
+			}
+		}
+	}
+
+	// Extract plan
+	if plan := agent.CurrentPlan; plan != nil {
+		d.PlanGoal = plan.Goal
+		d.PlanStep = plan.CurrentStep
+		d.PlanProgress = plan.StepProgress
+		if plan.DeadlineStep != nil {
+			d.PlanDeadline = *plan.DeadlineStep
+		}
+	}
+
+	return components.RenderMindView(d)
 }
 
 // buildSingleAgentPane renders one agent's pane.

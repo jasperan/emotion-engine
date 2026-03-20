@@ -71,25 +71,28 @@ func (h HelpModel) bindingsForScreen(screen Screen) []keyBinding {
 		}
 	case ScreenLauncher:
 		return []keyBinding{
-			{"Enter", "Launch run"},
+			{"Enter", "Start run"},
 			{"Tab", "Next field"},
-			{"Esc", "Back"},
+			{"Shift+Tab", "Prev field"},
+			{"←/→", "Change provider"},
+			{"q", "Back"},
 		}
 	case ScreenDashboard:
 		return []keyBinding{
-			{"Tab", "Panel mode"},
-			{"g", "Grid toggle"},
+			{"Tab", "Panel mode (Feed/Map/Rel/Neg)"},
+			{"g", "Grid/Focus toggle"},
+			{"Enter", "Agent Mind View"},
+			{"f", "Filter messages (Feed mode)"},
 			{"Space", "Pause/Resume"},
 			{"s", "Stop run"},
 			{"1-9", "Select agent"},
-			{"←/→", "Cycle agents"},
-			{"↑/↓", "Scroll feed"},
+			{"h/l", "Cycle agents"},
+			{"j/k", "Scroll feed/negotiations"},
 			{"q", "Back"},
 		}
 	case ScreenHistory:
 		return []keyBinding{
-			{"Enter", "View run"},
-			{"r", "Replay run"},
+			{"Enter", "Open run (Replay/Dashboard)"},
 			{"↑/↓", "Navigate"},
 			{"a", "Analytics"},
 			{"q", "Back"},

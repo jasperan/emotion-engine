@@ -10,13 +10,14 @@ import (
 
 // StatusBarData holds all data needed to render the status bar.
 type StatusBarData struct {
-	Connected bool
-	RunStatus string
-	Step      int
-	MaxSteps  int
-	TokPerSec float64
-	Hints     []KeyHint
-	PanelName string
+	Connected  bool
+	RunStatus  string
+	Step       int
+	MaxSteps   int
+	TokPerSec  float64
+	Hints      []KeyHint
+	PanelName  string
+	FilterName string
 }
 
 // KeyHint represents a keyboard shortcut hint.
@@ -39,6 +40,9 @@ func RenderStatusBar(d StatusBarData, width int) string {
 	left := fmt.Sprintf(" %s %s", connDot, statusStyle.Render(d.RunStatus))
 	if d.PanelName != "" {
 		left += "  " + theme.Subtitle.Render("["+d.PanelName+"]")
+	}
+	if d.FilterName != "" && d.FilterName != "All" {
+		left += "  " + lipgloss.NewStyle().Foreground(theme.Warning).Render("filter:"+d.FilterName)
 	}
 
 	// Center: step counter

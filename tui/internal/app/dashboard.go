@@ -723,13 +723,14 @@ func (m DashboardModel) View(width, height int) string {
 	}
 
 	bar := components.RenderStatusBar(components.StatusBarData{
-		Connected: true,
-		RunStatus: m.run.Status,
-		Step:      m.run.CurrentStep,
-		MaxSteps:  m.run.MaxSteps,
-		TokPerSec: m.throughput.CurrentRate(),
-		Hints:     hints,
-		PanelName: m.panelMode.String(),
+		Connected:  true,
+		RunStatus:  m.run.Status,
+		Step:       m.run.CurrentStep,
+		MaxSteps:   m.run.MaxSteps,
+		TokPerSec:  m.throughput.CurrentRate(),
+		Hints:      hints,
+		PanelName:  m.panelMode.String(),
+		FilterName: m.feedFilter.String(),
 	}, width)
 
 	sparkline := components.RenderThroughput(m.throughput, width)

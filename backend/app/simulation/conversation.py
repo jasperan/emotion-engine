@@ -417,13 +417,6 @@ class ConversationManager:
 
         return True
 
-    def get_conversations_needing_turns(self) -> list[Conversation]:
-        """Get all conversations that need turn processing"""
-        return [
-            conv for conv in self._conversations.values()
-            if conv.state == ConversationState.ACTIVE and conv.should_continue()
-        ]
-
     def reset_step_counters(self) -> None:
         """Reset per-step counters for all conversations"""
         for conv in self._conversations.values():

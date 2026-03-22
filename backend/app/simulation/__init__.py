@@ -14,6 +14,7 @@ from app.simulation.trust_network import TrustNetwork, TrustSignal
 from app.simulation.world_state_diff import WorldStateDiff, WorldStateDiffTracker
 from app.simulation.conversation_outcomes import ConversationOutcomeExtractor, ConversationOutcome
 from app.simulation.emotion_contagion import EmotionContagion, ContagionEvent
+from app.simulation.determinism import DeterminismTracker, DivergenceReport
 
 __all__ = [
     "MessageBus",
@@ -38,4 +39,6 @@ __all__ = [
     "ConversationOutcome",
     "EmotionContagion",
     "ContagionEvent",
+    "DeterminismTracker",
+    "DivergenceReport",
 ]

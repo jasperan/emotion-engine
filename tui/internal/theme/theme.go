@@ -107,7 +107,7 @@ func HazardColor(level float64) lipgloss.Color {
 // StatusColor returns a lipgloss.Color based on a status string.
 func StatusColor(status string) lipgloss.Color {
 	switch status {
-	case "active", "generating", "running":
+	case "active", "generating", "running", "completed":
 		return Accent
 	case "error", "failed":
 		return Danger

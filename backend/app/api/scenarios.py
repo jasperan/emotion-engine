@@ -54,26 +54,26 @@ async def generate_scenario(
 ):
     """
     Generate a new scenario using AI based on a natural language prompt.
-    
+
     Examples:
     - "earthquake in Tokyo with rescue workers and civilians"
     - "zombie outbreak in a shopping mall"
     - "hostage negotiation at a bank"
     """
     generator = ScenarioGenerator()
-    
+
     try:
         scenario = await generator.generate(
             prompt=request.prompt,
             persona_count=request.persona_count,
             archetypes=request.archetypes,
         )
-        
+
         filepath = None
         if request.save_to_file:
             filepath = save_scenario(scenario)
             filepath = str(filepath)
-        
+
         return GenerateResponse(
             scenario={
                 "name": scenario.name,
@@ -110,10 +110,12 @@ async def list_scenario_files():
 @router.get("/files/{filename}")
 async def get_scenario_file(filename: str):
     """Get a specific scenario file by filename"""
-    filepath = SCENARIOS_DIR / filename
+    filepath = (SCENARIOS_DIR / filename).resolve()
+    if not filepath.is_relative_to(SCENARIOS_DIR.resolve()):
+        raise HTTPException(status_code=400, detail="Invalid filename")
     if not filepath.exists():
         raise HTTPException(status_code=404, detail="Scenario file not found")
-    
+
     scenario = load_scenario(filepath)
     return {
         "name": scenario.name,
@@ -126,7 +128,9 @@ async def get_scenario_file(filename: str):
 @router.delete("/files/{filename}")
 async def delete_scenario_file_endpoint(filename: str):
     """Delete a scenario file"""
-    filepath = SCENARIOS_DIR / filename
+    filepath = (SCENARIOS_DIR / filename).resolve()
+    if not filepath.is_relative_to(SCENARIOS_DIR.resolve()):
+        raise HTTPException(status_code=400, detail="Invalid filename")
     if delete_scenario_file(filepath):
         return {"status": "deleted", "filename": filename}
     raise HTTPException(status_code=404, detail="Scenario file not found")
@@ -138,12 +142,14 @@ async def import_scenario_file(
     db: AsyncSession = Depends(get_db),
 ):
     """Import a scenario file into the database"""
-    filepath = SCENARIOS_DIR / filename
+    filepath = (SCENARIOS_DIR / filename).resolve()
+    if not filepath.is_relative_to(SCENARIOS_DIR.resolve()):
+        raise HTTPException(status_code=400, detail="Invalid filename")
     if not filepath.exists():
         raise HTTPException(status_code=404, detail="Scenario file not found")
-    
+
     scenario_data = load_scenario(filepath)
-    
+
     # Create database entry
     scenario = Scenario(
         name=scenario_data.name,
@@ -154,7 +160,7 @@ async def import_scenario_file(
     db.add(scenario)
     await db.commit()
     await db.refresh(scenario)
-    
+
     return scenario
 
 
@@ -173,7 +179,7 @@ async def create_scenario(
     db.add(scenario)
     await db.commit()
     await db.refresh(scenario)
-    
+
     return scenario
 
 
@@ -215,7 +221,7 @@ async def update_scenario(
     scenario = await db.get(Scenario, scenario_id)
     if not scenario:
         raise HTTPException(status_code=404, detail="Scenario not found")
-    
+
     if data.name is not None:
         scenario.name = data.name
     if data.description is not None:
@@ -224,10 +230,10 @@ async def update_scenario(
         scenario.config = data.config.model_dump()
     if data.agent_templates is not None:
         scenario.agent_templates = [t.model_dump() for t in data.agent_templates]
-    
+
     await db.commit()
     await db.refresh(scenario)
-    
+
     return scenario
 
 
@@ -240,9 +246,8 @@ async def delete_scenario(
     scenario = await db.get(Scenario, scenario_id)
     if not scenario:
         raise HTTPException(status_code=404, detail="Scenario not found")
-    
+
     await db.delete(scenario)
     await db.commit()
-    
-    return {"status": "deleted", "id": scenario_id}
 
+    return {"status": "deleted", "id": scenario_id}

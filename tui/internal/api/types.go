@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"strings"
 	"time"
 )
@@ -25,9 +26,7 @@ func (ft *FlexTime) UnmarshalJSON(b []byte) error {
 			return nil
 		}
 	}
-	t, err := time.Parse(time.RFC3339, s)
-	ft.Time = t
-	return err
+	return fmt.Errorf("unsupported time format: %s", s)
 }
 
 // --- Scenarios ---

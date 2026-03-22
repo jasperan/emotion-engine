@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -151,7 +152,7 @@ func (c *Client) DatalakeStats() (map[string]interface{}, error) {
 func (c *Client) DatalakeRuns(scenarioName string, limit int) ([]map[string]interface{}, error) {
 	path := fmt.Sprintf("/api/datalake/runs?limit=%d", limit)
 	if scenarioName != "" {
-		path += "&scenario_name=" + scenarioName
+		path += "&scenario_name=" + url.QueryEscape(scenarioName)
 	}
 	var runs []map[string]interface{}
 	err := c.get(path, &runs)

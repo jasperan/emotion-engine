@@ -1,5 +1,6 @@
 """Simulation Engine - main orchestrator for runs"""
 import asyncio
+import collections
 import logging
 import random
 import time
@@ -223,7 +224,7 @@ class SimulationEngine:
                 "message_type": msg.message_type.value if hasattr(msg.message_type, 'value') else msg.message_type,
                 "content": msg.content,
                 "step_index": msg.step_index,
-                "metadata": msg.metadata or {},
+                "metadata": msg.msg_metadata or {},
                 "timestamp": msg.timestamp.isoformat(),
             }
             self.message_bus._message_history.append(bus_msg)
@@ -1999,11 +2000,11 @@ class SimulationEngine:
         if start_loc == target_loc:
             return [start_loc]
 
-        queue = [(start_loc, [start_loc])]
+        queue = collections.deque([(start_loc, [start_loc])])
         visited = {start_loc}
 
         while queue:
-            current, path = queue.pop(0)
+            current, path = queue.popleft()
 
             # check neighbors
             nearby = locations.get(current, {}).get("nearby", [])
@@ -2263,7 +2264,7 @@ class SimulationEngine:
             message_type=db_msg_type,
             content=msg.content,
             step_index=self.current_step,
-            metadata={"conversation_id": conversation_id} if conversation_id else {},
+            msg_metadata={"conversation_id": conversation_id} if conversation_id else {},
         )
         self.db.add(db_message)
 
@@ -2280,9 +2281,7 @@ class SimulationEngine:
 
         if "affected_locations" in params:
             for loc in params["affected_locations"]:
-                self.world_state.setdefault("locations", {})[loc] = {
-                    "hazard_affected": True,
-                }
+                self.world_state.setdefault("locations", {}).setdefault(loc, {})["hazard_affected"] = True
 
         # Apply location-based health effects
         self._apply_location_health_effects()
@@ -2304,17 +2303,17 @@ class SimulationEngine:
         if not agent:
             return
 
-        current_health = agent.dynamic_state.get("health", 100.0) # Default to 100 if missing
+        current_health = agent.dynamic_state.get("health", 10.0) # Default to 10 if missing
         current_stress = agent.dynamic_state.get("stress", 0.0)   # Default to 0 if missing
 
         # Ensure they are floats
-        if current_health is None: current_health = 100.0
+        if current_health is None: current_health = 10.0
         if current_stress is None: current_stress = 0.0
 
         if "health_delta" in params:
             delta = params["health_delta"]
             if delta is not None:
-                agent.dynamic_state["health"] = max(0.0, min(100.0, current_health + float(delta)))
+                agent.dynamic_state["health"] = max(0.0, min(10.0, current_health + float(delta)))
 
         if "stress_delta" in params:
             new_stress = max(1, min(10, current_stress + params["stress_delta"]))

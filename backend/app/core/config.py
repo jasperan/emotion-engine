@@ -8,7 +8,7 @@ class Settings(BaseSettings):
 
     # Application
     app_name: str = "EmotionSim"
-    debug: bool = True
+    debug: bool = False
 
     # Database (Oracle DB 26ai Free — primary)
     oracle_db_host: str = "localhost"

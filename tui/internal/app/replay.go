@@ -407,8 +407,8 @@ func (m ReplayModel) renderReplayLeft(width, height int) string {
 		sort.Strings(keys)
 		for _, k := range keys {
 			v := fmt.Sprintf("%v", step.StateSnapshot[k])
-			if len(v) > width-len(k)-6 {
-				v = v[:width-len(k)-6] + "…"
+			if maxW := width - len(k) - 6; maxW > 0 && len(v) > maxW {
+				v = v[:maxW] + "…"
 			}
 			b.WriteString(fmt.Sprintf("  %s: %s\n",
 				theme.KeyName.Render(k),
@@ -524,8 +524,8 @@ func (m ReplayModel) renderReplayRight(width, height int) string {
 		keys := sortedKeys(m.run.Evaluation)
 		for _, k := range keys {
 			v := fmt.Sprintf("%v", m.run.Evaluation[k])
-			if len(v) > width-len(k)-6 {
-				v = v[:width-len(k)-6] + "…"
+			if maxW := width - len(k) - 6; maxW > 0 && len(v) > maxW {
+				v = v[:maxW] + "…"
 			}
 			b.WriteString(fmt.Sprintf("  %s: %s\n",
 				theme.KeyName.Render(k),
@@ -541,8 +541,8 @@ func (m ReplayModel) renderReplayRight(width, height int) string {
 		keys := sortedKeys(m.run.Metrics)
 		for _, k := range keys {
 			v := fmt.Sprintf("%v", m.run.Metrics[k])
-			if len(v) > width-len(k)-6 {
-				v = v[:width-len(k)-6] + "…"
+			if maxW := width - len(k) - 6; maxW > 0 && len(v) > maxW {
+				v = v[:maxW] + "…"
 			}
 			b.WriteString(fmt.Sprintf("  %s: %s\n",
 				theme.KeyName.Render(k),

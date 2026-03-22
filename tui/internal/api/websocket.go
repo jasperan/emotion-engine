@@ -13,13 +13,17 @@ import (
 // WSEventHandler is a callback invoked for each incoming WebSocket message.
 type WSEventHandler func(msg WSMessage)
 
+// WSDisconnectHandler is called when the connection is lost.
+type WSDisconnectHandler func()
+
 // WSClient manages a WebSocket connection to the EmotionSim backend.
 type WSClient struct {
-	serverURL string
-	conn      *websocket.Conn
-	mu        sync.Mutex
-	connected bool
-	done      chan struct{}
+	serverURL    string
+	conn         *websocket.Conn
+	mu           sync.Mutex
+	connected    bool
+	done         chan struct{}
+	onDisconnect WSDisconnectHandler
 }
 
 // NewWSClient creates a new WebSocket client for the given server URL.
@@ -27,6 +31,13 @@ func NewWSClient(serverURL string) *WSClient {
 	return &WSClient{
 		serverURL: serverURL,
 	}
+}
+
+// SetDisconnectHandler registers a callback for when the WS connection drops.
+func (ws *WSClient) SetDisconnectHandler(h WSDisconnectHandler) {
+	ws.mu.Lock()
+	ws.onDisconnect = h
+	ws.mu.Unlock()
 }
 
 // Connect establishes a WebSocket connection for the given run and starts
@@ -60,7 +71,11 @@ func (ws *WSClient) readLoop(handler WSEventHandler) {
 	defer func() {
 		ws.mu.Lock()
 		ws.connected = false
+		cb := ws.onDisconnect
 		ws.mu.Unlock()
+		if cb != nil {
+			cb()
+		}
 	}()
 
 	for {
@@ -70,7 +85,14 @@ func (ws *WSClient) readLoop(handler WSEventHandler) {
 		default:
 		}
 
-		_, message, err := ws.conn.ReadMessage()
+		ws.mu.Lock()
+		conn := ws.conn
+		ws.mu.Unlock()
+		if conn == nil {
+			return
+		}
+
+		_, message, err := conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
 				log.Printf("websocket read error: %v", err)

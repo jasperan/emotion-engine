@@ -352,8 +352,6 @@ func (m *DashboardModel) handleWSEvent(evt api.WSMessage) {
 		}
 
 	case "proposal_rejected":
-		agentID, _ := evt.Data["agent_id"].(string)
-		_ = m.agentNameByID(agentID) // limited info available
 		// Update negotiation entry
 		proposalID2, _ := evt.Data["proposal_id"].(string)
 		agentID2, _ := evt.Data["agent_id"].(string)

@@ -8,6 +8,7 @@ from app.api.seed import router as seed_router
 from app.api.datalake import router as datalake_router
 from app.api.governance import router as governance_router
 from app.llm.router import LLMRouter
+from app.core.config import get_settings
 
 router = APIRouter()
 
@@ -30,15 +31,18 @@ async def root():
 async def llm_health():
     """Check LLM provider health"""
     try:
-        client = LLMRouter.get_client("ollama")
+        settings = get_settings()
+        backend = settings.llm_backend
+        client = LLMRouter.get_client(backend)
         is_healthy = await client.health_check()
         return {
-            "provider": "ollama",
+            "provider": backend,
             "status": "healthy" if is_healthy else "unhealthy",
         }
     except Exception as e:
+        settings = get_settings()
         return {
-            "provider": "ollama",
+            "provider": settings.llm_backend,
             "status": "error",
             "error": str(e),
         }

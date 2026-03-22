@@ -29,7 +29,10 @@
 
 ### Prerequisites
 
-- Python 3.11+, Go 1.24+ (for TUI)
+**Docker path** (one-command install): Docker + Docker Compose only.
+
+**Manual path:**
+- Python 3.11+, Go 1.24+ (for TUI), Node.js 18+ (for web dashboard)
 - [vLLM](https://docs.vllm.ai/) (recommended) or [Ollama](https://ollama.ai/) for local inference
 - Oracle DB 26ai Free (localhost:1522)
 
@@ -45,9 +48,11 @@ emotionsim run --scenario "Rising Flood" --max-steps 50 --seed 42
 
 ```bash
 cd tui
-go build -o emotionsim-tui .
-./emotionsim-tui              # auto-starts backend if not running
-./emotionsim-tui --no-backend # connect to existing backend
+make build                            # or: go build -ldflags "-s -w" -o emotionsim-tui .
+./emotionsim-tui                      # auto-starts backend + vLLM if not running
+./emotionsim-tui --no-backend         # connect to existing backend
+./emotionsim-tui --no-vllm            # skip vLLM auto-start (use Ollama)
+./emotionsim-tui --no-backend --no-vllm  # connect to all existing services
 ```
 
 The TUI has 7 screens and multiple panel modes. See [TUI Guide](#tui-guide) below for the full walkthrough.
@@ -55,7 +60,9 @@ The TUI has 7 screens and multiple panel modes. See [TUI Guide](#tui-guide) belo
 ### Web Dashboard
 
 ```bash
-cd frontend && npm run dev    # starts both backend + SvelteKit frontend
+cd frontend
+npm install                   # first time only
+npm run dev                   # starts both backend + SvelteKit frontend
 ```
 
 ## Architecture
@@ -116,7 +123,7 @@ Agents communicate through a structured protocol with direct, broadcast, and roo
 
 ### Built-in Scenario: Rising Flood
 
-Eight diverse personas navigate a flooding disaster — from an ER doctor and retired firefighter to a scared 8-year-old child. The environment agent escalates hazard levels while human agents cooperate (or don't) based on their personality profiles.
+Ten diverse personas navigate a flooding disaster — from an ER doctor and retired firefighter to a scared 8-year-old child. The environment agent escalates hazard levels while human agents cooperate (or don't) based on their personality profiles.
 
 ## CLI Commands
 
@@ -127,6 +134,9 @@ Eight diverse personas navigate a flooding disaster — from an ER doctor and re
 | `emotionsim scenarios --create-builtin` | Create built-in scenario templates |
 | `emotionsim interactive` | Guided wizard mode |
 | `emotionsim status` | Check backend health |
+| `emotionsim monitor` | Attach to running simulation |
+| `emotionsim best` | Show best runs ranked by cooperation |
+| `emotionsim viewer` | Rich TUI viewer for past runs |
 
 ## Configuration
 
@@ -134,12 +144,18 @@ Environment variables via `.env` in `backend/`:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `LLM_BACKEND` | `vllm` | `vllm` or `ollama` |
+| `LLM_BACKEND` | `vllm` | `vllm` or `ollama` (Docker defaults to `ollama`) |
 | `VLLM_BASE_URL` | `http://localhost:8010` | vLLM server address |
-| `VLLM_DEFAULT_MODEL` | `Qwen/Qwen3.5-4B` | Model for inference |
+| `VLLM_DEFAULT_MODEL` | `Qwen/Qwen3.5-4B` | Model loaded in vLLM |
+| `OLLAMA_BASE_URL` | `http://localhost:11434/v1` | Ollama server address |
+| `OLLAMA_DEFAULT_MODEL` | `qwen3.5:4b` | Model for Ollama inference |
 | `ORACLE_DB_HOST` | `localhost` | Oracle DB host |
 | `ORACLE_DB_PORT` | `1522` | Oracle DB port |
+| `ORACLE_DB_USER` | `emotionsim` | DB username (dev default) |
 | `DEFAULT_MAX_STEPS` | `10` | Default simulation length |
+| `SCENE_MODE` | `true` | Parallel scenes by location (vLLM only) |
+| `DATALAKE_ENABLED` | `true` | Enable cross-run analytics |
+| `CORS_ORIGINS` | `localhost:3000,5173` | Allowed CORS origins |
 
 ## TUI Guide
 
@@ -149,10 +165,10 @@ The Go TUI is a full-featured terminal interface for running, monitoring, and an
 
 ```bash
 cd tui
-go build -o emotionsim-tui .
-./emotionsim-tui                        # auto-starts backend + vLLM
-./emotionsim-tui --no-backend           # connect to running backend
-./emotionsim-tui --ssh --ssh-port 2222  # serve over SSH (read-only)
+make build                                  # or: go build -ldflags "-s -w" -o emotionsim-tui .
+./emotionsim-tui                            # auto-starts backend + vLLM
+./emotionsim-tui --no-backend --no-vllm     # connect to running services
+./emotionsim-tui --ssh-port 2222            # serve over SSH (read-only)
 ```
 
 ### Screens

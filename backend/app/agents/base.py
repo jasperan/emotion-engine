@@ -216,7 +216,7 @@ class Agent(ABC):
         data = self._normalize_response(data)
         self._last_cinematic = data.get("_cinematic", {})
         actions = []
-        for action_data in data.get("actions", []):
+        for action_data in (data.get("actions") or []):
             if isinstance(action_data, dict):
                 # Coerce target to string or None to handle LLM returning non-string values
                 target_raw = action_data.get("target")
@@ -267,8 +267,8 @@ class Agent(ABC):
         return AgentResponse(
             actions=actions,
             message=message,
-            state_changes=data.get("state_changes", {}),
-            reasoning=data.get("reasoning", ""),
+            state_changes=data.get("state_changes") or {},
+            reasoning=data.get("reasoning") or "",
         )
 
     def _clean_response_text(self, content: str) -> str:

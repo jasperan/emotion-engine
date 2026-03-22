@@ -10,7 +10,12 @@ class Settings(BaseSettings):
     app_name: str = "EmotionSim"
     debug: bool = False
 
+    # CORS — comma-separated origins allowed to call the API
+    cors_origins: str = "http://localhost:3000,http://localhost:5173"
+
     # Database (Oracle DB 26ai Free — primary)
+    # NOTE: These defaults are for local dev only. In production, override via
+    # ORACLE_DB_USER / ORACLE_DB_PASSWORD environment variables or .env file.
     oracle_db_host: str = "localhost"
     oracle_db_port: int = 1522
     oracle_db_service: str = "FREEPDB1"

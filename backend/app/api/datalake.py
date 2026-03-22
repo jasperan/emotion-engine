@@ -1,4 +1,5 @@
 """Datalake API endpoints for querying Oracle 26ai Free logged data."""
+import asyncio
 from fastapi import APIRouter, HTTPException, Query
 from typing import Optional
 
@@ -29,12 +30,17 @@ def _get_store():
     return SimulationStore(config)
 
 
+async def _run_sync(func, *args, **kwargs):
+    """Run a synchronous SimulationStore method in a thread to avoid blocking the event loop."""
+    return await asyncio.to_thread(func, *args, **kwargs)
+
+
 @router.get("/stats")
 async def get_stats():
     """Get aggregate statistics across all logged runs."""
     store = _get_store()
     try:
-        return store.get_stats()
+        return await _run_sync(store.get_stats)
     finally:
         store.close()
 
@@ -49,7 +55,8 @@ async def list_runs(
     """List logged runs with optional filtering."""
     store = _get_store()
     try:
-        return store.list_runs(
+        return await _run_sync(
+            store.list_runs,
             scenario_name=scenario_name,
             status=status,
             limit=limit,
@@ -64,7 +71,7 @@ async def get_run(run_id: str):
     """Get a specific logged run with counts."""
     store = _get_store()
     try:
-        result = store.get_run(run_id)
+        result = await _run_sync(store.get_run, run_id)
         if result is None:
             raise HTTPException(status_code=404, detail="Run not found in datalake")
         return result
@@ -82,7 +89,8 @@ async def get_run_events(
     """Get events for a logged run."""
     store = _get_store()
     try:
-        return store.get_run_events(
+        return await _run_sync(
+            store.get_run_events,
             run_id=run_id,
             event_type=event_type,
             agent_name=agent_name,
@@ -100,7 +108,7 @@ async def get_run_plans(
     """Get cognitive plan snapshots for a logged run."""
     store = _get_store()
     try:
-        return store.get_run_plans(run_id=run_id, agent_name=agent_name)
+        return await _run_sync(store.get_run_plans, run_id=run_id, agent_name=agent_name)
     finally:
         store.close()
 
@@ -110,7 +118,7 @@ async def get_run_metrics(run_id: str):
     """Get all metrics for a logged run."""
     store = _get_store()
     try:
-        return store.get_run_metrics(run_id=run_id)
+        return await _run_sync(store.get_run_metrics, run_id=run_id)
     finally:
         store.close()
 
@@ -120,7 +128,7 @@ async def delete_run(run_id: str):
     """Delete a logged run and all its data."""
     store = _get_store()
     try:
-        deleted = store.delete_run(run_id)
+        deleted = await _run_sync(store.delete_run, run_id)
         if not deleted:
             raise HTTPException(status_code=404, detail="Run not found in datalake")
         return {"status": "deleted", "run_id": run_id}
@@ -133,7 +141,7 @@ async def init_datalake():
     """Initialize datalake tables (create if not exist)."""
     store = _get_store()
     try:
-        store.init_db()
+        await _run_sync(store.init_db)
         return {"status": "initialized"}
     finally:
         store.close()

@@ -394,6 +394,16 @@ class OllamaClient(LLMClient):
             usage=usage,
         )
 
+    async def close(self) -> None:
+        """Close the underlying HTTP client to release connections."""
+        if self.http_client:
+            await self.http_client.aclose()
+
+    def __del__(self) -> None:
+        """Safety net: warn if client was not explicitly closed."""
+        if hasattr(self, "http_client") and self.http_client and not self.http_client.is_closed:
+            logger.warning("OllamaClient was garbage-collected without calling close()")
+
     async def health_check(self) -> bool:
         """Check if Ollama is available"""
         try:

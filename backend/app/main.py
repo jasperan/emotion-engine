@@ -1,7 +1,9 @@
 """FastAPI application entry point"""
+import time
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.config import get_settings
 from app.core.database import init_db
@@ -63,14 +65,57 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS middleware for frontend
+# CORS middleware for frontend — origins loaded from settings
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for external access
+    allow_origins=[o.strip() for o in settings.cors_origins.split(",") if o.strip()],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ---------------------------------------------------------------------------
+# Simple in-memory rate limiter for mutation endpoints (POST/DELETE)
+# ---------------------------------------------------------------------------
+class RateLimitMiddleware(BaseHTTPMiddleware):
+    """Limits POST/DELETE requests to RATE_LIMIT per IP per 60-second window."""
+
+    RATE_LIMIT = 100
+    WINDOW_SECONDS = 60
+
+    def __init__(self, app):
+        super().__init__(app)
+        # ip -> (count, window_start)
+        self._hits: dict[str, tuple[int, float]] = {}
+
+    async def dispatch(self, request: Request, call_next):
+        if request.method not in ("POST", "DELETE"):
+            return await call_next(request)
+
+        now = time.time()
+        ip = request.client.host if request.client else "unknown"
+
+        count, window_start = self._hits.get(ip, (0, now))
+        if now - window_start >= self.WINDOW_SECONDS:
+            # Reset window
+            count = 0
+            window_start = now
+
+        count += 1
+        self._hits[ip] = (count, window_start)
+
+        if count > self.RATE_LIMIT:
+            return Response(
+                content="Rate limit exceeded",
+                status_code=429,
+                media_type="text/plain",
+            )
+
+        return await call_next(request)
+
+
+app.add_middleware(RateLimitMiddleware)
 
 # Include API routes
 app.include_router(api_router, prefix="/api")

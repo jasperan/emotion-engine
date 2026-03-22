@@ -1,6 +1,6 @@
 """Message database model"""
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 from enum import Enum
 
@@ -24,9 +24,9 @@ class MessageType(str, Enum):
 
 class Message(Base):
     """Message exchanged between agents"""
-    
+
     __tablename__ = "messages"
-    
+
     id: Mapped[str] = mapped_column(
         String(36),
         primary_key=True,
@@ -37,7 +37,7 @@ class Message(Base):
         ForeignKey("runs.id"),
         nullable=False
     )
-    
+
     # Message routing
     from_agent_id: Mapped[str] = mapped_column(String(36), nullable=True)  # Null for system
     to_target: Mapped[str] = mapped_column(String(255), nullable=False)  # Agent ID, room name, or "broadcast"
@@ -45,25 +45,24 @@ class Message(Base):
         SQLEnum(MessageType),
         default=MessageType.DIRECT
     )
-    
+
     # Content
     content: Mapped[str] = mapped_column(Text, nullable=False)
-    
+
     # Additional metadata (using msg_metadata to avoid SQLAlchemy reserved name)
     msg_metadata: Mapped[dict] = mapped_column(OracleJSON, default=dict)
-    
+
     # Step context
     step_index: Mapped[int] = mapped_column(Integer, nullable=False)
-    
+
     # Timestamp
     timestamp: Mapped[datetime] = mapped_column(
         DateTime,
-        default=datetime.utcnow
+        default=lambda: datetime.now(timezone.utc)
     )
-    
+
     # Relationships
     run: Mapped["Run"] = relationship(
         "Run",
         back_populates="messages"
     )
-

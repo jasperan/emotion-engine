@@ -1,7 +1,7 @@
 """JSON storage utilities for scenarios"""
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -27,7 +27,7 @@ def scenario_to_dict(scenario: ScenarioCreate) -> dict[str, Any]:
         "description": scenario.description,
         "config": scenario.config.model_dump(),
         "agent_templates": [t.model_dump() for t in scenario.agent_templates],
-        "generated_at": datetime.utcnow().isoformat(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
     }
 
 
@@ -43,14 +43,14 @@ def dict_to_scenario(data: dict[str, Any]) -> ScenarioCreate:
         max_steps=config_data.get("max_steps", 50),
         tick_delay=config_data.get("tick_delay", 1.0),
     )
-    
+
     # Parse agent templates
     agent_templates = []
     for t_data in data["agent_templates"]:
         persona = None
         if t_data.get("persona"):
             persona = Persona(**t_data["persona"])
-        
+
         agent_templates.append(AgentConfig(
             name=t_data["name"],
             role=t_data["role"],
@@ -61,7 +61,7 @@ def dict_to_scenario(data: dict[str, Any]) -> ScenarioCreate:
             tools=t_data.get("tools", []),
             initial_state=t_data.get("initial_state", {}),
         ))
-    
+
     return ScenarioCreate(
         name=data["name"],
         description=data["description"],
@@ -77,7 +77,7 @@ def generate_filename(name: str) -> str:
     # Remove special characters
     safe_name = "".join(c for c in safe_name if c.isalnum() or c == "_")
     # Add timestamp for uniqueness
-    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     return f"{safe_name}_{timestamp}.json"
 
 
@@ -88,70 +88,70 @@ def save_scenario(
 ) -> Path:
     """
     Save a scenario to a JSON file.
-    
+
     Args:
         scenario: The scenario to save
         filename: Optional filename (auto-generated if not provided)
         directory: Optional directory (uses default if not provided)
-        
+
     Returns:
         Path to the saved file
     """
     target_dir = directory or ensure_scenarios_dir()
     target_dir.mkdir(parents=True, exist_ok=True)
-    
+
     if filename is None:
         filename = generate_filename(scenario.name)
-    
+
     if not filename.endswith(".json"):
         filename += ".json"
-    
+
     filepath = target_dir / filename
-    
+
     data = scenario_to_dict(scenario)
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
-    
+
     return filepath
 
 
 def load_scenario(filepath: str | Path) -> ScenarioCreate:
     """
     Load a scenario from a JSON file.
-    
+
     Args:
         filepath: Path to the JSON file
-        
+
     Returns:
         ScenarioCreate object
     """
     with open(filepath, "r", encoding="utf-8") as f:
         data = json.load(f)
-    
+
     return dict_to_scenario(data)
 
 
 def list_scenarios(directory: Path | None = None) -> list[dict[str, Any]]:
     """
     List all scenarios in the directory.
-    
+
     Args:
         directory: Optional directory (uses default if not provided)
-        
+
     Returns:
         List of dicts with scenario metadata
     """
     target_dir = directory or SCENARIOS_DIR
-    
+
     if not target_dir.exists():
         return []
-    
+
     scenarios = []
     for filepath in target_dir.glob("*.json"):
         try:
             with open(filepath, "r", encoding="utf-8") as f:
                 data = json.load(f)
-            
+
             scenarios.append({
                 "filename": filepath.name,
                 "filepath": str(filepath),
@@ -166,7 +166,7 @@ def list_scenarios(directory: Path | None = None) -> list[dict[str, Any]]:
         except (json.JSONDecodeError, KeyError):
             # Skip invalid files
             continue
-    
+
     # Sort by generation time (newest first)
     scenarios.sort(key=lambda x: x.get("generated_at", ""), reverse=True)
     return scenarios
@@ -175,10 +175,10 @@ def list_scenarios(directory: Path | None = None) -> list[dict[str, Any]]:
 def delete_scenario(filepath: str | Path) -> bool:
     """
     Delete a scenario file.
-    
+
     Args:
         filepath: Path to the JSON file
-        
+
     Returns:
         True if deleted, False if file didn't exist
     """
@@ -195,57 +195,57 @@ def update_scenario(
 ) -> ScenarioCreate:
     """
     Update a scenario file with partial updates.
-    
+
     Args:
         filepath: Path to the JSON file
         updates: Dict of fields to update
-        
+
     Returns:
         Updated ScenarioCreate object
     """
     with open(filepath, "r", encoding="utf-8") as f:
         data = json.load(f)
-    
+
     # Apply updates
     for key, value in updates.items():
         if key in data:
             data[key] = value
-    
+
     # Update timestamp
-    data["updated_at"] = datetime.utcnow().isoformat()
-    
+    data["updated_at"] = datetime.now(timezone.utc).isoformat()
+
     # Save back
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
-    
+
     return dict_to_scenario(data)
 
 
 def load_generated_scenarios() -> list[dict[str, Any]]:
     """
     Load all generated scenarios from the scenarios_generated directory.
-    
+
     Returns:
         List of dicts with scenario data ready for use in CLI/API
     """
     scenarios = []
-    
+
     if not SCENARIOS_DIR.exists():
         return scenarios
-    
+
     for filepath in sorted(SCENARIOS_DIR.glob("*.json")):
         # Skip .gitkeep and other non-scenario files
         if filepath.name.startswith("."):
             continue
-            
+
         try:
             with open(filepath, "r", encoding="utf-8") as f:
                 data = json.load(f)
-            
+
             # Validate it has required fields
             if "name" not in data or "agent_templates" not in data:
                 continue
-            
+
             scenarios.append({
                 "filename": filepath.name,
                 "filepath": str(filepath),
@@ -263,8 +263,7 @@ def load_generated_scenarios() -> list[dict[str, Any]]:
         except (json.JSONDecodeError, KeyError, OSError):
             # Skip invalid files
             continue
-    
+
     # Sort by generation time (newest first)
     scenarios.sort(key=lambda x: x.get("generated_at", ""), reverse=True)
     return scenarios
-

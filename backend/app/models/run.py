@@ -1,6 +1,6 @@
 """Run database model"""
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 from enum import Enum
 
@@ -29,9 +29,9 @@ class RunStatus(str, Enum):
 
 class Run(Base):
     """A single simulation run of a scenario"""
-    
+
     __tablename__ = "runs"
-    
+
     id: Mapped[str] = mapped_column(
         String(36),
         primary_key=True,
@@ -42,7 +42,7 @@ class Run(Base):
         ForeignKey("scenarios.id"),
         nullable=False
     )
-    
+
     # Run state
     status: Mapped[RunStatus] = mapped_column(
         SQLEnum(RunStatus),
@@ -50,25 +50,25 @@ class Run(Base):
     )
     current_step: Mapped[int] = mapped_column(Integer, default=0)
     max_steps: Mapped[int] = mapped_column(Integer, default=100)
-    
+
     # Random seed for reproducibility
     seed: Mapped[int] = mapped_column(Integer, nullable=True)
-    
+
     # World state JSON
     world_state: Mapped[dict] = mapped_column(OracleJSON, default=dict)
-    
+
     # Metrics and evaluation results
     metrics: Mapped[dict] = mapped_column(OracleJSON, default=dict)
     evaluation: Mapped[dict] = mapped_column(OracleJSON, default=dict)
-    
+
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
-        default=datetime.utcnow
+        default=lambda: datetime.now(timezone.utc)
     )
     started_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     completed_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
-    
+
     # Relationships
     scenario: Mapped["Scenario"] = relationship(
         "Scenario",
@@ -94,4 +94,3 @@ class Run(Base):
         back_populates="run",
         cascade="all, delete-orphan"
     )
-

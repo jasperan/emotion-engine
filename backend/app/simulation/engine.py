@@ -4,7 +4,7 @@ import collections
 import logging
 import random
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Callable, Awaitable
 from enum import Enum
 
@@ -75,6 +75,7 @@ class SimulationEngine:
 
         # Agents
         self.agents: dict[str, Agent] = {}
+        self._name_to_id: dict[str, str] = {}  # agent.name -> agent.id cache
         self.message_bus = MessageBus()
 
         # Conversation management
@@ -151,6 +152,15 @@ class SimulationEngine:
             calm_factor=0.5,
         )
 
+    def _register_agent(self, agent: Agent) -> None:
+        """Register an agent in the agents dict and update the name-to-id cache."""
+        self.agents[agent.id] = agent
+        self._name_to_id[agent.name] = agent.id
+
+    def _resolve_name(self, name: str) -> str:
+        """Resolve an agent name to its ID via O(1) cache lookup. Returns name unchanged if not found."""
+        return self._name_to_id.get(name, name)
+
     async def load_from_db(self) -> None:
         """Load simulation state from database for resumption"""
         self.state = SimulationState.INITIALIZING
@@ -195,7 +205,7 @@ class SimulationEngine:
             if hasattr(model, 'memory_snapshot') and model.memory_snapshot:
                 agent.restore_memory(model.memory_snapshot)
 
-            self.agents[agent.id] = agent
+            self._register_agent(agent)
             self.message_bus.register_agent(agent.id, agent.name)
             self.acp_registry.register(agent.get_acp_identity())
             self.supervisor.register_agent(agent.id, agent.name)
@@ -273,7 +283,7 @@ class SimulationEngine:
         agent_templates = scenario_config.get("agent_templates", [])
         for template in agent_templates:
             agent = self._create_agent(template)
-            self.agents[agent.id] = agent
+            self._register_agent(agent)
             self.message_bus.register_agent(agent.id, agent.name)
             self.acp_registry.register(agent.get_acp_identity())
             self.supervisor.register_agent(agent.id, agent.name)
@@ -407,7 +417,7 @@ class SimulationEngine:
         run = await self.db.get(Run, self.run_id)
         if run:
             run.status = RunStatus.RUNNING
-            run.started_at = run.started_at or datetime.utcnow()
+            run.started_at = run.started_at or datetime.now(timezone.utc)
             await self.db.commit()
 
         self.on_event("run_started", {"step": self.current_step})
@@ -774,7 +784,7 @@ class SimulationEngine:
                 self.on_event("message", {
                     "type": "message",
                     "data": stored_msg,
-                    "timestamp": datetime.utcnow().strftime("%H:%M:%S")
+                    "timestamp": datetime.now(timezone.utc).strftime("%H:%M:%S")
                 })
                 await asyncio.sleep(0)
 
@@ -1065,7 +1075,7 @@ class SimulationEngine:
             self.on_event("message", {
                 "type": "message",
                 "data": stored_msg,
-                "timestamp": datetime.utcnow().strftime("%H:%M:%S")
+                "timestamp": datetime.now(timezone.utc).strftime("%H:%M:%S")
             })
             await asyncio.sleep(0)
         elif in_conversation and conversation:
@@ -1453,11 +1463,8 @@ class SimulationEngine:
                 if resolved:
                     to_agent_id = resolved
                 else:
-                    # Fallback to exact name match
-                    for aid, a in self.agents.items():
-                        if a.name == to_agent_id:
-                            to_agent_id = aid
-                            break
+                    # Fallback to exact name match via O(1) cache
+                    to_agent_id = self._resolve_name(to_agent_id)
             stored_msg = self.message_bus.send_direct(
                 from_agent_id=agent_id,
                 to_agent_id=to_agent_id,
@@ -1544,7 +1551,7 @@ class SimulationEngine:
                 self.on_event("message", {
                     "type": "message",
                     "data": stored_msg,
-                    "timestamp": datetime.utcnow().strftime("%H:%M:%S")
+                    "timestamp": datetime.now(timezone.utc).strftime("%H:%M:%S")
                 })
 
             self._update_agents_in_world_state()
@@ -1553,13 +1560,8 @@ class SimulationEngine:
 
     def _handle_propose(self, agent_id: str, target: str | None, params: dict[str, Any]) -> None:
         """Handle a formal proposal (Symphony-style state machine)"""
-        # Resolve target name to ID
-        target_id = target
-        if target_id:
-            for aid, a in self.agents.items():
-                if a.name == target_id:
-                    target_id = aid
-                    break
+        # Resolve target name to ID via O(1) cache
+        target_id = self._resolve_name(target) if target else target
 
         proposal = self.negotiation.create_proposal(
             proposer_id=agent_id,
@@ -1657,12 +1659,8 @@ class SimulationEngine:
         if not subject:
             return
 
-        # Resolve subject name to ID
-        subject_id = subject
-        for aid, a in self.agents.items():
-            if a.name == subject:
-                subject_id = aid
-                break
+        # Resolve subject name to ID via O(1) cache
+        subject_id = self._resolve_name(subject)
 
         # Vouch to all agents at the same location
         agent_location = self._agent_locations.get(agent_id)
@@ -1700,11 +1698,7 @@ class SimulationEngine:
 
         # Share plan increases trust with target
         if target:
-            target_id = target
-            for aid, a in self.agents.items():
-                if a.name == target:
-                    target_id = aid
-                    break
+            target_id = self._resolve_name(target)
 
             # Get current trust level
             rel = agent.agent_memory.get_relationship(target_id)
@@ -1746,12 +1740,8 @@ class SimulationEngine:
         if not target or not params.get("description"):
             return
 
-        # Resolve target name to ID
-        target_id = target
-        for aid, a in self.agents.items():
-            if a.name == target:
-                target_id = aid
-                break
+        # Resolve target name to ID via O(1) cache
+        target_id = self._resolve_name(target)
 
         # Create as a proposal so target can accept/reject
         self.negotiation.create_proposal(
@@ -2294,11 +2284,9 @@ class SimulationEngine:
         # Try to find agent by ID first, then by name
         agent = self.agents.get(target_agent_id)
         if not agent:
-            # Search by name
-            for agent_id, a in self.agents.items():
-                if a.name == target_agent_id:
-                    agent = a
-                    break
+            # Search by name via O(1) cache
+            resolved_id = self._resolve_name(target_agent_id)
+            agent = self.agents.get(resolved_id)
 
         if not agent:
             return
@@ -2765,7 +2753,7 @@ class SimulationEngine:
         run = await self.db.get(Run, self.run_id)
         if run:
             run.status = RunStatus.CANCELLED
-            run.completed_at = datetime.utcnow()
+            run.completed_at = datetime.now(timezone.utc)
             await self.db.commit()
 
         self.state = SimulationState.IDLE
@@ -2812,7 +2800,7 @@ class SimulationEngine:
         run = await self.db.get(Run, self.run_id)
         if run:
             run.status = RunStatus.COMPLETED
-            run.completed_at = datetime.utcnow()
+            run.completed_at = datetime.now(timezone.utc)
             run.metrics = self._compute_step_metrics()
             run.evaluation = evaluation
             await self.db.commit()

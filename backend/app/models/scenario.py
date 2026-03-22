@@ -1,6 +1,6 @@
 """Scenario database model"""
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 from sqlalchemy import String, Text, DateTime
@@ -14,9 +14,9 @@ if TYPE_CHECKING:
 
 class Scenario(Base):
     """Scenario configuration for simulations"""
-    
+
     __tablename__ = "scenarios"
-    
+
     id: Mapped[str] = mapped_column(
         String(36),
         primary_key=True,
@@ -24,28 +24,27 @@ class Scenario(Base):
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=True)
-    
+
     # Configuration JSON containing world parameters
     config: Mapped[dict] = mapped_column(OracleJSON, default=dict)
-    
+
     # Agent templates for this scenario
     agent_templates: Mapped[list] = mapped_column(OracleJSON, default=list)
-    
+
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
-        default=datetime.utcnow
+        default=lambda: datetime.now(timezone.utc)
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
     )
-    
+
     # Relationships
     runs: Mapped[list["Run"]] = relationship(
         "Run",
         back_populates="scenario",
         cascade="all, delete-orphan"
     )
-

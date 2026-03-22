@@ -2,7 +2,7 @@
 import logging
 import uuid
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Callable
 from collections import defaultdict
 
@@ -57,8 +57,8 @@ class Conversation:
         self._max_consecutive_passes: int = 2  # End after this many passes
 
         # Timing
-        self.started_at: datetime = datetime.utcnow()
-        self.last_activity: datetime = datetime.utcnow()
+        self.started_at: datetime = datetime.now(timezone.utc)
+        self.last_activity: datetime = datetime.now(timezone.utc)
         self.ended_at: datetime | None = None
 
         # Settings
@@ -118,12 +118,12 @@ class Conversation:
 
         self._current_turn_index = (self._current_turn_index + 1) % max(len(self._turn_order), 1)
         self._turns_this_step += 1
-        self.last_activity = datetime.utcnow()
+        self.last_activity = datetime.now(timezone.utc)
 
     def add_message(self, message: dict[str, Any]) -> None:
         """Add a message to the conversation history"""
         self.message_history.append(message)
-        self.last_activity = datetime.utcnow()
+        self.last_activity = datetime.now(timezone.utc)
         self._consecutive_passes = 0  # Reset passes when someone speaks
 
     def should_continue(self) -> bool:
@@ -153,7 +153,7 @@ class Conversation:
     def end(self) -> None:
         """End the conversation"""
         self.state = ConversationState.ENDED
-        self.ended_at = datetime.utcnow()
+        self.ended_at = datetime.now(timezone.utc)
 
     def pause(self) -> None:
         """Pause the conversation"""
@@ -205,6 +205,9 @@ class ConversationManager:
         # Agent locations for auto-join: agent_id -> location
         self._agent_locations: dict[str, str] = {}
 
+        # Reverse index: location -> set of agent_ids (avoids O(n) scan in get_agents_at_location)
+        self._location_agents: dict[str, set[str]] = defaultdict(set)
+
         # Callbacks for conversation events
         self._on_conversation_event: list[Callable[[str, dict[str, Any]], None]] = []
 
@@ -216,6 +219,11 @@ class ConversationManager:
         """
         old_location = self._agent_locations.get(agent_id)
         self._agent_locations[agent_id] = new_location
+
+        # Maintain reverse index
+        if old_location:
+            self._location_agents[old_location].discard(agent_id)
+        self._location_agents[new_location].add(agent_id)
 
         # Leave location-based conversations at old location
         if old_location and old_location != new_location:
@@ -371,12 +379,8 @@ class ConversationManager:
         return None
 
     def get_agents_at_location(self, location: str) -> set[str]:
-        """Get all agents at a specific location"""
-        return {
-            agent_id
-            for agent_id, loc in self._agent_locations.items()
-            if loc == location
-        }
+        """Get all agents at a specific location (O(1) via reverse index)"""
+        return self._location_agents.get(location, set()).copy()
 
     def get_location_conversation_summaries(self, location: str, exclude_agent: str | None = None) -> list[dict]:
         """Get summaries of active conversations at a location, excluding given agent's conversations."""
@@ -476,6 +480,7 @@ class ConversationManager:
         self._location_conversations.clear()
         self._agent_conversations.clear()
         self._agent_locations.clear()
+        self._location_agents.clear()
 
     def get_all_active_conversations(self) -> list[Conversation]:
         """Get all active conversations"""

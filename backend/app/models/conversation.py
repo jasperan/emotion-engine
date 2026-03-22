@@ -1,6 +1,6 @@
 """Conversation database model"""
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 from sqlalchemy import String, DateTime, ForeignKey, Text
@@ -14,9 +14,9 @@ if TYPE_CHECKING:
 
 class ConversationModel(Base):
     """Persisted conversation record"""
-    
+
     __tablename__ = "conversations"
-    
+
     id: Mapped[str] = mapped_column(
         String(36),
         primary_key=True,
@@ -27,43 +27,42 @@ class ConversationModel(Base):
         ForeignKey("runs.id"),
         nullable=False
     )
-    
+
     # Conversation location and type
     location: Mapped[str | None] = mapped_column(String(255), nullable=True)
     conversation_type: Mapped[str] = mapped_column(String(50), default="location")
-    
+
     # Participants (list of agent IDs)
     participants: Mapped[list] = mapped_column(OracleJSON, default=list)
-    
+
     # State
     state: Mapped[str] = mapped_column(String(50), default="active")
-    
+
     # Summary (for long-term memory)
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
-    
+
     # Key facts extracted from conversation
     key_facts: Mapped[list] = mapped_column(OracleJSON, default=list)
-    
+
     # Timing
     started_at: Mapped[datetime] = mapped_column(
         DateTime,
-        default=datetime.utcnow
+        default=lambda: datetime.now(timezone.utc)
     )
     ended_at: Mapped[datetime | None] = mapped_column(
         DateTime,
         nullable=True
     )
-    
+
     # Step range
     start_step: Mapped[int | None] = mapped_column(nullable=True)
     end_step: Mapped[int | None] = mapped_column(nullable=True)
-    
+
     # Metadata (using conv_metadata to avoid SQLAlchemy reserved name)
     conv_metadata: Mapped[dict] = mapped_column(OracleJSON, default=dict)
-    
+
     # Relationships
     run: Mapped["Run"] = relationship(
         "Run",
         back_populates="conversations"
     )
-

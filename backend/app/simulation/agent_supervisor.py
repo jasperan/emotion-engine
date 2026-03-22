@@ -4,7 +4,7 @@ import logging
 from typing import Any, Callable, Awaitable
 from collections import Counter
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.schemas.agent import AgentResponse, AgentAction, AgentMessage
 
@@ -188,7 +188,7 @@ class AgentSupervisor:
         telemetry.consecutive_failures += 1
         telemetry.retry_count += 1
         telemetry.last_error = error
-        telemetry.last_error_time = datetime.utcnow()
+        telemetry.last_error_time = datetime.now(timezone.utc)
 
         # Calculate backoff
         backoff = min(

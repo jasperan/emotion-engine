@@ -8,7 +8,7 @@ and metrics via SQLAlchemy + python-oracledb.
 import json
 import logging
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Generator, List, Optional
 
 from sqlalchemy import create_engine, func, or_, text
@@ -119,7 +119,7 @@ class SimulationStore:
                 logger.warning("Run %s not found in datalake", run_id)
                 return
             run.status = status
-            run.completed_at = datetime.utcnow()
+            run.completed_at = datetime.now(timezone.utc)
             if total_steps is not None:
                 run.total_steps = total_steps
             if final_metrics is not None:

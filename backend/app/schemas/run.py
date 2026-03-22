@@ -1,5 +1,5 @@
 """Run-related Pydantic schemas"""
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Literal
 from pydantic import BaseModel, Field
 
@@ -70,4 +70,4 @@ class WebSocketEvent(BaseModel):
     """Event sent over WebSocket"""
     event_type: Literal["step", "message", "agent_action", "state_change", "run_status", "error"]
     data: dict[str, Any]
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

@@ -1,7 +1,7 @@
 """Message bus for agent-to-agent communication"""
 import logging
 from typing import Any, Callable
-from datetime import datetime
+from datetime import datetime, timezone
 from collections import defaultdict
 
 from app.simulation.alias_registry import AliasRegistry
@@ -27,6 +27,12 @@ class MessageBus:
 
         # Message history for persistence
         self._message_history: list[dict[str, Any]] = []
+
+        # Per-agent message history index: agent_id -> list of messages
+        self._agent_message_history: dict[str, list[dict[str, Any]]] = defaultdict(list)
+
+        # Per-room message history index: room_name -> list of messages
+        self._room_message_history: dict[str, list[dict[str, Any]]] = defaultdict(list)
 
         # Conversation message history: conversation_id -> list of messages
         self._conversation_messages: dict[str, list[dict[str, Any]]] = defaultdict(list)
@@ -89,13 +95,14 @@ class MessageBus:
             "content": content,
             "step_index": step_index,
             "metadata": metadata or {},
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         if to_agent_id in self._agent_queues:
             self._agent_queues[to_agent_id].append(message)
 
         self._message_history.append(message)
+        self._agent_message_history[from_agent_id].append(message)
         self._notify_callbacks(message)
 
         return message
@@ -118,7 +125,7 @@ class MessageBus:
             "content": content,
             "step_index": step_index,
             "metadata": metadata or {},
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         # Deliver to all room members except sender
@@ -127,6 +134,8 @@ class MessageBus:
                 self._agent_queues[agent_id].append(message)
 
         self._message_history.append(message)
+        self._agent_message_history[from_agent_id].append(message)
+        self._room_message_history[room_name].append(message)
         self._notify_callbacks(message)
 
         return message
@@ -153,7 +162,7 @@ class MessageBus:
             "content": content,
             "step_index": step_index,
             "metadata": metadata or {},
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         # Deliver to all participants except sender
@@ -165,6 +174,7 @@ class MessageBus:
         self._conversation_messages[conversation_id].append(message)
 
         self._message_history.append(message)
+        self._agent_message_history[from_agent_id].append(message)
         self._notify_callbacks(message)
 
         return message
@@ -186,7 +196,7 @@ class MessageBus:
             "content": content,
             "step_index": step_index,
             "metadata": metadata or {},
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         # Deliver to all agents except sender
@@ -195,6 +205,8 @@ class MessageBus:
                 self._agent_queues[agent_id].append(message)
 
         self._message_history.append(message)
+        if from_agent_id:
+            self._agent_message_history[from_agent_id].append(message)
         self._notify_callbacks(message)
 
         return message
@@ -269,13 +281,18 @@ class MessageBus:
         limit: int | None = None,
     ) -> list[dict[str, Any]]:
         """Get message history with optional filters"""
-        result = self._message_history
-
-        if from_agent_id:
-            result = [m for m in result if m.get("from_agent") == from_agent_id]
-
-        if conversation_id:
-            result = [m for m in result if m.get("conversation_id") == conversation_id]
+        # Use per-agent index for O(1) lookup when filtering by agent
+        if from_agent_id and not conversation_id:
+            result = self._agent_message_history.get(from_agent_id, [])
+        elif conversation_id and not from_agent_id:
+            result = self._conversation_messages.get(conversation_id, [])
+        elif from_agent_id and conversation_id:
+            result = [
+                m for m in self._agent_message_history.get(from_agent_id, [])
+                if m.get("conversation_id") == conversation_id
+            ]
+        else:
+            result = self._message_history
 
         if limit:
             result = result[-limit:]
@@ -308,6 +325,8 @@ class MessageBus:
         self._room_subscriptions.clear()
         self._all_agents.clear()
         self._message_history.clear()
+        self._agent_message_history.clear()
+        self._room_message_history.clear()
         self._conversation_messages.clear()
         self._agent_names.clear()
 

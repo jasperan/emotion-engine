@@ -91,6 +91,9 @@ func RenderSpatialMap(d SpatialMapData) string {
 			if filled > barWidth {
 				filled = barWidth
 			}
+			if filled < 0 {
+				filled = 0
+			}
 			empty := barWidth - filled
 
 			bar := lipgloss.NewStyle().Foreground(theme.Primary).Render(strings.Repeat("\u2588", filled)) +

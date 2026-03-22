@@ -62,6 +62,9 @@ func RenderBarChart(entries []BarChartEntry, width int) string {
 			if ratio > 1 {
 				ratio = 1
 			}
+			if ratio < 0 {
+				ratio = 0
+			}
 		}
 		filled := int(ratio * float64(barWidth))
 		empty := barWidth - filled

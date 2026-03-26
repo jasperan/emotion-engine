@@ -17,12 +17,12 @@ const banner = ` ███████╗███╗   ███╗ ███�
  ██╔══╝  ██║╚██╔╝██║██║   ██║   ██║   ██║██║   ██║██║╚██╗██║
  ███████╗██║ ╚═╝ ██║╚██████╔╝   ██║   ██║╚██████╔╝██║ ╚████║
  ╚══════╝╚═╝     ╚═╝ ╚═════╝    ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
-              ███████╗██╗███╗   ███╗
-              ██╔════╝██║████╗ ████║
-              ███████╗██║██╔████╔██║
-              ╚════██║██║██║╚██╔╝██║
-              ███████║██║██║ ╚═╝ ██║
-              ╚══════╝╚═╝╚═╝     ╚═╝`
+      ███████╗███╗   ██╗ ██████╗ ██╗███╗   ██╗███████╗
+      ██╔════╝████╗  ██║██╔════╝ ██║████╗  ██║██╔════╝
+      █████╗  ██╔██╗ ██║██║  ███╗██║██╔██╗ ██║█████╗
+      ██╔══╝  ██║╚██╗██║██║   ██║██║██║╚██╗██║██╔══╝
+      ███████╗██║ ╚████║╚██████╔╝██║██║ ╚████║███████╗
+      ╚══════╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝╚═╝  ╚═══╝╚══════╝`
 
 // --- Messages ---
 
@@ -32,6 +32,7 @@ type connectionCheckMsg struct {
 }
 
 type fadeTickMsg time.Time
+type retryTickMsg struct{}
 
 // --- Model ---
 
@@ -47,15 +48,18 @@ type SplashModel struct {
 	spring         harmonica.Spring
 	done           bool
 	version        string
+	retryCount     int
+	maxRetries     int
 }
 
 // NewSplashModel creates a fresh splash screen model.
 func NewSplashModel(client *api.Client, version string) SplashModel {
 	return SplashModel{
-		client:  client,
-		opacity: 0,
-		spring:  harmonica.NewSpring(harmonica.FPS(60), 5.0, 0.4),
-		version: version,
+		client:     client,
+		opacity:    0,
+		spring:     harmonica.NewSpring(harmonica.FPS(60), 5.0, 0.4),
+		version:    version,
+		maxRetries: 10,
 	}
 }
 
@@ -75,10 +79,24 @@ func (m SplashModel) Update(msg tea.Msg) (SplashModel, tea.Cmd) {
 		if msg.err != nil {
 			m.connected = false
 			m.errMsg = msg.err.Error()
+			// Auto-retry after 3 seconds if under the limit
+			if m.retryCount < m.maxRetries {
+				return m, tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
+					return retryTickMsg{}
+				})
+			}
 		} else {
 			m.connected = true
 			m.errMsg = ""
 			m.scenarioCount = msg.scenarioCount
+		}
+		return m, nil
+
+	case retryTickMsg:
+		if !m.connected && m.retryCount < m.maxRetries {
+			m.retryCount++
+			m.checking = true
+			return m, m.checkConnection()
 		}
 		return m, nil
 
@@ -103,6 +121,7 @@ func (m SplashModel) Update(msg tea.Msg) (SplashModel, tea.Cmd) {
 		case "r":
 			m.checking = true
 			m.errMsg = ""
+			m.retryCount = 0
 			return m, m.checkConnection()
 		case "q":
 			return m, tea.Quit
@@ -126,13 +145,22 @@ func (m SplashModel) View(width, height int) string {
 	// Status line
 	var status string
 	if m.checking {
-		status = theme.MutedText.Render("⟳ Connecting to backend...")
+		if m.retryCount > 0 {
+			status = theme.MutedText.Render(fmt.Sprintf("⟳ Retrying connection (%d/%d)...", m.retryCount, m.maxRetries))
+		} else {
+			status = theme.MutedText.Render("⟳ Connecting to backend...")
+		}
 	} else if m.connected {
 		status = theme.StatusActive.Render(theme.StatusDot) + " " +
 			theme.Title.Render(fmt.Sprintf("Connected — %d scenarios available", m.scenarioCount))
 	} else if m.errMsg != "" {
-		status = theme.StatusError.Render(theme.StatusDot) + " " +
-			theme.ErrorText.Render("Connection failed: "+m.errMsg)
+		if m.retryCount < m.maxRetries {
+			status = theme.StatusError.Render(theme.StatusDot) + " " +
+				theme.ErrorText.Render("Connection failed, retrying...")
+		} else {
+			status = theme.StatusError.Render(theme.StatusDot) + " " +
+				theme.ErrorText.Render("Connection failed: "+m.errMsg)
+		}
 	} else {
 		status = theme.MutedText.Render("Waiting...")
 	}

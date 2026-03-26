@@ -91,6 +91,10 @@ class GeneratedPersona:
 
     def to_persona(self) -> Persona:
         """Convert to the existing Pydantic Persona model."""
+        # Clamp opinion_biases values to [-1.0, 1.0] for opinion_vectors
+        opinion_vectors = {
+            k: _clamp_float(v, -1.0, 1.0, 0.0) for k, v in self.opinion_biases.items()
+        }
         return Persona(
             name=self.name,
             age=self.age,
@@ -106,6 +110,13 @@ class GeneratedPersona:
             leadership=_clamp_int(self.leadership, 1, 10, 5),
             backstory=self.backstory,
             skills=list(self.skills),
+            opinion_vectors=opinion_vectors,
+            opinion_bias=_clamp_float(
+                1.0 - (self.openness / 10.0 + self.agreeableness / 10.0) / 2.0,
+                0.0, 1.0, 0.5,
+            ),
+            reaction_speed=_clamp_float(self.reaction_speed, 0.0, 1.0, 0.5),
+            influence_level=_clamp_float(self.influence_level, 0.0, 1.0, 0.5),
         )
 
     @classmethod

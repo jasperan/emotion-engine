@@ -353,6 +353,8 @@ def scene_turn(console: Console, data: dict[str, Any]) -> None:
     action = data.get("action", "")
     speech = data.get("speech")
     emotion = data.get("emotion", "")
+    if isinstance(emotion, list):
+        emotion = ", ".join(str(e) for e in emotion)
 
     if action:
         console.print(f"  [italic pi.dim]{escape(action)}[/italic pi.dim]")

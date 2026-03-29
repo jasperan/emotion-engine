@@ -7,6 +7,27 @@
 
 > A local-first multi-agent simulation engine for analyzing emergent cooperative behaviors in AI agent swarms. Simulates disaster scenarios with diverse LLM-driven personas that interact, make decisions, and cooperate based on personality traits and emotional states.
 
+<div align="center">
+
+**[View Interactive Presentation](docs/slides/presentation.html)** | Animated overview of the project
+
+</div>
+
+<table>
+<tr>
+<td><img src="docs/slides/slide-01.png" alt="Title" width="400"/></td>
+<td><img src="docs/slides/slide-02.png" alt="Overview" width="400"/></td>
+</tr>
+<tr>
+<td><img src="docs/slides/slide-03.png" alt="Architecture" width="400"/></td>
+<td><img src="docs/slides/slide-04.png" alt="Features" width="400"/></td>
+</tr>
+<tr>
+<td><img src="docs/slides/slide-05.png" alt="Tech Stack" width="400"/></td>
+<td><img src="docs/slides/slide-06.png" alt="Getting Started" width="400"/></td>
+</tr>
+</table>
+
 ![CLI Monitor](assets/cli.png)
 
 ## Key Features

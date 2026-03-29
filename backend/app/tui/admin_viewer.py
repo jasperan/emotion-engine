@@ -326,6 +326,7 @@ def _render_stats_panel(
     max_steps: int,
     backend: str,
     gpu_status: str,
+    backend_detail: str = "",
 ) -> Panel:
     """Render the stats panel."""
     table = Table.grid(padding=(0, 2))
@@ -344,7 +345,24 @@ def _render_stats_panel(
     table.add_row("Step", f"{current_step}/{max_steps}" if max_steps else str(current_step))
     table.add_row("Elapsed", elapsed_str)
     table.add_row("Throughput", f"{tps:,.1f} tok/s")
-    table.add_row("Backend", backend)
+
+    # Backend with color-coded status
+    backend_text = Text()
+    if "vLLM" in backend or "vllm" in backend:
+        backend_text.append(backend, style=f"bold {_GREEN}")
+        backend_text.append(" (parallel)", style=_DIM)
+    elif "Ollama" in backend:
+        backend_text.append(backend, style=f"bold {_YELLOW}")
+        backend_text.append(" (sequential)", style=_DIM)
+    elif "No backend" in backend:
+        backend_text.append(backend, style=f"bold {_RED}")
+    else:
+        backend_text.append(backend, style="white")
+    table.add_row("Backend", backend_text)
+
+    if backend_detail:
+        table.add_row("Model", backend_detail)
+
     table.add_row("", "")
     # GPU info (may be multi-line)
     for i, line in enumerate(gpu_status.split("|")):
@@ -386,12 +404,13 @@ class AdminViewer:
         log_dir: str = "logs",
         max_agents: int = 10,
         max_steps: int = 0,
-        backend: str = "Ollama",
+        backend: str = "auto",
     ) -> None:
         self.log_dir = Path(log_dir)
         self.max_agents = max_agents
         self.max_steps = max_steps
-        self.backend = backend
+        self.backend = backend  # "auto" triggers live detection
+        self._backend_detail: str = ""  # model/url detail line
 
         # Agent panes keyed by sanitized agent name
         self.panes: dict[str, AgentPane] = {}
@@ -505,7 +524,7 @@ class AdminViewer:
                 pane.flush_buf()
 
     def _poll_stats(self) -> None:
-        """Poll GPU and pipeline log (2s cadence)."""
+        """Poll GPU, backend status, and pipeline log (2s cadence)."""
         now = time.monotonic()
         if now - self._last_stats_poll < 2.0:
             return
@@ -514,12 +533,61 @@ class AdminViewer:
         # GPU
         self._gpu_status = _get_gpu_status()
 
+        # Backend auto-detection (runs synchronously, fast HTTP with 1s timeout)
+        if self.backend == "auto":
+            self._detect_backend()
+
         # Pipeline log
         new_lines = self.pipeline_tailer.read_new()
         for line in new_lines:
             self.pipeline_lines.append(_enrich_pipeline_line(line))
         if len(self.pipeline_lines) > _PIPELINE_MAX_LINES:
             self.pipeline_lines = self.pipeline_lines[-_PIPELINE_MAX_LINES:]
+
+    def _detect_backend(self) -> None:
+        """Synchronously probe vLLM and Ollama to determine active backend."""
+        import urllib.request
+        import urllib.error
+
+        # Try vLLM first (default port 8010)
+        for port in (8010, 8000):
+            try:
+                req = urllib.request.Request(
+                    f"http://localhost:{port}/v1/models",
+                    method="GET",
+                )
+                with urllib.request.urlopen(req, timeout=1) as resp:
+                    if resp.status == 200:
+                        import json as _json
+                        data = _json.loads(resp.read())
+                        models = [m["id"] for m in data.get("data", [])]
+                        if models:
+                            self.backend = f"vLLM :{port}"
+                            self._backend_detail = ", ".join(models)
+                            return
+            except Exception:
+                pass
+
+        # Try Ollama
+        try:
+            req = urllib.request.Request(
+                "http://localhost:11434/api/tags",
+                method="GET",
+            )
+            with urllib.request.urlopen(req, timeout=1) as resp:
+                if resp.status == 200:
+                    import json as _json
+                    data = _json.loads(resp.read())
+                    models = [m["name"] for m in data.get("models", [])]
+                    if models:
+                        self.backend = "Ollama"
+                        self._backend_detail = ", ".join(models[:3])
+                        return
+        except Exception:
+            pass
+
+        self.backend = "No backend"
+        self._backend_detail = ""
 
     # -- Layout builder -----------------------------------------------------
 
@@ -567,6 +635,7 @@ class AdminViewer:
             self.panes, self.start_time,
             self._current_step, self.max_steps,
             self.backend, self._gpu_status,
+            backend_detail=self._backend_detail,
         ))
 
         # Pipeline panel: show last lines that fit
@@ -596,6 +665,14 @@ class AdminViewer:
         t.append(f"   Workers: {active}/{total}", style="white")
         t.append(f"   Tokens: {total_tokens:,}", style="white")
         t.append(f"   {tps:,.1f} tok/s", style=_ACCENT)
+
+        # Backend indicator in title bar
+        if "vLLM" in self.backend or "vllm" in self.backend:
+            t.append(f"   {self.backend}", style=f"bold {_GREEN}")
+        elif "Ollama" in self.backend:
+            t.append(f"   {self.backend}", style=f"bold {_YELLOW}")
+        elif "No backend" in self.backend:
+            t.append(f"   {self.backend}", style=f"bold {_RED}")
 
         follow_str = "FOLLOW" if self.follow else "follow off"
         follow_style = f"bold {_GREEN}" if self.follow else _DIM
@@ -708,17 +785,28 @@ def main() -> None:
         help="Total simulation steps (for progress display, 0=unknown)",
     )
     parser.add_argument(
-        "--backend", type=str, default="Ollama",
-        help="LLM backend name to show in stats (default: Ollama)",
+        "--backend", type=str, default="auto",
+        help="LLM backend name: auto (detect), vLLM, Ollama (default: auto)",
+    )
+    parser.add_argument(
+        "--force-vllm", type=str, nargs="?", const="http://localhost:8010", default=None,
+        metavar="URL",
+        help="Force vLLM backend display, optionally with URL (default: http://localhost:8010)",
     )
     args = parser.parse_args()
+
+    backend = args.backend
+    if args.force_vllm:
+        backend = f"vLLM (forced)"
 
     viewer = AdminViewer(
         log_dir=args.log_dir,
         max_agents=args.max_agents,
         max_steps=args.max_steps,
-        backend=args.backend,
+        backend=backend,
     )
+    if args.force_vllm:
+        viewer._backend_detail = args.force_vllm
     viewer.run()
 
 

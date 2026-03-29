@@ -61,6 +61,9 @@ class Run(Base):
     metrics: Mapped[dict] = mapped_column(OracleJSON, default=dict)
     evaluation: Mapped[dict] = mapped_column(OracleJSON, default=dict)
 
+    # Knowledge graph reference
+    graph_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
         DateTime,

@@ -12,7 +12,6 @@
 \usepackage{amsfonts}       % blackboard math symbols
 \usepackage{nicefrac}       % compact symbols for 1/2, etc.
 \usepackage{microtype}      % microtypography
-\usepackage{lipsum}
 \usepackage{graphicx}
 \usepackage{listings}
 \usepackage{xcolor}
@@ -23,27 +22,27 @@
 \definecolor{backcolour}{rgb}{0.95,0.95,0.92}
 
 \lstdefinestyle{mystyle}{
-    backgroundcolor=\color{backcolour},   
+    backgroundcolor=\color{backcolour},
     commentstyle=\color{codegreen},
     keywordstyle=\color{magenta},
     numberstyle=\tiny\color{codegray},
     stringstyle=\color{codepurple},
     basicstyle=\ttfamily\footnotesize,
-    breakatwhitespace=false,         
-    breaklines=true,                 
-    captionpos=b,                    
-    keepspaces=true,                 
-    numbers=left,                    
-    numbersep=5pt,                  
-    showspaces=false,                
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
     showstringspaces=false,
-    showtabs=false,                  
+    showtabs=false,
     tabsize=2
 }
 
 \lstset{style=mystyle}
 
-\title{Emergent Consensus in Local-First Autonomous Agent Swarms}
+\title{EmotionSim: A Local-First Multi-Agent Simulation System for Reproducible Swarm Experiments}
 
 \author{
   Nacho Martínez (jasperan) \\
@@ -56,116 +55,157 @@
 \maketitle
 
 \begin{abstract}
-As Large Language Models (LLMs) evolve from simple chatbots to autonomous agents, the potential for simulating complex social dynamics increases exponentially. In this paper, I present EmotionSim, a local-first framework for running high-fidelity multi-agent simulations. Unlike cloud-based solutions that face latency and privacy hurdles, EmotionSim leverages quantized local models (specifically the Gemma 3 family) to execute rich, discrete-event simulations of disaster scenarios. I demonstrate the system's capabilities through an "Airplane Crash Investigation" scenario, where 10 diverse autonomous agents---ranging from a retired pilot to an investigative journalist---must autonomously perceive their environment, share information, and reach a consensus on the cause of the accident. My findings show that even small, locally-hosted models can exhibit sophisticated emergent cooperation and information propagation patterns, supported by a system throughput of over 200 tokens/second on consumer hardware.
+EmotionSim is a local-first multi-agent simulation system for studying how LLM-driven agents coordinate in high-pressure scenarios. The current implementation combines a FastAPI backend, Oracle DB 26ai Free persistence, a SvelteKit web dashboard, a Go Bubble Tea terminal UI, and an LLM router that prefers vLLM for concurrent inference while retaining Ollama fallback support. Agents maintain persona state, episodic memory, relationship memory, and an intent-driven think-plan-act-reflect loop inside a deterministic step-based engine. This paper is intentionally scoped as a systems and reproducibility paper: it documents the current architecture, deployment surface, and observability features, then reports a single benchmark run as a bounded demonstration rather than a comprehensive behavioral evaluation. On a one-step, 10-agent Airplane Crash Investigation benchmark using \texttt{gemma3:270m}, the system processed 12,549 tokens in 42.47 seconds, corresponding to 200.71 tokens per second on one machine. We close with limitations and outline a separate evaluation paper centered on repeated seeds, scenario-wide comparisons, and cohort ablations.
 \end{abstract}
 
-
-% keywords can be removed
-\keywords{Multi-Agent Systems \and Autonomous Agents \and Emergent Behavior \and Local AI \and Disaster Simulation}
-
+\keywords{Multi-Agent Systems \and Autonomous Agents \and Reproducibility \and Local AI \and Disaster Simulation}
 
 \section{Introduction}
-The field of Artificial Intelligence is undergoing a paradigm shift from static prompts to dynamic, agentic interactions. Researchers are increasingly interested in how swarms of AI agents can model complex human systems, from economic markets to social crises \cite{park2023generative}. However, conducting this research often requires massive compute resources or reliance on expensive, opaque proprietary APIs.
+Large language model agents have made it practical to simulate open-ended social interaction rather than relying only on fixed rule systems or hand-authored dialogue trees \cite{park2023generative, xi2023rise}. That creates an opportunity for local, inspectable, and repeatable simulation environments, but only if the surrounding system makes execution, persistence, and observability manageable on developer hardware.
 
-I developed \textbf{EmotionSim} to democratize access to high-fidelity social simulation. By optimizing for local execution using the Ollama runtime and efficient discrete-event scheduling, EmotionSim allows researchers to "run a disaster in their terminal," observing the micro-dynamics of human cooperation and panic without data leaving their machine.
+EmotionSim is designed around that systems problem. The current codebase ships a local-first stack that includes a FastAPI backend, Oracle-backed persistence, a SvelteKit dashboard, a Go terminal interface, built-in scenario seeding, and live event streaming for monitoring runs as they unfold. The repository currently includes nine built-in scenarios spanning floods, transportation disasters, mass-casualty response, first-contact coordination, and space-station failure.
 
-\section{System Architecture}
-EmotionSim is built on a decoupled, event-driven architecture designed to balance narrative richness with simulation determinism.
+This paper intentionally separates two questions. First, what system has been built, and how can another researcher or engineer reproduce and inspect it? Second, what scientific claims are currently supported by the experiments already run? We answer the first question in detail and keep the second narrow. Rather than presenting a broad empirical claim about social realism or agent validity, we report one benchmark artifact as a bounded demonstration of the system in operation.
 
-\subsection{Discrete Event Engine}
-At the core is a deterministic simulation engine. Unlike real-time game loops, the engine advances in discrete "ticks," allowing agents to deliberate for as long as necessary without desynchronizing the world state.
+\section{Current Implementation}
+\subsection{Service Architecture}
+EmotionSim is implemented as a multi-surface application with shared backend orchestration:
 
-\begin{lstlisting}[language=Python, caption=Deterministic Simulation Step]
-async def _execute_step(self):
-    # 1. Process pending world events (e.g., flood rising)
-    self._process_event_queue()
-    
-    # 2. Agent Deliberation Cycle
-    actions = []
-    for agent in self.agents.values():
-        if agent.is_active:
-             # Agents make decisions based on local perception
-             action = await agent.tick(self.state)
-             actions.append(action)
-             
-    # 3. Resolve Actions and Update World State
-    self._resolve_conflicts_and_apply(actions)
-\end{lstlisting}
+\begin{verbatim}
+SvelteKit dashboard (:3000) / Go Bubble Tea TUI
+    -> REST + WebSocket
+FastAPI backend (:8000)
+    -> SimulationEngine
+    -> MessageBus / ConversationManager / datalake logger
+    -> LLMRouter (vLLM primary, Ollama fallback)
+    -> Oracle DB 26ai Free
+\end{verbatim}
 
-\subsection{Rich Persona System}
-Agents are not merely prompt templates; they are stateful entities with defined psychological profiles. Each agent is initialized with Big Five personality traits, a specific skillset, and a hidden "backstory" that influences their perception.
+The FastAPI application initializes the database, auto-seeds built-in scenarios when the scenario table is empty, and attempts to resume active runs on startup. The web client and terminal UI consume the same backend APIs and event stream, which keeps the simulation logic centralized while exposing multiple operator views.
 
-\begin{lstlisting}[language=Python, caption=Persona Definition]
+\subsection{Agent Model}
+The implementation uses stateful agents rather than stateless prompt templates. Human agents carry both stable persona fields and mutable simulation state:
+
+\begin{lstlisting}[language=Python, caption=Simplified Persona Schema]
 class Persona(BaseModel):
     name: str
+    age: int
+    sex: Literal["male", "female", "non-binary"]
     occupation: str
-    # Big Five Traits (0.0 - 1.0)
-    openness: float
-    conscientiousness: float
-    extraversion: float
-    agreeableness: float
-    neuroticism: float
-    
-    # Dynamic State
+
+    # Big Five traits on a 1-10 scale
+    openness: int
+    conscientiousness: int
+    extraversion: int
+    agreeableness: int
+    neuroticism: int
+
+    # Additional behavioral modifiers
+    risk_tolerance: int
+    empathy_level: int
+    leadership: int
+
+    # Dynamic state
     stress_level: int
     health: int
-    inventory: List[str]
+    inventory: list[str]
+    location: str
 \end{lstlisting}
 
-This granularity ensures that a "Retired Pilot" agent notices engine debris that a "Civilian" agent would ignore, driving information asymmetry and the need for communication.
+Beyond the schema above, each agent also maintains episodic memory, relationship memory, intent memory, and action feedback buffers. Those components support the current cognitive pipeline, where an agent can assess the world, form or reuse a plan, act, and then reflect on whether the plan should continue.
 
-\section{Experiment: Autonomous Investigation}
-To test the system's capacity for emergent logic, I designed the "Airplane Crash Investigation" scenario.
+\subsection{Execution Model}
+At runtime, the simulation proceeds in deterministic steps. Environment agents update the world first, human agents then act either in scene-based groupings or sequential order depending on configuration, and the engine persists state plus WebSocket events after each step. In the current codebase, scene mode, governance gates, fallback routing, and token-budget-based conclusion prompts are configurable features of the execution loop.
 
-\subsection{Scenario Setup}
-The simulation initializes 10 agents in a suburban neighborhood immediately following a light aircraft crash.
+\begin{lstlisting}[language=Python, caption=High-Level Step Structure]
+async def execute_step():
+    tick_environment_agents()
+    run_human_scenes_or_single_agent_ticks()
+    run_reaction_round()
+    persist_state_and_emit_events()
+\end{lstlisting}
+
+This design is meant to preserve inspectability. A run can be observed through the web dashboard, the Go TUI, and persisted records in the datalake tables, rather than only through transient console logs.
+
+\section{Reproducibility Surface}
+The current repository exposes several reproducibility hooks that matter for systems work.
+
+First, deployment is local-first. The repository includes a Docker Compose stack that brings up Oracle DB 26ai Free, the backend, and the frontend together. It also supports direct local development through the backend package, the SvelteKit frontend, and the Go TUI.
+
+Second, inference configuration is explicit. The default settings prefer vLLM with \texttt{Qwen/Qwen3.5-4B} for concurrent agent execution, while retaining Ollama settings and fallback models for local runtimes that do not use vLLM. That means a paper or benchmark report should always state the active backend, model, and routing configuration rather than treating ``the model'' as an implicit constant.
+
+Third, the repository already contains a benchmark harness and a checked-in benchmark artifact. The script \texttt{backend/tools/benchmark\_gemma.py} executes a one-step, 10-agent run and records latency plus token metrics. The checked-in benchmark result used in this paper comes from that harness. Even though the default runtime path now prefers vLLM and Qwen, the benchmark artifact remains useful as a concrete, reproducible demonstration of the system under a specific Ollama-based configuration.
+
+\section{Demonstration Benchmark}
+\subsection{Scope of the Demonstration}
+This section is deliberately narrow. Its purpose is to show that the current implementation can execute a local multi-agent step, persist state, and expose measurable throughput on one machine. It is not intended to validate social realism, prove general scalability, or establish that one scenario's outcome generalizes across the scenario library.
+
+\subsection{Setup}
+The benchmark artifact in the repository uses the following setup:
+
 \begin{itemize}
-    \item \textbf{Agents}: Includes a Retired Pilot (witness), an ER Doctor (first responder), a Journalist (information broker), and several local residents.
-    \item \textbf{Environment}: Locations include the Crash Site, a Hilltop vantage point, and a Community Center.
-    \item \textbf{Information Distribution}: Key clues (e.g., "left engine smoke") are only visible to specific agents based on their location and backstory.
+    \item Scenario: Airplane Crash Investigation
+    \item Agent count: 10
+    \item Duration: 1 simulation step
+    \item Model: \texttt{gemma3:270m}
+    \item Measurement harness: \texttt{backend/tools/benchmark\_gemma.py}
 \end{itemize}
 
-\subsection{Emergent Behaviors}
-During the simulation, I observed distinct phases of autonomous behavior:
-\begin{enumerate}
-    \item \textbf{Triage Phase (Steps 1-3)}: High-empathy agents (Doctor, Pastor) immediately prioritized the "Crash Site" to help survivors, disregarding investigation.
-    \item \textbf{Information Consensus (Steps 4-7)}: The Journalist agent actively moved between groups, aggregating witness reports. The Retired Pilot provided technical context to the Journalist's questions.
-    \item \textbf{Conclusion (Steps 8+)}: Without explicit instruction, the agents converged on a "mechanical failure" theory rather than "pilot error," synthesizing disjointed observations.
-\end{enumerate}
-
-\section{Benchmarks and Feasibility}
-While the primary focus is behavior, performance determines feasibility for large-scale research. I benchmarked the system using the `gemma3:270m` model to test the limits of efficiency.
-
 \begin{table}[h]
- \caption{Performance on Consumer Hardware (10 Agents)}
+ \caption{Single-Run Demonstration Benchmark (10 Agents, 1 Step)}
  \centering
  \begin{tabular}{ll}
  \toprule
  Metric & Result \\
  \midrule
- Total Duration (1 Step) & 42.47 sec \\
+ Total Duration (Wall Time) & 42.47 sec \\
+ Total LLM Requests & 9 \\
+ Total Tokens Generated & 8,525 \\
  Total Tokens Processed & 12,549 \\
- Throughput & 200.71 tokens/sec \\
- Avg Agent Latency & 4.72 sec \\
+ Average Latency & 4.72 sec \\
+ System Throughput & 200.71 tokens/sec \\
  \bottomrule
  \end{tabular}
  \label{tab:benchmarks}
 \end{table}
 
-The system achieves over \textbf{200 tokens/second} throughput. This high efficiency implies that simulating complex social interactions is becoming accessible to individual researchers without the need for H100 clusters.
+The measured result supports a constrained systems claim: EmotionSim can run a small, locally hosted, observable multi-agent step on commodity hardware while maintaining a non-trivial token throughput. That is useful evidence for the viability of the software stack. It is not, by itself, evidence that the platform has solved large-scale social simulation, nor that the same throughput would hold across longer runs, larger agent populations, different models, or different hardware.
+
+\section{Limitations and Scope}
+Several limitations are important if this paper is read as evidence rather than as a systems description.
+
+First, the agents are simulated agents, not validated human proxies. The system is useful for exploratory experiments and tooling, but this paper does not establish that the behaviors produced by the agents correspond to real human social dynamics.
+
+Second, outcomes are sensitive to prompt construction, model choice, routing policy, and scenario authoring. The current codebase includes multiple configurable inference paths, including vLLM as the preferred concurrent backend and Ollama as a fallback path. Results should therefore be interpreted as configuration-dependent.
+
+Third, the benchmark in Table~\ref{tab:benchmarks} is a single-run artifact measured on one machine. It demonstrates that the implementation works in that configuration; it does not prove general scalability, stable performance under long horizons, or cross-hardware reproducibility.
+
+Fourth, this paper does not present repeated-seed experiments, cross-scenario comparisons, or ablations on personality diversity, governance, scene mode, or routing strategy. Those are exactly the kinds of questions that require a separate evaluation-oriented study.
+
+\section{Toward a Separate Evaluation Paper}
+To keep this manuscript honest, the broader experimental claims should be moved into a follow-on paper rather than implied here.
+
+That second paper should evaluate the scenario library across repeated seeds and explicit cohort ablations. A reasonable design would include:
+
+\begin{enumerate}
+    \item multi-scenario evaluation across the nine built-in scenarios, rather than a single case;
+    \item repeated-seed runs per scenario to characterize variance rather than anecdote;
+    \item cohort ablations comparing diverse-personality groups against more homogeneous agent populations;
+    \item system ablations over inference backend, fallback routing, scene mode, and governance settings; and
+    \item standardized metrics such as task completion, survival, consensus latency, message volume, trust changes, and intervention frequency.
+\end{enumerate}
+
+In other words, the current paper should remain a demo and systems paper, while the future paper becomes the place to answer behavioral questions about generalization, robustness, and the effects of personality diversity.
 
 \section{Conclusion}
-EmotionSim validates that local-first AI models have reached a threshold of capability sufficient for complex social simulation. By embedding these models in a robust discrete-event framework, I enable a new class of privacy-preserving, reproducible agentic research. Future work will focus on scaling to 100+ agents using hierarchical swarms.
+EmotionSim demonstrates that a local-first, inspectable multi-agent simulation system can be packaged into a coherent developer workflow with backend persistence, live dashboards, configurable inference routing, and reproducible benchmark tooling. The current repository is strong enough to support systems discussion and bounded demonstrations. What it does not yet justify is a broad claim that local agent swarms faithfully model social behavior in general. Treating this manuscript as a systems paper, and moving broader behavioral validation into a dedicated follow-on evaluation paper, is the more defensible framing.
 
 \section*{Code Availability}
-The code is available at \url{https://github.com/jasperan/emotion-engine}.
+The code, built-in scenarios, and benchmark tooling are available in the public repository below.
 
-\bibliographystyle{unsrt}  
-%\bibliography{references}  %%% Remove comment to use the external .bib file (using bibtex).
-%%% and comment out the ``thebibliography'' section.
+\url{https://github.com/jasperan/emotion-engine}
 
-
-%%% Comment out this section when you \bibliography{references} is enabled.
+\bibliographystyle{unsrt}
 \begin{thebibliography}{1}
 
 \bibitem{park2023generative}
@@ -179,6 +219,5 @@ Zhiheng Xi, Wenxiang Chen, Xin Guo, Wei He, Yiwen Ding, Boyang Hong, Ming Zhang,
 \newblock {\em arXiv preprint arXiv:2309.07864}, 2023.
 
 \end{thebibliography}
-
 
 \end{document}

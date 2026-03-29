@@ -1,0 +1,1723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotion Engine — Multi-Agent Simulation System</title>
+
+    <!-- Fonts: Cormorant (display serif) + IBM Plex Sans (body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,600;0,700;1,400;1,600&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        /* ===========================================
+           CSS CUSTOM PROPERTIES — DARK BOTANICAL
+           =========================================== */
+        :root {
+            /* Colors */
+            --bg-primary: #0f0f0f;
+            --bg-secondary: #161614;
+            --bg-card: #1a1917;
+            --text-primary: #e8e4df;
+            --text-secondary: #9a9590;
+            --text-dim: #6b6560;
+            --accent-warm: #d4a574;
+            --accent-pink: #e8b4b8;
+            --accent-gold: #c9b896;
+            --accent-glow: rgba(212, 165, 116, 0.15);
+            --accent-pink-glow: rgba(232, 180, 184, 0.12);
+
+            /* Typography — MUST use clamp() */
+            --font-display: 'Cormorant', Georgia, serif;
+            --font-body: 'IBM Plex Sans', -apple-system, sans-serif;
+            --font-mono: 'IBM Plex Mono', monospace;
+            --title-size: clamp(2rem, 6vw, 5rem);
+            --h2-size: clamp(1.25rem, 3.5vw, 2.5rem);
+            --h3-size: clamp(1rem, 2.5vw, 1.75rem);
+            --subtitle-size: clamp(0.875rem, 2vw, 1.25rem);
+            --body-size: clamp(0.75rem, 1.5vw, 1.125rem);
+            --small-size: clamp(0.65rem, 1vw, 0.875rem);
+            --code-size: clamp(0.6rem, 1vw, 0.8rem);
+
+            /* Spacing */
+            --slide-padding: clamp(1.5rem, 4vw, 4rem);
+            --content-gap: clamp(0.75rem, 2vw, 2rem);
+            --element-gap: clamp(0.25rem, 1vw, 1rem);
+
+            /* Animation */
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+            --duration-normal: 0.6s;
+            --duration-slow: 1s;
+        }
+
+        /* ===========================================
+           BASE RESET
+           =========================================== */
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* ===========================================
+           VIEWPORT FITTING: MANDATORY BASE STYLES
+           Include this ENTIRE file in every presentation.
+           These styles ensure slides fit exactly in the viewport.
+           =========================================== */
+
+        /* 1. Lock html/body to viewport */
+        html, body {
+            height: 100%;
+            overflow-x: hidden;
+        }
+
+        html {
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+
+        /* 2. Each slide = exact viewport height */
+        .slide {
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            scroll-snap-align: start;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* 3. Content container with flex for centering */
+        .slide-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            max-height: 100%;
+            overflow: hidden;
+            padding: var(--slide-padding);
+        }
+
+        /* 4. ALL typography uses clamp() for responsive scaling */
+        /* (Already defined in :root above) */
+
+        /* 5. Cards/containers use viewport-relative max sizes */
+        .card, .container, .content-box {
+            max-width: min(90vw, 1000px);
+            max-height: min(80vh, 700px);
+        }
+
+        /* 6. Lists auto-scale with viewport */
+        .feature-list, .bullet-list {
+            gap: clamp(0.4rem, 1vh, 1rem);
+        }
+
+        .feature-list li, .bullet-list li {
+            font-size: var(--body-size);
+            line-height: 1.4;
+        }
+
+        /* 7. Grids adapt to available space */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+            gap: clamp(0.5rem, 1.5vw, 1rem);
+        }
+
+        /* 8. Images constrained to viewport */
+        img, .image-container {
+            max-width: 100%;
+            max-height: min(50vh, 400px);
+            object-fit: contain;
+        }
+
+        /* ===========================================
+           RESPONSIVE BREAKPOINTS
+           Aggressive scaling for smaller viewports
+           =========================================== */
+
+        /* Short viewports (< 700px height) */
+        @media (max-height: 700px) {
+            :root {
+                --slide-padding: clamp(0.75rem, 3vw, 2rem);
+                --content-gap: clamp(0.4rem, 1.5vw, 1rem);
+                --title-size: clamp(1.25rem, 4.5vw, 2.5rem);
+                --h2-size: clamp(1rem, 3vw, 1.75rem);
+            }
+        }
+
+        /* Very short viewports (< 600px height) */
+        @media (max-height: 600px) {
+            :root {
+                --slide-padding: clamp(0.5rem, 2.5vw, 1.5rem);
+                --content-gap: clamp(0.3rem, 1vw, 0.75rem);
+                --title-size: clamp(1.1rem, 4vw, 2rem);
+                --body-size: clamp(0.7rem, 1.2vw, 0.95rem);
+            }
+
+            .nav-dots, .keyboard-hint, .decorative {
+                display: none;
+            }
+        }
+
+        /* Extremely short (landscape phones, < 500px height) */
+        @media (max-height: 500px) {
+            :root {
+                --slide-padding: clamp(0.4rem, 2vw, 1rem);
+                --title-size: clamp(1rem, 3.5vw, 1.5rem);
+                --h2-size: clamp(0.9rem, 2.5vw, 1.25rem);
+                --body-size: clamp(0.65rem, 1vw, 0.85rem);
+            }
+        }
+
+        /* Narrow viewports (< 600px width) */
+        @media (max-width: 600px) {
+            :root {
+                --title-size: clamp(1.25rem, 7vw, 2.5rem);
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ===========================================
+           REDUCED MOTION
+           Respect user preferences
+           =========================================== */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.2s !important;
+            }
+
+            html {
+                scroll-behavior: auto;
+            }
+        }
+
+        /* ===========================================
+           DARK BOTANICAL THEME STYLES
+           =========================================== */
+
+        /* Typography */
+        h1, h2, h3 {
+            font-family: var(--font-display);
+            font-weight: 600;
+            line-height: 1.15;
+            letter-spacing: -0.01em;
+        }
+
+        h1 {
+            font-size: var(--title-size);
+            font-style: italic;
+            color: var(--text-primary);
+        }
+
+        h2 {
+            font-size: var(--h2-size);
+            font-style: italic;
+            color: var(--text-primary);
+        }
+
+        h3 {
+            font-size: var(--h3-size);
+            color: var(--accent-warm);
+        }
+
+        p, li {
+            font-family: var(--font-body);
+            font-size: var(--body-size);
+            font-weight: 300;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+
+        code {
+            font-family: var(--font-mono);
+            font-size: var(--code-size);
+            background: rgba(212, 165, 116, 0.1);
+            color: var(--accent-warm);
+            padding: 0.15em 0.4em;
+            border-radius: 3px;
+        }
+
+        /* === PROGRESS BAR === */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-warm), var(--accent-pink), var(--accent-gold));
+            z-index: 1000;
+            transition: width 0.3s var(--ease-out-expo);
+        }
+
+        /* === SLIDE COUNTER === */
+        .slide-counter {
+            position: fixed;
+            top: clamp(0.75rem, 2vw, 1.5rem);
+            right: clamp(0.75rem, 2vw, 1.5rem);
+            font-family: var(--font-mono);
+            font-size: var(--small-size);
+            color: var(--text-dim);
+            z-index: 1000;
+            letter-spacing: 0.05em;
+        }
+
+        /* === NAVIGATION DOTS === */
+        .nav-dots {
+            position: fixed;
+            right: clamp(0.5rem, 1.5vw, 1rem);
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: clamp(4px, 0.5vh, 8px);
+            z-index: 1000;
+        }
+
+        .nav-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.3s var(--ease-out-expo);
+            border: none;
+            padding: 0;
+        }
+
+        .nav-dot.active {
+            background: var(--accent-warm);
+            transform: scale(1.4);
+        }
+
+        .nav-dot:hover {
+            background: var(--accent-pink);
+        }
+
+        /* === BOTANICAL DECORATIVE ELEMENTS === */
+        .botanical-circle {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .botanical-circle.warm {
+            background: radial-gradient(circle, rgba(212, 165, 116, 0.2), transparent 70%);
+        }
+
+        .botanical-circle.pink {
+            background: radial-gradient(circle, rgba(232, 180, 184, 0.15), transparent 70%);
+        }
+
+        .botanical-circle.gold {
+            background: radial-gradient(circle, rgba(201, 184, 150, 0.12), transparent 70%);
+        }
+
+        /* Thin vertical accent lines */
+        .accent-line {
+            position: absolute;
+            width: 1px;
+            background: linear-gradient(to bottom, transparent, var(--accent-warm), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* === SLIDE VARIANTS === */
+        .slide {
+            background: var(--bg-primary);
+        }
+
+        .slide .slide-content {
+            position: relative;
+            z-index: 1;
+            max-width: min(90vw, 1100px);
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Title slide */
+        .title-slide .slide-content {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .title-slide h1 {
+            font-size: clamp(2.5rem, 7vw, 6rem);
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-warm) 50%, var(--accent-pink) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-family: var(--font-body);
+            font-size: var(--subtitle-size);
+            color: var(--text-secondary);
+            font-weight: 300;
+            margin-top: var(--element-gap);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .tagline {
+            font-family: var(--font-display);
+            font-size: clamp(1rem, 2.5vw, 1.5rem);
+            font-style: italic;
+            color: var(--accent-gold);
+            margin-top: clamp(0.5rem, 1.5vw, 1.5rem);
+        }
+
+        /* Section header slides */
+        .section-slide .slide-content {
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .section-number {
+            font-family: var(--font-display);
+            font-size: clamp(3rem, 10vw, 8rem);
+            font-weight: 700;
+            color: rgba(212, 165, 116, 0.08);
+            line-height: 1;
+            position: absolute;
+            top: clamp(1rem, 4vw, 3rem);
+            right: clamp(1rem, 4vw, 3rem);
+        }
+
+        /* === FEATURE CARDS === */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+            gap: clamp(0.5rem, 1.5vw, 1.25rem);
+            margin-top: var(--content-gap);
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(212, 165, 116, 0.08);
+            border-radius: 8px;
+            padding: clamp(0.75rem, 2vw, 1.5rem);
+            transition: border-color 0.3s ease, transform 0.3s var(--ease-out-expo);
+        }
+
+        .feature-card:hover {
+            border-color: rgba(212, 165, 116, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .feature-card .icon {
+            font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+            margin-bottom: clamp(0.25rem, 0.5vw, 0.5rem);
+        }
+
+        .feature-card h3 {
+            font-size: clamp(0.85rem, 1.5vw, 1.1rem);
+            font-family: var(--font-body);
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: clamp(0.15rem, 0.3vw, 0.3rem);
+            font-style: normal;
+        }
+
+        .feature-card p {
+            font-size: var(--small-size);
+            color: var(--text-dim);
+            line-height: 1.4;
+        }
+
+        /* === CODE BLOCKS === */
+        .code-block {
+            background: #0a0a0a;
+            border: 1px solid rgba(212, 165, 116, 0.1);
+            border-radius: 8px;
+            padding: clamp(0.75rem, 2vw, 1.25rem);
+            margin-top: var(--element-gap);
+            overflow: hidden;
+        }
+
+        .code-block pre {
+            font-family: var(--font-mono);
+            font-size: var(--code-size);
+            line-height: 1.6;
+            color: var(--text-secondary);
+            white-space: pre;
+            overflow: hidden;
+        }
+
+        .code-block .comment { color: var(--text-dim); }
+        .code-block .keyword { color: var(--accent-pink); }
+        .code-block .string { color: var(--accent-gold); }
+        .code-block .function { color: var(--accent-warm); }
+
+        /* === ARCHITECTURE DIAGRAMS === */
+        .arch-box {
+            background: var(--bg-card);
+            border: 1px solid rgba(212, 165, 116, 0.12);
+            border-radius: 6px;
+            padding: clamp(0.5rem, 1.25vw, 1rem);
+            text-align: center;
+            font-size: var(--small-size);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            font-weight: 400;
+        }
+
+        .arch-arrow {
+            text-align: center;
+            color: var(--accent-warm);
+            font-size: var(--body-size);
+            padding: clamp(0.15rem, 0.5vw, 0.35rem) 0;
+        }
+
+        .arch-flow {
+            display: flex;
+            flex-direction: column;
+            gap: clamp(0.15rem, 0.4vw, 0.3rem);
+            margin-top: var(--content-gap);
+        }
+
+        .arch-row {
+            display: flex;
+            gap: clamp(0.3rem, 1vw, 0.75rem);
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .arch-row .arch-box {
+            flex: 1;
+            min-width: min(100%, 120px);
+            max-width: 250px;
+        }
+
+        /* === TWO COLUMN LAYOUT === */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: clamp(1rem, 3vw, 2.5rem);
+            margin-top: var(--content-gap);
+            align-items: start;
+        }
+
+        @media (max-width: 700px) {
+            .two-col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* === BULLET LISTS === */
+        .styled-list {
+            list-style: none;
+            margin-top: var(--content-gap);
+        }
+
+        .styled-list li {
+            padding-left: clamp(1rem, 2vw, 1.5rem);
+            position: relative;
+            margin-bottom: clamp(0.3rem, 0.8vh, 0.6rem);
+        }
+
+        .styled-list li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0.6em;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent-warm);
+        }
+
+        .styled-list li strong {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* === HIGHLIGHT TEXT === */
+        .highlight {
+            color: var(--accent-warm);
+        }
+
+        .highlight-pink {
+            color: var(--accent-pink);
+        }
+
+        .highlight-gold {
+            color: var(--accent-gold);
+        }
+
+        /* === PILL BADGES === */
+        .pill {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: var(--small-size);
+            padding: clamp(0.15rem, 0.3vw, 0.25rem) clamp(0.4rem, 1vw, 0.75rem);
+            border-radius: 20px;
+            border: 1px solid rgba(212, 165, 116, 0.2);
+            color: var(--accent-warm);
+            margin: clamp(0.1rem, 0.3vw, 0.2rem);
+        }
+
+        .pill.pink {
+            border-color: rgba(232, 180, 184, 0.25);
+            color: var(--accent-pink);
+        }
+
+        .pill.gold {
+            border-color: rgba(201, 184, 150, 0.25);
+            color: var(--accent-gold);
+        }
+
+        /* === TABLE === */
+        .styled-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: var(--content-gap);
+            font-size: var(--small-size);
+        }
+
+        .styled-table th {
+            font-family: var(--font-body);
+            font-weight: 500;
+            color: var(--accent-warm);
+            text-align: left;
+            padding: clamp(0.3rem, 0.8vw, 0.6rem) clamp(0.4rem, 1vw, 0.75rem);
+            border-bottom: 1px solid rgba(212, 165, 116, 0.15);
+        }
+
+        .styled-table td {
+            padding: clamp(0.3rem, 0.8vw, 0.6rem) clamp(0.4rem, 1vw, 0.75rem);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: var(--text-secondary);
+        }
+
+        /* === QUOTE === */
+        .quote {
+            font-family: var(--font-display);
+            font-size: clamp(1.1rem, 2.5vw, 1.75rem);
+            font-style: italic;
+            color: var(--accent-gold);
+            border-left: 2px solid var(--accent-warm);
+            padding-left: clamp(0.75rem, 2vw, 1.5rem);
+            margin-top: var(--content-gap);
+            line-height: 1.5;
+        }
+
+        /* === ANIMATIONS === */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity var(--duration-normal) var(--ease-out-expo),
+                        transform var(--duration-normal) var(--ease-out-expo);
+        }
+
+        .reveal-left {
+            opacity: 0;
+            transform: translateX(-50px);
+            transition: opacity var(--duration-normal) var(--ease-out-expo),
+                        transform var(--duration-normal) var(--ease-out-expo);
+        }
+
+        .reveal-scale {
+            opacity: 0;
+            transform: scale(0.9);
+            transition: opacity var(--duration-normal) var(--ease-out-expo),
+                        transform var(--duration-normal) var(--ease-out-expo);
+        }
+
+        .slide.visible .reveal,
+        .slide.visible .reveal-left,
+        .slide.visible .reveal-scale {
+            opacity: 1;
+            transform: translateY(0) translateX(0) scale(1);
+        }
+
+        /* Stagger children */
+        .reveal:nth-child(1), .reveal-left:nth-child(1) { transition-delay: 0.1s; }
+        .reveal:nth-child(2), .reveal-left:nth-child(2) { transition-delay: 0.2s; }
+        .reveal:nth-child(3), .reveal-left:nth-child(3) { transition-delay: 0.3s; }
+        .reveal:nth-child(4), .reveal-left:nth-child(4) { transition-delay: 0.4s; }
+        .reveal:nth-child(5), .reveal-left:nth-child(5) { transition-delay: 0.5s; }
+        .reveal:nth-child(6), .reveal-left:nth-child(6) { transition-delay: 0.6s; }
+        .reveal:nth-child(7), .reveal-left:nth-child(7) { transition-delay: 0.7s; }
+
+        /* === CLOSING SLIDE === */
+        .closing-slide .slide-content {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .closing-slide .links {
+            display: flex;
+            gap: clamp(0.5rem, 2vw, 1.5rem);
+            margin-top: var(--content-gap);
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .closing-slide .links a {
+            font-family: var(--font-body);
+            font-size: var(--small-size);
+            color: var(--accent-warm);
+            text-decoration: none;
+            padding: clamp(0.3rem, 0.8vw, 0.5rem) clamp(0.75rem, 2vw, 1.25rem);
+            border: 1px solid rgba(212, 165, 116, 0.25);
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            letter-spacing: 0.05em;
+        }
+
+        .closing-slide .links a:hover {
+            background: rgba(212, 165, 116, 0.1);
+            border-color: var(--accent-warm);
+        }
+
+        /* === PIPELINE STEP === */
+        .pipeline {
+            display: flex;
+            align-items: center;
+            gap: clamp(0.25rem, 0.8vw, 0.5rem);
+            margin-top: var(--content-gap);
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .pipeline-step {
+            background: var(--bg-card);
+            border: 1px solid rgba(212, 165, 116, 0.1);
+            border-radius: 6px;
+            padding: clamp(0.4rem, 1vw, 0.75rem) clamp(0.6rem, 1.5vw, 1rem);
+            font-size: var(--small-size);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            font-weight: 400;
+            text-align: center;
+        }
+
+        .pipeline-arrow {
+            color: var(--accent-warm);
+            font-size: var(--body-size);
+        }
+
+        /* === PERSONA CARD === */
+        .persona-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
+            gap: clamp(0.35rem, 1vw, 0.75rem);
+            margin-top: var(--content-gap);
+        }
+
+        .persona-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(232, 180, 184, 0.08);
+            border-radius: 6px;
+            padding: clamp(0.4rem, 1vw, 0.75rem);
+            text-align: center;
+        }
+
+        .persona-card .emoji {
+            font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+        }
+
+        .persona-card .name {
+            font-family: var(--font-body);
+            font-size: var(--small-size);
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-top: clamp(0.1rem, 0.3vw, 0.25rem);
+        }
+
+        .persona-card .role {
+            font-size: clamp(0.55rem, 0.9vw, 0.75rem);
+            color: var(--text-dim);
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Progress bar -->
+    <div class="progress-bar" id="progressBar"></div>
+
+    <!-- Slide counter -->
+    <div class="slide-counter" id="slideCounter">01 / 22</div>
+
+    <!-- Navigation dots -->
+    <nav class="nav-dots" id="navDots" aria-label="Slide navigation"></nav>
+
+    <!-- ============================================
+         SLIDE 1: TITLE
+         ============================================ -->
+    <section class="slide title-slide" aria-label="Title">
+        <div class="botanical-circle warm" style="width: 500px; height: 500px; top: -150px; right: -100px;"></div>
+        <div class="botanical-circle pink" style="width: 400px; height: 400px; bottom: -100px; left: -80px;"></div>
+        <div class="accent-line" style="height: 40vh; top: 30vh; left: 8vw; opacity: 0.15;"></div>
+        <div class="slide-content">
+            <h1 class="reveal">Emotion Engine</h1>
+            <p class="subtitle reveal">Multi-Agent Simulation System</p>
+            <p class="tagline reveal">Where AI agents develop emotional intelligence through disaster</p>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SLIDE 2: THE PROBLEM
+         ============================================ -->
+    <section class="slide" aria-label="The Problem">
+        <div class="botanical-circle gold" style="width: 350px; height: 350px; top: 10vh; right: 5vw;"></div>
+        <div class="accent-line" style="height: 30vh; bottom: 15vh; right: 12vw; opacity: 0.1;"></div>
+        <div class="slide-content">
+            <h2 class="reveal">Why simulate emotion?</h2>
+            <div class="quote reveal">
+                Most AI benchmarks test logic. But cooperation, trust, and moral reasoning under stress? Those don't fit in a multiple-choice test.
+            </div>
+            <ul class="styled-list">
+                <li class="reveal"><strong>Emergent behavior</strong> only appears when agents have personality, memory, and real stakes</li>
+                <li class="reveal"><strong>Reproducible research</strong> needs deterministic, seedable simulations (not vibes)</li>
+                <li class="reveal"><strong>LLM decision-making</strong> under pressure is still poorly understood</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SLIDE 3: WHAT IT DOES
+         ============================================ -->
+    <section class="slide" aria-label="What It Does">
+        <div class="botanical-circle warm" style="width: 300px; height: 300px; bottom: 5vh; left: -60px;"></div>
+        <div class="slide-content">
+            <h2 class="reveal">What Emotion Engine does</h2>
+            <p class="reveal" style="margin-top: var(--element-gap);">
+                A <span class="highlight">local-first simulation engine</span> that drops LLM-powered agents into disaster scenarios. Each agent has a unique personality, tracks relationships, remembers events, and cooperates (or doesn't) based on who they are.
+            </p>
+            <ul class="styled-list">
+                <li class="reveal"><strong>10 diverse personas</strong> navigate a rising flood, from an ER doctor to a scared 8-year-old</li>
+                <li class="reveal"><strong>Every decision traced</strong> through a cognitive pipeline: think, plan, act, reflect</li>
+                <li class="reveal"><strong>Real-time monitoring</strong> via terminal TUI or web dashboard</li>
+                <li class="reveal"><strong>Cross-run analytics</strong> for comparing behaviors across seeds and scenarios</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SLIDE 4: KEY FEATURES (1/2)
+         ============================================ -->
+    <section class="slide" aria-label="Key Features Part 1">
+        <div class="botanical-circle pink" style="width: 400px; height: 400px; top: -80px; right: -60px;"></div>
+        <div class="accent-line" style="height: 50vh; top: 25vh; left: 5vw; opacity: 0.12;"></div>
+        <div class="slide-content">
+            <h2 class="reveal">Core capabilities</h2>
+            <div class="feature-grid">
+                <div class="feature-card reveal">
+                    <div class="icon">🧠</div>
+                    <h3>Deep Agent Roleplay</h3>
+                    <p>Big Five traits, dynamic stress and health, episodic memory, per-agent relationship tracking</p>
+                </div>
+                <div class="feature-card reveal">
+                    <div class="icon">🖥️</div>
+                    <h3>Real-time TUI</h3>
+                    <p>Go Bubble Tea dashboard with live token streaming, spatial maps, relationship webs, mind views</p>
+                </div>
+                <div class="feature-card reveal">
+                    <div class="icon">🎲</div>
+                    <h3>Deterministic Simulation</h3>
+                    <p>Seedable, step-by-step execution. Same seed, same scenario, same results. Reproducible research.</p>
+                </div>
+                <div class="feature-card reveal">
+                    <div class="icon">⚡</div>
+                    <h3>Scene Parallelism</h3>
+                    <p>Agents grouped by location. Independent scenes run concurrently via vLLM continuous batching.</p>
+                </div>
+                <div class="feature-card reveal">
+                    <div class="icon">💭</div>
+                    <h3>Cognitive Engine</h3>
+                    <p>Think, plan, act, reflect. Each agent reasons through a structured pipeline every tick.</p>
+                </div>
+                <div class="feature-card reveal">
+                    <div class="icon">📊</div>
+                    <h3>Auto-Evaluation</h3>
+                    <p>Built-in evaluator agents analyze cooperation quality, narrative arcs, and behavioral patterns.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SLIDE 5: KEY FEATURES (2/2)
+         ============================================ -->
+    <section class="slide" aria-label="Key Features Part 2">
+        <div class="botanical-circle gold" style="width: 350px; height: 350px; bottom: -50px; right: 10vw;"></div>
+        <div class="slide-content">
+            <h2 class="reveal">More than a chatbot arena</h2>
+            <div class="feature-grid">
+                <div class="feature-card reveal">
+                    <div class="icon">🤝</div>
+                    <h3>Trust Network</h3>
+                    <p>Vouch and betray mechanics. Agents build (and break) trust based on observed behavior.</p>
+                </div>
+                <div class="feature-card reveal">
+                    <div class="icon">🗣️</div>
+                    <h3>Negotiation System</h3>
+                    <p>Proposals, counter-proposals, acceptance and rejection. Tracked in a theater timeline.</p>
+                </div>
+                <div class="feature-card reveal">
+                    <div class="icon">🗺️</div>
+                    <h3>Spatial Simulation</h3>
+                    <p>Agents physically move between locations. Travel takes time. Proximity matters for interaction.</p>
+                </div>
+                <div class="feature-card reveal">
+                    <div class="icon">🔄</div>
+                    <h3>Replay System</h3>
+                    <p>Step through completed runs frame by frame. Diff view shows exactly what changed each tick.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SLIDE 6: ARCHITECTURE OVERVIEW
+         ============================================ -->
+    <section class="slide section-slide" aria-label="Architecture Overview">
+        <div class="section-number">02</div>
+        <div class="botanical-circle warm" style="width: 450px; height: 450px; top: 5vh; left: -100px;"></div>
+        <div class="accent-line" style="height: 60vh; top: 20vh; right: 8vw; opacity: 0.1;"></div>
+        <div class="slide-content">
+            <h2 class="reveal">System architecture</h2>
+            <div class="arch-flow reveal-scale">
+                <div class="arch-row">
+                    <div class="arch-box" style="border-color: rgba(232, 180, 184, 0.2);">SvelteKit Dashboard</div>
+                    <div class="arch-box" style="border-color: rgba(201, 184, 150, 0.2);">Go TUI (Bubble Tea)</div>
+                </div>
+                <div class="arch-arrow">&#8595; WebSocket + REST</div>
+                <div class="arch-row">
+                    <div class="arch-box" style="flex: 2; border-color: rgba(212, 165, 116, 0.25);">FastAPI Backend (:8000)</div>
+                </div>
+                <div class="arch-arrow">&#8595;</div>
+                <div class="arch-row">
+                    <div class="arch-box">SimulationEngine</div>
+                    <div class="arch-box">MessageBus</div>
+                    <div class="arch-box">CognitiveEngine</div>
+                </div>
+                <div class="arch-arrow">&#8595;</div>
+                <div class="arch-row">
+                    <div class="arch-box" style="border-color: rgba(232, 180, 184, 0.2);">LLM Router (vLLM / Ollama)</div>
+                    <div class="arch-box" style="border-color: rgba(201, 184, 150, 0.2);">Oracle DB 26ai Free</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SLIDE 7: SIMULATION FLOW
+         ============================================ -->
+    <section class="slide" aria-label="Simulation Flow">
+        <div class="botanical-circle pink" style="width: 300px; height: 300px; top: 10vh; right: -40px;"></div>
+        <div class="slide-content">
+            <h2 class="reveal">How a tick works</h2>
+            <p class="reveal" style="margin-top: var(--element-gap); margin-bottom: var(--content-gap);">
+                Each simulation step runs through 4 phases. The world evolves, agents react, then everything gets persisted.
+            </p>
+            <div class="pipeline reveal">
+                <div class="pipeline-step" style="border-color: rgba(212, 165, 116, 0.2);">
+                    <strong class="highlight">Phase 1</strong><br>
+                    Environment agents generate world events
+                </div>
+                <span class="pipeline-arrow">&#8594;</span>
+                <div class="pipeline-step" style="border-color: rgba(232, 180, 184, 0.2);">
+                    <strong class="highlight-pink">Phase 2</strong><br>
+                    Human agents process (parallel by scene)
+                </div>
+                <span class="pipeline-arrow">&#8594;</span>
+                <div class="pipeline-step" style="border-color: rgba(201, 184, 150, 0.2);">
+                    <strong class="highlight-gold">Phase 3</strong><br>
+                    Reaction round for intra-step responses
+                </div>
+                <span class="pipeline-arrow">&#8594;</span>
+                <div class="pipeline-step" style="border-color: rgba(212, 165, 116, 0.15);">
+                    <strong>Persist</strong><br>
+                    Snapshot, WebSocket emit, consensus check
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SLIDE 8: AGENT SYSTEM
+         ============================================ -->
+    <section class="slide section-slide" aria-label="Agent System">
+        <div class="section-number">03</div>
+        <div class="botanical-circle gold" style="width: 400px; height: 400px; bottom: -80px; left: 5vw;"></div>
+        <div class="accent-line" style="height: 40vh; top: 30vh; right: 15vw; opacity: 0.12;"></div>
+        <div class="slide-content">
+            <h2 class="reveal">The agent system</h2>
+            <p class="reveal" style="margin-top: var(--element-gap);">
+                Four distinct agent types, each with different responsibilities. Human agents are the stars; the rest form the supporting cast.
+            </p>
+            <div class="feature-grid" style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));">
+                <div class="feature-card reveal">
+                    <div class="icon">👤</div>
+                    <h3>Human Agent</h3>
+                    <p>LLM-driven with persona, Big Five traits, stress, health, inventory, relationships</p>
+                </div>
+                <div class="feature-card reveal">
+                    <div class="icon">🌊</div>
+                    <h3>Environment Agent</h3>
+                    <p>Controls hazards, locations, items, and world events. Sets the stage.</p>
+                </div>
+                <div class="feature-card reveal">
+                    <div class="icon">🎬</div>
+                    <h3>Designer Agent</h3>
+                    <p>Guides the scenario narrative. Keeps things moving when agents stall.</p>
+                </div>
+                <div class="feature-card reveal">
+                    <div class="icon">📋</div>
+                    <h3>Evaluator Agent</h3>
+                    <p>Post-run analysis. Scores cooperation, identifies narrative arcs and key moments.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SLIDE 9: AGENT COGNITION
+         ============================================ -->
+    <section class="slide" aria-label="Agent Cognition Pipeline">
+        <div class="botanical-circle warm" style="width: 350px; height: 350px; top: -60px; left: 10vw;"></div>
+        <div class="slide-content">
+            <h2 class="reveal">Cognitive pipeline</h2>
+            <p class="reveal" style="margin-top: var(--element-gap);">
+                Every human agent runs this pipeline each tick. Context in, reasoned action out.
+            </p>
+            <div class="pipeline reveal" style="margin-top: var(--content-gap);">
+                <div class="pipeline-step">Build Context<br><span style="color: var(--text-dim); font-size: var(--small-size);">world state + messages</span></div>
+                <span class="pipeline-arrow">&#8594;</span>
+                <div class="pipeline-step" style="border-color: rgba(212, 165, 116, 0.2);">Think<br><span style="color: var(--text-dim); font-size: var(--small-size);">internal reasoning</span></div>
+                <span class="pipeline-arrow">&#8594;</span>
+                <div class="pipeline-step" style="border-color: rgba(232, 180, 184, 0.2);">Plan<br><span style="color: var(--text-dim); font-size: var(--small-size);">set goals + steps</span></div>
+                <span class="pipeline-arrow">&#8594;</span>
+                <div class="pipeline-step" style="border-color: rgba(201, 184, 150, 0.2);">Act<br><span style="color: var(--text-dim); font-size: var(--small-size);">execute JSON action</span></div>
+                <span class="pipeline-arrow">&#8594;</span>
+                <div class="pipeline-step">Reflect<br><span style="color: var(--text-dim); font-size: var(--small-size);">update memory</span></div>
+            </div>
+            <ul class="styled-list" style="margin-top: var(--content-gap);">
+                <li class="reveal">System prompt encodes persona, Big Five traits, current goals</li>
+                <li class="reveal">LLM responds in JSON mode; fallback to natural language parsing if malformed</li>
+                <li class="reveal">Intent memory persists goals across ticks; stagnation detection forces new plans</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SLIDE 10: PERSONA SYSTEM
+         ============================================ -->
+    <section class="slide" aria-label="Persona System">
+        <div class="botanical-circle pink" style="width: 350px; height: 350px; bottom: 5vh; right: -50px;"></div>
+        <div class="accent-line" style="height: 35vh; top: 25vh; left: 6vw; opacity: 0.1;"></div>
+        <div class="slide-content">
+            <h2 class="reveal">What makes each agent unique</h2>
+            <div class="two-col">
+                <div>
+                    <h3 class="reveal" style="font-size: var(--body-size); font-family: var(--font-body); font-weight: 500;">Immutable Persona</h3>
+                    <ul class="styled-list">
+                        <li class="reveal"><strong>Demographics</strong> age, background, occupation</li>
+                        <li class="reveal"><strong>Big Five traits</strong> openness, conscientiousness, extraversion, agreeableness, neuroticism (1-10)</li>
+                        <li class="reveal"><strong>Skills</strong> what they're capable of</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="reveal" style="font-size: var(--body-size); font-family: var(--font-body); font-weight: 500;">Mutable State (per tick)</h3>
+                    <ul class="styled-list">
+                        <li class="reveal"><strong>Health + Stress</strong> affects decision quality</li>
+                        <li class="reveal"><strong>Location</strong> physical position in the world</li>
+                        <li class="reveal"><strong>Inventory</strong> tools, supplies, resources</li>
+                        <li class="reveal"><strong>Relationships</strong> trust per agent pair</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SLIDE 11: BUILT-IN SCENARIO
+         ============================================ -->
+    <section class="slide" aria-label="Rising Flood Scenario">
+        <div class="botanical-circle warm" style="width: 400px; height: 400px; top: -60px; right: -80px;"></div>
+        <div class="slide-content">
+            <h2 class="reveal">Built-in: Rising Flood</h2>
+            <p class="reveal" style="margin-top: var(--element-gap);">
+                Ten diverse personas, one escalating disaster. The environment agent raises water levels while humans figure out how (and whether) to cooperate.
+            </p>
+            <div class="persona-grid">
+                <div class="persona-card reveal"><div class="emoji">👩‍⚕️</div><div class="name">Dr. Chen</div><div class="role">ER Doctor</div></div>
+                <div class="persona-card reveal"><div class="emoji">👨‍🚒</div><div class="name">Frank</div><div class="role">Retired Firefighter</div></div>
+                <div class="persona-card reveal"><div class="emoji">👦</div><div class="name">Tommy</div><div class="role">8-year-old Child</div></div>
+                <div class="persona-card reveal"><div class="emoji">👩‍🔧</div><div class="name">Maria</div><div class="role">Mechanic</div></div>
+                <div class="persona-card reveal"><div class="emoji">👨‍💼</div><div class="name">James</div><div class="role">Bank Manager</div></div>
+                <div class="persona-card reveal"><div class="emoji">👩‍🏫</div><div class="name">Priya</div><div class="role">Teacher</div></div>
+                <div class="persona-card reveal"><div class="emoji">👨‍🌾</div><div class="name">Earl</div><div class="role">Farmer</div></div>
+            </div>
+            <p class="reveal" style="margin-top: var(--element-gap); color: var(--text-dim); font-size: var(--small-size);">
+                Personality profiles drive cooperation patterns. The child triggers protective instincts. The bank manager hoards supplies. The firefighter takes charge. Every run tells a different story.
+            </p>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SLIDE 12: COMMUNICATION SYSTEM
+         ============================================ -->
+    <section class="slide" aria-label="Communication System">
+        <div class="botanical-circle gold" style="width: 300px; height: 300px; top: 15vh; left: -50px;"></div>
+        <div class="slide-content">
+            <h2 class="reveal">Communication protocol</h2>
+            <p class="reveal" style="margin-top: var(--element-gap);">
+                Agents talk through a structured message bus with three channel types.
+            </p>
+            <div class="feature-grid" style="grid-template-columns: repeat(3, 1fr); margin-top: var(--content-gap);">
+                <div class="feature-card reveal">
+                    <h3 style="color: var(--accent-warm);">Direct</h3>
+                    <p>One-to-one. Private conversations between two agents. Used for negotiation, requests, warnings.</p>
+                </div>
+                <div class="feature-card reveal">
+                    <h3 style="color: var(--accent-pink);">Room-scoped</h3>
+                    <p>Everyone at the same location hears it. Announcements, group discussions, calls for help.</p>
+                </div>
+                <div class="feature-card reveal">
+                    <h3 style="color: var(--accent-gold);">Broadcast</h3>
+                    <p>World-wide. Environment events, designer guidance, emergency alerts.</p>
+                </div>
+            </div>
+            <ul class="styled-list" style="margin-top: var(--content-gap);">
+                <li class="reveal">Multi-turn conversations with explicit initiation and turn-taking</li>
+                <li class="reveal">10-round safety limit prevents infinite loops</li>
+                <li class="reveal">Communication frequency modulated by personality traits</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SLIDE 13: TUI DASHBOARD
+         ============================================ -->
+    <section class="slide section-slide" aria-label="TUI Dashboard">
+        <div class="section-number">04</div>
+        <div class="botanical-circle pink" style="width: 450px; height: 450px; bottom: -100px; right: -80px;"></div>
+        <div class="accent-line" style="height: 50vh; top: 25vh; left: 10vw; opacity: 0.12;"></div>
+        <div class="slide-content">
+            <h2 class="reveal">Terminal dashboard</h2>
+            <p class="reveal" style="margin-top: var(--element-gap);">
+                A full-featured Go TUI built with <span class="highlight">Bubble Tea</span> and <span class="highlight">Lipgloss</span>. 7 screens, live token streaming, and SSH sharing built in.
+            </p>
+            <div class="feature-grid" style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); margin-top: var(--content-gap);">
+                <div class="feature-card reveal">
+                    <h3>Splash</h3>
+                    <p>Animated banner + backend health check</p>
+                </div>
+                <div class="feature-card reveal">
+                    <h3>Scenarios</h3>
+                    <p>Browse and select simulation templates</p>
+                </div>
+                <div class="feature-card reveal">
+                    <h3>Launcher</h3>
+                    <p>Configure steps, seed, inference provider</p>
+                </div>
+                <div class="feature-card reveal">
+                    <h3>Dashboard</h3>
+                    <p>Live monitoring with 4 panel modes</p>
+                </div>
+                <div class="feature-card reveal">
+                    <h3>History</h3>
+                    <p>Browse and compare past runs</p>
+                </div>
+                <div class="feature-card reveal">
+                    <h3>Replay</h3>
+                    <p>Step-by-step playback with diffs</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SLIDE 14: DASHBOARD PANELS
+         ============================================ -->
+    <section class="slide" aria-label="Dashboard Panel Modes">
+        <div class="botanical-circle warm" style="width: 350px; height: 350px; top: -40px; left: -60px;"></div>
+        <div class="slide-content">
+            <h2 class="reveal">Dashboard panel modes</h2>
+            <p class="reveal" style="margin-top: var(--element-gap);">
+                Left side: up to 4 agent panes with live token streams. Right side cycles with <code>Tab</code>:
+            </p>
+            <div class="feature-grid" style="grid-template-columns: repeat(2, 1fr); margin-top: var(--content-gap);">
+                <div class="feature-card reveal">
+                    <h3 style="color: var(--accent-warm);">Feed Mode</h3>
+                    <p>Scrollable message feed grouped by location. World state panel with hazard gauge. Filter: all, speech, negotiations, movement.</p>
+                </div>
+                <div class="feature-card reveal">
+                    <h3 style="color: var(--accent-pink);">Spatial Map</h3>
+                    <p>Live map of locations with agent positions. Hazard zones highlighted. Travel progress bars for agents in transit.</p>
+                </div>
+                <div class="feature-card reveal">
+                    <h3 style="color: var(--accent-gold);">Relationship Web</h3>
+                    <p>Trust, conflict, alliance edges. Color-coded: green trust, red conflict, yellow pending. Strength bars.</p>
+                </div>
+                <div class="feature-card reveal">
+                    <h3 style="color: var(--text-primary);">Negotiation Theater</h3>
+                    <p>Timeline of proposals. Each shows proposer, target, terms, status. Responses indented with accept/reject/counter.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SLIDE 15: AGENT MIND VIEW
+         ============================================ -->
+    <section class="slide" aria-label="Agent Mind View">
+        <div class="botanical-circle gold" style="width: 300px; height: 300px; bottom: 10vh; right: 5vw;"></div>
+        <div class="slide-content">
+            <h2 class="reveal">Agent mind view</h2>
+            <p class="reveal" style="margin-top: var(--element-gap);">
+                Press <code>Enter</code> on any agent to expand their full cognitive state. Everything happening inside an agent's head, visible in one screen.
+            </p>
+            <div class="feature-grid" style="grid-template-columns: repeat(3, 1fr); margin-top: var(--content-gap);">
+                <div class="feature-card reveal">
+                    <h3>Personality</h3>
+                    <p>Big Five traits as bar charts (1-10 scale)</p>
+                </div>
+                <div class="feature-card reveal">
+                    <h3>Current Plan</h3>
+                    <p>Goal, step, progress bar, deadline</p>
+                </div>
+                <div class="feature-card reveal">
+                    <h3>Inventory</h3>
+                    <p>Items the agent is carrying</p>
+                </div>
+                <div class="feature-card reveal">
+                    <h3>Relationships</h3>
+                    <p>Per-agent trust bars with descriptions</p>
+                </div>
+                <div class="feature-card reveal">
+                    <h3>Reasoning</h3>
+                    <p>Most recent internal reasoning trace</p>
+                </div>
+                <div class="feature-card reveal">
+                    <h3>Recent Actions</h3>
+                    <p>Last 4 actions with emotional state</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SLIDE 16: TECH STACK
+         ============================================ -->
+    <section class="slide section-slide" aria-label="Tech Stack">
+        <div class="section-number">05</div>
+        <div class="botanical-circle warm" style="width: 400px; height: 400px; top: 10vh; right: -80px;"></div>
+        <div class="accent-line" style="height: 45vh; top: 28vh; left: 7vw; opacity: 0.1;"></div>
+        <div class="slide-content">
+            <h2 class="reveal">Tech stack</h2>
+            <div class="two-col" style="margin-top: var(--content-gap);">
+                <div>
+                    <h3 class="reveal" style="font-size: var(--body-size); font-family: var(--font-body); font-weight: 500; color: var(--accent-warm);">Backend</h3>
+                    <ul class="styled-list">
+                        <li class="reveal"><strong>Python 3.11+</strong> async-first architecture</li>
+                        <li class="reveal"><strong>FastAPI</strong> REST + WebSocket API</li>
+                        <li class="reveal"><strong>SQLAlchemy</strong> async ORM</li>
+                        <li class="reveal"><strong>Oracle DB 26ai Free</strong> persistence</li>
+                        <li class="reveal"><strong>Pydantic</strong> validation layer</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="reveal" style="font-size: var(--body-size); font-family: var(--font-body); font-weight: 500; color: var(--accent-pink);">Frontend + TUI</h3>
+                    <ul class="styled-list">
+                        <li class="reveal"><strong>Go 1.24+</strong> Bubble Tea TUI</li>
+                        <li class="reveal"><strong>Lipgloss</strong> terminal styling</li>
+                        <li class="reveal"><strong>SvelteKit 2.0</strong> web dashboard</li>
+                        <li class="reveal"><strong>Vite</strong> build tooling</li>
+                        <li class="reveal"><strong>charmbracelet/wish</strong> SSH server</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SLIDE 17: LLM INFRASTRUCTURE
+         ============================================ -->
+    <section class="slide" aria-label="LLM Infrastructure">
+        <div class="botanical-circle pink" style="width: 350px; height: 350px; bottom: -50px; left: 5vw;"></div>
+        <div class="slide-content">
+            <h2 class="reveal">LLM infrastructure</h2>
+            <p class="reveal" style="margin-top: var(--element-gap);">
+                An abstraction layer routes inference calls to the best available provider. vLLM for throughput, Ollama as a fallback.
+            </p>
+            <div class="arch-flow reveal-scale" style="margin-top: var(--content-gap);">
+                <div class="arch-row">
+                    <div class="arch-box" style="flex: 2;">LLM Router (Singleton)</div>
+                </div>
+                <div class="arch-arrow">&#8595; per-agent-type model routing</div>
+                <div class="arch-row">
+                    <div class="arch-box" style="border-color: rgba(212, 165, 116, 0.25);">
+                        <strong style="color: var(--accent-warm);">vLLM :8010</strong><br>
+                        <span style="color: var(--text-dim); font-size: var(--small-size);">Primary. Continuous batching.<br>Parallel inference. JSON mode.</span>
+                    </div>
+                    <div class="arch-box" style="border-color: rgba(232, 180, 184, 0.2);">
+                        <strong style="color: var(--accent-pink);">Ollama :11434</strong><br>
+                        <span style="color: var(--text-dim); font-size: var(--small-size);">Fallback. Single-slot.<br>Semaphore-gated. Sequential.</span>
+                    </div>
+                </div>
+            </div>
+            <ul class="styled-list" style="margin-top: var(--content-gap);">
+                <li class="reveal">Default model: <code>Qwen/Qwen3.5-4B</code> (auto-disables thinking tokens)</li>
+                <li class="reveal">Automatic fallback chain: vLLM -> Ollama -> fallback model</li>
+                <li class="reveal">Token budget per agent: 50,000 streamed characters per run</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SLIDE 18: GETTING STARTED
+         ============================================ -->
+    <section class="slide section-slide" aria-label="Getting Started">
+        <div class="section-number">06</div>
+        <div class="botanical-circle gold" style="width: 400px; height: 400px; top: -50px; left: -60px;"></div>
+        <div class="accent-line" style="height: 40vh; bottom: 20vh; right: 10vw; opacity: 0.12;"></div>
+        <div class="slide-content">
+            <h2 class="reveal">Getting started</h2>
+            <p class="reveal" style="margin-top: var(--element-gap);">Two paths: Docker (one command) or manual setup.</p>
+            <div class="code-block reveal" style="margin-top: var(--content-gap);">
+                <pre><span class="comment"># Docker: one-command install</span>
+<span class="function">curl</span> -fsSL https://raw.githubusercontent.com/jasperan/
+    emotion-engine/main/install.sh | <span class="function">bash</span>
+
+<span class="comment"># Or manual: backend</span>
+<span class="keyword">cd</span> backend
+<span class="function">pip</span> install -e .
+<span class="function">emotionsim</span> run --scenario <span class="string">"Rising Flood"</span> \
+    --max-steps 50 --seed 42</pre>
+            </div>
+            <div class="code-block reveal">
+                <pre><span class="comment"># TUI dashboard</span>
+<span class="keyword">cd</span> tui
+<span class="function">make</span> build
+./emotionsim-tui            <span class="comment"># auto-starts backend + vLLM</span>
+./emotionsim-tui --no-backend --no-vllm  <span class="comment"># existing services</span></pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SLIDE 19: CLI COMMANDS
+         ============================================ -->
+    <section class="slide" aria-label="CLI Commands">
+        <div class="botanical-circle warm" style="width: 300px; height: 300px; bottom: 10vh; right: -40px;"></div>
+        <div class="slide-content">
+            <h2 class="reveal">CLI commands</h2>
+            <table class="styled-table reveal" style="margin-top: var(--content-gap);">
+                <thead>
+                    <tr>
+                        <th>Command</th>
+                        <th>What it does</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>emotionsim run</code></td>
+                        <td>Run simulation with live terminal monitor</td>
+                    </tr>
+                    <tr>
+                        <td><code>emotionsim auto --count 5</code></td>
+                        <td>Batch run multiple simulations</td>
+                    </tr>
+                    <tr>
+                        <td><code>emotionsim interactive</code></td>
+                        <td>Guided wizard mode</td>
+                    </tr>
+                    <tr>
+                        <td><code>emotionsim status</code></td>
+                        <td>Check backend health</td>
+                    </tr>
+                    <tr>
+                        <td><code>emotionsim monitor</code></td>
+                        <td>Attach to running simulation</td>
+                    </tr>
+                    <tr>
+                        <td><code>emotionsim best</code></td>
+                        <td>Rank runs by cooperation score</td>
+                    </tr>
+                    <tr>
+                        <td><code>emotionsim viewer</code></td>
+                        <td>Rich TUI viewer for past runs</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SLIDE 20: CONFIGURATION
+         ============================================ -->
+    <section class="slide" aria-label="Configuration">
+        <div class="botanical-circle pink" style="width: 350px; height: 350px; top: 5vh; left: -50px;"></div>
+        <div class="slide-content">
+            <h2 class="reveal">Configuration</h2>
+            <p class="reveal" style="margin-top: var(--element-gap);">
+                Environment variables via <code>.env</code> in the backend directory. Pydantic settings with sensible defaults.
+            </p>
+            <table class="styled-table reveal" style="margin-top: var(--content-gap);">
+                <thead>
+                    <tr>
+                        <th>Variable</th>
+                        <th>Default</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>LLM_BACKEND</code></td>
+                        <td>vllm</td>
+                        <td>vllm or ollama</td>
+                    </tr>
+                    <tr>
+                        <td><code>VLLM_BASE_URL</code></td>
+                        <td>:8010</td>
+                        <td>vLLM server address</td>
+                    </tr>
+                    <tr>
+                        <td><code>SCENE_MODE</code></td>
+                        <td>true</td>
+                        <td>Parallel scenes by location</td>
+                    </tr>
+                    <tr>
+                        <td><code>DEFAULT_MAX_STEPS</code></td>
+                        <td>10</td>
+                        <td>Simulation length</td>
+                    </tr>
+                    <tr>
+                        <td><code>DATALAKE_ENABLED</code></td>
+                        <td>true</td>
+                        <td>Cross-run analytics</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SLIDE 21: KNOWLEDGE GRAPH (MIROFISH)
+         ============================================ -->
+    <section class="slide section-slide" aria-label="Knowledge Graph Integration">
+        <div class="section-number">07</div>
+        <div class="botanical-circle gold" style="width: 450px; height: 450px; bottom: -80px; right: -60px;"></div>
+        <div class="accent-line" style="height: 50vh; top: 20vh; left: 8vw; opacity: 0.1;"></div>
+        <div class="slide-content">
+            <h2 class="reveal">Knowledge graph layer</h2>
+            <p class="reveal" style="margin-top: var(--element-gap);">
+                The <span class="highlight">mirofish-integration</span> branch bolts on a knowledge graph powered by Oracle SQL/PGQ. Agents remember by relevance, not recency.
+            </p>
+            <div class="feature-grid" style="margin-top: var(--content-gap);">
+                <div class="feature-card reveal">
+                    <h3>Graph Memory</h3>
+                    <p>Hybrid search: 0.7 vector cosine + 0.3 BM25. A bridge memory from 30 steps ago surfaces when an agent reaches a bridge.</p>
+                </div>
+                <div class="feature-card reveal">
+                    <h3>Document Ingestion</h3>
+                    <p>Text in, NER/RE extraction, graph entities out. Auto-generates scenarios from uploaded documents.</p>
+                </div>
+                <div class="feature-card reveal">
+                    <h3>Persona Generator</h3>
+                    <p>Graph entities become Big Five + MBTI personas. Characters generated from the source material.</p>
+                </div>
+                <div class="feature-card reveal">
+                    <h3>Report Agent</h3>
+                    <p>Post-sim analysis with InsightForge deep search and PanoramaSearch breadth scanning.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SLIDE 22: SOCIAL DYNAMICS
+         ============================================ -->
+    <section class="slide" aria-label="Social Dynamics">
+        <div class="botanical-circle warm" style="width: 350px; height: 350px; top: 10vh; left: -40px;"></div>
+        <div class="slide-content">
+            <h2 class="reveal">Opinion dynamics + social systems</h2>
+            <p class="reveal" style="margin-top: var(--element-gap);">
+                Agents don't just talk; they <span class="highlight-pink">influence each other</span>. Opinions shift based on trust, personality bias, and who's talking.
+            </p>
+            <ul class="styled-list">
+                <li class="reveal"><strong>Opinion vectors</strong> per topic (-1.0 to 1.0). "Evacuation: 0.8" means strongly in favor.</li>
+                <li class="reveal"><strong>Shift formula:</strong> direction * influence * trust * (1-bias) * speed. Max +-0.3 per interaction.</li>
+                <li class="reveal"><strong>Sentiment tracking</strong> detects tipping points: when a group suddenly converges or diverges on a topic.</li>
+                <li class="reveal"><strong>Influence network</strong> maps who influenced whom. Identifies super-spreaders and opinion anchors.</li>
+            </ul>
+            <div style="margin-top: var(--content-gap);">
+                <span class="pill reveal">OpinionDynamics</span>
+                <span class="pill pink reveal">SentimentTracker</span>
+                <span class="pill gold reveal">InfluenceNetwork</span>
+                <span class="pill reveal">SocialDynamicsEngine</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SLIDE 23: LIGHTWEIGHT AGENTS
+         ============================================ -->
+    <section class="slide" aria-label="Lightweight Agents">
+        <div class="botanical-circle pink" style="width: 300px; height: 300px; bottom: 15vh; right: 5vw;"></div>
+        <div class="slide-content">
+            <h2 class="reveal">Scaling to 100+ agents</h2>
+            <p class="reveal" style="margin-top: var(--element-gap);">
+                Not every agent needs an LLM call. <span class="highlight">Lightweight agents</span> use personality-driven rules for decisions: zero GPU cost.
+            </p>
+            <div class="two-col" style="margin-top: var(--content-gap);">
+                <div>
+                    <h3 class="reveal" style="font-size: var(--body-size); font-family: var(--font-body); font-weight: 500; color: var(--accent-warm);">Rule-based decisions</h3>
+                    <ul class="styled-list">
+                        <li class="reveal">Action weights from Big Five traits</li>
+                        <li class="reveal">Extraversion -> speak</li>
+                        <li class="reveal">Agreeableness -> help</li>
+                        <li class="reveal">Openness -> explore/move</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="reveal" style="font-size: var(--body-size); font-family: var(--font-body); font-weight: 500; color: var(--accent-pink);">Dynamic promotion</h3>
+                    <ul class="styled-list">
+                        <li class="reveal">Background agents promoted when addressed directly</li>
+                        <li class="reveal">High-extraversion agents in active scenes</li>
+                        <li class="reveal">Leaders with low stress step forward</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SLIDE 24: PROJECT STRUCTURE
+         ============================================ -->
+    <section class="slide" aria-label="Project Structure">
+        <div class="botanical-circle gold" style="width: 350px; height: 350px; top: -30px; right: -50px;"></div>
+        <div class="slide-content">
+            <h2 class="reveal">Project structure</h2>
+            <div class="code-block reveal" style="margin-top: var(--content-gap);">
+                <pre>emotion-engine/
+├── <span class="function">backend/</span>
+│   └── app/
+│       ├── <span class="keyword">agents/</span>      <span class="comment"># Human, Env, Designer, Evaluator</span>
+│       ├── <span class="keyword">api/</span>         <span class="comment"># FastAPI routes + WebSocket</span>
+│       ├── <span class="keyword">llm/</span>         <span class="comment"># vLLM/Ollama router, token logger</span>
+│       ├── <span class="keyword">models/</span>      <span class="comment"># SQLAlchemy ORM (Oracle DB)</span>
+│       ├── <span class="keyword">schemas/</span>     <span class="comment"># Pydantic validation</span>
+│       ├── <span class="keyword">scenarios/</span>   <span class="comment"># Built-in templates</span>
+│       └── <span class="keyword">simulation/</span>  <span class="comment"># Engine, bus, scenes</span>
+├── <span class="function">tui/</span>               <span class="comment"># Go Bubble Tea TUI</span>
+│   ├── cmd/             <span class="comment"># CLI entry point</span>
+│   └── internal/        <span class="comment"># Screens, API, components</span>
+├── <span class="function">frontend/</span>          <span class="comment"># SvelteKit web dashboard</span>
+└── docker-compose.yml</pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SLIDE 25: CLOSING
+         ============================================ -->
+    <section class="slide closing-slide" aria-label="Closing">
+        <div class="botanical-circle warm" style="width: 500px; height: 500px; top: -120px; left: -100px;"></div>
+        <div class="botanical-circle pink" style="width: 400px; height: 400px; bottom: -80px; right: -60px;"></div>
+        <div class="botanical-circle gold" style="width: 300px; height: 300px; top: 40vh; right: 20vw;"></div>
+        <div class="accent-line" style="height: 60vh; top: 20vh; left: 50%; opacity: 0.08;"></div>
+        <div class="slide-content">
+            <h1 class="reveal" style="font-size: clamp(2rem, 5vw, 4rem);">Emotion Engine</h1>
+            <p class="tagline reveal">Where AI learns to cooperate under pressure</p>
+            <p class="reveal" style="margin-top: var(--content-gap); color: var(--text-secondary); font-size: var(--body-size);">
+                MIT License. Python 3.11+ / Go 1.24+ / SvelteKit / Oracle DB 26ai Free
+            </p>
+            <div class="links reveal">
+                <a href="https://github.com/jasperan/emotion-engine">GitHub</a>
+                <a href="https://github.com/jasperan">@jasperan</a>
+                <a href="https://www.linkedin.com/in/jasperan/">LinkedIn</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===========================================
+         JAVASCRIPT: SLIDE PRESENTATION CONTROLLER
+         =========================================== -->
+    <script>
+        class SlidePresentation {
+            constructor() {
+                this.slides = document.querySelectorAll('.slide');
+                this.currentSlide = 0;
+                this.totalSlides = this.slides.length;
+                this.isScrolling = false;
+
+                this.setupIntersectionObserver();
+                this.setupKeyboardNav();
+                this.setupTouchNav();
+                this.setupProgressBar();
+                this.setupNavDots();
+                this.setupSlideCounter();
+
+                // Mark first slide visible
+                this.slides[0].classList.add('visible');
+            }
+
+            /* --- Intersection Observer --- */
+            setupIntersectionObserver() {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('visible');
+                            const index = Array.from(this.slides).indexOf(entry.target);
+                            if (index !== -1) {
+                                this.currentSlide = index;
+                                this.updateProgressBar();
+                                this.updateNavDots();
+                                this.updateSlideCounter();
+                            }
+                        }
+                    });
+                }, {
+                    threshold: 0.5
+                });
+
+                this.slides.forEach(slide => observer.observe(slide));
+            }
+
+            /* --- Keyboard Navigation --- */
+            setupKeyboardNav() {
+                document.addEventListener('keydown', (e) => {
+                    switch (e.key) {
+                        case 'ArrowDown':
+                        case 'ArrowRight':
+                        case ' ':
+                        case 'PageDown':
+                            e.preventDefault();
+                            this.goToSlide(this.currentSlide + 1);
+                            break;
+                        case 'ArrowUp':
+                        case 'ArrowLeft':
+                        case 'PageUp':
+                            e.preventDefault();
+                            this.goToSlide(this.currentSlide - 1);
+                            break;
+                        case 'Home':
+                            e.preventDefault();
+                            this.goToSlide(0);
+                            break;
+                        case 'End':
+                            e.preventDefault();
+                            this.goToSlide(this.totalSlides - 1);
+                            break;
+                    }
+                });
+            }
+
+            /* --- Touch/Swipe Navigation --- */
+            setupTouchNav() {
+                let touchStartY = 0;
+                let touchStartX = 0;
+
+                document.addEventListener('touchstart', (e) => {
+                    touchStartY = e.touches[0].clientY;
+                    touchStartX = e.touches[0].clientX;
+                }, { passive: true });
+
+                document.addEventListener('touchend', (e) => {
+                    const touchEndY = e.changedTouches[0].clientY;
+                    const touchEndX = e.changedTouches[0].clientX;
+                    const diffY = touchStartY - touchEndY;
+                    const diffX = touchStartX - touchEndX;
+
+                    // Only respond to vertical swipes (ignore horizontal)
+                    if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffY) > 50) {
+                        if (diffY > 0) {
+                            this.goToSlide(this.currentSlide + 1);
+                        } else {
+                            this.goToSlide(this.currentSlide - 1);
+                        }
+                    }
+                }, { passive: true });
+            }
+
+            /* --- Progress Bar --- */
+            setupProgressBar() {
+                this.progressBar = document.getElementById('progressBar');
+                this.updateProgressBar();
+            }
+
+            updateProgressBar() {
+                const progress = ((this.currentSlide + 1) / this.totalSlides) * 100;
+                if (this.progressBar) {
+                    this.progressBar.style.width = progress + '%';
+                }
+            }
+
+            /* --- Navigation Dots --- */
+            setupNavDots() {
+                const nav = document.getElementById('navDots');
+                if (!nav) return;
+
+                this.slides.forEach((_, i) => {
+                    const dot = document.createElement('button');
+                    dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+                    dot.setAttribute('aria-label', `Go to slide ${i + 1}`);
+                    dot.addEventListener('click', () => this.goToSlide(i));
+                    nav.appendChild(dot);
+                });
+
+                this.navDotElements = nav.querySelectorAll('.nav-dot');
+            }
+
+            updateNavDots() {
+                if (!this.navDotElements) return;
+                this.navDotElements.forEach((dot, i) => {
+                    dot.classList.toggle('active', i === this.currentSlide);
+                });
+            }
+
+            /* --- Slide Counter --- */
+            setupSlideCounter() {
+                this.counterEl = document.getElementById('slideCounter');
+                this.updateSlideCounter();
+            }
+
+            updateSlideCounter() {
+                if (this.counterEl) {
+                    const current = String(this.currentSlide + 1).padStart(2, '0');
+                    const total = String(this.totalSlides).padStart(2, '0');
+                    this.counterEl.textContent = `${current} / ${total}`;
+                }
+            }
+
+            /* --- Navigate to Slide --- */
+            goToSlide(index) {
+                if (index < 0 || index >= this.totalSlides) return;
+                this.currentSlide = index;
+                this.slides[index].scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            new SlidePresentation();
+        });
+    </script>
+
+</body>
+</html>

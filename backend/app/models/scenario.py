@@ -42,6 +42,9 @@ class Scenario(Base):
         onupdate=lambda: datetime.now(timezone.utc)
     )
 
+    # Knowledge graph reference
+    graph_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
     # Relationships
     runs: Mapped[list["Run"]] = relationship(
         "Run",

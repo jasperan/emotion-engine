@@ -55,19 +55,28 @@ func renderHazardGauge(level float64, width int) string {
 		width = 10
 	}
 
-	label := fmt.Sprintf("Hazard %.0f%%", level*100)
+	// Backend sends hazard_level on 0-10 scale; normalize to 0.0-1.0
+	normalized := level / 10.0
+	if normalized > 1.0 {
+		normalized = 1.0
+	}
+	if normalized < 0 {
+		normalized = 0
+	}
+
+	label := fmt.Sprintf("Hazard %.0f%%", normalized*100)
 	barWidth := width - len(label) - 3 // space + brackets
 	if barWidth < 5 {
 		barWidth = 5
 	}
 
-	filled := int(level * float64(barWidth))
+	filled := int(normalized * float64(barWidth))
 	if filled > barWidth {
 		filled = barWidth
 	}
 	empty := barWidth - filled
 
-	color := theme.HazardColor(level)
+	color := theme.HazardColor(normalized)
 	gaugeStyle := lipgloss.NewStyle().Foreground(color)
 
 	bar := gaugeStyle.Render(strings.Repeat("\u2588", filled)) +

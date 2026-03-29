@@ -5,6 +5,7 @@ from typing import Any, Callable, Awaitable
 from app.agents.base import Agent
 from app.agents.cognitive_engine import CognitiveEngine, CognitivePhase
 from app.llm.base import LLMMessage
+from app.llm.router import LLMRouter
 from app.schemas.agent import AgentResponse
 from app.schemas.persona import Persona
 
@@ -15,7 +16,7 @@ class HumanAgent(Agent):
     Makes decisions based on persona characteristics and emotional state.
     Includes memory of relationships and past events.
     """
-    
+
     def __init__(
         self,
         agent_id: str | None = None,
@@ -33,7 +34,7 @@ class HumanAgent(Agent):
             provider=provider,
             goals=goals or ["Survive", "Help others if possible"],
         )
-        
+
         # Use provided persona or create a default one
         self.persona = persona or Persona(
             name=name,
@@ -41,13 +42,13 @@ class HumanAgent(Agent):
             sex="non-binary",
             occupation="Civilian",
         )
-        
+
         # Sync name with persona
         self.name = self.persona.name
-        
+
         # Update agent memory with correct name
         self.agent_memory.agent_name = self.name
-        
+
         # Initialize dynamic state from persona
         self.dynamic_state = {
             "stress_level": self.persona.stress_level,
@@ -55,7 +56,7 @@ class HumanAgent(Agent):
             "inventory": self.persona.inventory.copy(),
             "location": self.persona.location,
         }
-    
+
     def should_respond(
         self,
         has_events: bool,
@@ -64,29 +65,29 @@ class HumanAgent(Agent):
     ) -> bool:
         """Determine if agent should evaluate/respond this turn based on personality"""
         base_probability = 0.3  # Base 30% chance
-        
+
         # Extraversion increases base probability
         extraversion_mod = (self.persona.extraversion - 5) * 0.05  # -0.2 to +0.2
-        
+
         # Neuroticism increases reactivity to events
         neuroticism_mod = 0.0
         if has_events or has_messages:
             neuroticism_mod = (self.persona.neuroticism - 5) * 0.08  # -0.32 to +0.32
-        
+
         # Leadership increases initiative
         leadership_mod = (self.persona.leadership - 5) * 0.03
-        
+
         # Stress makes agents more reactive
         stress_mod = (self.persona.stress_level - 5) * 0.05
-        
+
         # Location activity (more people = more likely to interact)
         activity_mod = min(location_activity * 0.1, 0.3)
-        
+
         probability = base_probability + extraversion_mod + neuroticism_mod + leadership_mod + stress_mod + activity_mod
         probability = max(0.1, min(0.9, probability))  # Clamp between 10% and 90%
-        
+
         return random.random() < probability
-    
+
     def get_system_prompt(self) -> str:
         """Generate cinematic screenplay-style system prompt."""
         p = self.persona
@@ -151,7 +152,7 @@ Rules:
 - thought is private — others cannot hear it
 - move_to is a valid nearby location name, or null
 - Be decisive. No hedging. No "maybe we should." Act."""
-    
+
     def build_context(
         self,
         world_state: dict[str, Any],
@@ -310,7 +311,7 @@ Your inventory: {inv_str}
         # If even L3 doesn't fit, hard-truncate to budget
         minimal = _build_events(1, 60) + _build_speech(1, 40)
         return core + minimal[:max(budget, 200)] + tail
-    
+
     async def tick(
         self,
         world_state: dict[str, Any],
@@ -351,7 +352,7 @@ Your inventory: {inv_str}
                 world_state=str(world_state),
                 memory_context=memory_context,
                 recent_messages=recent_msgs,
-                llm_generate=self._llm_client.generate,
+                llm_generate=LLMRouter.generate_with_fallback,
             )
 
         # 6. PLAN phase
@@ -364,7 +365,7 @@ Your inventory: {inv_str}
                 assessment=assessment or {},
                 intent=intent,
                 world_state=str(world_state),
-                llm_generate=self._llm_client.generate,
+                llm_generate=LLMRouter.generate_with_fallback,
                 current_step=current_step,
             )
             intent.set_plan(plan)
@@ -391,14 +392,15 @@ Your inventory: {inv_str}
         llm_messages = [LLMMessage(role="user", content=context)]
         context_size = len(context)
 
-        response = await self._llm_client.generate(
+        response = await LLMRouter.generate_with_fallback(
             messages=llm_messages,
-            model=self.model_id,
             system=system_prompt,
             temperature=0.8,
             max_tokens=2048,
             json_mode=True,
             stream_callback=stream_callback,
+            model_override=self.model_id,
+            agent_role=self.role,
         )
 
         # Parse response
@@ -433,14 +435,14 @@ Your inventory: {inv_str}
         new_level = max(1, min(10, current + delta))
         self.dynamic_state["stress_level"] = new_level
         self.persona.stress_level = new_level
-    
+
     def update_health(self, delta: int) -> None:
         """Update health with bounds checking"""
         current = self.dynamic_state.get("health", 10)
         new_health = max(0, min(10, current + delta))
         self.dynamic_state["health"] = new_health
         self.persona.health = new_health
-    
+
     def update_relationship(
         self,
         agent_id: str,
@@ -471,7 +473,7 @@ Your inventory: {inv_str}
                 "new_trust": new_trust,
                 "reason": note or "interaction",
             })
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Serialize agent with persona data"""
         base = super().to_dict()

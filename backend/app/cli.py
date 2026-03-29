@@ -27,10 +27,35 @@ console = Console(theme=PI_THEME)
 def print_header():
     startup_banner(console, version="0.1.0")
 
-async def check_model_selection():
+async def probe_backend(url: str, backend: str) -> dict[str, str] | None:
+    """Probe a single backend and return info dict if healthy, None otherwise."""
+    try:
+        async with httpx.AsyncClient() as client:
+            if backend == "vllm":
+                resp = await client.get(f"{url.rstrip('/')}/v1/models", timeout=3.0)
+                if resp.status_code == 200:
+                    models = [m["id"] for m in resp.json().get("data", [])]
+                    if models:
+                        return {"backend": "vllm", "url": url.rstrip("/"), "model": ", ".join(models), "mode": "parallel"}
+            elif backend == "ollama":
+                native = url.rstrip("/")
+                if native.endswith("/v1"):
+                    native = native[:-3]
+                resp = await client.get(f"{native}/api/tags", timeout=2.0)
+                if resp.status_code == 200:
+                    models = [m["name"] for m in resp.json().get("models", [])]
+                    if models:
+                        return {"backend": "ollama", "url": native, "model": ", ".join(models), "mode": "sequential"}
+    except Exception:
+        pass
+    return None
+
+
+async def check_model_selection() -> dict[str, str]:
     """Ensure a valid model is selected and available.
 
     Checks vLLM first (if configured), then falls back to Ollama.
+    Returns dict with 'backend', 'url', 'model', 'mode' keys.
     """
     settings = get_settings()
 
@@ -45,8 +70,8 @@ async def check_model_selection():
                     models = [m["id"] for m in models_data.get("data", [])]
                     if models:
                         console.print(f"[green]vLLM backend:[/green] {vllm_url}")
-                        console.print(f"[green]Model:[/green] {', '.join(models)} [dim](parallel inference enabled)[/dim]\n")
-                        return
+                        console.print(f"[green]Model:[/green] {', '.join(models)} [dim](parallel inference, continuous batching)[/dim]\n")
+                        return {"backend": "vllm", "url": vllm_url, "model": ", ".join(models), "mode": "parallel"}
                     else:
                         console.print(f"[yellow]vLLM at {vllm_url} has no models loaded[/yellow]")
                 else:
@@ -74,7 +99,7 @@ async def check_model_selection():
                 if response.status_code != 200:
                     console.print(f"[yellow]Warning: Could not connect to Ollama at {base_url}[/yellow]")
                     console.print(f"Using configured default: [bold]{default_model}[/bold]")
-                    return
+                    return {"backend": "ollama", "url": native_url, "model": default_model, "mode": "sequential"}
 
                 models_data = response.json()
                 models = [m["name"] for m in models_data.get("models", [])]
@@ -100,16 +125,21 @@ async def check_model_selection():
 
                     settings.ollama_default_model = selected_model
                     console.print(f"[green]Using model: {selected_model}[/green]\n")
+                    return {"backend": "ollama", "url": native_url, "model": selected_model, "mode": "sequential"}
                 else:
                     console.print(f"[green]Ollama backend:[/green] {native_url}")
-                    console.print(f"[green]Model:[/green] {default_model}\n")
+                    console.print(f"[green]Model:[/green] {default_model} [dim](semaphore-gated, sequential scenes)[/dim]\n")
+                    return {"backend": "ollama", "url": native_url, "model": default_model, "mode": "sequential"}
 
             except httpx.ConnectError:
                 console.print(f"[yellow]Warning: Could not connect to Ollama at {base_url}[/yellow]")
                 console.print(f"Using configured default: [bold]{default_model}[/bold]")
+                return {"backend": "ollama", "url": native_url, "model": default_model, "mode": "sequential"}
 
     except Exception as e:
         console.print(f"[dim]Model check failed: {e}[/dim]")
+
+    return {"backend": "unknown", "url": "", "model": "", "mode": "sequential"}
 
 
 
@@ -122,7 +152,7 @@ async def check_model_selection():
 @click.pass_context
 def cli(ctx):
     """EmotionSim - Multi-Agent Simulation System
-    
+
     Monitor simulations in real-time or run them directly from the CLI.
     """
     if ctx.invoked_subcommand is None:
@@ -142,13 +172,17 @@ def cli(ctx):
 @click.option("--simple", is_flag=True, help="Use simple log output instead of rich UI")
 @click.option("--verbose", "-v", is_flag=True, default=False, help="Verbose: timestamp every LLM call, token counts, context sizes")
 @click.option("--engine-v2", is_flag=True, default=False, help="Use V2 engine (heartbeat + goals + governance)")
-def run(scenario: str | None, max_steps: int | None, seed: int | None, tick_delay: float | None, simple: bool, verbose: bool, engine_v2: bool):
+@click.option("--force-vllm", type=str, default=None, metavar="[URL]", is_eager=True,
+              help="Force vLLM backend. Optionally specify URL (default: http://localhost:8010)")
+def run(scenario: str | None, max_steps: int | None, seed: int | None, tick_delay: float | None, simple: bool, verbose: bool, engine_v2: bool, force_vllm: str | None):
     """Run a simulation in standalone mode (no server required).
 
     Example:
         emotionsim run --scenario "Rising Flood" --max-steps 50 --seed 42
+        emotionsim run --force-vllm                           # force vLLM on default port
+        emotionsim run --force-vllm http://localhost:8020      # force vLLM on custom port
     """
-    asyncio.run(_run_standalone(scenario, max_steps, seed, tick_delay, simple, engine_v2=engine_v2, verbose=verbose))
+    asyncio.run(_run_standalone(scenario, max_steps, seed, tick_delay, simple, engine_v2=engine_v2, verbose=verbose, force_vllm=force_vllm))
 
 
 async def _run_standalone(
@@ -159,52 +193,60 @@ async def _run_standalone(
     simple: bool,
     engine_v2: bool = False,
     verbose: bool = False,
+    force_vllm: str | None = None,
 ):
     """Run simulation in standalone mode"""
     from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
     from sqlalchemy import select
-    
+
     from app.core.config import get_settings
     from app.core.database import Base
     from app.models.scenario import Scenario
     from app.models.run import Run, RunStatus
     from app.simulation.engine import SimulationEngine
 
-    
+
     settings = get_settings()
-    
+
+    # --force-vllm: override backend and optionally the URL
+    if force_vllm is not None:
+        vllm_url = force_vllm if force_vllm.startswith("http") else "http://localhost:8010"
+        settings.llm_backend = "vllm"
+        settings.vllm_base_url = vllm_url
+        console.print(f"[bold cyan]Forced vLLM backend:[/bold cyan] {vllm_url}\n")
+
     print_header()
     console.print("[pi.dim]Standalone Mode[/pi.dim]\n")
-    
-    # Check model
-    await check_model_selection()
-    
+
+    # Check model and get active backend info
+    backend_info = await check_model_selection()
+
     # Create database engine
     engine = create_async_engine(settings.database_url, echo=False)
     async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-    
+
     # Initialize database
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
+
     async with async_session() as db:
-        
+
         # If no scenario specified, show menu
         if not scenario_name:
             from app.scenarios.defaults import DEFAULT_SCENARIOS
             from app.scenarios.storage import load_generated_scenarios
-            
+
             # Fetch DB scenarios
             db_scenarios = (await db.execute(select(Scenario))).scalars().all()
-            
+
             # Load generated scenarios
             generated_scenarios = load_generated_scenarios()
-            
+
             console.print("\n[bold]Select a Scenario:[/bold]")
-            
+
             choices = []
             choice_sources = []  # Track where each choice comes from
-            
+
             # Add DB scenarios
             if db_scenarios:
                 console.print("\n[dim]Saved Scenarios:[/dim]")
@@ -212,7 +254,7 @@ async def _run_standalone(
                     choices.append(sc.name)
                     choice_sources.append(("db", sc))
                     console.print(f"  [cyan]{len(choices)}.[/cyan] {sc.name} [dim]({len(sc.agent_templates)} agents)[/dim]")
-            
+
             # Add Generated scenarios
             if generated_scenarios:
                 console.print("\n[dim]Generated Scenarios:[/dim]")
@@ -220,16 +262,16 @@ async def _run_standalone(
                     choices.append(gen_sc["name"])
                     choice_sources.append(("generated", gen_sc))
                     console.print(f"  [cyan]{len(choices)}.[/cyan] {gen_sc['name']} [dim]({gen_sc['agent_count']} agents)[/dim]")
-            
+
             # Add Built-in scenarios
             console.print("\n[dim]Built-in Templates:[/dim]")
             for name in DEFAULT_SCENARIOS.keys():
                 choices.append(name)
                 choice_sources.append(("builtin", name))
                 console.print(f"  [cyan]{len(choices)}.[/cyan] {name}")
-                
+
             console.print()
-            
+
             if not choices:
                 console.print("[red]No scenarios found![/red]")
                 return
@@ -239,10 +281,10 @@ async def _run_standalone(
                 choices=choices,
                 use_arrow_keys=True
             ).unsafe_ask_async()
-            
+
             if not scenario_name:
                 return
-                
+
             # Find the source for the selected name
             idx = choices.index(scenario_name)
             selected_source, selected_data = choice_sources[idx]
@@ -252,16 +294,16 @@ async def _run_standalone(
 
         # Find or create scenario
         scenario = None
-        
+
         # Check if scenario_name is a simple numeric ID
         if scenario_name.isdigit():
             # Build scenario map
             db_scenarios_list = (await db.execute(select(Scenario).order_by(Scenario.name))).scalars().all()
             from app.scenarios.storage import load_generated_scenarios
             generated_scenarios = load_generated_scenarios()
-            
+
             idx = int(scenario_name)
-            
+
             # Check if it's a DB scenario
             if idx < len(db_scenarios_list):
                 scenario = db_scenarios_list[idx]
@@ -294,7 +336,7 @@ async def _run_standalone(
                     select(Scenario).where(Scenario.name.ilike(f"%{scenario_name}%"))
                 )
                 scenario = result.scalar_one_or_none()
-                
+
                 # Try generated scenario filename
                 if not scenario:
                     from app.scenarios.storage import load_generated_scenarios
@@ -303,7 +345,7 @@ async def _run_standalone(
                         (s for s in generated_scenarios if scenario_name in s["filename"] or scenario_name.lower() in s["name"].lower()),
                         None
                     )
-                    
+
                     if gen_scenario:
                         console.print(f"[yellow]Loading generated scenario: {gen_scenario['name']}[/yellow]")
                         scenario = Scenario(
@@ -315,7 +357,7 @@ async def _run_standalone(
                         db.add(scenario)
                         await db.commit()
                         await db.refresh(scenario)
-        
+
         if not scenario:
             # Check if it's a generated scenario
             if selected_source == "generated":
@@ -334,7 +376,7 @@ async def _run_standalone(
                 # Try to create a built-in scenario
                 from app.scenarios.defaults import DEFAULT_SCENARIOS
                 from app.scenarios.storage import load_generated_scenarios
-                
+
                 creator = next(
                     (
                         func
@@ -343,7 +385,7 @@ async def _run_standalone(
                     ),
                     None,
                 )
-                
+
                 if creator:
                     scenario_create = creator()
                     console.print(f"[yellow]Creating built-in scenario: {scenario_create.name}[/yellow]")
@@ -363,7 +405,7 @@ async def _run_standalone(
                         (s for s in generated_scenarios if scenario_name.lower() in s["name"].lower()),
                         None
                     )
-                    
+
                     if gen_scenario:
                         console.print(f"[yellow]Loading generated scenario: {gen_scenario['name']}[/yellow]")
                         scenario = Scenario(
@@ -379,9 +421,9 @@ async def _run_standalone(
                         console.print(f"[red]Scenario '{scenario_name}' not found.[/red]")
                         console.print("Use 'emotionsim scenarios --create-builtin' to see available scenarios.")
                         return
-        
+
         console.print(f"[green]✓[/green] Loaded scenario: [bold]{scenario.name}[/bold]")
-        
+
         # Create run
         run_record = Run(
             scenario_id=scenario.id,
@@ -392,9 +434,9 @@ async def _run_standalone(
         db.add(run_record)
         await db.commit()
         await db.refresh(run_record)
-        
+
         console.print(f"[green]✓[/green] Created run: [dim]{run_record.id}[/dim]")
-        
+
         # Setup renderer
         if simple:
             logger = PiStyleLogger(console)
@@ -419,7 +461,8 @@ async def _run_standalone(
             renderer = PiStyleRenderer(console)
             renderer.max_steps = run_record.max_steps
             renderer.scenario_name = scenario.name
-            renderer.model_name = settings.ollama_default_model
+            renderer.model_name = backend_info.get("model", settings.ollama_default_model)
+            renderer.backend_info = backend_info
 
             def on_event(event_type: str, data: dict[str, Any]):
                 if event_type in ("scene_turn", "scene_completed"):
@@ -432,27 +475,27 @@ async def _run_standalone(
 
                 # Note: We no longer add messages from step_completed to avoid duplicates
                 # and ensure real-time logging via the 'message' event above.
-        
+
         # Create engine
         engine_sim = SimulationEngine(
             run_id=run_record.id,
             db_session=db,
             on_event=on_event,
         )
-        
+
         # Build config
         config = {
             "config": scenario.config,
             "agent_templates": scenario.agent_templates,
             "seed": seed,
         }
-        
+
         # Apply overrides
         if max_steps:
             config["config"]["max_steps"] = max_steps
         if tick_delay:
             config["config"]["tick_delay"] = tick_delay
-        
+
         # Initialize
         await engine_sim.initialize(config)
         console.print(f"[green]✓[/green] Initialized {len(engine_sim.agents)} agents")
@@ -473,10 +516,10 @@ async def _run_standalone(
             console.print(f"[green]✓[/green] Engine V2 activated (heartbeat + goals + governance)")
 
         console.print()
-        
+
         # Handle Ctrl+C gracefully
         stop_requested = False
-        
+
         def signal_handler(sig, frame):
             nonlocal stop_requested
             if stop_requested:
@@ -485,9 +528,9 @@ async def _run_standalone(
             stop_requested = True
             console.print("\n[yellow]Stopping simulation... (Ctrl+C again to force)[/yellow]")
             asyncio.create_task(engine_sim.stop())
-        
+
         signal.signal(signal.SIGINT, signal_handler)
-        
+
         # Verbose mode: track per-agent LLM call timing
         if verbose:
             import time as _time
@@ -575,7 +618,7 @@ async def _run_standalone(
                 engine_sim.supervisor.supervised_tick = _verbose_supervised_tick
 
             await engine_sim.start(stream_callback=simple_stream_callback)
-            
+
             # Ensure newline after last stream
             if logger.last_stream_agent:
                 console.print()
@@ -605,21 +648,21 @@ async def _run_standalone(
 
                 # Final update
                 live.update(renderer.get_footer())
-        
+
         console.print()
         console.print(f"[green]✓[/green] Simulation complete. Final step: {engine_sim.current_step}")
-        
+
         # Show summary
         if engine_sim.world_state:
             console.print()
             table = Table(title="Final World State", box=box.ROUNDED)
             table.add_column("Metric", style="cyan")
             table.add_column("Value", style="white")
-            
+
             table.add_row("Hazard Level", str(engine_sim.world_state.get("hazard_level", "?")))
             table.add_row("Total Messages", str(len(engine_sim.message_bus._message_history)))
             table.add_row("Steps Completed", str(engine_sim.current_step))
-            
+
             console.print(table)
 
 
@@ -633,7 +676,7 @@ async def _run_standalone(
 @click.option("--simple", is_flag=True, help="Use simple log output instead of rich UI")
 def monitor(url: str, run_id: str, simple: bool):
     """Monitor a running simulation via WebSocket.
-    
+
     Example:
         emotionsim monitor --run-id abc123
     """
@@ -643,22 +686,22 @@ def monitor(url: str, run_id: str, simple: bool):
 async def _monitor_websocket(base_url: str, run_id: str, simple: bool):
     """Connect to WebSocket and monitor events"""
     import websockets
-    
+
     ws_url = f"{base_url}/{run_id}"
-    
+
     print_header()
     console.print(f"[dim]Client Mode[/dim]")
     console.print(f"Connecting to: [dim]{ws_url}[/dim]\n")
-    
+
     if simple:
         logger = PiStyleLogger(console)
     else:
         renderer = PiStyleRenderer(console)
-    
+
     try:
         async with websockets.connect(ws_url) as ws:
             console.print("[green]✓[/green] Connected to simulation\n")
-            
+
             if simple:
                 # Simple streaming mode
                 async for message in ws:
@@ -666,18 +709,18 @@ async def _monitor_websocket(base_url: str, run_id: str, simple: bool):
                         data = json.loads(message)
                         event_type = data.get("event", "unknown")
                         event_data = data.get("data", {})
-                        
+
                         logger.log_event(event_type, event_data)
-                        
+
                         # Log messages
                         if event_type == "step_completed":
                             for msg in event_data.get("messages", []):
                                 logger.log_message(msg)
-                        
+
                         # Exit on completion
                         if event_type in ("run_completed", "run_stopped"):
                             break
-                            
+
                     except json.JSONDecodeError:
                         console.print(f"[red]Invalid JSON:[/red] {message[:100]}")
             else:
@@ -697,33 +740,33 @@ async def _monitor_websocket(base_url: str, run_id: str, simple: bool):
                                     renderer.add_message(msg)
 
                             live.update(renderer.get_footer())
-                            
+
                             # Exit on completion
                             if event_type in ("run_completed", "run_stopped"):
                                 await asyncio.sleep(1)  # Show final state briefly
                                 break
-                                
+
                         except json.JSONDecodeError:
                             pass
-            
+
             console.print("\n[green]✓[/green] Monitoring complete")
-            
+
     except ConnectionRefusedError:
         console.print(f"[red]✗[/red] Could not connect to {ws_url}")
-        
+
         if Confirm.ask("Backend server not reachable. Start it now?"):
             console.print("[yellow]Starting backend server...[/yellow]")
             import subprocess
-            
+
             # Start backend in background
             # We assume we are in backend dir because cli runs from there?
             # Actually CLI might be run as `python -m app.cli` from backend dir.
             process = subprocess.Popen(
                 [sys.executable, "-m", "app.main"],
-                stdout=subprocess.DEVNULL, 
+                stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
-            
+
             # Wait for it to start
             connected = False
             with console.status("[cyan]Waiting for server to start...[/cyan]"):
@@ -739,7 +782,7 @@ async def _monitor_websocket(base_url: str, run_id: str, simple: bool):
                                  break
                     except:
                         pass
-            
+
             if connected:
                 console.print("[green]✓[/green] Server started. Retrying connection...")
                 await _monitor_websocket(base_url, run_id, simple)
@@ -747,7 +790,7 @@ async def _monitor_websocket(base_url: str, run_id: str, simple: bool):
             else:
                 console.print("[red]✗[/red] Failed to start server or connect in time.")
                 process.terminate()
-                
+
         console.print("  Make sure the backend server is running.")
     except Exception as e:
         console.print(f"[red]✗[/red] Error: {e}")
@@ -761,7 +804,7 @@ async def _monitor_websocket(base_url: str, run_id: str, simple: bool):
 @click.option("--create-builtin", is_flag=True, help="Create built-in scenarios in database")
 def scenarios(create_builtin: bool):
     """List available scenarios.
-    
+
     Example:
         emotionsim scenarios
         emotionsim scenarios --create-builtin
@@ -773,19 +816,19 @@ async def _list_scenarios(create_builtin: bool):
     """List scenarios from database"""
     from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
     from sqlalchemy import select
-    
+
     from app.core.config import get_settings
     from app.core.database import Base
     from app.models.scenario import Scenario
     from app.scenarios.defaults import DEFAULT_SCENARIOS
-    
+
     settings = get_settings()
     engine = create_async_engine(settings.database_url, echo=False)
     async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-    
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
+
     async with async_session() as db:
         if create_builtin:
             console.print("[cyan]Creating built-in scenarios...[/cyan]")
@@ -805,19 +848,19 @@ async def _list_scenarios(create_builtin: bool):
                 else:
                     console.print(f"  [dim]Already exists: {name}[/dim]")
             console.print()
-        
+
         # List scenarios from DB
         result = await db.execute(select(Scenario).order_by(Scenario.name))
         db_scenarios = result.scalars().all()
-        
+
         # Load generated scenarios
         from app.scenarios.storage import load_generated_scenarios
         generated_scenarios = load_generated_scenarios()
-        
+
         # Combine all scenarios
         all_scenarios = []
         scenario_map = {}  # Map simple ID to actual scenario data
-        
+
         # Add DB scenarios
         for idx, s in enumerate(db_scenarios):
             simple_id = str(idx)
@@ -831,7 +874,7 @@ async def _list_scenarios(create_builtin: bool):
                 "description": s.description or "",
             })
             scenario_map[simple_id] = {"type": "db", "db_id": str(s.id), "name": s.name}
-        
+
         # Add generated scenarios
         start_idx = len(db_scenarios)
         for idx, g in enumerate(generated_scenarios):
@@ -847,13 +890,13 @@ async def _list_scenarios(create_builtin: bool):
                 "description": g["description"],
             })
             scenario_map[simple_id] = {"type": "generated", "file_id": file_id, "name": g["name"]}
-        
+
         if not all_scenarios:
             console.print("[yellow]No scenarios found.[/yellow]")
             console.print("Use 'emotionsim scenarios --create-builtin' to create built-in scenarios.")
             console.print("Or use 'python tools/generate_scenario.py' to generate new scenarios.")
             return
-        
+
         table = Table(title="Available Scenarios", box=box.ROUNDED)
         table.add_column("ID", style="dim", width=4)
         table.add_column("Source", style="magenta", width=10)
@@ -861,12 +904,12 @@ async def _list_scenarios(create_builtin: bool):
         table.add_column("Agents", style="green", width=7)
         table.add_column("Max Steps", style="yellow", width=10)
         table.add_column("Description", style="white", max_width=40)
-        
+
         for s in all_scenarios:
             desc = s["description"][:40]
             if len(s["description"]) > 40:
                 desc += "..."
-            
+
             table.add_row(
                 s["id"],
                 s["source"],
@@ -875,7 +918,7 @@ async def _list_scenarios(create_builtin: bool):
                 str(s["max_steps"]),
                 desc,
             )
-        
+
         console.print()
         console.print(table)
         console.print()
@@ -889,7 +932,7 @@ async def _list_scenarios(create_builtin: bool):
 @cli.command()
 def interactive():
     """Launch interactive simulation wizard.
-    
+
     Example:
         emotionsim interactive
     """
@@ -900,34 +943,34 @@ async def _interactive_wizard():
     """Interactive simulation launcher"""
     from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
     from sqlalchemy import select
-    
+
     from app.core.config import get_settings
     from app.core.database import Base
     from app.models.scenario import Scenario
     from app.scenarios.defaults import DEFAULT_SCENARIOS
-    
+
     print_header()
     console.print("[pi.dim]Interactive Simulation Wizard[/pi.dim]\n")
-    
+
     settings = get_settings()
     engine = create_async_engine(settings.database_url, echo=False)
     async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-    
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
+
     async with async_session() as db:
         # Check model
         await check_model_selection()
-        
+
         # Get DB scenarios
         result = await db.execute(select(Scenario).order_by(Scenario.name))
         db_scenarios = list(result.scalars().all())
-        
+
         # Load generated scenarios
         from app.scenarios.storage import load_generated_scenarios
         generated_scenarios = load_generated_scenarios()
-        
+
         # Create built-in if none exist
         if not db_scenarios and not generated_scenarios:
             console.print("[yellow]No scenarios found. Creating built-in scenarios...[/yellow]")
@@ -941,15 +984,15 @@ async def _interactive_wizard():
                 )
                 db.add(scenario)
             await db.commit()
-            
+
             result = await db.execute(select(Scenario).order_by(Scenario.name))
             db_scenarios = list(result.scalars().all())
             console.print(f"[green]✓[/green] Created {len(db_scenarios)} scenarios.\n")
-        
+
         # Combine all scenarios for selection
         all_scenarios = []
         scenario_sources = []
-        
+
         # Add DB scenarios
         console.print("[bold]Available Scenarios:[/bold]")
         if db_scenarios:
@@ -959,7 +1002,7 @@ async def _interactive_wizard():
                 all_scenarios.append(s)
                 scenario_sources.append(("db", s))
                 console.print(f"  [cyan]{len(all_scenarios)}.[/cyan] {s.name} [dim]({agent_count} agents)[/dim]")
-        
+
         # Add generated scenarios
         if generated_scenarios:
             console.print("\n[dim]Generated Scenarios:[/dim]")
@@ -967,9 +1010,9 @@ async def _interactive_wizard():
                 all_scenarios.append(g)
                 scenario_sources.append(("generated", g))
                 console.print(f"  [cyan]{len(all_scenarios)}.[/cyan] {g['name']} [dim]({g['agent_count']} agents)[/dim]")
-        
+
         console.print()
-        
+
         # Prepare choices for questionary
         q_choices = []
         for s_obj in all_scenarios:
@@ -979,24 +1022,24 @@ async def _interactive_wizard():
              else: # db object
                  name = s_obj.name
                  agent_count = len(s_obj.agent_templates) if s_obj.agent_templates else 0
-             
+
              q_choices.append(questionary.Choice(
                  title=f"{name} ({agent_count} agents)",
                  value=len(q_choices) # Store index as value
              ))
-        
+
         # Select scenario
         choice_idx = await questionary.select(
             "Select scenario",
             choices=q_choices,
             use_arrow_keys=True
         ).unsafe_ask_async()
-        
+
         if choice_idx is None:
              return
 
         source_type, selected_data = scenario_sources[choice_idx]
-        
+
         # Load scenario into DB if it's a generated one
         if source_type == "generated":
             selected = Scenario(
@@ -1010,9 +1053,9 @@ async def _interactive_wizard():
             await db.refresh(selected)
         else:
             selected = selected_data
-        
+
         console.print()
-        
+
         # Configuration
         default_steps = selected.config.get("max_steps", 10)
         max_steps_str = Prompt.ask(
@@ -1020,22 +1063,22 @@ async def _interactive_wizard():
             default=str(default_steps)
         )
         max_steps = int(max_steps_str)
-        
+
         default_delay = selected.config.get("tick_delay", 1.0)
         tick_delay_str = Prompt.ask(
             "Tick delay (seconds)",
             default=str(default_delay)
         )
         tick_delay = float(tick_delay_str)
-        
+
         seed_str = Prompt.ask(
             "Random seed (blank for random)",
             default=""
         )
         seed = int(seed_str) if seed_str else None
-        
+
         use_rich = Confirm.ask("Use rich UI display?", default=True)
-        
+
         console.print()
         console.print("[bold]Configuration:[/bold]")
         console.print(f"  Scenario: [cyan]{selected.name}[/cyan]")
@@ -1044,13 +1087,13 @@ async def _interactive_wizard():
         console.print(f"  Seed: [yellow]{seed or 'random'}[/yellow]")
         console.print(f"  Display: [yellow]{'Rich UI' if use_rich else 'Simple logs'}[/yellow]")
         console.print()
-        
+
         if not Confirm.ask("Start simulation?", default=True):
             console.print("[dim]Cancelled.[/dim]")
             return
-        
+
         console.print()
-    
+
     # Run the simulation (need to close db session first since _run_standalone creates its own)
     await _run_standalone(
         scenario_name=selected.name,
@@ -1069,7 +1112,7 @@ async def _interactive_wizard():
 @click.option("--url", "-u", default="http://localhost:8000", help="Backend API URL")
 def status(url: str):
     """Check backend server status.
-    
+
     Example:
         emotionsim status
     """
@@ -1079,10 +1122,10 @@ def status(url: str):
 async def _check_status(base_url: str):
     """Check server status"""
     import httpx
-    
+
     console.print(f"\n[bold cyan]EmotionSim[/bold cyan] - Status Check")
     console.print(f"Server: [dim]{base_url}[/dim]\n")
-    
+
     try:
         async with httpx.AsyncClient() as client:
             # Health check
@@ -1094,7 +1137,7 @@ async def _check_status(base_url: str):
             else:
                 console.print(f"[red]✗[/red] Server returned status {response.status_code}")
                 return
-            
+
             # Get runs
             response = await client.get(f"{base_url}/api/runs/", timeout=5.0)
             if response.status_code == 200:
@@ -1107,7 +1150,7 @@ async def _check_status(base_url: str):
                     table.add_column("ID", style="dim")
                     table.add_column("Status", style="cyan")
                     table.add_column("Steps", style="yellow")
-                    
+
                     for run in runs[:5]:
                         table.add_row(
                             str(run.get("id", "?"))[:8] + "...",
@@ -1115,7 +1158,7 @@ async def _check_status(base_url: str):
                             str(run.get("current_step", 0)),
                         )
                     console.print(table)
-                    
+
     except httpx.ConnectError:
         console.print(f"[red]✗[/red] Could not connect to {base_url}")
         console.print("  Make sure the backend server is running:")
@@ -1132,7 +1175,7 @@ async def _check_status(base_url: str):
 @click.option("--limit", "-n", default=10, help="Number of runs to show")
 def best(limit: int):
     """Show the best simulations based on agent health and stress.
-    
+
     Example:
         emotionsim best
     """
@@ -1144,17 +1187,17 @@ async def _show_best_runs(limit: int):
     from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
     from sqlalchemy import select, desc
     from sqlalchemy.orm import selectinload
-    
+
     from app.core.config import get_settings
     from app.core.database import Base
     from app.models.run import Run, RunStatus
-    
+
     settings = get_settings()
     engine = create_async_engine(settings.database_url, echo=False)
     async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-    
+
     console.print(f"\n[bold cyan]EmotionSim[/bold cyan] - Best Simulations")
-    
+
     async with async_session() as db:
         # Get completed runs logic
         # Fetch completed runs and sort in Python for simplicity
@@ -1165,22 +1208,22 @@ async def _show_best_runs(limit: int):
             .options(selectinload(Run.scenario))
         )
         runs = result.scalars().all()
-        
+
         if not runs:
             console.print("[yellow]No completed runs found.[/yellow]")
             return
-            
+
         # Calculate scores and sort
         scored_runs = []
         for run in runs:
             metrics = run.metrics or {}
             avg_health = float(metrics.get("avg_health", 0))
             avg_stress = float(metrics.get("avg_stress", 10))
-            
+
             # Simple score: Health - Stress (higher is better)
             # Normalize stress (lower is better, so negate)
             score = avg_health - avg_stress
-            
+
             scored_runs.append({
                 "run": run,
                 "score": score,
@@ -1188,10 +1231,10 @@ async def _show_best_runs(limit: int):
                 "stress": avg_stress,
                 "steps": run.current_step
             })
-            
+
         # Sort by score descending
         scored_runs.sort(key=lambda x: x["score"], reverse=True)
-        
+
         # Display
         table = Table(title=f"Top {limit} Simulations", box=box.ROUNDED)
         table.add_column("Rank", style="dim")
@@ -1201,7 +1244,7 @@ async def _show_best_runs(limit: int):
         table.add_column("Avg Health", style="green")
         table.add_column("Avg Stress", style="red")
         table.add_column("Steps", style="yellow")
-        
+
         for i, item in enumerate(scored_runs[:limit], 1):
             run = item["run"]
             table.add_row(
@@ -1213,7 +1256,7 @@ async def _show_best_runs(limit: int):
                 f"{item['stress']:.1f}",
                 str(item['steps'])
             )
-            
+
         console.print(table)
         console.print()
 
@@ -1226,7 +1269,7 @@ async def _show_best_runs(limit: int):
 @click.option("--count", "-n", default=None, type=int, help="Number of simulations to run (default: infinite)")
 def auto(count: int | None):
     """Automatically run simulations sequentially.
-    
+
     Checks for pending runs first, then generates new ones from presets.
     """
     asyncio.run(_run_auto_loop(count))
@@ -1237,15 +1280,15 @@ async def _run_auto_loop(count: int | None):
     from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
     from sqlalchemy import select, asc
     import random
-    
+
     from app.core.config import get_settings
     from app.core.database import Base
     from app.models.scenario import Scenario
     from app.models.run import Run, RunStatus
     from app.scenarios.defaults import DEFAULT_SCENARIOS
-    
+
     settings = get_settings()
-    
+
     console.print("\n[bold cyan]EmotionSim[/bold cyan] - Auto Runner")
     console.print(f"Model: [bold green]{settings.ollama_default_model}[/bold green]")
     console.print(f"Max Context: [bold yellow]8192 tokens[/bold yellow]")
@@ -1253,17 +1296,17 @@ async def _run_auto_loop(count: int | None):
 
     # Preset Selection Logic
     selected_preset = None
-    
+
     # Get available presets
     preset_choices = list(DEFAULT_SCENARIOS.keys())
     preset_choices.sort()
-    
+
     console.print("[bold]Select Auto-Run Source:[/bold]")
     console.print("  [cyan]0.[/cyan] [bold white]Random (Cycle through all)[/bold white]")
     for i, name in enumerate(preset_choices, 1):
         console.print(f"  [cyan]{i}.[/cyan] {name}")
     console.print()
-    
+
     choice_idx = Prompt.ask("Enter number", default="0")
     try:
         idx = int(choice_idx)
@@ -1276,21 +1319,21 @@ async def _run_auto_loop(count: int | None):
         console.print("[yellow]Invalid input, using Random selection[/yellow]")
 
     console.print()
-    
+
     # Setup DB
     engine = create_async_engine(settings.database_url, echo=False)
     async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-    
+
     # Ensure DB exists
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
+
     # CLEANUP: End all pending and running simulations before starting
     async with async_session() as db:
         cleanup_query = select(Run).where(Run.status.in_([RunStatus.PENDING, RunStatus.RUNNING]))
         cleanup_result = await db.execute(cleanup_query)
         runs_to_cleanup = cleanup_result.scalars().all()
-        
+
         if runs_to_cleanup:
             console.print(f"[yellow]Cleaning up {len(runs_to_cleanup)} pending/running simulation(s)...[/yellow]")
             for run in runs_to_cleanup:
@@ -1298,16 +1341,16 @@ async def _run_auto_loop(count: int | None):
                 console.print(f"  [dim]Stopped run {str(run.id)[:8]}...[/dim]")
             await db.commit()
             console.print("[green]✓[/green] Cleanup complete\n")
-        
+
     runs_completed = 0
-    
+
     while count is None or runs_completed < count:
         console.print(f"[bold]>>> Starting cycle {runs_completed + 1}[/bold]")
-        
+
         # Check for pending runs
         target_run_id = None
         scenario_name = None
-        
+
         async with async_session() as db:
             # Check for PENDING runs
             result = await db.execute(
@@ -1317,7 +1360,7 @@ async def _run_auto_loop(count: int | None):
                 .limit(1)
             )
             pending_run = result.scalar_one_or_none()
-            
+
             if pending_run:
                 target_run_id = pending_run.id
                 # Eager load scenario to get name
@@ -1329,11 +1372,11 @@ async def _run_auto_loop(count: int | None):
                 # Create a new run
                 preset_name = selected_preset or random.choice(list(DEFAULT_SCENARIOS.keys()))
                 console.print(f"[cyan]No pending runs. Creating new run:[/cyan] {preset_name}")
-                
+
                 # Check if scenario exists
                 result = await db.execute(select(Scenario).where(Scenario.name.ilike(f"%{preset_name}%")))
                 scenario = result.scalar_one_or_none()
-                
+
                 if not scenario:
                     # Create it
                     creator = DEFAULT_SCENARIOS[preset_name]
@@ -1347,7 +1390,7 @@ async def _run_auto_loop(count: int | None):
                     db.add(scenario)
                     await db.commit()
                     await db.refresh(scenario)
-                
+
                 # Create Run
                 new_run = Run(
                     scenario_id=scenario.id,
@@ -1358,38 +1401,38 @@ async def _run_auto_loop(count: int | None):
                 db.add(new_run)
                 await db.commit()
                 await db.refresh(new_run)
-                
+
                 target_run_id = new_run.id
                 scenario_name = scenario.name
-        
+
         if target_run_id:
             # Run it using existing standalone runner
             # We use simple mode for auto runner to keep logs clean
             console.print(f"[green]Executing run {target_run_id} ({scenario_name})...[/green]")
             try:
-                # We need to run this function. 
+                # We need to run this function.
                 # Note: passing specific run_id isn't supported by _run_standalone directly
                 # _run_standalone takes scenario name and creates a NEW run.
                 # We need to refactor _run_standalone or create a variant that takes a run_id.
                 # But wait, looking at _run_standalone, it creates a run.
-                
+
                 # Let's modify _run_standalone to accept an optional run_id!
                 # Or simply implement the execution logic here reusing the engine?
-                
+
                 # Reusing internal logic is better to avoid "creating" a run when we already have one.
-                
+
                 # Reuse logic from _run_standalone but for an existing run
                 await _execute_existing_run(target_run_id, simple=False)
-                
+
             except Exception as e:
                 console.print(f"[red]Error executing run:[/red] {e}")
                 import traceback
                 traceback.print_exc()
-            
+
             runs_completed += 1
             console.print(f"[bold green]✓ Cycle completed.[/bold green]")
             console.print("-" * 50)
-            
+
             # Small delay between runs
             await asyncio.sleep(2)
 
@@ -1401,17 +1444,17 @@ async def _execute_existing_run(run_id: str, simple: bool = True):
     from app.simulation.engine import SimulationEngine
     from app.tui.renderer import PiStyleLogger, PiStyleRenderer
     from rich.live import Live
-    
+
     from sqlalchemy import select
     from sqlalchemy.orm import selectinload
     from app.models.run import Run, RunStatus
-    
+
     settings = get_settings()
     engine = create_async_engine(settings.database_url, echo=False)
     async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-    
+
     async with async_session() as db:
-        
+
         if simple:
             logger = PiStyleLogger(console)
             def on_event(event_type: str, data: dict[str, Any]):
@@ -1438,7 +1481,7 @@ async def _execute_existing_run(run_id: str, simple: bool = True):
             db_session=db,
             on_event=on_event
         )
-        
+
         # Check run status to decide whether to load or initialize
         result = await db.execute(
             select(Run)
@@ -1446,7 +1489,7 @@ async def _execute_existing_run(run_id: str, simple: bool = True):
             .options(selectinload(Run.scenario))
         )
         run = result.scalar_one_or_none()
-        
+
         if not run:
             console.print(f"[red]Run {run_id} not found![/red]")
             return
@@ -1454,28 +1497,28 @@ async def _execute_existing_run(run_id: str, simple: bool = True):
         if run.status == RunStatus.PENDING or (run.current_step == 0 and not run.agents):
              # Initialize fresh
              console.print(f"[cyan]Initializing new run from scenario: {run.scenario.name}[/cyan]")
-             
+
              config = {
                 "config": run.scenario.config,
                 "agent_templates": run.scenario.agent_templates,
                 "seed": run.seed,
             }
-             
+
              # Apply max_steps override if present in run
              if run.max_steps:
                  config["config"]["max_steps"] = run.max_steps
-                 
+
              await sim_engine.initialize(config)
              console.print(f"[green]✓[/green] Initialized {len(sim_engine.agents)} agents")
         else:
              # Load existing state
              await sim_engine.load_from_db()
              console.print(f"[green]✓[/green] Resumed run {run_id} (step {sim_engine.current_step})")
-             
+
         # Set max steps for renderer if applicable
         if not simple and hasattr(sim_engine, 'max_steps'):
             renderer.max_steps = sim_engine.max_steps
-        
+
         # Start Simulation
         if simple:
             console.print("[cyan]Starting simulation...[/cyan]\n")
@@ -1505,7 +1548,7 @@ async def _execute_existing_run(run_id: str, simple: bool = True):
 
                 # Final update
                 live.update(renderer.get_footer())
-        
+
         console.print(f"[green]✓[/green] Simulation finished.")
 
 
@@ -1559,7 +1602,7 @@ async def select_active_run() -> str | None:
     from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
     from sqlalchemy import select, or_
     import time
-    
+
     from app.core.config import get_settings
     from app.core.database import Base
     from app.models.run import Run, RunStatus
@@ -1568,25 +1611,25 @@ async def select_active_run() -> str | None:
     settings = get_settings()
     engine = create_async_engine(settings.database_url, echo=False)
     async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-    
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-        
+
     async with async_session() as db:
         # Fetch active runs (PENDING or RUNNING)
         query = select(Run).options(select.joinedload(Run.scenario)).where(
             or_(Run.status == RunStatus.RUNNING, Run.status == RunStatus.PENDING)
         ).order_by(Run.created_at.desc())
-        
+
         result = await db.execute(query)
         runs = result.scalars().all()
-        
+
         if not runs:
             console.print("[yellow]No active simulations found.[/yellow]")
             return None
-            
+
         console.print("\n[bold cyan]Active Simulations:[/bold cyan]")
-        
+
         table = Table(box=box.SIMPLE)
         table.add_column("#", style="dim")
         table.add_column("Run ID", style="cyan")
@@ -1594,7 +1637,7 @@ async def select_active_run() -> str | None:
         table.add_column("Status", style="yellow")
         table.add_column("Step", style="white")
         table.add_column("Created", style="dim")
-        
+
         for i, run in enumerate(runs, 1):
             table.add_row(
                 str(i),
@@ -1604,10 +1647,10 @@ async def select_active_run() -> str | None:
                 f"{run.current_step}/{run.max_steps}",
                 run.created_at.strftime("%H:%M:%S")
             )
-            
+
         console.print(table)
         console.print()
-        
+
         # Create choices properly
         run_choices = []
         for r in runs:
@@ -1616,13 +1659,13 @@ async def select_active_run() -> str | None:
                  title=f"{r.id} | {s_name} | Step {r.current_step}",
                  value=r.id
              ))
-             
+
         run_id = await questionary.select(
             "Select run to monitor",
             choices=run_choices,
             use_arrow_keys=True
         ).unsafe_ask_async()
-        
+
         return run_id
 
 async def generate_scenario_task():
@@ -1630,18 +1673,18 @@ async def generate_scenario_task():
     from app.scenarios.generator import ScenarioGenerator
     from app.scenarios.storage import save_scenario
     from rich.prompt import IntPrompt
-    
+
     console.print("\n[bold yellow]Generate New Scenario[/bold yellow]")
     console.print("[dim]Examples: 'A tornado hits a small town', 'Alien first contact', 'Heist at a museum'[/dim]\n")
-    
+
     prompt = Prompt.ask("[bold]Describe your scenario[/bold]")
     if not prompt:
         return
 
     persona_count = IntPrompt.ask("Number of personas", default=10)
-    
+
     console.print(f"\n[cyan]Generating scenario with {persona_count} agents...[/cyan]")
-    
+
     try:
         generator = ScenarioGenerator()
         with console.status("[cyan]Calling AI to generate scenario...[/cyan]"):
@@ -1649,19 +1692,19 @@ async def generate_scenario_task():
                 prompt=prompt,
                 persona_count=persona_count,
             )
-        
+
         filepath = save_scenario(scenario)
-        
+
         console.print(f"\n[green]✓[/green] Generated: [bold]{scenario.name}[/bold]")
         console.print(f"[green]✓[/green] Saved to: [dim]{filepath}[/dim]")
         console.print(f"  {scenario.description}\n")
-        
+
     except Exception as e:
         console.print(f"[red]Generation failed: {e}[/red]")
 
     while True:
         print_header()
-        
+
         menu_choices = [
             questionary.Choice("Generate New Scenario", value="1"),
             questionary.Choice("Browse Scenarios", value="2"),
@@ -1671,13 +1714,13 @@ async def generate_scenario_task():
             questionary.Separator(),
             questionary.Choice("Exit", value="0")
         ]
-        
+
         choice = await questionary.select(
             "Select a Task:",
             choices=menu_choices,
             use_arrow_keys=True
         ).unsafe_ask_async()
-        
+
         if choice == "1":
             await generate_scenario_task()
             input("\nPress Enter to continue...")

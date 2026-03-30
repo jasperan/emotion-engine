@@ -256,3 +256,4 @@ logs/
 # Generated content (local only, never push)
 content/
 benchmarks/results/
+tui/tui

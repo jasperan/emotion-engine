@@ -1081,6 +1081,26 @@ class SimulationEngine:
         elif in_conversation and conversation:
             conversation.advance_turn(spoke=False)
 
+        # Persist cinematic record (action description, thought, emotion, speech)
+        # so analytics can reconstruct the full agent experience per tick
+        cinematic = getattr(agent, '_last_cinematic', {})
+        if cinematic or response.message:
+            step_actions.append({
+                "agent_id": agent_id,
+                "agent_name": agent.name,
+                "action_type": "cinematic",
+                "target": None,
+                "parameters": {
+                    "action": cinematic.get("action", ""),
+                    "thought": cinematic.get("thought", ""),
+                    "emotion": cinematic.get("emotion", ""),
+                    "speech": response.message.content if response.message else None,
+                    "stress_level": agent.dynamic_state.get("stress_level"),
+                    "health": agent.dynamic_state.get("health"),
+                    "location": agent.dynamic_state.get("location"),
+                },
+            })
+
         # Track for loop detection
         if response.message and response.message.content.strip():
             topic = self._extract_topic(response.message.content)

@@ -121,12 +121,57 @@ def classify_critical_decisions(
                 "score": len(reasons),
             })
 
-    # Analyze actions for heroic/movement decisions
+    # Analyze cinematic records for rich behavioral data
+    for act in actions:
+        if act.get("action_type") == "cinematic":
+            params = act.get("parameters", {})
+            reasons = []
+            agent_name = act.get("agent_name", "?")
+
+            stress = params.get("stress_level")
+            if stress and stress >= 8:
+                reasons.append("high_stress")
+
+            speech = (params.get("speech") or "").lower()
+            if any(w in speech for w in ["help", "save", "rescue", "protect", "everyone", "together"]):
+                reasons.append("cooperative_speech")
+            if any(w in speech for w in ["run", "leave", "abandon", "forget it", "give up"]):
+                reasons.append("self_preservation")
+            if any(w in speech for w in ["follow me", "with me", "let's go", "i'll lead", "listen to me"]):
+                reasons.append("leadership")
+            if any(w in speech for w in ["oh god", "we're going to die", "damn", "help!"]):
+                reasons.append("panic_speech")
+
+            action_desc = (params.get("action") or "").lower()
+            if any(w in action_desc for w in ["shield", "protect", "carry", "drag", "rescue", "bandage"]):
+                reasons.append("heroic_action")
+
+            emotion = (params.get("emotion") or "").lower()
+            if any(w in emotion for w in ["panic", "terror", "despair", "fear"]):
+                reasons.append("extreme_emotion")
+
+            if reasons:
+                critical.append({
+                    "step": act.get("step"),
+                    "agent": agent_name,
+                    "type": "cinematic",
+                    "action": params.get("action", "")[:150],
+                    "speech": params.get("speech", "")[:150] if params.get("speech") else None,
+                    "emotion": params.get("emotion"),
+                    "stress": stress,
+                    "tags": reasons,
+                    "score": len(reasons),
+                })
+            continue
+
+    # Analyze structured actions for heroic/movement decisions
     for act in actions:
         reasons = []
         action_type = act.get("action_type", "")
         params = act.get("parameters", {})
 
+        if action_type == "cinematic":
+            continue  # Already handled above
         if action_type == "move":
             reasons.append("relocation")
         if action_type in ("help", "rescue", "share"):
@@ -256,6 +301,32 @@ async def extract_run(run_id: str, session_factory) -> dict:
 
         msg_timeline = build_message_timeline(messages, agent_map)
 
+        # Build cinematic timeline (agent experience per tick)
+        cinematic_timeline = []
+        stress_trajectories = defaultdict(list)
+        for act in all_actions:
+            if act.get("action_type") == "cinematic":
+                params = act.get("parameters", {})
+                entry = {
+                    "step": act["step"],
+                    "agent": act["agent_name"],
+                    "action": params.get("action"),
+                    "speech": params.get("speech"),
+                    "thought": params.get("thought"),
+                    "emotion": params.get("emotion"),
+                    "stress": params.get("stress_level"),
+                    "health": params.get("health"),
+                    "location": params.get("location"),
+                }
+                cinematic_timeline.append(entry)
+                if params.get("stress_level") is not None:
+                    stress_trajectories[act["agent_name"]].append({
+                        "step": act["step"],
+                        "stress": params["stress_level"],
+                        "emotion": params.get("emotion"),
+                        "health": params.get("health"),
+                    })
+
         analytics = {
             "run_id": run_id,
             "scenario": scenario.name if scenario else "unknown",
@@ -277,7 +348,9 @@ async def extract_run(run_id: str, session_factory) -> dict:
                 msg_timeline, all_actions, agent_profiles
             ),
             "communication_graph": build_communication_graph(msg_timeline),
+            "stress_trajectories": dict(stress_trajectories),
             "world_state_progression": extract_world_state_progression(steps),
+            "cinematic_timeline": cinematic_timeline,
             "action_timeline": all_actions,
             "message_timeline": msg_timeline,
         }

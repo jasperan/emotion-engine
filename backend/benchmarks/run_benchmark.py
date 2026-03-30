@@ -86,7 +86,6 @@ def run_sim_via_cli(
         "OLLAMA_DEFAULT_MODEL": model_name,
         "OLLAMA_FALLBACK_MODEL": model_name,
         "MAX_CONCURRENT_LLM_CALLS": "1",
-        "SCENE_MODE": "false",
         "PYTHONUNBUFFERED": "1",
     })
 

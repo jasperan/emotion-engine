@@ -152,6 +152,13 @@ class SimulationEngine:
             calm_factor=0.5,
         )
 
+        # L11: Social Dynamics Engine (MiroFish — opinion dynamics, influence tracking, sentiment)
+        from app.simulation.social_dynamics import SocialDynamicsEngine
+        self.social_dynamics = SocialDynamicsEngine(
+            base_shift_rate=0.15,
+            convergence_threshold=0.15,
+        )
+
     def _register_agent(self, agent: Agent) -> None:
         """Register an agent in the agents dict and update the name-to-id cache."""
         self.agents[agent.id] = agent
@@ -534,6 +541,9 @@ class SimulationEngine:
         # Cleanup ended conversations
         self.conversation_manager.cleanup_ended_conversations()
 
+        # L11: Social Dynamics — opinion shifts, influence tracking, tipping points
+        social_dynamics_result = await self._execute_social_dynamics(step_messages)
+
         # L8: End diff tracking
         self.diff_tracker.end_step(self.world_state)
 
@@ -571,6 +581,7 @@ class SimulationEngine:
             "world_state_diff": self.diff_tracker.get_current_diff().to_dict(),
             "negotiations": self.negotiation.to_dict(),
             "emotion_contagion": self.emotion_contagion.to_dict(),
+            "social_dynamics": social_dynamics_result,
         })
 
     def _update_agents_in_world_state(self) -> None:
@@ -684,6 +695,118 @@ class SimulationEngine:
             await log_pipeline_event(
                 f"🧠 Emotion contagion: {len(total_events)} agents affected"
             )
+
+    async def _execute_social_dynamics(self, step_messages: list[dict[str, Any]]) -> dict[str, Any]:
+        """L11: Process opinion dynamics, influence tracking, and sentiment tipping points.
+
+        Extracts interactions from this step's messages and conversations,
+        then feeds them through the SocialDynamicsEngine.
+        """
+        from app.llm.pipeline_logger import log_pipeline_event
+
+        # Build interactions: (speaker_id, listener_id, trust_level)
+        interactions = []
+
+        # Extract from step messages (broadcasts reach all co-located agents)
+        for msg in step_messages:
+            sender_id = msg.get("from_agent_id") or msg.get("from")
+            if not sender_id or sender_id not in self.agents:
+                continue
+            sender_loc = self._agent_locations.get(sender_id)
+            msg_type = msg.get("message_type", msg.get("type", ""))
+
+            if msg_type == "broadcast":
+                # Broadcast reaches all human agents
+                for aid, agent in self.agents.items():
+                    if aid != sender_id and agent.role == "human":
+                        trust = 5
+                        if hasattr(agent, "agent_memory"):
+                            rel = agent.agent_memory.get_relationship(sender_id)
+                            if rel:
+                                trust = rel.trust_level
+                        interactions.append((sender_id, aid, trust))
+            elif msg_type in ("room", "conversation"):
+                # Room/conversation messages reach co-located agents
+                for aid, agent in self.agents.items():
+                    if aid != sender_id and agent.role == "human":
+                        if self._agent_locations.get(aid) == sender_loc:
+                            trust = 5
+                            if hasattr(agent, "agent_memory"):
+                                rel = agent.agent_memory.get_relationship(sender_id)
+                                if rel:
+                                    trust = rel.trust_level
+                            interactions.append((sender_id, aid, trust))
+
+        if not interactions:
+            return {}
+
+        # Build agents dict for social dynamics (needs persona with opinion fields)
+        agents_data = {}
+        for aid, agent in self.agents.items():
+            if agent.role != "human":
+                continue
+            persona = agent.persona if hasattr(agent, 'persona') else None
+            if persona:
+                agents_data[aid] = persona
+            else:
+                # Fallback: wrap dynamic state as persona-like object
+                agents_data[aid] = agent.dynamic_state
+
+        try:
+            result = self.social_dynamics.process_step(
+                step=self.current_step,
+                agents=agents_data,
+                interactions=interactions,
+            )
+        except Exception as e:
+            logger.warning(f"Social dynamics error: {e}")
+            return {"error": str(e)}
+
+        # Apply opinion shifts back to agent personas
+        opinion_shifts = result.get("opinion_shifts", [])
+        for shift in opinion_shifts:
+            agent = self.agents.get(shift.listener_id)
+            if agent and hasattr(agent, 'persona') and hasattr(agent.persona, 'opinion_vectors'):
+                agent.persona.opinion_vectors[shift.topic] = shift.new_stance
+
+        # Emit events for tipping points
+        tipping_points = result.get("tipping_points", [])
+        for tp in tipping_points:
+            self.on_event("opinion_tipping_point", {
+                "step": self.current_step,
+                "topic": tp.topic,
+                "type": tp.type,
+                "mean_before": tp.mean_before,
+                "mean_after": tp.mean_after,
+                "std_before": tp.std_before,
+                "std_after": tp.std_after,
+            })
+
+        n_shifts = len(opinion_shifts)
+        n_tipping = len(tipping_points)
+        if n_shifts > 0 or n_tipping > 0:
+            await log_pipeline_event(
+                f"🔄 Social dynamics: {n_shifts} opinion shifts, {n_tipping} tipping points"
+            )
+            self.on_event("social_dynamics", {
+                "step": self.current_step,
+                "opinion_shifts": n_shifts,
+                "tipping_points": n_tipping,
+                "interactions": len(interactions),
+                "super_spreaders": self.social_dynamics.get_super_spreaders(),
+                "opinion_anchors": self.social_dynamics.get_opinion_anchors(),
+            })
+
+        # Return serializable summary for step_completed event
+        return {
+            "opinion_shifts": n_shifts,
+            "tipping_points": [
+                {"topic": tp.topic, "type": tp.type, "step": tp.step}
+                for tp in tipping_points
+            ],
+            "interactions": len(interactions),
+            "influence_data": self.social_dynamics.get_influence_data(),
+        }
 
     def _calculate_hop_distance(self, agent_id_1: str, agent_id_2: str) -> int:
         """Calculate hop distance between two agents using BFS. Cached per step."""
@@ -2551,12 +2674,24 @@ class SimulationEngine:
                     total_health += 10
                     total_stress += 5
 
+        # Social dynamics metrics
+        social_metrics = {}
+        try:
+            social_metrics = {
+                "super_spreaders": self.social_dynamics.get_super_spreaders(),
+                "opinion_anchors": self.social_dynamics.get_opinion_anchors(),
+                "influence_data": self.social_dynamics.get_influence_data(),
+            }
+        except Exception:
+            pass
+
         return {
             "avg_health": total_health / max(human_count, 1),
             "avg_stress": total_stress / max(human_count, 1),
             "hazard_level": self.world_state.get("hazard_level", 0),
             "message_count": len(self.message_bus._message_history),
             "active_conversations": len(self.conversation_manager.get_all_active_conversations()),
+            "social_dynamics": social_metrics,
         }
 
     def start_explicit_conversation(

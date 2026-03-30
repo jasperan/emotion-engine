@@ -1207,7 +1207,7 @@ class SimulationEngine:
         # Persist cinematic record (action description, thought, emotion, speech)
         # so analytics can reconstruct the full agent experience per tick
         cinematic = getattr(agent, '_last_cinematic', {})
-        if cinematic or response.message:
+        if agent.role == "human":
             step_actions.append({
                 "agent_id": agent_id,
                 "agent_name": agent.name,

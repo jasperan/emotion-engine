@@ -1,13 +1,11 @@
 """
 Extract structured analytics from benchmark runs for downstream analysis.
 
-Produces per-run JSON files with:
-- Agent decision timelines (action, speech, emotion, stress per step)
-- Cooperation events (who helped whom, shared resources)
-- Critical decision points (high-stress pivots, leadership emergence)
-- Movement patterns (where agents went, failed moves)
-- Communication graph (who talked to whom, broadcast vs direct)
-- Stress/emotion trajectories
+Pulls data from Oracle DB tables:
+- steps.actions: [{agent_id, agent_name, action_type, target, parameters}]
+- messages: speech content with sender/target/type/step
+- agents: persona (Big Five), dynamic_state (stress, health, location)
+- steps.state_snapshot: world state per step
 """
 import asyncio
 import json
@@ -20,14 +18,12 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
 
 from app.core.config import get_settings
-from app.models.run import Run, RunStatus
+from app.models.run import Run
 from app.models.agent import AgentModel
 from app.models.step import Step
-from app.models.message import Message, MessageType
-from app.models.scenario import Scenario
+from app.models.message import Message
 
 
 RESULTS_DIR = Path(__file__).parent / "results"
@@ -57,72 +53,128 @@ def extract_agent_profile(agent: AgentModel) -> dict:
 
 
 def extract_step_actions(step: Step) -> list[dict]:
-    """Parse step actions into structured records."""
+    """Parse step actions from DB format: {action_type, target, parameters}."""
     actions = step.actions or []
     parsed = []
     for act in actions:
-        if isinstance(act, dict):
-            parsed.append({
-                "agent_id": act.get("agent_id"),
-                "agent_name": act.get("agent_name"),
-                "action": act.get("action"),
-                "speech": act.get("speech"),
-                "emotion": act.get("emotion"),
-                "thought": act.get("thought"),
-                "move_to": act.get("move_to"),
-                "stress_level": act.get("stress_level"),
-                "step": step.step_index,
-            })
+        if not isinstance(act, dict):
+            continue
+        params = act.get("parameters", {}) or {}
+        parsed.append({
+            "agent_id": act.get("agent_id"),
+            "agent_name": act.get("agent_name"),
+            "action_type": act.get("action_type"),
+            "target": act.get("target"),
+            "parameters": params,
+            "step": step.step_index,
+        })
     return parsed
 
 
-def classify_critical_decisions(all_actions: list[dict]) -> list[dict]:
-    """Identify critical decision points based on heuristics."""
+def build_message_timeline(messages: list[Message], agent_map: dict) -> list[dict]:
+    """Build a timeline of speech/communication from messages table."""
+    timeline = []
+    for msg in messages:
+        sender_name = agent_map.get(msg.from_agent_id, msg.from_agent_id or "system")
+        timeline.append({
+            "step": msg.step_index,
+            "from_agent": sender_name,
+            "from_id": msg.from_agent_id,
+            "to": msg.to_target,
+            "type": msg.message_type.value if msg.message_type else "unknown",
+            "content": msg.content,
+        })
+    return timeline
+
+
+def classify_critical_decisions(
+    messages: list[dict],
+    actions: list[dict],
+    agents: list[dict],
+) -> list[dict]:
+    """Identify critical decisions from messages and actions."""
     critical = []
-    for act in all_actions:
+
+    # Analyze messages for cooperative/leadership/panic speech
+    for msg in messages:
+        if msg["type"] == "system":
+            continue
         reasons = []
-        stress = act.get("stress_level")
-        if stress and stress >= 8:
-            reasons.append("high_stress")
+        content = (msg.get("content") or "").lower()
 
-        speech = (act.get("speech") or "").lower()
-        if any(w in speech for w in ["help", "save", "rescue", "protect", "everyone"]):
+        if any(w in content for w in ["help", "save", "rescue", "protect", "everyone", "together"]):
             reasons.append("cooperative_speech")
-        if any(w in speech for w in ["run", "leave", "abandon", "forget"]):
+        if any(w in content for w in ["run", "leave", "abandon", "forget it", "give up"]):
             reasons.append("self_preservation")
-        if any(w in speech for w in ["follow me", "with me", "let's go", "i'll lead"]):
+        if any(w in content for w in ["follow me", "with me", "let's go", "i'll lead", "listen to me", "move now"]):
             reasons.append("leadership")
+        if any(w in content for w in ["oh god", "we're going to die", "no!", "damn", "help!"]):
+            reasons.append("panic_speech")
 
-        action = (act.get("action") or "").lower()
-        if any(w in action for w in ["shield", "protect", "carry", "drag", "rescue"]):
-            reasons.append("heroic_action")
-        if act.get("move_to"):
-            reasons.append("relocation")
-
-        emotion = (act.get("emotion") or "").lower()
-        if any(w in emotion for w in ["panic", "terror", "despair"]):
-            reasons.append("extreme_emotion")
-
-        if len(reasons) >= 2:
+        if reasons:
             critical.append({
-                **act,
-                "decision_tags": reasons,
-                "criticality_score": len(reasons),
+                "step": msg["step"],
+                "agent": msg["from_agent"],
+                "type": "speech",
+                "content": msg["content"][:200],
+                "tags": reasons,
+                "score": len(reasons),
             })
 
-    return sorted(critical, key=lambda x: x["criticality_score"], reverse=True)
+    # Analyze actions for heroic/movement decisions
+    for act in actions:
+        reasons = []
+        action_type = act.get("action_type", "")
+        params = act.get("parameters", {})
+
+        if action_type == "move":
+            reasons.append("relocation")
+        if action_type in ("help", "rescue", "share"):
+            reasons.append("heroic_action")
+        if action_type == "environment_update":
+            continue  # Skip env agent updates
+
+        # Check parameters for cooperation signals
+        param_str = json.dumps(params).lower()
+        if any(w in param_str for w in ["shield", "protect", "carry", "drag", "rescue", "bandage"]):
+            reasons.append("heroic_action")
+
+        if reasons:
+            critical.append({
+                "step": act["step"],
+                "agent": act["agent_name"],
+                "type": "action",
+                "action_type": action_type,
+                "tags": reasons,
+                "score": len(reasons),
+            })
+
+    # Check agent final states for high stress
+    for agent in agents:
+        stress = agent.get("final_stress")
+        if stress and stress >= 8:
+            critical.append({
+                "agent": agent["name"],
+                "type": "final_state",
+                "tags": ["high_stress"],
+                "score": 1,
+                "final_stress": stress,
+                "final_health": agent.get("final_health"),
+            })
+
+    return sorted(critical, key=lambda x: x.get("score", 0), reverse=True)
 
 
-def build_communication_graph(messages: list[Message]) -> dict:
-    """Build directed communication graph from messages."""
+def build_communication_graph(messages: list[dict]) -> dict:
+    """Build directed communication graph from message timeline."""
     edges = defaultdict(lambda: {"count": 0, "types": []})
     broadcasts = 0
     direct_count = 0
 
     for msg in messages:
-        sender = msg.from_agent_id or "system"
-        target = msg.to_target
-        mtype = msg.message_type.value if msg.message_type else "unknown"
+        sender = msg["from_agent"]
+        target = msg["to"]
+        mtype = msg["type"]
 
         if mtype == "broadcast":
             broadcasts += 1
@@ -138,6 +190,7 @@ def build_communication_graph(messages: list[Message]) -> dict:
         "total_messages": len(messages),
         "broadcasts": broadcasts,
         "direct_messages": direct_count,
+        "unique_speakers": len({m["from_agent"] for m in messages}),
         "edges": [
             {"from": k.split("->")[0], "to": k.split("->")[1], **v}
             for k, v in edges.items()
@@ -145,52 +198,32 @@ def build_communication_graph(messages: list[Message]) -> dict:
     }
 
 
-def compute_stress_trajectories(all_actions: list[dict], agents: dict[str, str]) -> dict:
-    """Compute per-agent stress over time."""
-    trajectories = defaultdict(list)
-    for act in all_actions:
-        agent_name = act.get("agent_name") or agents.get(act.get("agent_id"), "?")
-        stress = act.get("stress_level")
-        if stress is not None:
-            trajectories[agent_name].append({
-                "step": act["step"],
-                "stress": stress,
-                "emotion": act.get("emotion"),
-            })
-    return dict(trajectories)
-
-
-def compute_movement_patterns(all_actions: list[dict]) -> dict:
-    """Track movement successes and common destinations."""
-    moves = []
-    destinations = defaultdict(int)
-    for act in all_actions:
-        if act.get("move_to"):
-            moves.append({
-                "agent": act.get("agent_name"),
-                "step": act["step"],
-                "destination": act["move_to"],
-            })
-            destinations[act["move_to"]] += 1
-    return {
-        "total_moves": len(moves),
-        "moves": moves,
-        "popular_destinations": dict(sorted(destinations.items(), key=lambda x: -x[1])),
-    }
+def extract_world_state_progression(steps: list[Step]) -> list[dict]:
+    """Track world state changes across steps."""
+    progression = []
+    for step in steps:
+        snapshot = step.state_snapshot or {}
+        progression.append({
+            "step": step.step_index,
+            "hazard_level": snapshot.get("hazard_level"),
+            "weather": snapshot.get("weather"),
+            "time_of_day": snapshot.get("time_of_day"),
+            "events": snapshot.get("events", []),
+            "resources": snapshot.get("resources", []),
+        })
+    return progression
 
 
 async def extract_run(run_id: str, session_factory) -> dict:
     """Extract full analytics for a single run."""
     async with session_factory() as db:
-        # Load run with relationships
-        result = await db.execute(
-            select(Run).where(Run.id == run_id)
-        )
+        result = await db.execute(select(Run).where(Run.id == run_id))
         run = result.scalars().first()
         if not run:
             return {"error": f"Run {run_id} not found"}
 
-        # Load scenario
+        # Load scenario name
+        from app.models.scenario import Scenario
         scenario_result = await db.execute(
             select(Scenario).where(Scenario.id == run.scenario_id)
         )
@@ -202,6 +235,7 @@ async def extract_run(run_id: str, session_factory) -> dict:
         )
         agents = agents_result.scalars().all()
         agent_map = {a.id: a.name for a in agents}
+        agent_profiles = [extract_agent_profile(a) for a in agents if a.role == "human"]
 
         # Load steps
         steps_result = await db.execute(
@@ -215,12 +249,13 @@ async def extract_run(run_id: str, session_factory) -> dict:
         )
         messages = msgs_result.scalars().all()
 
-        # Extract all actions across steps
+        # Build structured data
         all_actions = []
         for step in steps:
             all_actions.extend(extract_step_actions(step))
 
-        # Build analytics
+        msg_timeline = build_message_timeline(messages, agent_map)
+
         analytics = {
             "run_id": run_id,
             "scenario": scenario.name if scenario else "unknown",
@@ -232,26 +267,25 @@ async def extract_run(run_id: str, session_factory) -> dict:
             "metrics": run.metrics or {},
             "evaluation": run.evaluation or {},
 
-            "agents": [extract_agent_profile(a) for a in agents if a.role == "human"],
-            "agent_count": len([a for a in agents if a.role == "human"]),
+            "agents": agent_profiles,
+            "agent_count": len(agent_profiles),
 
             "total_actions": len(all_actions),
-            "total_messages": len(messages),
+            "total_messages": len(msg_timeline),
 
-            "critical_decisions": classify_critical_decisions(all_actions),
-            "communication_graph": build_communication_graph(messages),
-            "stress_trajectories": compute_stress_trajectories(all_actions, agent_map),
-            "movement_patterns": compute_movement_patterns(all_actions),
-
+            "critical_decisions": classify_critical_decisions(
+                msg_timeline, all_actions, agent_profiles
+            ),
+            "communication_graph": build_communication_graph(msg_timeline),
+            "world_state_progression": extract_world_state_progression(steps),
             "action_timeline": all_actions,
+            "message_timeline": msg_timeline,
         }
 
         return analytics
 
 
 async def main():
-    """Extract analytics for all runs in the latest benchmark manifest."""
-    # Find latest manifest
     manifests = sorted(RESULTS_DIR.glob("benchmark_*.json"), reverse=True)
     if not manifests:
         print("No benchmark manifests found. Run run_benchmark.py first.")
@@ -263,7 +297,9 @@ async def main():
 
     settings = get_settings()
     db_engine = create_async_engine(settings.database_url, echo=False)
-    session_factory = async_sessionmaker(db_engine, class_=AsyncSession, expire_on_commit=False)
+    session_factory = async_sessionmaker(
+        db_engine, class_=AsyncSession, expire_on_commit=False
+    )
 
     run_ids = [r["run_id"] for r in manifest["runs"] if "run_id" in r]
     print(f"Extracting analytics for {len(run_ids)} runs...\n")
@@ -274,23 +310,24 @@ async def main():
             print(f"  SKIP: {analytics['error']}")
             continue
 
-        # Save per-run analytics
         out_path = RESULTS_DIR / f"analytics_{run_id[:8]}.json"
         out_path.write_text(json.dumps(analytics, indent=2, default=str))
 
-        # Print summary
         n_critical = len(analytics["critical_decisions"])
         n_msgs = analytics["total_messages"]
         n_acts = analytics["total_actions"]
         scenario = analytics["scenario"][:40]
-        print(f"  {scenario:<42} steps={analytics['total_steps']:<4} actions={n_acts:<5} msgs={n_msgs:<5} critical={n_critical}")
+        print(
+            f"  {scenario:<42} steps={analytics['total_steps']:<4} "
+            f"actions={n_acts:<5} msgs={n_msgs:<5} critical={n_critical}"
+        )
 
-    # Save combined summary
     summary_path = RESULTS_DIR / f"summary_{manifest['benchmark_id']}.json"
     summary = {
         "benchmark_id": manifest["benchmark_id"],
-        "model": manifest.get("model"),
+        "models": manifest.get("models"),
         "backend": manifest.get("backend"),
+        "total_time": manifest.get("total_time_seconds"),
         "run_ids": run_ids,
         "extracted_at": datetime.now(timezone.utc).isoformat(),
     }

@@ -257,3 +257,8 @@ logs/
 content/
 benchmarks/results/
 tui/tui
+
+# Interactive (Next.js)
+interactive/node_modules/
+interactive/.next/
+interactive/out/

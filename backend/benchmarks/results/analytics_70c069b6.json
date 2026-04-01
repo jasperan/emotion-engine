@@ -1,0 +1,1558 @@
+{
+  "run_id": "70c069b6-8579-4e55-a265-19c93a4b71a7",
+  "scenario": "Philippines Mega-Tsunami (12 agents)",
+  "scenario_description": "A coastal fishing town in Leyte province devastated by a mega-tsunami. 12 survivors from vastly different backgrounds must overcome language barriers, cultural mistrust, and competing authority struct",
+  "status": "completed",
+  "total_steps": 8,
+  "max_steps": 8,
+  "seed": 404,
+  "metrics": {
+    "avg_health": 8.083333333333334,
+    "avg_stress": 7.516666666666666,
+    "hazard_level": 10,
+    "message_count": 8,
+    "active_conversations": 0,
+    "social_dynamics": {
+      "super_spreaders": [],
+      "opinion_anchors": [],
+      "influence_data": {
+        "nodes": [],
+        "edges": []
+      }
+    }
+  },
+  "evaluation": {
+    "scores": {
+      "cooperation": 4,
+      "ethics": 6,
+      "strategy": 3,
+      "emotional_coherence": 5,
+      "leadership": 4,
+      "empathy": 4,
+      "overall": 4
+    },
+    "narrative": "The simulation run reveals a critical failure in the agents' ability to execute physical survival strategies, despite high levels of verbal communication. While all agents maintained high message counts, indicating an active attempt to coordinate, the 'Actions Taken' metric is zero for every agent, including the Tsunami System itself. This suggests a systemic breakdown where agents were trapped in a dialogue loop without translating plans into the necessary survival actions (e.g., moving to high ground, rescuing the injured). Consequently, while the scenario ended with 'completed' status, the agents suffered significant health degradation (Lito at 4.6, Nanay Iska at 2.6) and extreme stress levels (Soo-jin at 10, Dong-hyun at 9.6) due to inaction during a catastrophic 10/10 hazard event.\n\nLeadership roles, held by figures like Captain Reyna and Barangay Captain Jun, failed to materialize into effective command because no actions were recorded. The narrative shows a village being completely submerged and structural failures occurring, yet the agents did not physically react to these environmental shifts. The ethical and empathetic dimensions were likely present in their messages but were rendered ineffective by the lack of physical intervention. The simulation highlights a disconnect between the agents' cognitive processing (talking) and their behavioral output (acting), resulting in a scenario where survival was not optimized despite the presence of potential leaders and medical personnel.",
+    "highlights": [
+      "High volume of communication indicates agents were aware of the crisis and attempting to coordinate verbally.",
+      "Presence of diverse roles (Captain, Doctor, Priest) provided a strong theoretical framework for a multi-faceted response."
+    ],
+    "concerns": [
+      "Zero actions taken by any agent is a critical failure mode, rendering the simulation a 'talk-only' exercise rather than a survival run.",
+      "Significant health loss for vulnerable agents (Nanay Iska) and extreme stress for others due to total lack of physical evacuation or rescue attempts.",
+      "The Tsunami System agent also took zero actions, failing to provide dynamic environmental feedback or interaction beyond static alerts."
+    ],
+    "recommendations": [
+      "Modify the agent prompt to enforce a mandatory 'Action' output in every step when hazard levels are above 5/10.",
+      "Implement a 'decision-to-action' validation check to ensure that when a leader issues a command, a subordinate agent executes a corresponding physical action.",
+      "Review the simulation logic to prevent agents from entering a communication loop that bypasses the action execution phase."
+    ]
+  },
+  "agents": [
+    {
+      "id": "4950caa8-1730-467c-baab-3354f0972f53",
+      "name": "Lito Magbanua #1",
+      "role": "human",
+      "occupation": "Master Fisherman",
+      "age": 60,
+      "big_five": {
+        "openness": 5,
+        "conscientiousness": 7,
+        "extraversion": 6,
+        "agreeableness": 7,
+        "neuroticism": 2
+      },
+      "final_stress": 4,
+      "final_health": 7,
+      "final_location": "coastal_village",
+      "is_active": true
+    },
+    {
+      "id": "4c5f1858-4368-434d-909a-1207c10f85cb",
+      "name": "Captain Reyna Dela Cruz #2",
+      "role": "human",
+      "occupation": "Philippine Navy Officer",
+      "age": 37,
+      "big_five": {
+        "openness": 6,
+        "conscientiousness": 10,
+        "extraversion": 7,
+        "agreeableness": 5,
+        "neuroticism": 3
+      },
+      "final_stress": 5,
+      "final_health": 10,
+      "final_location": "hilltop_evacuation",
+      "is_active": true
+    },
+    {
+      "id": "5300eeca-7392-440d-bd76-fcbd84f6baf0",
+      "name": "Father Domingo Reyes #3",
+      "role": "human",
+      "occupation": "Parish Priest",
+      "age": 55,
+      "big_five": {
+        "openness": 7,
+        "conscientiousness": 8,
+        "extraversion": 7,
+        "agreeableness": 10,
+        "neuroticism": 4
+      },
+      "final_stress": 6,
+      "final_health": 8,
+      "final_location": "church_plaza",
+      "is_active": true
+    },
+    {
+      "id": "71bf5f22-7b05-4913-b95e-610c1290897e",
+      "name": "Karen Lindstr\u00f6m #4",
+      "role": "human",
+      "occupation": "Swedish NGO Field Director",
+      "age": 35,
+      "big_five": {
+        "openness": 8,
+        "conscientiousness": 9,
+        "extraversion": 4,
+        "agreeableness": 6,
+        "neuroticism": 5
+      },
+      "final_stress": 6,
+      "final_health": 10,
+      "final_location": "ngo_compound",
+      "is_active": true
+    },
+    {
+      "id": "5a58976d-d4c2-4fae-9a12-b24420f74655",
+      "name": "Barangay Captain Jun Aquino #5",
+      "role": "human",
+      "occupation": "Local Politician",
+      "age": 52,
+      "big_five": {
+        "openness": 3,
+        "conscientiousness": 5,
+        "extraversion": 8,
+        "agreeableness": 3,
+        "neuroticism": 7
+      },
+      "final_stress": 7,
+      "final_health": 9,
+      "final_location": "barangay_hall",
+      "is_active": true
+    },
+    {
+      "id": "d34891ce-069e-4950-9657-a1cfd3e8e12f",
+      "name": "Soo-jin Park #6",
+      "role": "human",
+      "occupation": "Korean Tourist",
+      "age": 26,
+      "big_five": {
+        "openness": 7,
+        "conscientiousness": 6,
+        "extraversion": 5,
+        "agreeableness": 7,
+        "neuroticism": 8
+      },
+      "final_stress": 9,
+      "final_health": 9,
+      "final_location": "church_plaza",
+      "is_active": true
+    },
+    {
+      "id": "4ae4db1f-ccb7-40bc-a29b-446e514216f2",
+      "name": "Dong-hyun Park #7",
+      "role": "human",
+      "occupation": "Korean Tourist",
+      "age": 30,
+      "big_five": {
+        "openness": 6,
+        "conscientiousness": 7,
+        "extraversion": 5,
+        "agreeableness": 7,
+        "neuroticism": 6
+      },
+      "final_stress": 8,
+      "final_health": 10,
+      "final_location": "church_plaza",
+      "is_active": true
+    },
+    {
+      "id": "c5f5093d-41d6-4f6c-97d1-689651b79edf",
+      "name": "Nanay Iska #8",
+      "role": "human",
+      "occupation": "Traditional Healer (Albularyo)",
+      "age": 75,
+      "big_five": {
+        "openness": 5,
+        "conscientiousness": 6,
+        "extraversion": 4,
+        "agreeableness": 8,
+        "neuroticism": 3
+      },
+      "final_stress": 5,
+      "final_health": 5,
+      "final_location": "coastal_village",
+      "is_active": true
+    },
+    {
+      "id": "d818f9a1-5c97-4195-aaf9-dbbbf7239f01",
+      "name": "PFC Marco Villanueva #9",
+      "role": "human",
+      "occupation": "Navy Enlisted Sailor",
+      "age": 23,
+      "big_five": {
+        "openness": 5,
+        "conscientiousness": 7,
+        "extraversion": 7,
+        "agreeableness": 7,
+        "neuroticism": 5
+      },
+      "final_stress": 6,
+      "final_health": 10,
+      "final_location": "hilltop_evacuation",
+      "is_active": true
+    },
+    {
+      "id": "7b64695b-5414-4f50-9253-0e2f5d3ee614",
+      "name": "Dr. Amara Osei #10",
+      "role": "human",
+      "occupation": "Ghanaian NGO Doctor",
+      "age": 42,
+      "big_five": {
+        "openness": 7,
+        "conscientiousness": 9,
+        "extraversion": 5,
+        "agreeableness": 8,
+        "neuroticism": 4
+      },
+      "final_stress": 7,
+      "final_health": 10,
+      "final_location": "ngo_compound",
+      "is_active": true
+    },
+    {
+      "id": "cb41bf88-10ae-4b64-a415-0b155863db9a",
+      "name": "Benny Tan #11",
+      "role": "human",
+      "occupation": "Local Student",
+      "age": 12,
+      "big_five": {
+        "openness": 9,
+        "conscientiousness": 5,
+        "extraversion": 7,
+        "agreeableness": 7,
+        "neuroticism": 6
+      },
+      "final_stress": 8,
+      "final_health": 10,
+      "final_location": "school_rooftop",
+      "is_active": true
+    },
+    {
+      "id": "df33f8f1-44d0-4616-8fe2-5601044891c3",
+      "name": "Rosa Magbanua #12",
+      "role": "human",
+      "occupation": "Fish Vendor",
+      "age": 44,
+      "big_five": {
+        "openness": 6,
+        "conscientiousness": 8,
+        "extraversion": 7,
+        "agreeableness": 7,
+        "neuroticism": 5
+      },
+      "final_stress": 7,
+      "final_health": 9,
+      "final_location": "fishing_harbor",
+      "is_active": true
+    }
+  ],
+  "agent_count": 12,
+  "total_actions": 73,
+  "total_messages": 8,
+  "critical_decisions": [
+    {
+      "step": 1,
+      "agent": "Tsunami System",
+      "type": "speech",
+      "content": "CRITICAL ALERT: The floodwaters have reached their peak. The coastal village and fishing harbor are now completely submerged, with debris piling up against structures. The mangrove trail is impassable",
+      "tags": [
+        "cooperative_speech"
+      ],
+      "score": 1
+    },
+    {
+      "step": 3,
+      "agent": "Tsunami System",
+      "type": "speech",
+      "content": "The situation has reached a critical tipping point. Hazard levels remain at a catastrophic 10/10 as the storm surge refuses to recede. The coastal_village is crumbling; foundations are washing away an",
+      "tags": [
+        "self_preservation"
+      ],
+      "score": 1
+    },
+    {
+      "step": 4,
+      "agent": "Tsunami System",
+      "type": "speech",
+      "content": "The storm's fury has reached its peak. The water level is no longer rising, but the sheer force of the current has begun to tear at the coastline. The fishing harbor is groaning; the main pier is visi",
+      "tags": [
+        "cooperative_speech"
+      ],
+      "score": 1
+    },
+    {
+      "agent": "Soo-jin Park #6",
+      "type": "final_state",
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1,
+      "final_stress": 9,
+      "final_health": 9
+    },
+    {
+      "agent": "Dong-hyun Park #7",
+      "type": "final_state",
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1,
+      "final_stress": 8,
+      "final_health": 10
+    },
+    {
+      "agent": "Benny Tan #11",
+      "type": "final_state",
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1,
+      "final_stress": 8,
+      "final_health": 10
+    }
+  ],
+  "communication_graph": {
+    "total_messages": 8,
+    "broadcasts": 8,
+    "direct_messages": 0,
+    "unique_speakers": 1,
+    "edges": [
+      {
+        "from": "Tsunami System",
+        "to": "broadcast",
+        "count": 8,
+        "types": [
+          "broadcast"
+        ]
+      }
+    ]
+  },
+  "stress_trajectories": {},
+  "world_state_progression": [
+    {
+      "step": 1,
+      "hazard_level": 10,
+      "weather": "tropical_storm",
+      "time_of_day": "early_morning",
+      "events": [
+        "Mega-tsunami struck the coast at 5:47 AM",
+        "Aftershocks continuing every 20-30 minutes",
+        "Children trapped on school rooftop waving for help",
+        "NGO compound gate locked \u2014 locals demanding access to medical supplies",
+        "Barangay captain hoarding emergency supplies in government building",
+        "The storm surge has breached the seawall, submerging the fishing harbor and coastal village under churning debris. A sudden landslide has blocked the lower section of the mangrove trail, cutting off the path to the hilltop. The barangay hall's foundation is cracking under the pressure of the rising floodwaters."
+      ],
+      "resources": [
+        "philippine_navy_incoming",
+        "ngo_medical_supplies",
+        "fishing_boats",
+        "emergency_flare",
+        "collapsing_raft"
+      ]
+    },
+    {
+      "step": 2,
+      "hazard_level": 10,
+      "weather": "tropical_storm",
+      "time_of_day": "early_morning",
+      "events": [
+        "Mega-tsunami struck the coast at 5:47 AM",
+        "Aftershocks continuing every 20-30 minutes",
+        "Children trapped on school rooftop waving for help",
+        "NGO compound gate locked \u2014 locals demanding access to medical supplies",
+        "Barangay captain hoarding emergency supplies in government building",
+        "The storm surge has breached the seawall, submerging the fishing harbor and coastal village under churning debris. A sudden landslide has blocked the lower section of the mangrove trail, cutting off the path to the hilltop. The barangay hall's foundation is cracking under the pressure of the rising floodwaters.",
+        "The fishing harbor has completely collapsed under the weight of the surge, creating a dangerous debris field.",
+        "A sudden surge of water has breached the lower defenses of the coastal village, cutting off the main road.",
+        "The current is pulling violently near the mangrove trail, making passage nearly impossible without flotation devices."
+      ],
+      "resources": [
+        "philippine_navy_incoming",
+        "ngo_medical_supplies",
+        "fishing_boats",
+        "emergency_flare",
+        "collapsing_raft",
+        "emergency_ration_pack",
+        "flotation_device",
+        "radio_battery"
+      ]
+    },
+    {
+      "step": 3,
+      "hazard_level": 10,
+      "weather": "tropical_storm",
+      "time_of_day": "early_morning",
+      "events": [
+        "Mega-tsunami struck the coast at 5:47 AM",
+        "Aftershocks continuing every 20-30 minutes",
+        "Children trapped on school rooftop waving for help",
+        "NGO compound gate locked \u2014 locals demanding access to medical supplies",
+        "Barangay captain hoarding emergency supplies in government building",
+        "The storm surge has breached the seawall, submerging the fishing harbor and coastal village under churning debris. A sudden landslide has blocked the lower section of the mangrove trail, cutting off the path to the hilltop. The barangay hall's foundation is cracking under the pressure of the rising floodwaters.",
+        "The fishing harbor has completely collapsed under the weight of the surge, creating a dangerous debris field.",
+        "A sudden surge of water has breached the lower defenses of the coastal village, cutting off the main road.",
+        "The current is pulling violently near the mangrove trail, making passage nearly impossible without flotation devices.",
+        "Structural collapse imminent at coastal_village",
+        "Flash flood surge hitting fishing_harbor",
+        "Debris dam formed in mangrove_trail"
+      ],
+      "resources": [
+        "philippine_navy_incoming",
+        "ngo_medical_supplies",
+        "fishing_boats",
+        "emergency_flare",
+        "collapsing_raft",
+        "emergency_ration_pack",
+        "flotation_device",
+        "radio_battery",
+        "makeshift_raft",
+        "emergency_radio"
+      ]
+    },
+    {
+      "step": 4,
+      "hazard_level": 10,
+      "weather": "tropical_storm",
+      "time_of_day": "early_morning",
+      "events": [
+        "Mega-tsunami struck the coast at 5:47 AM",
+        "Aftershocks continuing every 20-30 minutes",
+        "Children trapped on school rooftop waving for help",
+        "NGO compound gate locked \u2014 locals demanding access to medical supplies",
+        "Barangay captain hoarding emergency supplies in government building",
+        "The storm surge has breached the seawall, submerging the fishing harbor and coastal village under churning debris. A sudden landslide has blocked the lower section of the mangrove trail, cutting off the path to the hilltop. The barangay hall's foundation is cracking under the pressure of the rising floodwaters.",
+        "The fishing harbor has completely collapsed under the weight of the surge, creating a dangerous debris field.",
+        "A sudden surge of water has breached the lower defenses of the coastal village, cutting off the main road.",
+        "The current is pulling violently near the mangrove trail, making passage nearly impossible without flotation devices.",
+        "Structural collapse imminent at coastal_village",
+        "Flash flood surge hitting fishing_harbor",
+        "Debris dam formed in mangrove_trail",
+        "Structural failure imminent at fishing_harbor: The main pier is buckling under the current.",
+        "Flash flood surge blocks the lower path to coastal_village.",
+        "A group of stranded survivors spotted on the school_rooftop waving for help."
+      ],
+      "resources": [
+        "philippine_navy_incoming",
+        "ngo_medical_supplies",
+        "fishing_boats",
+        "emergency_flare",
+        "collapsing_raft",
+        "emergency_ration_pack",
+        "flotation_device",
+        "radio_battery",
+        "makeshift_raft",
+        "emergency_radio",
+        "collapsing_raft",
+        "floating_medicine_case"
+      ]
+    },
+    {
+      "step": 5,
+      "hazard_level": 10,
+      "weather": "tropical_storm",
+      "time_of_day": "early_morning",
+      "events": [
+        "Mega-tsunami struck the coast at 5:47 AM",
+        "Aftershocks continuing every 20-30 minutes",
+        "Children trapped on school rooftop waving for help",
+        "NGO compound gate locked \u2014 locals demanding access to medical supplies",
+        "Barangay captain hoarding emergency supplies in government building",
+        "The storm surge has breached the seawall, submerging the fishing harbor and coastal village under churning debris. A sudden landslide has blocked the lower section of the mangrove trail, cutting off the path to the hilltop. The barangay hall's foundation is cracking under the pressure of the rising floodwaters.",
+        "The fishing harbor has completely collapsed under the weight of the surge, creating a dangerous debris field.",
+        "A sudden surge of water has breached the lower defenses of the coastal village, cutting off the main road.",
+        "The current is pulling violently near the mangrove trail, making passage nearly impossible without flotation devices.",
+        "Structural collapse imminent at coastal_village",
+        "Flash flood surge hitting fishing_harbor",
+        "Debris dam formed in mangrove_trail",
+        "Structural failure imminent at fishing_harbor: The main pier is buckling under the current.",
+        "Flash flood surge blocks the lower path to coastal_village.",
+        "A group of stranded survivors spotted on the school_rooftop waving for help.",
+        "The seawall at the coastal village finally gives way, sending a surge of debris-choked water into the streets.",
+        "A section of the mangrove trail collapses, severing the path between the harbor and the village.",
+        "Heavy rain intensifies the river flow, making the water current at the fishing harbor treacherous."
+      ],
+      "resources": [
+        "philippine_navy_incoming",
+        "ngo_medical_supplies",
+        "fishing_boats",
+        "emergency_flare",
+        "collapsing_raft",
+        "emergency_ration_pack",
+        "flotation_device",
+        "radio_battery",
+        "makeshift_raft",
+        "emergency_radio",
+        "collapsing_raft",
+        "floating_medicine_case",
+        "tangled_fishing_net",
+        "floating_plastic_container",
+        "damaged_raft"
+      ]
+    },
+    {
+      "step": 6,
+      "hazard_level": 10,
+      "weather": "tropical_storm",
+      "time_of_day": "early_morning",
+      "events": [
+        "Mega-tsunami struck the coast at 5:47 AM",
+        "Aftershocks continuing every 20-30 minutes",
+        "Children trapped on school rooftop waving for help",
+        "NGO compound gate locked \u2014 locals demanding access to medical supplies",
+        "Barangay captain hoarding emergency supplies in government building",
+        "The storm surge has breached the seawall, submerging the fishing harbor and coastal village under churning debris. A sudden landslide has blocked the lower section of the mangrove trail, cutting off the path to the hilltop. The barangay hall's foundation is cracking under the pressure of the rising floodwaters.",
+        "The fishing harbor has completely collapsed under the weight of the surge, creating a dangerous debris field.",
+        "A sudden surge of water has breached the lower defenses of the coastal village, cutting off the main road.",
+        "The current is pulling violently near the mangrove trail, making passage nearly impossible without flotation devices.",
+        "Structural collapse imminent at coastal_village",
+        "Flash flood surge hitting fishing_harbor",
+        "Debris dam formed in mangrove_trail",
+        "Structural failure imminent at fishing_harbor: The main pier is buckling under the current.",
+        "Flash flood surge blocks the lower path to coastal_village.",
+        "A group of stranded survivors spotted on the school_rooftop waving for help.",
+        "The seawall at the coastal village finally gives way, sending a surge of debris-choked water into the streets.",
+        "A section of the mangrove trail collapses, severing the path between the harbor and the village.",
+        "Heavy rain intensifies the river flow, making the water current at the fishing harbor treacherous.",
+        "The main seawall at the coastal village has finally breached, sending a surge of debris-laden water inland.",
+        "The fishing harbor is now completely submerged, rendering boats unreachable without swimming.",
+        "A makeshift raft has been spotted drifting near the church plaza."
+      ],
+      "resources": [
+        "philippine_navy_incoming",
+        "ngo_medical_supplies",
+        "fishing_boats",
+        "emergency_flare",
+        "collapsing_raft",
+        "emergency_ration_pack",
+        "flotation_device",
+        "radio_battery",
+        "makeshift_raft",
+        "emergency_radio",
+        "collapsing_raft",
+        "floating_medicine_case",
+        "tangled_fishing_net",
+        "floating_plastic_container",
+        "damaged_raft",
+        "floating_plastic_drums",
+        "tattered_boat",
+        "emergency_rations"
+      ]
+    },
+    {
+      "step": 7,
+      "hazard_level": 10,
+      "weather": "tropical_storm",
+      "time_of_day": "early_morning",
+      "events": [
+        "Mega-tsunami struck the coast at 5:47 AM",
+        "Aftershocks continuing every 20-30 minutes",
+        "Children trapped on school rooftop waving for help",
+        "NGO compound gate locked \u2014 locals demanding access to medical supplies",
+        "Barangay captain hoarding emergency supplies in government building",
+        "The storm surge has breached the seawall, submerging the fishing harbor and coastal village under churning debris. A sudden landslide has blocked the lower section of the mangrove trail, cutting off the path to the hilltop. The barangay hall's foundation is cracking under the pressure of the rising floodwaters.",
+        "The fishing harbor has completely collapsed under the weight of the surge, creating a dangerous debris field.",
+        "A sudden surge of water has breached the lower defenses of the coastal village, cutting off the main road.",
+        "The current is pulling violently near the mangrove trail, making passage nearly impossible without flotation devices.",
+        "Structural collapse imminent at coastal_village",
+        "Flash flood surge hitting fishing_harbor",
+        "Debris dam formed in mangrove_trail",
+        "Structural failure imminent at fishing_harbor: The main pier is buckling under the current.",
+        "Flash flood surge blocks the lower path to coastal_village.",
+        "A group of stranded survivors spotted on the school_rooftop waving for help.",
+        "The seawall at the coastal village finally gives way, sending a surge of debris-choked water into the streets.",
+        "A section of the mangrove trail collapses, severing the path between the harbor and the village.",
+        "Heavy rain intensifies the river flow, making the water current at the fishing harbor treacherous.",
+        "The main seawall at the coastal village has finally breached, sending a surge of debris-laden water inland.",
+        "The fishing harbor is now completely submerged, rendering boats unreachable without swimming.",
+        "A makeshift raft has been spotted drifting near the church plaza.",
+        "A massive wave surge has completely submerged the lower levels of the coastal_village and fishing_harbor, making ground movement impossible.",
+        "The mangrove_trail has been severed by a collapsing tree line, cutting off the path to the northern sector.",
+        "Structural instability warning: The church_plaza bell tower is showing signs of imminent collapse."
+      ],
+      "resources": [
+        "philippine_navy_incoming",
+        "ngo_medical_supplies",
+        "fishing_boats",
+        "emergency_flare",
+        "collapsing_raft",
+        "emergency_ration_pack",
+        "flotation_device",
+        "radio_battery",
+        "makeshift_raft",
+        "emergency_radio",
+        "collapsing_raft",
+        "floating_medicine_case",
+        "tangled_fishing_net",
+        "floating_plastic_container",
+        "damaged_raft",
+        "floating_plastic_drums",
+        "tattered_boat",
+        "emergency_rations",
+        {
+          "name": "Floating Debris Raft",
+          "location": "coastal_village",
+          "count": 1
+        },
+        {
+          "name": "Waterlogged Medical Kit",
+          "location": "church_plaza",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "step": 8,
+      "hazard_level": 10,
+      "weather": "tropical_storm",
+      "time_of_day": "early_morning",
+      "events": [
+        "Mega-tsunami struck the coast at 5:47 AM",
+        "Aftershocks continuing every 20-30 minutes",
+        "Children trapped on school rooftop waving for help",
+        "NGO compound gate locked \u2014 locals demanding access to medical supplies",
+        "Barangay captain hoarding emergency supplies in government building",
+        "The storm surge has breached the seawall, submerging the fishing harbor and coastal village under churning debris. A sudden landslide has blocked the lower section of the mangrove trail, cutting off the path to the hilltop. The barangay hall's foundation is cracking under the pressure of the rising floodwaters.",
+        "The fishing harbor has completely collapsed under the weight of the surge, creating a dangerous debris field.",
+        "A sudden surge of water has breached the lower defenses of the coastal village, cutting off the main road.",
+        "The current is pulling violently near the mangrove trail, making passage nearly impossible without flotation devices.",
+        "Structural collapse imminent at coastal_village",
+        "Flash flood surge hitting fishing_harbor",
+        "Debris dam formed in mangrove_trail",
+        "Structural failure imminent at fishing_harbor: The main pier is buckling under the current.",
+        "Flash flood surge blocks the lower path to coastal_village.",
+        "A group of stranded survivors spotted on the school_rooftop waving for help.",
+        "The seawall at the coastal village finally gives way, sending a surge of debris-choked water into the streets.",
+        "A section of the mangrove trail collapses, severing the path between the harbor and the village.",
+        "Heavy rain intensifies the river flow, making the water current at the fishing harbor treacherous.",
+        "The main seawall at the coastal village has finally breached, sending a surge of debris-laden water inland.",
+        "The fishing harbor is now completely submerged, rendering boats unreachable without swimming.",
+        "A makeshift raft has been spotted drifting near the church plaza.",
+        "A massive wave surge has completely submerged the lower levels of the coastal_village and fishing_harbor, making ground movement impossible.",
+        "The mangrove_trail has been severed by a collapsing tree line, cutting off the path to the northern sector.",
+        "Structural instability warning: The church_plaza bell tower is showing signs of imminent collapse.",
+        "The sea wall at the Fishing Harbor has completely collapsed, sending a massive surge into the village center.",
+        "Heavy debris is blocking the main road to the Church Plaza, forcing evacuees to use the treacherous Mangrove Trail.",
+        "The Barangay Hall roof is showing signs of imminent structural failure due to water pressure."
+      ],
+      "resources": [
+        "philippine_navy_incoming",
+        "ngo_medical_supplies",
+        "fishing_boats",
+        "emergency_flare",
+        "collapsing_raft",
+        "emergency_ration_pack",
+        "flotation_device",
+        "radio_battery",
+        "makeshift_raft",
+        "emergency_radio",
+        "collapsing_raft",
+        "floating_medicine_case",
+        "tangled_fishing_net",
+        "floating_plastic_container",
+        "damaged_raft",
+        "floating_plastic_drums",
+        "tattered_boat",
+        "emergency_rations",
+        {
+          "name": "Floating Debris Raft",
+          "location": "coastal_village",
+          "count": 1
+        },
+        {
+          "name": "Waterlogged Medical Kit",
+          "location": "church_plaza",
+          "count": 1
+        },
+        "emergency_flares",
+        "medical_kit"
+      ]
+    }
+  ],
+  "cinematic_timeline": [],
+  "action_timeline": [
+    {
+      "agent_id": "65ecaa63-d3c0-4624-b926-a873eab44136",
+      "agent_name": "Tsunami System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "coastal_village",
+          "fishing_harbor",
+          "mangrove_trail",
+          "barangay_hall"
+        ],
+        "new_resources": [
+          "emergency_flare",
+          "collapsing_raft"
+        ],
+        "events": [
+          "The storm surge has breached the seawall, submerging the fishing harbor and coastal village under churning debris. A sudden landslide has blocked the lower section of the mangrove trail, cutting off the path to the hilltop. The barangay hall's foundation is cracking under the pressure of the rising floodwaters."
+        ]
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "65ecaa63-d3c0-4624-b926-a873eab44136",
+      "agent_name": "Tsunami System",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_coastal_village",
+      "parameters": {
+        "health_delta": -5,
+        "stress_delta": 8,
+        "health": 5,
+        "stress_level": 9
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "65ecaa63-d3c0-4624-b926-a873eab44136",
+      "agent_name": "Tsunami System",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_fishing_harbor",
+      "parameters": {
+        "health_delta": -6,
+        "stress_delta": 7,
+        "health": 4,
+        "stress_level": 9
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "4950caa8-1730-467c-baab-3354f0972f53",
+      "agent_name": "Lito Magbanua #1",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "4c5f1858-4368-434d-909a-1207c10f85cb",
+      "agent_name": "Captain Reyna Dela Cruz #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "d818f9a1-5c97-4195-aaf9-dbbbf7239f01",
+      "agent_name": "PFC Marco Villanueva #9",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "5300eeca-7392-440d-bd76-fcbd84f6baf0",
+      "agent_name": "Father Domingo Reyes #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "d34891ce-069e-4950-9657-a1cfd3e8e12f",
+      "agent_name": "Soo-jin Park #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "4ae4db1f-ccb7-40bc-a29b-446e514216f2",
+      "agent_name": "Dong-hyun Park #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "7b64695b-5414-4f50-9253-0e2f5d3ee614",
+      "agent_name": "Dr. Amara Osei #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "5a58976d-d4c2-4fae-9a12-b24420f74655",
+      "agent_name": "Barangay Captain Jun Aquino #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "cb41bf88-10ae-4b64-a415-0b155863db9a",
+      "agent_name": "Benny Tan #11",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "65ecaa63-d3c0-4624-b926-a873eab44136",
+      "agent_name": "Tsunami System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "fishing_harbor",
+          "coastal_village",
+          "mangrove_trail"
+        ],
+        "new_resources": [
+          "emergency_ration_pack",
+          "flotation_device",
+          "radio_battery"
+        ],
+        "events": [
+          "The fishing harbor has completely collapsed under the weight of the surge, creating a dangerous debris field.",
+          "A sudden surge of water has breached the lower defenses of the coastal village, cutting off the main road.",
+          "The current is pulling violently near the mangrove trail, making passage nearly impossible without flotation devices."
+        ]
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "65ecaa63-d3c0-4624-b926-a873eab44136",
+      "agent_name": "Tsunami System",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_fishing_harbor",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": 8,
+        "stress_level": 6
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "65ecaa63-d3c0-4624-b926-a873eab44136",
+      "agent_name": "Tsunami System",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_coastal_village",
+      "parameters": {
+        "health_delta": -1,
+        "stress_delta": 2,
+        "health": 9,
+        "stress_level": 5
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "4950caa8-1730-467c-baab-3354f0972f53",
+      "agent_name": "Lito Magbanua #1",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "d818f9a1-5c97-4195-aaf9-dbbbf7239f01",
+      "agent_name": "PFC Marco Villanueva #9",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "5300eeca-7392-440d-bd76-fcbd84f6baf0",
+      "agent_name": "Father Domingo Reyes #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "d34891ce-069e-4950-9657-a1cfd3e8e12f",
+      "agent_name": "Soo-jin Park #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "4ae4db1f-ccb7-40bc-a29b-446e514216f2",
+      "agent_name": "Dong-hyun Park #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "7b64695b-5414-4f50-9253-0e2f5d3ee614",
+      "agent_name": "Dr. Amara Osei #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "71bf5f22-7b05-4913-b95e-610c1290897e",
+      "agent_name": "Karen Lindstr\u00f6m #4",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "5a58976d-d4c2-4fae-9a12-b24420f74655",
+      "agent_name": "Barangay Captain Jun Aquino #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "cb41bf88-10ae-4b64-a415-0b155863db9a",
+      "agent_name": "Benny Tan #11",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "65ecaa63-d3c0-4624-b926-a873eab44136",
+      "agent_name": "Tsunami System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "coastal_village",
+          "mangrove_trail",
+          "fishing_harbor"
+        ],
+        "new_resources": [
+          "makeshift_raft",
+          "emergency_radio"
+        ],
+        "events": [
+          "Structural collapse imminent at coastal_village",
+          "Flash flood surge hitting fishing_harbor",
+          "Debris dam formed in mangrove_trail"
+        ]
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "65ecaa63-d3c0-4624-b926-a873eab44136",
+      "agent_name": "Tsunami System",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_coastal_village",
+      "parameters": {
+        "health_delta": -3,
+        "stress_delta": 5,
+        "health": 7,
+        "stress_level": 8
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "65ecaa63-d3c0-4624-b926-a873eab44136",
+      "agent_name": "Tsunami System",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_fishing_harbor",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 4,
+        "health": 8,
+        "stress_level": 7
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "4c5f1858-4368-434d-909a-1207c10f85cb",
+      "agent_name": "Captain Reyna Dela Cruz #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "d818f9a1-5c97-4195-aaf9-dbbbf7239f01",
+      "agent_name": "PFC Marco Villanueva #9",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "d34891ce-069e-4950-9657-a1cfd3e8e12f",
+      "agent_name": "Soo-jin Park #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "4ae4db1f-ccb7-40bc-a29b-446e514216f2",
+      "agent_name": "Dong-hyun Park #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "5a58976d-d4c2-4fae-9a12-b24420f74655",
+      "agent_name": "Barangay Captain Jun Aquino #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "65ecaa63-d3c0-4624-b926-a873eab44136",
+      "agent_name": "Tsunami System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "coastal_village",
+          "fishing_harbor",
+          "mangrove_trail"
+        ],
+        "new_resources": [
+          "collapsing_raft",
+          "floating_medicine_case"
+        ],
+        "events": [
+          "Structural failure imminent at fishing_harbor: The main pier is buckling under the current.",
+          "Flash flood surge blocks the lower path to coastal_village.",
+          "A group of stranded survivors spotted on the school_rooftop waving for help."
+        ]
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "65ecaa63-d3c0-4624-b926-a873eab44136",
+      "agent_name": "Tsunami System",
+      "action_type": "affect_agent",
+      "target": "agent_in_harbor",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": 8,
+        "stress_level": 6
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "65ecaa63-d3c0-4624-b926-a873eab44136",
+      "agent_name": "Tsunami System",
+      "action_type": "affect_agent",
+      "target": "agent_in_village",
+      "parameters": {
+        "health_delta": -1,
+        "stress_delta": 2,
+        "health": 7,
+        "stress_level": 5
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "4c5f1858-4368-434d-909a-1207c10f85cb",
+      "agent_name": "Captain Reyna Dela Cruz #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "5300eeca-7392-440d-bd76-fcbd84f6baf0",
+      "agent_name": "Father Domingo Reyes #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "d34891ce-069e-4950-9657-a1cfd3e8e12f",
+      "agent_name": "Soo-jin Park #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "7b64695b-5414-4f50-9253-0e2f5d3ee614",
+      "agent_name": "Dr. Amara Osei #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "71bf5f22-7b05-4913-b95e-610c1290897e",
+      "agent_name": "Karen Lindstr\u00f6m #4",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "5a58976d-d4c2-4fae-9a12-b24420f74655",
+      "agent_name": "Barangay Captain Jun Aquino #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "cb41bf88-10ae-4b64-a415-0b155863db9a",
+      "agent_name": "Benny Tan #11",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "df33f8f1-44d0-4616-8fe2-5601044891c3",
+      "agent_name": "Rosa Magbanua #12",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "65ecaa63-d3c0-4624-b926-a873eab44136",
+      "agent_name": "Tsunami System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "coastal_village",
+          "fishing_harbor",
+          "mangrove_trail"
+        ],
+        "new_resources": [
+          "tangled_fishing_net",
+          "floating_plastic_container",
+          "damaged_raft"
+        ],
+        "events": [
+          "The seawall at the coastal village finally gives way, sending a surge of debris-choked water into the streets.",
+          "A section of the mangrove trail collapses, severing the path between the harbor and the village.",
+          "Heavy rain intensifies the river flow, making the water current at the fishing harbor treacherous."
+        ]
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "65ecaa63-d3c0-4624-b926-a873eab44136",
+      "agent_name": "Tsunami System",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_coastal_village",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": 8,
+        "stress_level": 7
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "65ecaa63-d3c0-4624-b926-a873eab44136",
+      "agent_name": "Tsunami System",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_fishing_harbor",
+      "parameters": {
+        "health_delta": -1,
+        "stress_delta": 4,
+        "health": 9,
+        "stress_level": 8
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "4950caa8-1730-467c-baab-3354f0972f53",
+      "agent_name": "Lito Magbanua #1",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "4c5f1858-4368-434d-909a-1207c10f85cb",
+      "agent_name": "Captain Reyna Dela Cruz #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "d818f9a1-5c97-4195-aaf9-dbbbf7239f01",
+      "agent_name": "PFC Marco Villanueva #9",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "d34891ce-069e-4950-9657-a1cfd3e8e12f",
+      "agent_name": "Soo-jin Park #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "4ae4db1f-ccb7-40bc-a29b-446e514216f2",
+      "agent_name": "Dong-hyun Park #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "65ecaa63-d3c0-4624-b926-a873eab44136",
+      "agent_name": "Tsunami System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "coastal_village",
+          "fishing_harbor",
+          "mangrove_trail"
+        ],
+        "new_resources": [
+          "floating_plastic_drums",
+          "tattered_boat",
+          "emergency_rations"
+        ],
+        "events": [
+          "The main seawall at the coastal village has finally breached, sending a surge of debris-laden water inland.",
+          "The fishing harbor is now completely submerged, rendering boats unreachable without swimming.",
+          "A makeshift raft has been spotted drifting near the church plaza."
+        ]
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "65ecaa63-d3c0-4624-b926-a873eab44136",
+      "agent_name": "Tsunami System",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_coastal_village",
+      "parameters": {
+        "health_delta": -3,
+        "stress_delta": 5,
+        "health": null,
+        "stress_level": null
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "65ecaa63-d3c0-4624-b926-a873eab44136",
+      "agent_name": "Tsunami System",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_fishing_harbor",
+      "parameters": {
+        "health_delta": -5,
+        "stress_delta": 8,
+        "health": null,
+        "stress_level": null
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "4c5f1858-4368-434d-909a-1207c10f85cb",
+      "agent_name": "Captain Reyna Dela Cruz #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "5300eeca-7392-440d-bd76-fcbd84f6baf0",
+      "agent_name": "Father Domingo Reyes #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "7b64695b-5414-4f50-9253-0e2f5d3ee614",
+      "agent_name": "Dr. Amara Osei #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "71bf5f22-7b05-4913-b95e-610c1290897e",
+      "agent_name": "Karen Lindstr\u00f6m #4",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "5a58976d-d4c2-4fae-9a12-b24420f74655",
+      "agent_name": "Barangay Captain Jun Aquino #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "df33f8f1-44d0-4616-8fe2-5601044891c3",
+      "agent_name": "Rosa Magbanua #12",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "65ecaa63-d3c0-4624-b926-a873eab44136",
+      "agent_name": "Tsunami System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "coastal_village",
+          "mangrove_trail",
+          "fishing_harbor",
+          "church_plaza"
+        ],
+        "new_resources": [
+          {
+            "name": "Floating Debris Raft",
+            "location": "coastal_village",
+            "count": 1
+          },
+          {
+            "name": "Waterlogged Medical Kit",
+            "location": "church_plaza",
+            "count": 1
+          }
+        ],
+        "events": [
+          "A massive wave surge has completely submerged the lower levels of the coastal_village and fishing_harbor, making ground movement impossible.",
+          "The mangrove_trail has been severed by a collapsing tree line, cutting off the path to the northern sector.",
+          "Structural instability warning: The church_plaza bell tower is showing signs of imminent collapse."
+        ]
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "65ecaa63-d3c0-4624-b926-a873eab44136",
+      "agent_name": "Tsunami System",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_flooded_zones",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": null,
+        "stress_level": null
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "5300eeca-7392-440d-bd76-fcbd84f6baf0",
+      "agent_name": "Father Domingo Reyes #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 7
+    },
+    {
+      "agent_id": "4ae4db1f-ccb7-40bc-a29b-446e514216f2",
+      "agent_name": "Dong-hyun Park #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 7
+    },
+    {
+      "agent_id": "71bf5f22-7b05-4913-b95e-610c1290897e",
+      "agent_name": "Karen Lindstr\u00f6m #4",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 7
+    },
+    {
+      "agent_id": "cb41bf88-10ae-4b64-a415-0b155863db9a",
+      "agent_name": "Benny Tan #11",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 7
+    },
+    {
+      "agent_id": "df33f8f1-44d0-4616-8fe2-5601044891c3",
+      "agent_name": "Rosa Magbanua #12",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 7
+    },
+    {
+      "agent_id": "65ecaa63-d3c0-4624-b926-a873eab44136",
+      "agent_name": "Tsunami System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "coastal_village",
+          "mangrove_trail",
+          "fishing_harbor",
+          "barangay_hall"
+        ],
+        "new_resources": [
+          "emergency_flares",
+          "medical_kit"
+        ],
+        "events": [
+          "The sea wall at the Fishing Harbor has completely collapsed, sending a massive surge into the village center.",
+          "Heavy debris is blocking the main road to the Church Plaza, forcing evacuees to use the treacherous Mangrove Trail.",
+          "The Barangay Hall roof is showing signs of imminent structural failure due to water pressure."
+        ]
+      },
+      "step": 8
+    },
+    {
+      "agent_id": "65ecaa63-d3c0-4624-b926-a873eab44136",
+      "agent_name": "Tsunami System",
+      "action_type": "affect_agent",
+      "target": "agents_in_coastal_village",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": 0,
+        "stress_level": 10
+      },
+      "step": 8
+    },
+    {
+      "agent_id": "65ecaa63-d3c0-4624-b926-a873eab44136",
+      "agent_name": "Tsunami System",
+      "action_type": "affect_agent",
+      "target": "agents_in_fishing_harbor",
+      "parameters": {
+        "health_delta": -3,
+        "stress_delta": 4,
+        "health": 0,
+        "stress_level": 10
+      },
+      "step": 8
+    },
+    {
+      "agent_id": "c5f5093d-41d6-4f6c-97d1-689651b79edf",
+      "agent_name": "Nanay Iska #8",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 8
+    },
+    {
+      "agent_id": "d818f9a1-5c97-4195-aaf9-dbbbf7239f01",
+      "agent_name": "PFC Marco Villanueva #9",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 8
+    },
+    {
+      "agent_id": "7b64695b-5414-4f50-9253-0e2f5d3ee614",
+      "agent_name": "Dr. Amara Osei #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 8
+    }
+  ],
+  "message_timeline": [
+    {
+      "step": 1,
+      "from_agent": "Tsunami System",
+      "from_id": "65ecaa63-d3c0-4624-b926-a873eab44136",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "CRITICAL ALERT: The floodwaters have reached their peak. The coastal village and fishing harbor are now completely submerged, with debris piling up against structures. The mangrove trail is impassable due to a landslide, isolating those on the lower ground. The barangay hall is at risk of total collapse. Emergency flares have washed up near the school rooftop, offering a potential signal for rescue. A makeshift raft is visible in the churning water near the NGO compound but is unstable."
+    },
+    {
+      "step": 2,
+      "from_agent": "Tsunami System",
+      "from_id": "65ecaa63-d3c0-4624-b926-a873eab44136",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "CRITICAL ALERT: The peak of the storm surge has arrived. The fishing harbor has structurally failed, creating a chaotic debris field in the water. The coastal village is now partially submerged, severing the main evacuation route. The currents near the mangrove trail are lethal without aid. However, survivors have washed up with emergency ration packs, a few flotation devices, and a radio battery near the school rooftop. The water is not receding; it is at its absolute zenith. You must act now or be swept away."
+    },
+    {
+      "step": 3,
+      "from_agent": "Tsunami System",
+      "from_id": "65ecaa63-d3c0-4624-b926-a873eab44136",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The situation has reached a critical tipping point. Hazard levels remain at a catastrophic 10/10 as the storm surge refuses to recede. The coastal_village is crumbling; foundations are washing away and roofs are being torn off by the wind. In the fishing_harbor, a sudden flash flood surge is sweeping boats onto the docks, creating a chaotic tangle of debris. The mangrove_trail is now partially blocked by a massive debris dam, cutting off the escape route. However, amidst the chaos, a Makeshift Raft has washed up near the harbor, and an Emergency Radio has been spotted in the village debris. Time is running out for those still in the low-lying zones."
+    },
+    {
+      "step": 4,
+      "from_agent": "Tsunami System",
+      "from_id": "65ecaa63-d3c0-4624-b926-a873eab44136",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The storm's fury has reached its peak. The water level is no longer rising, but the sheer force of the current has begun to tear at the coastline. The fishing harbor is groaning; the main pier is visibly cracking, threatening to collapse into the churning depths. The path to the coastal village has been severed by a sudden wall of debris and floodwater. Meanwhile, a faint cry for help rises from the school rooftop, where a group of survivors is clinging to life as the water laps at the eaves. A makeshift raft and a case of emergency medicine have washed up near the mangrove trail, but retrieving them will require navigating the dangerous currents."
+    },
+    {
+      "step": 5,
+      "from_agent": "Tsunami System",
+      "from_id": "65ecaa63-d3c0-4624-b926-a873eab44136",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "CRITICAL ALERT: The seawall has breached! The coastal village is now inundated with debris-filled floodwaters. The mangrove trail has collapsed, isolating the fishing harbor from the mainland. The current is too strong for swimming; survival depends on finding floatation devices or higher ground immediately. New supplies washed up: a tangled fishing net and a damaged raft near the harbor."
+    },
+    {
+      "step": 6,
+      "from_agent": "Tsunami System",
+      "from_id": "65ecaa63-d3c0-4624-b926-a873eab44136",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "CRITICAL ALERT: The seawall at the coastal village has collapsed. A massive surge of water is sweeping through the village and flooding the fishing harbor. Debris is everywhere. Agents in the coastal village and harbor are taking severe damage from the impact and hypothermia. A small window of opportunity exists near the church plaza where a raft is drifting\u2014use it before the current sweeps it away! The mangrove trail is becoming impassable due to rising water and fallen trees."
+    },
+    {
+      "step": 7,
+      "from_agent": "Tsunami System",
+      "from_id": "65ecaa63-d3c0-4624-b926-a873eab44136",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "CRITICAL ALERT: The surge has reached its peak! The coastal_village and fishing_harbor are now completely underwater; survival depends on reaching higher ground immediately. The mangrove_trail is blocked by fallen trees. Agents in the church_plaza must move quickly as the bell tower is buckling under the water pressure. A makeshift raft has appeared in the debris of the village, and a damaged medical kit is floating near the church."
+    },
+    {
+      "step": 8,
+      "from_agent": "Tsunami System",
+      "from_id": "65ecaa63-d3c0-4624-b926-a873eab44136",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "CRITICAL ALERT: The sea wall at the Fishing Harbor has catastrophically failed. A massive surge is flooding the Coastal Village and Barangay Hall. The road to Church Plaza is now blocked by debris; the only viable route is the unstable Mangrove Trail. The Barangay Hall roof is buckling under the weight of the flood. Emergency flares and a medical kit have washed ashore near the Harbor ruins, but reaching them requires wading through deep, fast-moving water filled with debris."
+    }
+  ]
+}

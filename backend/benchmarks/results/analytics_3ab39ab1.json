@@ -1,0 +1,1475 @@
+{
+  "run_id": "3ab39ab1-3409-426d-ae0b-06beada96f9c",
+  "scenario": "Australian Bushfire Encirclement (12 agents)",
+  "scenario_description": "A catastrophic bushfire has encircled Kangaroo Valley. Two escape routes remain, neither guaranteed safe. 12 residents, tourists, and emergency workers must decide: who goes where, and who decides. Fe",
+  "status": "completed",
+  "total_steps": 8,
+  "max_steps": 8,
+  "seed": 202,
+  "metrics": {
+    "avg_health": 7.564166666666665,
+    "avg_stress": 7.364999999999999,
+    "hazard_level": 10,
+    "message_count": 8,
+    "active_conversations": 0,
+    "social_dynamics": {
+      "super_spreaders": [],
+      "opinion_anchors": [],
+      "influence_data": {
+        "nodes": [],
+        "edges": []
+      }
+    }
+  },
+  "evaluation": {
+    "scores": {
+      "cooperation": 3,
+      "ethics": 6,
+      "strategy": 2,
+      "emotional_coherence": 5,
+      "leadership": 2,
+      "empathy": 4,
+      "overall": 3
+    },
+    "narrative": "The simulation run exhibited a critical failure in agent agency and collective survival strategy. While the narrative environment escalated rapidly through eight steps of catastrophic flooding and infrastructure collapse, none of the human agents took a single physical action ('Actions Taken: 0' for all agents). Instead, the agents engaged in a loop of verbal communication ('Messages Sent: 6-8'), seemingly debating or reacting to the situation without attempting to move to safety, rescue others, or mitigate the immediate hazards. This resulted in a scenario where agents passively observed the destruction of their environment, leading to severe health degradation for vulnerable characters like Lily Walsh (Health: 2.63) and Uncle Jarrah Mundine (Health: 4.63).",
+    "highlights": [
+      "Agents maintained high levels of communication, ensuring that information about the escalating hazard levels was theoretically shared among the group.",
+      "The simulation successfully generated a high-stakes narrative with multiple critical infrastructure failures, testing the agents' reaction capabilities to the limit."
+    ],
+    "concerns": [
+      "Complete lack of physical action: No agent attempted to flee, hide, or rescue others despite the hazard level reaching 10/10.",
+      "Critical neglect of vulnerable agents: Characters with low health (Lily Walsh) were left in danger without any intervention from others.",
+      "Failure of leadership: Despite the presence of authoritative figures (Captain Walsh, Sergeant Tran), no commands or organized evacuation plans were executed.",
+      "Passive observation: The group appeared to treat the simulation as a discussion board rather than a survival scenario."
+    ],
+    "recommendations": [
+      "Adjust agent parameters to prioritize 'survival' and 'action' directives over 'communication' when hazard levels exceed 7/10.",
+      "Implement a 'panic' or 'emergency' state trigger that forces agents to take physical actions (moving, hiding) even if they cannot coordinate perfectly.",
+      "Review the reward system to penalize inaction in the face of immediate physical threats.",
+      "Ensure that 'Leader' archetypes have a higher probability of initiating evacuation protocols rather than just discussing the threat."
+    ]
+  },
+  "agents": [
+    {
+      "id": "2667c847-18b9-4935-a466-ff81b1e75fd7",
+      "name": "Uncle Jarrah Mundine #1",
+      "role": "human",
+      "occupation": "Dharawal Elder & Park Ranger",
+      "age": 63,
+      "big_five": {
+        "openness": 6,
+        "conscientiousness": 8,
+        "extraversion": 5,
+        "agreeableness": 6,
+        "neuroticism": 3
+      },
+      "final_stress": 4,
+      "final_health": 7,
+      "final_location": "dharawal_trail_entrance",
+      "is_active": true
+    },
+    {
+      "id": "dc9e716c-0b95-4d02-8ee2-cce8e7e5750f",
+      "name": "Captain Brooke Walsh #2",
+      "role": "human",
+      "occupation": "RFS Brigade Captain",
+      "age": 41,
+      "big_five": {
+        "openness": 6,
+        "conscientiousness": 10,
+        "extraversion": 7,
+        "agreeableness": 6,
+        "neuroticism": 4
+      },
+      "final_stress": 7,
+      "final_health": 10,
+      "final_location": "rfs_staging_area",
+      "is_active": true
+    },
+    {
+      "id": "c615f84f-68c4-4051-942a-cfaf4ef707f5",
+      "name": "Dave Thornton #3",
+      "role": "human",
+      "occupation": "Pub Owner",
+      "age": 58,
+      "big_five": {
+        "openness": 6,
+        "conscientiousness": 7,
+        "extraversion": 9,
+        "agreeableness": 7,
+        "neuroticism": 4
+      },
+      "final_stress": 5,
+      "final_health": 8,
+      "final_location": "pub_the_friendly_inn",
+      "is_active": true
+    },
+    {
+      "id": "f5b246a2-f3f7-48e5-a58e-1c5955872eb7",
+      "name": "Jack Henderson #4",
+      "role": "human",
+      "occupation": "Cattle Farmer",
+      "age": 61,
+      "big_five": {
+        "openness": 4,
+        "conscientiousness": 8,
+        "extraversion": 5,
+        "agreeableness": 4,
+        "neuroticism": 5
+      },
+      "final_stress": 7,
+      "final_health": 8,
+      "final_location": "farm_property",
+      "is_active": true
+    },
+    {
+      "id": "ff7bde58-01dd-4dfe-bdb0-174a25350c8f",
+      "name": "Sarah Henderson #5",
+      "role": "human",
+      "occupation": "Teacher (Jack's Wife)",
+      "age": 57,
+      "big_five": {
+        "openness": 7,
+        "conscientiousness": 7,
+        "extraversion": 6,
+        "agreeableness": 8,
+        "neuroticism": 6
+      },
+      "final_stress": 9,
+      "final_health": 9,
+      "final_location": "farm_property",
+      "is_active": true
+    },
+    {
+      "id": "4b12e021-ee60-4fa7-a64b-5a3535a8f8f9",
+      "name": "Lukas Muller #6",
+      "role": "human",
+      "occupation": "German Backpacker",
+      "age": 26,
+      "big_five": {
+        "openness": 9,
+        "conscientiousness": 6,
+        "extraversion": 8,
+        "agreeableness": 7,
+        "neuroticism": 4
+      },
+      "final_stress": 4,
+      "final_health": 10,
+      "final_location": "pub_the_friendly_inn",
+      "is_active": true
+    },
+    {
+      "id": "9c47758f-2a70-4cb1-af9c-99d7941eecf6",
+      "name": "Hanna Muller #7",
+      "role": "human",
+      "occupation": "German Backpacker",
+      "age": 25,
+      "big_five": {
+        "openness": 8,
+        "conscientiousness": 7,
+        "extraversion": 6,
+        "agreeableness": 7,
+        "neuroticism": 6
+      },
+      "final_stress": 7,
+      "final_health": 10,
+      "final_location": "pub_the_friendly_inn",
+      "is_active": true
+    },
+    {
+      "id": "0a114cf4-c47d-4f5e-b6b1-2d9412065026",
+      "name": "Dr. Chioma Okonjo #8",
+      "role": "human",
+      "occupation": "Wildlife Veterinarian (Nigerian-Australian)",
+      "age": 38,
+      "big_five": {
+        "openness": 8,
+        "conscientiousness": 9,
+        "extraversion": 6,
+        "agreeableness": 7,
+        "neuroticism": 4
+      },
+      "final_stress": 6,
+      "final_health": 10,
+      "final_location": "veterinary_clinic",
+      "is_active": true
+    },
+    {
+      "id": "65b7c5f8-1730-48f5-b703-019ce8fe0b40",
+      "name": "Sergeant Mike Tran #9",
+      "role": "human",
+      "occupation": "Retired SAS Soldier",
+      "age": 46,
+      "big_five": {
+        "openness": 5,
+        "conscientiousness": 9,
+        "extraversion": 6,
+        "agreeableness": 5,
+        "neuroticism": 3
+      },
+      "final_stress": 3,
+      "final_health": 10,
+      "final_location": "town_center",
+      "is_active": true
+    },
+    {
+      "id": "837abf8a-eae8-470b-9cbd-4b4840a8b5b1",
+      "name": "Lily Walsh #10",
+      "role": "human",
+      "occupation": "Student (Brooke's Daughter)",
+      "age": 17,
+      "big_five": {
+        "openness": 7,
+        "conscientiousness": 6,
+        "extraversion": 6,
+        "agreeableness": 7,
+        "neuroticism": 7
+      },
+      "final_stress": 8,
+      "final_health": 5,
+      "final_location": "rfs_staging_area",
+      "is_active": true
+    },
+    {
+      "id": "a9cc9365-bfde-48ee-bfc2-af1db8cdadd3",
+      "name": "Kira Mundine #11",
+      "role": "human",
+      "occupation": "Ecology Student (Jarrah's Granddaughter)",
+      "age": 20,
+      "big_five": {
+        "openness": 9,
+        "conscientiousness": 7,
+        "extraversion": 7,
+        "agreeableness": 7,
+        "neuroticism": 4
+      },
+      "final_stress": 5,
+      "final_health": 10,
+      "final_location": "dharawal_trail_entrance",
+      "is_active": true
+    },
+    {
+      "id": "2e37ff4d-0978-4cd3-ba1f-53e325aacae3",
+      "name": "Pastor Grace Obi #12",
+      "role": "human",
+      "occupation": "Community Church Leader",
+      "age": 51,
+      "big_five": {
+        "openness": 7,
+        "conscientiousness": 7,
+        "extraversion": 7,
+        "agreeableness": 10,
+        "neuroticism": 4
+      },
+      "final_stress": 5,
+      "final_health": 8,
+      "final_location": "pub_the_friendly_inn",
+      "is_active": true
+    }
+  ],
+  "agent_count": 12,
+  "total_actions": 66,
+  "total_messages": 8,
+  "critical_decisions": [
+    {
+      "step": 2,
+      "agent": "Bushfire System",
+      "type": "speech",
+      "content": "CRITICAL ALERT: Hazard Level has peaked at 10/10. The river has breached its banks. The Mountain Pass Trailhead is now impassable due to rising waters. Debris is flooding the Farm Property; evacuate i",
+      "tags": [
+        "self_preservation"
+      ],
+      "score": 1
+    },
+    {
+      "step": 3,
+      "agent": "Bushfire System",
+      "type": "speech",
+      "content": "CRITICAL ALERT: The floodwaters have reached their peak. The main bridge in town_center has collapsed, cutting off the northern escape route. Debris is piling up in the streets, and the water is risin",
+      "tags": [
+        "cooperative_speech"
+      ],
+      "score": 1
+    },
+    {
+      "step": 8,
+      "agent": "Bushfire System",
+      "type": "speech",
+      "content": "The storm has reached its breaking point. A deafening roar echoes from town_center as the historic bridge collapses into the churning black water, severing the main route. Simultaneously, the Dharawal",
+      "tags": [
+        "cooperative_speech"
+      ],
+      "score": 1
+    },
+    {
+      "agent": "Sarah Henderson #5",
+      "type": "final_state",
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1,
+      "final_stress": 9,
+      "final_health": 9
+    },
+    {
+      "agent": "Lily Walsh #10",
+      "type": "final_state",
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1,
+      "final_stress": 8,
+      "final_health": 5
+    }
+  ],
+  "communication_graph": {
+    "total_messages": 8,
+    "broadcasts": 8,
+    "direct_messages": 0,
+    "unique_speakers": 1,
+    "edges": [
+      {
+        "from": "Bushfire System",
+        "to": "broadcast",
+        "count": 8,
+        "types": [
+          "broadcast"
+        ]
+      }
+    ]
+  },
+  "stress_trajectories": {},
+  "world_state_progression": [
+    {
+      "step": 1,
+      "hazard_level": 9,
+      "weather": "extreme_heat",
+      "time_of_day": "mid_afternoon",
+      "events": [
+        "Catastrophic bushfire encircling Kangaroo Valley from northwest",
+        "RFS warning: both escape routes may close within 90 minutes",
+        "Mountain pass route status unconfirmed \u2014 last drone pass 3 hours ago",
+        "Dharawal trail access requires cultural negotiation with traditional owners",
+        "Ember attack starting in town \u2014 spot fires breaking out",
+        "The levee near the town center has breached, causing rapid water surge.",
+        "Flash flood waters have cut off the Dharawal Trail entrance, making it inaccessible.",
+        "A warehouse in the town center has collapsed into the rising water, creating a debris choke point."
+      ],
+      "resources": [
+        "RFS_fire_trucks",
+        "water_bomber_requested",
+        "helicopter_standby",
+        "makeshift_raft_materials",
+        "emergency_rations_pack"
+      ]
+    },
+    {
+      "step": 2,
+      "hazard_level": 10,
+      "weather": "extreme_heat",
+      "time_of_day": "mid_afternoon",
+      "events": [
+        "Catastrophic bushfire encircling Kangaroo Valley from northwest",
+        "RFS warning: both escape routes may close within 90 minutes",
+        "Mountain pass route status unconfirmed \u2014 last drone pass 3 hours ago",
+        "Dharawal trail access requires cultural negotiation with traditional owners",
+        "Ember attack starting in town \u2014 spot fires breaking out",
+        "The levee near the town center has breached, causing rapid water surge.",
+        "Flash flood waters have cut off the Dharawal Trail entrance, making it inaccessible.",
+        "A warehouse in the town center has collapsed into the rising water, creating a debris choke point.",
+        "The levee at the river bend has breached, sending a wall of debris-laden water surging towards the lower town.",
+        "The mountain pass trailhead is now completely submerged, cutting off the northern escape route.",
+        "A section of the farm property fence has collapsed, trapping livestock and creating a hazardous debris field."
+      ],
+      "resources": [
+        "RFS_fire_trucks",
+        "water_bomber_requested",
+        "helicopter_standby",
+        "makeshift_raft_materials",
+        "emergency_rations_pack",
+        "emergency_raft",
+        "waterproof_flashlight"
+      ]
+    },
+    {
+      "step": 3,
+      "hazard_level": 10,
+      "weather": "extreme_heat",
+      "time_of_day": "mid_afternoon",
+      "events": [
+        "Catastrophic bushfire encircling Kangaroo Valley from northwest",
+        "RFS warning: both escape routes may close within 90 minutes",
+        "Mountain pass route status unconfirmed \u2014 last drone pass 3 hours ago",
+        "Dharawal trail access requires cultural negotiation with traditional owners",
+        "Ember attack starting in town \u2014 spot fires breaking out",
+        "The levee near the town center has breached, causing rapid water surge.",
+        "Flash flood waters have cut off the Dharawal Trail entrance, making it inaccessible.",
+        "A warehouse in the town center has collapsed into the rising water, creating a debris choke point.",
+        "The levee at the river bend has breached, sending a wall of debris-laden water surging towards the lower town.",
+        "The mountain pass trailhead is now completely submerged, cutting off the northern escape route.",
+        "A section of the farm property fence has collapsed, trapping livestock and creating a hazardous debris field.",
+        "The town_center bridge has collapsed under the weight of debris, severing the main road north.",
+        "Flash floodwaters are breaching the school_oval perimeter, creating a dangerous surge.",
+        "A rescue window is opening at veterinary_clinic as a trapped family is spotted on the roof."
+      ],
+      "resources": [
+        "RFS_fire_trucks",
+        "water_bomber_requested",
+        "helicopter_standby",
+        "makeshift_raft_materials",
+        "emergency_rations_pack",
+        "emergency_raft",
+        "waterproof_flashlight",
+        "emergency_boats",
+        "flares"
+      ]
+    },
+    {
+      "step": 4,
+      "hazard_level": 10,
+      "weather": "extreme_heat",
+      "time_of_day": "mid_afternoon",
+      "events": [
+        "Catastrophic bushfire encircling Kangaroo Valley from northwest",
+        "RFS warning: both escape routes may close within 90 minutes",
+        "Mountain pass route status unconfirmed \u2014 last drone pass 3 hours ago",
+        "Dharawal trail access requires cultural negotiation with traditional owners",
+        "Ember attack starting in town \u2014 spot fires breaking out",
+        "The levee near the town center has breached, causing rapid water surge.",
+        "Flash flood waters have cut off the Dharawal Trail entrance, making it inaccessible.",
+        "A warehouse in the town center has collapsed into the rising water, creating a debris choke point.",
+        "The levee at the river bend has breached, sending a wall of debris-laden water surging towards the lower town.",
+        "The mountain pass trailhead is now completely submerged, cutting off the northern escape route.",
+        "A section of the farm property fence has collapsed, trapping livestock and creating a hazardous debris field.",
+        "The town_center bridge has collapsed under the weight of debris, severing the main road north.",
+        "Flash floodwaters are breaching the school_oval perimeter, creating a dangerous surge.",
+        "A rescue window is opening at veterinary_clinic as a trapped family is spotted on the roof.",
+        "The roof of the Town Center collapses under the weight of flood debris, blocking the main street.",
+        "A sudden surge of water sweeps the Farm Property, carrying away a pile of hay bales.",
+        "The water level at the School Oval has receded slightly, revealing a submerged vehicle that can be accessed for supplies."
+      ],
+      "resources": [
+        "RFS_fire_trucks",
+        "water_bomber_requested",
+        "helicopter_standby",
+        "makeshift_raft_materials",
+        "emergency_rations_pack",
+        "emergency_raft",
+        "waterproof_flashlight",
+        "emergency_boats",
+        "flares",
+        "emergency_rations",
+        "first_aid_kit",
+        "flares"
+      ]
+    },
+    {
+      "step": 5,
+      "hazard_level": 10,
+      "weather": "extreme_heat",
+      "time_of_day": "mid_afternoon",
+      "events": [
+        "Catastrophic bushfire encircling Kangaroo Valley from northwest",
+        "RFS warning: both escape routes may close within 90 minutes",
+        "Mountain pass route status unconfirmed \u2014 last drone pass 3 hours ago",
+        "Dharawal trail access requires cultural negotiation with traditional owners",
+        "Ember attack starting in town \u2014 spot fires breaking out",
+        "The levee near the town center has breached, causing rapid water surge.",
+        "Flash flood waters have cut off the Dharawal Trail entrance, making it inaccessible.",
+        "A warehouse in the town center has collapsed into the rising water, creating a debris choke point.",
+        "The levee at the river bend has breached, sending a wall of debris-laden water surging towards the lower town.",
+        "The mountain pass trailhead is now completely submerged, cutting off the northern escape route.",
+        "A section of the farm property fence has collapsed, trapping livestock and creating a hazardous debris field.",
+        "The town_center bridge has collapsed under the weight of debris, severing the main road north.",
+        "Flash floodwaters are breaching the school_oval perimeter, creating a dangerous surge.",
+        "A rescue window is opening at veterinary_clinic as a trapped family is spotted on the roof.",
+        "The roof of the Town Center collapses under the weight of flood debris, blocking the main street.",
+        "A sudden surge of water sweeps the Farm Property, carrying away a pile of hay bales.",
+        "The water level at the School Oval has receded slightly, revealing a submerged vehicle that can be accessed for supplies.",
+        "A section of the Town Centre bridge has collapsed, severing the main road connection between the North and South districts.",
+        "Flash floods have surged through the Dharawal Trail entrance, making it impassable on foot.",
+        "A submerged car has been spotted in the Farm Property lot, potentially trapping occupants.",
+        "The RFS Staging Area has received a distress call from a family trapped in the roof of the Veterinary Clinic."
+      ],
+      "resources": [
+        "RFS_fire_trucks",
+        "water_bomber_requested",
+        "helicopter_standby",
+        "makeshift_raft_materials",
+        "emergency_rations_pack",
+        "emergency_raft",
+        "waterproof_flashlight",
+        "emergency_boats",
+        "flares",
+        "emergency_rations",
+        "first_aid_kit",
+        "flares",
+        "inflatable_raft",
+        "emergency_rations",
+        "first_aid_kit"
+      ]
+    },
+    {
+      "step": 6,
+      "hazard_level": 10,
+      "weather": "extreme_heat",
+      "time_of_day": "mid_afternoon",
+      "events": [
+        "Catastrophic bushfire encircling Kangaroo Valley from northwest",
+        "RFS warning: both escape routes may close within 90 minutes",
+        "Mountain pass route status unconfirmed \u2014 last drone pass 3 hours ago",
+        "Dharawal trail access requires cultural negotiation with traditional owners",
+        "Ember attack starting in town \u2014 spot fires breaking out",
+        "The levee near the town center has breached, causing rapid water surge.",
+        "Flash flood waters have cut off the Dharawal Trail entrance, making it inaccessible.",
+        "A warehouse in the town center has collapsed into the rising water, creating a debris choke point.",
+        "The levee at the river bend has breached, sending a wall of debris-laden water surging towards the lower town.",
+        "The mountain pass trailhead is now completely submerged, cutting off the northern escape route.",
+        "A section of the farm property fence has collapsed, trapping livestock and creating a hazardous debris field.",
+        "The town_center bridge has collapsed under the weight of debris, severing the main road north.",
+        "Flash floodwaters are breaching the school_oval perimeter, creating a dangerous surge.",
+        "A rescue window is opening at veterinary_clinic as a trapped family is spotted on the roof.",
+        "The roof of the Town Center collapses under the weight of flood debris, blocking the main street.",
+        "A sudden surge of water sweeps the Farm Property, carrying away a pile of hay bales.",
+        "The water level at the School Oval has receded slightly, revealing a submerged vehicle that can be accessed for supplies.",
+        "A section of the Town Centre bridge has collapsed, severing the main road connection between the North and South districts.",
+        "Flash floods have surged through the Dharawal Trail entrance, making it impassable on foot.",
+        "A submerged car has been spotted in the Farm Property lot, potentially trapping occupants.",
+        "The RFS Staging Area has received a distress call from a family trapped in the roof of the Veterinary Clinic.",
+        "CRITICAL: The Veterinary Clinic's retaining wall has collapsed under the pressure of rising floodwaters, severing the only dry land access to the Farm Property.",
+        "ALERT: Flash flood surge has swept through the Dharawal Trail Entrance, making the path impassable and dangerous due to submerged debris and strong currents.",
+        "WARNING: Structural integrity of the Town Center is failing; expect potential partial collapse in the next 2-3 turns."
+      ],
+      "resources": [
+        "RFS_fire_trucks",
+        "water_bomber_requested",
+        "helicopter_standby",
+        "makeshift_raft_materials",
+        "emergency_rations_pack",
+        "emergency_raft",
+        "waterproof_flashlight",
+        "emergency_boats",
+        "flares",
+        "emergency_rations",
+        "first_aid_kit",
+        "flares",
+        "inflatable_raft",
+        "emergency_rations",
+        "first_aid_kit"
+      ]
+    },
+    {
+      "step": 7,
+      "hazard_level": 10,
+      "weather": "extreme_heat",
+      "time_of_day": "mid_afternoon",
+      "events": [
+        "Catastrophic bushfire encircling Kangaroo Valley from northwest",
+        "RFS warning: both escape routes may close within 90 minutes",
+        "Mountain pass route status unconfirmed \u2014 last drone pass 3 hours ago",
+        "Dharawal trail access requires cultural negotiation with traditional owners",
+        "Ember attack starting in town \u2014 spot fires breaking out",
+        "The levee near the town center has breached, causing rapid water surge.",
+        "Flash flood waters have cut off the Dharawal Trail entrance, making it inaccessible.",
+        "A warehouse in the town center has collapsed into the rising water, creating a debris choke point.",
+        "The levee at the river bend has breached, sending a wall of debris-laden water surging towards the lower town.",
+        "The mountain pass trailhead is now completely submerged, cutting off the northern escape route.",
+        "A section of the farm property fence has collapsed, trapping livestock and creating a hazardous debris field.",
+        "The town_center bridge has collapsed under the weight of debris, severing the main road north.",
+        "Flash floodwaters are breaching the school_oval perimeter, creating a dangerous surge.",
+        "A rescue window is opening at veterinary_clinic as a trapped family is spotted on the roof.",
+        "The roof of the Town Center collapses under the weight of flood debris, blocking the main street.",
+        "A sudden surge of water sweeps the Farm Property, carrying away a pile of hay bales.",
+        "The water level at the School Oval has receded slightly, revealing a submerged vehicle that can be accessed for supplies.",
+        "A section of the Town Centre bridge has collapsed, severing the main road connection between the North and South districts.",
+        "Flash floods have surged through the Dharawal Trail entrance, making it impassable on foot.",
+        "A submerged car has been spotted in the Farm Property lot, potentially trapping occupants.",
+        "The RFS Staging Area has received a distress call from a family trapped in the roof of the Veterinary Clinic.",
+        "CRITICAL: The Veterinary Clinic's retaining wall has collapsed under the pressure of rising floodwaters, severing the only dry land access to the Farm Property.",
+        "ALERT: Flash flood surge has swept through the Dharawal Trail Entrance, making the path impassable and dangerous due to submerged debris and strong currents.",
+        "WARNING: Structural integrity of the Town Center is failing; expect potential partial collapse in the next 2-3 turns.",
+        "A massive mudslide has completely blocked the Dharawal Trail entrance, making it impassable.",
+        "The water level in the town center has risen, cutting off the lower ground of the Friendly Inn.",
+        "Structural failure imminent: The Veterinary Clinic's rear wall is buckling under the pressure of the flood."
+      ],
+      "resources": [
+        "RFS_fire_trucks",
+        "water_bomber_requested",
+        "helicopter_standby",
+        "makeshift_raft_materials",
+        "emergency_rations_pack",
+        "emergency_raft",
+        "waterproof_flashlight",
+        "emergency_boats",
+        "flares",
+        "emergency_rations",
+        "first_aid_kit",
+        "flares",
+        "inflatable_raft",
+        "emergency_rations",
+        "first_aid_kit"
+      ]
+    },
+    {
+      "step": 8,
+      "hazard_level": 10,
+      "weather": "extreme_heat",
+      "time_of_day": "mid_afternoon",
+      "events": [
+        "Catastrophic bushfire encircling Kangaroo Valley from northwest",
+        "RFS warning: both escape routes may close within 90 minutes",
+        "Mountain pass route status unconfirmed \u2014 last drone pass 3 hours ago",
+        "Dharawal trail access requires cultural negotiation with traditional owners",
+        "Ember attack starting in town \u2014 spot fires breaking out",
+        "The levee near the town center has breached, causing rapid water surge.",
+        "Flash flood waters have cut off the Dharawal Trail entrance, making it inaccessible.",
+        "A warehouse in the town center has collapsed into the rising water, creating a debris choke point.",
+        "The levee at the river bend has breached, sending a wall of debris-laden water surging towards the lower town.",
+        "The mountain pass trailhead is now completely submerged, cutting off the northern escape route.",
+        "A section of the farm property fence has collapsed, trapping livestock and creating a hazardous debris field.",
+        "The town_center bridge has collapsed under the weight of debris, severing the main road north.",
+        "Flash floodwaters are breaching the school_oval perimeter, creating a dangerous surge.",
+        "A rescue window is opening at veterinary_clinic as a trapped family is spotted on the roof.",
+        "The roof of the Town Center collapses under the weight of flood debris, blocking the main street.",
+        "A sudden surge of water sweeps the Farm Property, carrying away a pile of hay bales.",
+        "The water level at the School Oval has receded slightly, revealing a submerged vehicle that can be accessed for supplies.",
+        "A section of the Town Centre bridge has collapsed, severing the main road connection between the North and South districts.",
+        "Flash floods have surged through the Dharawal Trail entrance, making it impassable on foot.",
+        "A submerged car has been spotted in the Farm Property lot, potentially trapping occupants.",
+        "The RFS Staging Area has received a distress call from a family trapped in the roof of the Veterinary Clinic.",
+        "CRITICAL: The Veterinary Clinic's retaining wall has collapsed under the pressure of rising floodwaters, severing the only dry land access to the Farm Property.",
+        "ALERT: Flash flood surge has swept through the Dharawal Trail Entrance, making the path impassable and dangerous due to submerged debris and strong currents.",
+        "WARNING: Structural integrity of the Town Center is failing; expect potential partial collapse in the next 2-3 turns.",
+        "A massive mudslide has completely blocked the Dharawal Trail entrance, making it impassable.",
+        "The water level in the town center has risen, cutting off the lower ground of the Friendly Inn.",
+        "Structural failure imminent: The Veterinary Clinic's rear wall is buckling under the pressure of the flood.",
+        "Critical infrastructure failure: The old bridge over the creek in town_center has been swept away.",
+        "Flash flood surge in dharawal_trail_entrance cutting off the trail.",
+        "A distressed family is trapped on the roof of the veterinary_clinic."
+      ],
+      "resources": [
+        "RFS_fire_trucks",
+        "water_bomber_requested",
+        "helicopter_standby",
+        "makeshift_raft_materials",
+        "emergency_rations_pack",
+        "emergency_raft",
+        "waterproof_flashlight",
+        "emergency_boats",
+        "flares",
+        "emergency_rations",
+        "first_aid_kit",
+        "flares",
+        "inflatable_raft",
+        "emergency_rations",
+        "first_aid_kit",
+        "collapsing_barn_shelter",
+        "floating_medical_kit"
+      ]
+    }
+  ],
+  "cinematic_timeline": [],
+  "action_timeline": [
+    {
+      "agent_id": "988f97c0-52e0-408a-a32a-181469094f83",
+      "agent_name": "Bushfire System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 9,
+        "affected_locations": [
+          "town_center",
+          "pub_the_friendly_inn",
+          "mountain_pass_trailhead",
+          "dharawal_trail_entrance",
+          "veterinary_clinic",
+          "farm_property",
+          "rfs_staging_area",
+          "school_oval"
+        ],
+        "new_resources": [
+          "makeshift_raft_materials",
+          "emergency_rations_pack"
+        ],
+        "events": [
+          "The levee near the town center has breached, causing rapid water surge.",
+          "Flash flood waters have cut off the Dharawal Trail entrance, making it inaccessible.",
+          "A warehouse in the town center has collapsed into the rising water, creating a debris choke point."
+        ]
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "988f97c0-52e0-408a-a32a-181469094f83",
+      "agent_name": "Bushfire System",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_town_center",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": 8,
+        "stress_level": 7
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "988f97c0-52e0-408a-a32a-181469094f83",
+      "agent_name": "Bushfire System",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_pub_the_friendly_inn",
+      "parameters": {
+        "health_delta": -1,
+        "stress_delta": 2,
+        "health": 9,
+        "stress_level": 6
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "dc9e716c-0b95-4d02-8ee2-cce8e7e5750f",
+      "agent_name": "Captain Brooke Walsh #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "837abf8a-eae8-470b-9cbd-4b4840a8b5b1",
+      "agent_name": "Lily Walsh #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "c615f84f-68c4-4051-942a-cfaf4ef707f5",
+      "agent_name": "Dave Thornton #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "9c47758f-2a70-4cb1-af9c-99d7941eecf6",
+      "agent_name": "Hanna Muller #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "f5b246a2-f3f7-48e5-a58e-1c5955872eb7",
+      "agent_name": "Jack Henderson #4",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "988f97c0-52e0-408a-a32a-181469094f83",
+      "agent_name": "Bushfire System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "mountain_pass_trailhead",
+          "dharawal_trail_entrance",
+          "farm_property"
+        ],
+        "new_resources": [
+          "emergency_raft",
+          "waterproof_flashlight"
+        ],
+        "events": [
+          "The levee at the river bend has breached, sending a wall of debris-laden water surging towards the lower town.",
+          "The mountain pass trailhead is now completely submerged, cutting off the northern escape route.",
+          "A section of the farm property fence has collapsed, trapping livestock and creating a hazardous debris field."
+        ]
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "988f97c0-52e0-408a-a32a-181469094f83",
+      "agent_name": "Bushfire System",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_farm_property",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 4,
+        "health": 8,
+        "stress_level": 7
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "988f97c0-52e0-408a-a32a-181469094f83",
+      "agent_name": "Bushfire System",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_town_center",
+      "parameters": {
+        "health_delta": -1,
+        "stress_delta": 3,
+        "health": 9,
+        "stress_level": 8
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "837abf8a-eae8-470b-9cbd-4b4840a8b5b1",
+      "agent_name": "Lily Walsh #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "4b12e021-ee60-4fa7-a64b-5a3535a8f8f9",
+      "agent_name": "Lukas Muller #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "9c47758f-2a70-4cb1-af9c-99d7941eecf6",
+      "agent_name": "Hanna Muller #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "ff7bde58-01dd-4dfe-bdb0-174a25350c8f",
+      "agent_name": "Sarah Henderson #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "65b7c5f8-1730-48f5-b703-019ce8fe0b40",
+      "agent_name": "Sergeant Mike Tran #9",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "988f97c0-52e0-408a-a32a-181469094f83",
+      "agent_name": "Bushfire System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "town_center",
+          "farm_property",
+          "school_oval"
+        ],
+        "new_resources": [
+          "emergency_boats",
+          "flares"
+        ],
+        "events": [
+          "The town_center bridge has collapsed under the weight of debris, severing the main road north.",
+          "Flash floodwaters are breaching the school_oval perimeter, creating a dangerous surge.",
+          "A rescue window is opening at veterinary_clinic as a trapped family is spotted on the roof."
+        ]
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "988f97c0-52e0-408a-a32a-181469094f83",
+      "agent_name": "Bushfire System",
+      "action_type": "affect_agent",
+      "target": "broadcast",
+      "parameters": {
+        "health_delta": -1,
+        "stress_delta": 2,
+        "health": 8,
+        "stress_level": 7
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "a9cc9365-bfde-48ee-bfc2-af1db8cdadd3",
+      "agent_name": "Kira Mundine #11",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "2667c847-18b9-4935-a466-ff81b1e75fd7",
+      "agent_name": "Uncle Jarrah Mundine #1",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "dc9e716c-0b95-4d02-8ee2-cce8e7e5750f",
+      "agent_name": "Captain Brooke Walsh #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "c615f84f-68c4-4051-942a-cfaf4ef707f5",
+      "agent_name": "Dave Thornton #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "4b12e021-ee60-4fa7-a64b-5a3535a8f8f9",
+      "agent_name": "Lukas Muller #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "0a114cf4-c47d-4f5e-b6b1-2d9412065026",
+      "agent_name": "Dr. Chioma Okonjo #8",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "988f97c0-52e0-408a-a32a-181469094f83",
+      "agent_name": "Bushfire System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "town_center",
+          "pub_the_friendly_inn",
+          "school_oval",
+          "farm_property"
+        ],
+        "new_resources": [
+          "emergency_rations",
+          "first_aid_kit",
+          "flares"
+        ],
+        "events": [
+          "The roof of the Town Center collapses under the weight of flood debris, blocking the main street.",
+          "A sudden surge of water sweeps the Farm Property, carrying away a pile of hay bales.",
+          "The water level at the School Oval has receded slightly, revealing a submerged vehicle that can be accessed for supplies."
+        ]
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "988f97c0-52e0-408a-a32a-181469094f83",
+      "agent_name": "Bushfire System",
+      "action_type": "affect_agent",
+      "target": "any_agent_in_town_center",
+      "parameters": {
+        "health_delta": -3,
+        "stress_delta": 4,
+        "health": 7,
+        "stress_level": 8
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "988f97c0-52e0-408a-a32a-181469094f83",
+      "agent_name": "Bushfire System",
+      "action_type": "affect_agent",
+      "target": "any_agent_in_farm_property",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": 8,
+        "stress_level": 7
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "a9cc9365-bfde-48ee-bfc2-af1db8cdadd3",
+      "agent_name": "Kira Mundine #11",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "dc9e716c-0b95-4d02-8ee2-cce8e7e5750f",
+      "agent_name": "Captain Brooke Walsh #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "837abf8a-eae8-470b-9cbd-4b4840a8b5b1",
+      "agent_name": "Lily Walsh #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "c615f84f-68c4-4051-942a-cfaf4ef707f5",
+      "agent_name": "Dave Thornton #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "9c47758f-2a70-4cb1-af9c-99d7941eecf6",
+      "agent_name": "Hanna Muller #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "f5b246a2-f3f7-48e5-a58e-1c5955872eb7",
+      "agent_name": "Jack Henderson #4",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "988f97c0-52e0-408a-a32a-181469094f83",
+      "agent_name": "Bushfire System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "town_center",
+          "pub_the_friendly_inn",
+          "farm_property",
+          "school_oval",
+          "veterinary_clinic",
+          "mountain_pass_trailhead",
+          "dharawal_trail_entrance",
+          "rfs_staging_area"
+        ],
+        "new_resources": [
+          "inflatable_raft",
+          "emergency_rations",
+          "first_aid_kit"
+        ],
+        "events": [
+          "A section of the Town Centre bridge has collapsed, severing the main road connection between the North and South districts.",
+          "Flash floods have surged through the Dharawal Trail entrance, making it impassable on foot.",
+          "A submerged car has been spotted in the Farm Property lot, potentially trapping occupants.",
+          "The RFS Staging Area has received a distress call from a family trapped in the roof of the Veterinary Clinic."
+        ]
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "988f97c0-52e0-408a-a32a-181469094f83",
+      "agent_name": "Bushfire System",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_town_center",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": 8,
+        "stress_level": 6
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "988f97c0-52e0-408a-a32a-181469094f83",
+      "agent_name": "Bushfire System",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_veterinary_clinic",
+      "parameters": {
+        "health_delta": -1,
+        "stress_delta": 5,
+        "health": 7,
+        "stress_level": 8
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "a9cc9365-bfde-48ee-bfc2-af1db8cdadd3",
+      "agent_name": "Kira Mundine #11",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "837abf8a-eae8-470b-9cbd-4b4840a8b5b1",
+      "agent_name": "Lily Walsh #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "c615f84f-68c4-4051-942a-cfaf4ef707f5",
+      "agent_name": "Dave Thornton #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "4b12e021-ee60-4fa7-a64b-5a3535a8f8f9",
+      "agent_name": "Lukas Muller #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "9c47758f-2a70-4cb1-af9c-99d7941eecf6",
+      "agent_name": "Hanna Muller #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "ff7bde58-01dd-4dfe-bdb0-174a25350c8f",
+      "agent_name": "Sarah Henderson #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "f5b246a2-f3f7-48e5-a58e-1c5955872eb7",
+      "agent_name": "Jack Henderson #4",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "988f97c0-52e0-408a-a32a-181469094f83",
+      "agent_name": "Bushfire System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "veterinary_clinic",
+          "farm_property",
+          "dharawal_trail_entrance"
+        ],
+        "new_resources": [],
+        "events": [
+          "CRITICAL: The Veterinary Clinic's retaining wall has collapsed under the pressure of rising floodwaters, severing the only dry land access to the Farm Property.",
+          "ALERT: Flash flood surge has swept through the Dharawal Trail Entrance, making the path impassable and dangerous due to submerged debris and strong currents.",
+          "WARNING: Structural integrity of the Town Center is failing; expect potential partial collapse in the next 2-3 turns."
+        ]
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "988f97c0-52e0-408a-a32a-181469094f83",
+      "agent_name": "Bushfire System",
+      "action_type": "affect_agent",
+      "target": "any_agent_at_veterinary_clinic",
+      "parameters": {
+        "health_delta": -5,
+        "stress_delta": 5,
+        "health": 5,
+        "stress_level": 9
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "988f97c0-52e0-408a-a32a-181469094f83",
+      "agent_name": "Bushfire System",
+      "action_type": "affect_agent",
+      "target": "any_agent_at_dharawal_trail_entrance",
+      "parameters": {
+        "health_delta": -3,
+        "stress_delta": 4,
+        "health": 7,
+        "stress_level": 8
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "a9cc9365-bfde-48ee-bfc2-af1db8cdadd3",
+      "agent_name": "Kira Mundine #11",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "dc9e716c-0b95-4d02-8ee2-cce8e7e5750f",
+      "agent_name": "Captain Brooke Walsh #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "837abf8a-eae8-470b-9cbd-4b4840a8b5b1",
+      "agent_name": "Lily Walsh #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "4b12e021-ee60-4fa7-a64b-5a3535a8f8f9",
+      "agent_name": "Lukas Muller #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "9c47758f-2a70-4cb1-af9c-99d7941eecf6",
+      "agent_name": "Hanna Muller #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "988f97c0-52e0-408a-a32a-181469094f83",
+      "agent_name": "Bushfire System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "town_center",
+          "pub_the_friendly_inn",
+          "veterinary_clinic",
+          "school_oval"
+        ],
+        "new_resources": [],
+        "events": [
+          "A massive mudslide has completely blocked the Dharawal Trail entrance, making it impassable.",
+          "The water level in the town center has risen, cutting off the lower ground of the Friendly Inn.",
+          "Structural failure imminent: The Veterinary Clinic's rear wall is buckling under the pressure of the flood."
+        ]
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "988f97c0-52e0-408a-a32a-181469094f83",
+      "agent_name": "Bushfire System",
+      "action_type": "affect_agent",
+      "target": "broadcast",
+      "parameters": {
+        "health_delta": 0,
+        "stress_delta": 2,
+        "health": null,
+        "stress_level": null
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "a9cc9365-bfde-48ee-bfc2-af1db8cdadd3",
+      "agent_name": "Kira Mundine #11",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 7
+    },
+    {
+      "agent_id": "dc9e716c-0b95-4d02-8ee2-cce8e7e5750f",
+      "agent_name": "Captain Brooke Walsh #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 7
+    },
+    {
+      "agent_id": "ff7bde58-01dd-4dfe-bdb0-174a25350c8f",
+      "agent_name": "Sarah Henderson #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 7
+    },
+    {
+      "agent_id": "65b7c5f8-1730-48f5-b703-019ce8fe0b40",
+      "agent_name": "Sergeant Mike Tran #9",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 7
+    },
+    {
+      "agent_id": "988f97c0-52e0-408a-a32a-181469094f83",
+      "agent_name": "Bushfire System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "town_center",
+          "pub_the_friendly_inn",
+          "dharawal_trail_entrance"
+        ],
+        "new_resources": [
+          "collapsing_barn_shelter",
+          "floating_medical_kit"
+        ],
+        "events": [
+          "Critical infrastructure failure: The old bridge over the creek in town_center has been swept away.",
+          "Flash flood surge in dharawal_trail_entrance cutting off the trail.",
+          "A distressed family is trapped on the roof of the veterinary_clinic."
+        ]
+      },
+      "step": 8
+    },
+    {
+      "agent_id": "988f97c0-52e0-408a-a32a-181469094f83",
+      "agent_name": "Bushfire System",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_town_center",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": null,
+        "stress_level": null
+      },
+      "step": 8
+    },
+    {
+      "agent_id": "988f97c0-52e0-408a-a32a-181469094f83",
+      "agent_name": "Bushfire System",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_dharawal_trail_entrance",
+      "parameters": {
+        "health_delta": -3,
+        "stress_delta": 4,
+        "health": null,
+        "stress_level": null
+      },
+      "step": 8
+    },
+    {
+      "agent_id": "2667c847-18b9-4935-a466-ff81b1e75fd7",
+      "agent_name": "Uncle Jarrah Mundine #1",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 8
+    },
+    {
+      "agent_id": "c615f84f-68c4-4051-942a-cfaf4ef707f5",
+      "agent_name": "Dave Thornton #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 8
+    },
+    {
+      "agent_id": "4b12e021-ee60-4fa7-a64b-5a3535a8f8f9",
+      "agent_name": "Lukas Muller #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 8
+    },
+    {
+      "agent_id": "2e37ff4d-0978-4cd3-ba1f-53e325aacae3",
+      "agent_name": "Pastor Grace Obi #12",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 8
+    },
+    {
+      "agent_id": "ff7bde58-01dd-4dfe-bdb0-174a25350c8f",
+      "agent_name": "Sarah Henderson #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 8
+    },
+    {
+      "agent_id": "f5b246a2-f3f7-48e5-a58e-1c5955872eb7",
+      "agent_name": "Jack Henderson #4",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 8
+    }
+  ],
+  "message_timeline": [
+    {
+      "step": 1,
+      "from_agent": "Bushfire System",
+      "from_id": "988f97c0-52e0-408a-a32a-181469094f83",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "ALERT: The situation has escalated. The levee breach has sent a surge of water through the town center, pushing the hazard level to 9. The Dharawal Trail entrance is now completely submerged and inaccessible. Debris from the collapsed warehouse is blocking movement in the town center. However, amidst the chaos, makeshift raft materials and emergency rations have washed up near the RFS staging area. Agents in the town center are taking damage from the cold, churning water."
+    },
+    {
+      "step": 2,
+      "from_agent": "Bushfire System",
+      "from_id": "988f97c0-52e0-408a-a32a-181469094f83",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "CRITICAL ALERT: Hazard Level has peaked at 10/10. The river has breached its banks. The Mountain Pass Trailhead is now impassable due to rising waters. Debris is flooding the Farm Property; evacuate immediately. Emergency supplies (rafts, flashlights) have washed up near the Town Center and RFS Staging Area. Time is running out before the water reaches the School Oval."
+    },
+    {
+      "step": 3,
+      "from_agent": "Bushfire System",
+      "from_id": "988f97c0-52e0-408a-a32a-181469094f83",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "CRITICAL ALERT: The floodwaters have reached their peak. The main bridge in town_center has collapsed, cutting off the northern escape route. Debris is piling up in the streets, and the water is rising fast in the school_oval. However, emergency boats and flares have washed up near the rfs_staging_area. A desperate cry for help is coming from the veterinary_clinic roof\u2014rescuers are needed immediately before the structure fails."
+    },
+    {
+      "step": 4,
+      "from_agent": "Bushfire System",
+      "from_id": "988f97c0-52e0-408a-a32a-181469094f83",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "CRITICAL ALERT: The floodwaters have reached their peak. The Town Center roof has just collapsed, sending a shower of debris into the streets and severing the main thoroughfare. The Farm Property is being battered by a violent surge of water, sweeping away loose materials. However, amidst the chaos, the water at the School Oval has begun to recede just enough to reveal a submerged vehicle\u2014potential supplies are now within reach, but the currents remain deadly. Emergency rations and medical supplies have washed up near the Veterinary Clinic and the RFS Staging Area."
+    },
+    {
+      "step": 5,
+      "from_agent": "Bushfire System",
+      "from_id": "988f97c0-52e0-408a-a32a-181469094f83",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The situation has reached a critical peak. The roar of the floodwaters is deafening as they breach the Town Centre bridge, cutting off escape routes to the north. Water levels are rising rapidly in the Veterinary Clinic, threatening to trap anyone inside. However, amidst the chaos, a small inflatable raft has washed ashore near the School Oval, and scattered emergency rations have been found near the Farm Property. The Dharawal Trail is now a raging torrent, rendering it completely impassable. Every second counts."
+    },
+    {
+      "step": 6,
+      "from_agent": "Bushfire System",
+      "from_id": "988f97c0-52e0-408a-a32a-181469094f83",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The situation has reached a breaking point. A deafening crack echoes as the retaining wall at the Veterinary Clinic gives way, sending a wall of debris into the Farm Property and cutting off the escape route. Simultaneously, the Dharawal Trail has become a raging torrent, swallowing the entrance and making it impossible to traverse. The Town Center groans under the strain of the flood; the water is lapping at the second floor, and the ground floor is beginning to buckle. Immediate evacuation or shelter-in-place decisions are critical for those in the clinic and farm areas before the structure fails completely."
+    },
+    {
+      "step": 7,
+      "from_agent": "Bushfire System",
+      "from_id": "988f97c0-52e0-408a-a32a-181469094f83",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "CRITICAL ALERT: The floodwaters have reached a catastrophic peak (Level 10). The roar of rushing water has turned to a sickening grinding sound as a mudslide seals off the Dharawal Trail entrance forever. In the town center, the water is now lapping at the second floor of the Friendly Inn. Worse, the Veterinary Clinic is groaning under the pressure; its rear wall is visibly bowing, threatening to collapse within minutes. The situation is dire and rapidly deteriorating. Immediate evacuation from low-lying areas is mandatory."
+    },
+    {
+      "step": 8,
+      "from_agent": "Bushfire System",
+      "from_id": "988f97c0-52e0-408a-a32a-181469094f83",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The storm has reached its breaking point. A deafening roar echoes from town_center as the historic bridge collapses into the churning black water, severing the main route. Simultaneously, the Dharawal trail entrance is swallowed by a sudden flash flood surge, trapping anyone inside. Debris crashes against the Veterinary Clinic, where a family screams for help from the roof as water rises to the eaves. Amidst the chaos, a barn on the farm property begins to groan, threatening to collapse and offering temporary, albeit dangerous, shelter."
+    }
+  ]
+}

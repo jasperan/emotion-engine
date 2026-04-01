@@ -1,0 +1,28 @@
+{
+  "benchmark_id": "20260330_005618",
+  "models": [
+    "qwen3.5:9b",
+    "qwen3.5:4b",
+    "gemma3:latest"
+  ],
+  "backend": "ollama",
+  "total_time": 11167.4,
+  "run_ids": [
+    "49bfcaa4-946d-4e77-82bf-393df9073a08",
+    "31e1ef83-1da6-45a6-a95e-751bdf2da0c4",
+    "a1343d45-6882-4a72-9544-7ee6ff2eca43",
+    "bb3f19ba-0277-45ed-a321-586a20f4f4be",
+    "c2013757-9b37-4d85-90d3-8c4b46076ae7",
+    "8a33a8b2-4f0c-4905-b3f1-4ff4534990af",
+    "8647e825-3e3b-4e75-9235-55cf94f270f7",
+    "104b98ae-10bb-4881-87f5-fd69ad773e9f",
+    "ff297741-e54f-4e76-8036-c22d75bbcab6",
+    "caf1a8eb-00f1-4b53-8d75-1d3e277c6064",
+    "764d387b-2c7e-487c-95ec-c79c628de542",
+    "78e6178b-7e32-4fbe-a50f-6e78481a1dd5",
+    "5b87aae4-cb9b-48a8-8204-d2c07b8b5e5a",
+    "265f6c7d-4588-4a2a-94da-549173009304",
+    "d9bb53f4-3f62-4c66-a8f1-8352c6c751be"
+  ],
+  "extracted_at": "2026-03-30T00:58:39.212228+00:00"
+}

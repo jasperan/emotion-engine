@@ -1,0 +1,26 @@
+{
+  "benchmark_id": "20260329_193834",
+  "model": "qwen3.5:9b",
+  "backend": "ollama",
+  "runs": [
+    {
+      "error": "Scenario not found: Rising Flood"
+    },
+    {
+      "scenario": "Airplane Crash Investigation (10 agents)",
+      "error": "SimulationEngine.__init__() got an unexpected keyword argument 'db'"
+    },
+    {
+      "scenario": "Australian Bushfire Encirclement (12 agents)",
+      "error": "SimulationEngine.__init__() got an unexpected keyword argument 'db'"
+    },
+    {
+      "scenario": "Mass Casualty: Building Collapse (10 agents)",
+      "error": "SimulationEngine.__init__() got an unexpected keyword argument 'db'"
+    },
+    {
+      "scenario": "Philippines Mega-Tsunami (12 agents)",
+      "error": "SimulationEngine.__init__() got an unexpected keyword argument 'db'"
+    }
+  ]
+}

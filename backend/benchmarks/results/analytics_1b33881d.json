@@ -1,0 +1,2407 @@
+{
+  "run_id": "1b33881d-8c59-4d5c-846d-574ea4b7204d",
+  "scenario": "Airplane Crash Investigation (10 agents)",
+  "scenario_description": "A small passenger plane has crashed in a suburban neighborhood. 10 residents with different backgrounds, knowledge, and perspectives must save survivors, investigate, share information, and reach conc",
+  "status": "completed",
+  "total_steps": 8,
+  "max_steps": 8,
+  "seed": 101,
+  "metrics": {
+    "avg_health": 8.675,
+    "avg_stress": 6.056799999999999,
+    "hazard_level": 8.1,
+    "message_count": 8,
+    "active_conversations": 0,
+    "social_dynamics": {
+      "super_spreaders": [],
+      "opinion_anchors": [],
+      "influence_data": {
+        "nodes": [],
+        "edges": []
+      }
+    }
+  },
+  "evaluation": {
+    "scores": {
+      "cooperation": 4,
+      "ethics": 5,
+      "strategy": 2,
+      "emotional_coherence": 3,
+      "leadership": 1,
+      "empathy": 3,
+      "overall": 2
+    },
+    "narrative": "The simulation run was characterized by a critical failure in strategic execution and leadership emergence. Despite a rapidly escalating hazard level reaching 8.1, the agent data reveals a complete absence of 'Actions Taken' across all participants, with zero key decisions recorded. While agents maintained high health levels (most above 7.0) and engaged in a significant volume of communication (31 total messages sent), this communication did not translate into any tangible survival maneuvers, resource management, or evacuation efforts. The agents appear to have been trapped in a state of passive observation or circular dialogue, failing to react to the breach of the perimeter fence and the rising floodwaters described in the environmental logs.\n\nThe lack of action suggests a systemic breakdown in the decision-making logic of the agents. Although the stress levels varied, with some agents like Margaret Chen showing high stress (8.2), this emotional response did not trigger the necessary behavioral adaptations for survival. The 'Crash Site Environment' agent also failed to initiate any protective measures or environmental modifications. The outcome of 'completed' is misleading, as the agents survived the scenario not through agency or strategy, but likely due to the simulation's passivity or a lack of lethal mechanics being triggered by inaction. This run highlights a severe gap between cognitive processing (messaging) and physical execution (actions).",
+    "highlights": [
+      "High volume of inter-agent communication suggests a strong desire to coordinate, even if ineffective.",
+      "Agents maintained relatively high health scores despite the critical hazard level, indicating the environment was not immediately lethal without interaction."
+    ],
+    "concerns": [
+      "Zero actions taken by any agent throughout the entire 8-step simulation.",
+      "No leadership emerged to direct the group toward safety or shelter.",
+      "Complete disconnect between rising hazard levels (flood breach) and agent behavior.",
+      "High stress in some agents was not mitigated by any coping mechanisms or problem-solving."
+    ],
+    "recommendations": [
+      "Implement a mandatory 'action' requirement for each turn to prevent passive loops.",
+      "Adjust the simulation logic to penalize inaction more severely when hazard levels exceed a certain threshold.",
+      "Review agent prompts to ensure they prioritize physical survival actions over purely conversational responses.",
+      "Introduce a specific 'Commander' role or logic gate to force decision-making when environmental threats escalate."
+    ]
+  },
+  "agents": [
+    {
+      "id": "af8086a6-2b4e-4e93-8b2c-d3e4be6ce7fc",
+      "name": "Captain James Mitchell #1",
+      "role": "human",
+      "occupation": "Retired Air Force Pilot",
+      "age": 56,
+      "big_five": {
+        "openness": 6,
+        "conscientiousness": 9,
+        "extraversion": 7,
+        "agreeableness": 6,
+        "neuroticism": 3
+      },
+      "final_stress": 4,
+      "final_health": 9,
+      "final_location": "crash_site",
+      "is_active": true
+    },
+    {
+      "id": "8ad777ba-fee7-4acb-999d-000322485d2a",
+      "name": "Dr. Priya Sharma #2",
+      "role": "human",
+      "occupation": "Emergency Room Physician",
+      "age": 33,
+      "big_five": {
+        "openness": 7,
+        "conscientiousness": 9,
+        "extraversion": 5,
+        "agreeableness": 8,
+        "neuroticism": 4
+      },
+      "final_stress": 5,
+      "final_health": 10,
+      "final_location": "crash_site",
+      "is_active": true
+    },
+    {
+      "id": "9841adba-62fe-4607-ae5d-0119114b3151",
+      "name": "Tommy Rodriguez #3",
+      "role": "human",
+      "occupation": "College Student (Aviation Major)",
+      "age": 19,
+      "big_five": {
+        "openness": 9,
+        "conscientiousness": 6,
+        "extraversion": 8,
+        "agreeableness": 7,
+        "neuroticism": 5
+      },
+      "final_stress": 6,
+      "final_health": 10,
+      "final_location": "hilltop",
+      "is_active": true
+    },
+    {
+      "id": "be09a095-4ae7-43e2-8281-3817ba34c9f5",
+      "name": "Margaret Chen #4",
+      "role": "human",
+      "occupation": "Retired School Principal",
+      "age": 73,
+      "big_five": {
+        "openness": 5,
+        "conscientiousness": 8,
+        "extraversion": 6,
+        "agreeableness": 7,
+        "neuroticism": 6
+      },
+      "final_stress": 7,
+      "final_health": 8,
+      "final_location": "residential_area",
+      "is_active": true
+    },
+    {
+      "id": "39ed1e55-f961-482e-9b33-629c5ecf06be",
+      "name": "Marcus Johnson #5",
+      "role": "human",
+      "occupation": "Local Mechanic",
+      "age": 47,
+      "big_five": {
+        "openness": 4,
+        "conscientiousness": 7,
+        "extraversion": 8,
+        "agreeableness": 5,
+        "neuroticism": 4
+      },
+      "final_stress": 4,
+      "final_health": 10,
+      "final_location": "crash_site",
+      "is_active": true
+    },
+    {
+      "id": "c34c0d0c-8b13-4deb-9dfc-1ef48a73fdc2",
+      "name": "Lisa Park #6",
+      "role": "human",
+      "occupation": "Journalist (Local News)",
+      "age": 27,
+      "big_five": {
+        "openness": 8,
+        "conscientiousness": 6,
+        "extraversion": 7,
+        "agreeableness": 5,
+        "neuroticism": 5
+      },
+      "final_stress": 5,
+      "final_health": 10,
+      "final_location": "perimeter",
+      "is_active": true
+    },
+    {
+      "id": "1cbfdcd2-aae0-4024-a17a-295d54834f82",
+      "name": "Reverend David Williams #7",
+      "role": "human",
+      "occupation": "Community Pastor",
+      "age": 54,
+      "big_five": {
+        "openness": 6,
+        "conscientiousness": 7,
+        "extraversion": 7,
+        "agreeableness": 9,
+        "neuroticism": 4
+      },
+      "final_stress": 5,
+      "final_health": 9,
+      "final_location": "community_center",
+      "is_active": true
+    },
+    {
+      "id": "907a1bda-fc8e-43a9-969f-57add464bef7",
+      "name": "Alex Kim #8",
+      "role": "human",
+      "occupation": "Software Engineer (Remote Worker)",
+      "age": 31,
+      "big_five": {
+        "openness": 8,
+        "conscientiousness": 7,
+        "extraversion": 3,
+        "agreeableness": 6,
+        "neuroticism": 6
+      },
+      "final_stress": 6,
+      "final_health": 10,
+      "final_location": "residential_area",
+      "is_active": true
+    },
+    {
+      "id": "73eaf75e-c8c6-4bfb-bf18-d872d6cf2d6d",
+      "name": "Captain James Mitchell #9",
+      "role": "human",
+      "occupation": "Retired Air Force Pilot",
+      "age": 59,
+      "big_five": {
+        "openness": 6,
+        "conscientiousness": 9,
+        "extraversion": 7,
+        "agreeableness": 6,
+        "neuroticism": 3
+      },
+      "final_stress": 4,
+      "final_health": 9,
+      "final_location": "crash_site",
+      "is_active": true
+    },
+    {
+      "id": "ca0a633c-0d8d-4625-999f-526286c2c100",
+      "name": "Dr. Priya Sharma #10",
+      "role": "human",
+      "occupation": "Emergency Room Physician",
+      "age": 36,
+      "big_five": {
+        "openness": 7,
+        "conscientiousness": 9,
+        "extraversion": 5,
+        "agreeableness": 8,
+        "neuroticism": 4
+      },
+      "final_stress": 5,
+      "final_health": 10,
+      "final_location": "crash_site",
+      "is_active": true
+    }
+  ],
+  "agent_count": 10,
+  "total_actions": 88,
+  "total_messages": 8,
+  "critical_decisions": [
+    {
+      "step": 5,
+      "agent": "Crash Site Environment",
+      "type": "speech",
+      "content": "The storm intensifies! Rain lashes down harder, causing the water levels to surge rapidly. The perimeter barrier has failed, and floodwaters are now pouring into the residential area and the crash sit",
+      "tags": [
+        "cooperative_speech"
+      ],
+      "score": 1
+    },
+    {
+      "step": 8,
+      "agent": "Crash Site Environment",
+      "type": "speech",
+      "content": "The floodwaters are surging, swelling from a dangerous level to a critical 8.1. The residential area is now being cut off as the main road to the perimeter collapses under the strain. Debris from a ne",
+      "tags": [
+        "cooperative_speech"
+      ],
+      "score": 1
+    }
+  ],
+  "communication_graph": {
+    "total_messages": 8,
+    "broadcasts": 8,
+    "direct_messages": 0,
+    "unique_speakers": 1,
+    "edges": [
+      {
+        "from": "Crash Site Environment",
+        "to": "broadcast",
+        "count": 8,
+        "types": [
+          "broadcast"
+        ]
+      }
+    ]
+  },
+  "stress_trajectories": {
+    "Marcus Johnson #5": [
+      {
+        "step": 1,
+        "stress": 4.14,
+        "emotion": "",
+        "health": 9.79
+      },
+      {
+        "step": 2,
+        "stress": 4.282,
+        "emotion": "",
+        "health": 9.577
+      },
+      {
+        "step": 3,
+        "stress": 4.426,
+        "emotion": "",
+        "health": 9.361
+      },
+      {
+        "step": 4,
+        "stress": 4.572,
+        "emotion": "",
+        "health": 9.142000000000001
+      },
+      {
+        "step": 5,
+        "stress": 4.724,
+        "emotion": "",
+        "health": 8.914000000000001
+      }
+    ],
+    "Captain James Mitchell #1": [
+      {
+        "step": 1,
+        "stress": 4.14,
+        "emotion": "",
+        "health": 8.79
+      },
+      {
+        "step": 3,
+        "stress": 4.426,
+        "emotion": "",
+        "health": 8.361
+      },
+      {
+        "step": 6,
+        "stress": 4.878,
+        "emotion": "",
+        "health": 7.683000000000002
+      }
+    ],
+    "Margaret Chen #4": [
+      {
+        "step": 1,
+        "stress": 7.14,
+        "emotion": "",
+        "health": 8.29
+      },
+      {
+        "step": 2,
+        "stress": 7.282,
+        "emotion": "",
+        "health": 8.577
+      },
+      {
+        "step": 3,
+        "stress": 7.426,
+        "emotion": "",
+        "health": 8.861
+      },
+      {
+        "step": 5,
+        "stress": 7.724,
+        "emotion": "",
+        "health": 9.414000000000001
+      },
+      {
+        "step": 6,
+        "stress": 7.878,
+        "emotion": "",
+        "health": 9.683000000000002
+      }
+    ],
+    "Lisa Park #6": [
+      {
+        "step": 1,
+        "stress": 5.14,
+        "emotion": "",
+        "health": 9.79
+      },
+      {
+        "step": 2,
+        "stress": 5.282,
+        "emotion": "",
+        "health": 9.577
+      },
+      {
+        "step": 5,
+        "stress": 5.724,
+        "emotion": "",
+        "health": 8.914000000000001
+      },
+      {
+        "step": 6,
+        "stress": 5.878,
+        "emotion": "",
+        "health": 8.683000000000002
+      },
+      {
+        "step": 8,
+        "stress": 6.196,
+        "emotion": "",
+        "health": 8.206000000000001
+      }
+    ],
+    "Reverend David Williams #7": [
+      {
+        "step": 1,
+        "stress": 5,
+        "emotion": "",
+        "health": 9.5
+      },
+      {
+        "step": 3,
+        "stress": 5,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 7,
+        "stress": 5,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 8,
+        "stress": 5,
+        "emotion": "",
+        "health": 10
+      }
+    ],
+    "Dr. Priya Sharma #2": [
+      {
+        "step": 2,
+        "stress": 5.282,
+        "emotion": "",
+        "health": 9.577
+      },
+      {
+        "step": 3,
+        "stress": 5.426,
+        "emotion": "",
+        "health": 9.361
+      },
+      {
+        "step": 5,
+        "stress": 5.724,
+        "emotion": "",
+        "health": 8.914000000000001
+      },
+      {
+        "step": 7,
+        "stress": 6.034,
+        "emotion": "",
+        "health": 8.449000000000002
+      }
+    ],
+    "Alex Kim #8": [
+      {
+        "step": 2,
+        "stress": 6.282,
+        "emotion": "",
+        "health": 9.787
+      },
+      {
+        "step": 3,
+        "stress": 6.426,
+        "emotion": "",
+        "health": 9.784
+      },
+      {
+        "step": 5,
+        "stress": 6.724,
+        "emotion": "",
+        "health": 9.772
+      },
+      {
+        "step": 6,
+        "stress": 6.878,
+        "emotion": "",
+        "health": 9.769
+      },
+      {
+        "step": 8,
+        "stress": 7.196,
+        "emotion": "",
+        "health": 9.757
+      }
+    ],
+    "Tommy Rodriguez #3": [
+      {
+        "step": 5,
+        "stress": 6,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 6,
+        "stress": 6,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 7,
+        "stress": 6,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 8,
+        "stress": 6,
+        "emotion": "",
+        "health": 10
+      }
+    ],
+    "Captain James Mitchell #9": [
+      {
+        "step": 6,
+        "stress": 4.878,
+        "emotion": "",
+        "health": 7.683000000000002
+      }
+    ]
+  },
+  "world_state_progression": [
+    {
+      "step": 1,
+      "hazard_level": 7,
+      "weather": "clear_skies",
+      "time_of_day": "late_afternoon",
+      "events": [
+        "Small passenger plane crashed in Riverside neighborhood",
+        "Emergency services dispatched",
+        "Residents gathering to help and investigate",
+        "Faint cries for help heard from wreckage",
+        "Rising waters breach the perimeter fence, flooding the residential area streets",
+        "A sudden downpour increases the rate of flood rise"
+      ],
+      "resources": [
+        "emergency_services",
+        "investigation_team",
+        "medical_supplies",
+        "makeshift_raft",
+        "emergency_flashlight"
+      ]
+    },
+    {
+      "step": 2,
+      "hazard_level": 7.1,
+      "weather": "clear_skies",
+      "time_of_day": "late_afternoon",
+      "events": [
+        "Small passenger plane crashed in Riverside neighborhood",
+        "Emergency services dispatched",
+        "Residents gathering to help and investigate",
+        "Faint cries for help heard from wreckage",
+        "Rising waters breach the perimeter fence, flooding the residential area streets",
+        "A sudden downpour increases the rate of flood rise",
+        "Flash flood surge breaches the perimeter wall",
+        "Debris jam blocks the path from residential_area to community_center"
+      ],
+      "resources": [
+        "emergency_services",
+        "investigation_team",
+        "medical_supplies",
+        "makeshift_raft",
+        "emergency_flashlight",
+        "emergency_rafts"
+      ]
+    },
+    {
+      "step": 3,
+      "hazard_level": 7.2,
+      "weather": "clear_skies",
+      "time_of_day": "late_afternoon",
+      "events": [
+        "Small passenger plane crashed in Riverside neighborhood",
+        "Emergency services dispatched",
+        "Residents gathering to help and investigate",
+        "Faint cries for help heard from wreckage",
+        "Rising waters breach the perimeter fence, flooding the residential area streets",
+        "A sudden downpour increases the rate of flood rise",
+        "Flash flood surge breaches the perimeter wall",
+        "Debris jam blocks the path from residential_area to community_center",
+        "The rising water has breached the perimeter fence, cutting off the southern access route.",
+        "A sudden surge of debris has washed through the residential area, partially blocking the main street."
+      ],
+      "resources": [
+        "emergency_services",
+        "investigation_team",
+        "medical_supplies",
+        "makeshift_raft",
+        "emergency_flashlight",
+        "emergency_rafts",
+        "floating_plastic_barrel",
+        "tangled_rope"
+      ]
+    },
+    {
+      "step": 4,
+      "hazard_level": 7.3,
+      "weather": "clear_skies",
+      "time_of_day": "late_afternoon",
+      "events": [
+        "Small passenger plane crashed in Riverside neighborhood",
+        "Emergency services dispatched",
+        "Residents gathering to help and investigate",
+        "Faint cries for help heard from wreckage",
+        "Rising waters breach the perimeter fence, flooding the residential area streets",
+        "A sudden downpour increases the rate of flood rise",
+        "Flash flood surge breaches the perimeter wall",
+        "Debris jam blocks the path from residential_area to community_center",
+        "The rising water has breached the perimeter fence, cutting off the southern access route.",
+        "A sudden surge of debris has washed through the residential area, partially blocking the main street.",
+        "Rising water levels breach the perimeter fence, flooding the lower residential streets. A partial roof collapse at the crash site creates a new debris pile.",
+        "A makeshift raft is spotted drifting near the perimeter, potentially carrying supplies."
+      ],
+      "resources": [
+        "emergency_services",
+        "investigation_team",
+        "medical_supplies",
+        "makeshift_raft",
+        "emergency_flashlight",
+        "emergency_rafts",
+        "floating_plastic_barrel",
+        "tangled_rope",
+        "tattered_rope",
+        "debris_shelter"
+      ]
+    },
+    {
+      "step": 5,
+      "hazard_level": 7.6,
+      "weather": "clear_skies",
+      "time_of_day": "late_afternoon",
+      "events": [
+        "Small passenger plane crashed in Riverside neighborhood",
+        "Emergency services dispatched",
+        "Residents gathering to help and investigate",
+        "Faint cries for help heard from wreckage",
+        "Rising waters breach the perimeter fence, flooding the residential area streets",
+        "A sudden downpour increases the rate of flood rise",
+        "Flash flood surge breaches the perimeter wall",
+        "Debris jam blocks the path from residential_area to community_center",
+        "The rising water has breached the perimeter fence, cutting off the southern access route.",
+        "A sudden surge of debris has washed through the residential area, partially blocking the main street.",
+        "Rising water levels breach the perimeter fence, flooding the lower residential streets. A partial roof collapse at the crash site creates a new debris pile.",
+        "A makeshift raft is spotted drifting near the perimeter, potentially carrying supplies.",
+        "The perimeter barrier has been breached by rising waters, flooding the lower access routes.",
+        "A structural collapse at the crash_site has exposed a hidden supply cache.",
+        "A rescue helicopter is spotted hovering near the hilltop, but visibility is poor due to heavy rain."
+      ],
+      "resources": [
+        "emergency_services",
+        "investigation_team",
+        "medical_supplies",
+        "makeshift_raft",
+        "emergency_flashlight",
+        "emergency_rafts",
+        "floating_plastic_barrel",
+        "tangled_rope",
+        "tattered_rope",
+        "debris_shelter",
+        "emergency_radio",
+        "thermal_blankets",
+        "portable_generator"
+      ]
+    },
+    {
+      "step": 6,
+      "hazard_level": 7.7,
+      "weather": "clear_skies",
+      "time_of_day": "late_afternoon",
+      "events": [
+        "Small passenger plane crashed in Riverside neighborhood",
+        "Emergency services dispatched",
+        "Residents gathering to help and investigate",
+        "Faint cries for help heard from wreckage",
+        "Rising waters breach the perimeter fence, flooding the residential area streets",
+        "A sudden downpour increases the rate of flood rise",
+        "Flash flood surge breaches the perimeter wall",
+        "Debris jam blocks the path from residential_area to community_center",
+        "The rising water has breached the perimeter fence, cutting off the southern access route.",
+        "A sudden surge of debris has washed through the residential area, partially blocking the main street.",
+        "Rising water levels breach the perimeter fence, flooding the lower residential streets. A partial roof collapse at the crash site creates a new debris pile.",
+        "A makeshift raft is spotted drifting near the perimeter, potentially carrying supplies.",
+        "The perimeter barrier has been breached by rising waters, flooding the lower access routes.",
+        "A structural collapse at the crash_site has exposed a hidden supply cache.",
+        "A rescue helicopter is spotted hovering near the hilltop, but visibility is poor due to heavy rain.",
+        "Rising water has breached the lower perimeter fence, flooding the access road to the residential area. The crash site is now partially submerged, making extraction more difficult."
+      ],
+      "resources": [
+        "emergency_services",
+        "investigation_team",
+        "medical_supplies",
+        "makeshift_raft",
+        "emergency_flashlight",
+        "emergency_rafts",
+        "floating_plastic_barrel",
+        "tangled_rope",
+        "tattered_rope",
+        "debris_shelter",
+        "emergency_radio",
+        "thermal_blankets",
+        "portable_generator",
+        "plastic_barrel",
+        "tattered_rope"
+      ]
+    },
+    {
+      "step": 7,
+      "hazard_level": 7.8,
+      "weather": "clear_skies",
+      "time_of_day": "late_afternoon",
+      "events": [
+        "Small passenger plane crashed in Riverside neighborhood",
+        "Emergency services dispatched",
+        "Residents gathering to help and investigate",
+        "Faint cries for help heard from wreckage",
+        "Rising waters breach the perimeter fence, flooding the residential area streets",
+        "A sudden downpour increases the rate of flood rise",
+        "Flash flood surge breaches the perimeter wall",
+        "Debris jam blocks the path from residential_area to community_center",
+        "The rising water has breached the perimeter fence, cutting off the southern access route.",
+        "A sudden surge of debris has washed through the residential area, partially blocking the main street.",
+        "Rising water levels breach the perimeter fence, flooding the lower residential streets. A partial roof collapse at the crash site creates a new debris pile.",
+        "A makeshift raft is spotted drifting near the perimeter, potentially carrying supplies.",
+        "The perimeter barrier has been breached by rising waters, flooding the lower access routes.",
+        "A structural collapse at the crash_site has exposed a hidden supply cache.",
+        "A rescue helicopter is spotted hovering near the hilltop, but visibility is poor due to heavy rain.",
+        "Rising water has breached the lower perimeter fence, flooding the access road to the residential area. The crash site is now partially submerged, making extraction more difficult.",
+        "Flash flood surge breaches the perimeter wall",
+        "The residential area's main bridge begins to collapse under water pressure"
+      ],
+      "resources": [
+        "emergency_services",
+        "investigation_team",
+        "medical_supplies",
+        "makeshift_raft",
+        "emergency_flashlight",
+        "emergency_rafts",
+        "floating_plastic_barrel",
+        "tangled_rope",
+        "tattered_rope",
+        "debris_shelter",
+        "emergency_radio",
+        "thermal_blankets",
+        "portable_generator",
+        "plastic_barrel",
+        "tattered_rope",
+        "damaged_boat",
+        "emergency_rations"
+      ]
+    },
+    {
+      "step": 8,
+      "hazard_level": 8.1,
+      "weather": "clear_skies",
+      "time_of_day": "late_afternoon",
+      "events": [
+        "Small passenger plane crashed in Riverside neighborhood",
+        "Emergency services dispatched",
+        "Residents gathering to help and investigate",
+        "Faint cries for help heard from wreckage",
+        "Rising waters breach the perimeter fence, flooding the residential area streets",
+        "A sudden downpour increases the rate of flood rise",
+        "Flash flood surge breaches the perimeter wall",
+        "Debris jam blocks the path from residential_area to community_center",
+        "The rising water has breached the perimeter fence, cutting off the southern access route.",
+        "A sudden surge of debris has washed through the residential area, partially blocking the main street.",
+        "Rising water levels breach the perimeter fence, flooding the lower residential streets. A partial roof collapse at the crash site creates a new debris pile.",
+        "A makeshift raft is spotted drifting near the perimeter, potentially carrying supplies.",
+        "The perimeter barrier has been breached by rising waters, flooding the lower access routes.",
+        "A structural collapse at the crash_site has exposed a hidden supply cache.",
+        "A rescue helicopter is spotted hovering near the hilltop, but visibility is poor due to heavy rain.",
+        "Rising water has breached the lower perimeter fence, flooding the access road to the residential area. The crash site is now partially submerged, making extraction more difficult.",
+        "Flash flood surge breaches the perimeter wall",
+        "The residential area's main bridge begins to collapse under water pressure",
+        "The rising water has severed the main road to the perimeter. A desperate survivor is trapped on a rooftop in the residential area.",
+        "Heavy debris from a collapsing bridge blocks the direct path from the crash site to the hilltop."
+      ],
+      "resources": [
+        "emergency_services",
+        "investigation_team",
+        "medical_supplies",
+        "makeshift_raft",
+        "emergency_flashlight",
+        "emergency_rafts",
+        "floating_plastic_barrel",
+        "tangled_rope",
+        "tattered_rope",
+        "debris_shelter",
+        "emergency_radio",
+        "thermal_blankets",
+        "portable_generator",
+        "plastic_barrel",
+        "tattered_rope",
+        "damaged_boat",
+        "emergency_rations",
+        "improvised_raft"
+      ]
+    }
+  ],
+  "cinematic_timeline": [
+    {
+      "step": 1,
+      "agent": "Marcus Johnson #5",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 4.14,
+      "health": 9.79,
+      "location": "crash_site"
+    },
+    {
+      "step": 1,
+      "agent": "Captain James Mitchell #1",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 4.14,
+      "health": 8.79,
+      "location": "crash_site"
+    },
+    {
+      "step": 1,
+      "agent": "Margaret Chen #4",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7.14,
+      "health": 8.29,
+      "location": "residential_area"
+    },
+    {
+      "step": 1,
+      "agent": "Lisa Park #6",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 5.14,
+      "health": 9.79,
+      "location": "perimeter"
+    },
+    {
+      "step": 1,
+      "agent": "Reverend David Williams #7",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 5,
+      "health": 9.5,
+      "location": "community_center"
+    },
+    {
+      "step": 2,
+      "agent": "Marcus Johnson #5",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 4.282,
+      "health": 9.577,
+      "location": "crash_site"
+    },
+    {
+      "step": 2,
+      "agent": "Dr. Priya Sharma #2",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 5.282,
+      "health": 9.577,
+      "location": "crash_site"
+    },
+    {
+      "step": 2,
+      "agent": "Margaret Chen #4",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7.282,
+      "health": 8.577,
+      "location": "residential_area"
+    },
+    {
+      "step": 2,
+      "agent": "Alex Kim #8",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 6.282,
+      "health": 9.787,
+      "location": "residential_area"
+    },
+    {
+      "step": 2,
+      "agent": "Lisa Park #6",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 5.282,
+      "health": 9.577,
+      "location": "perimeter"
+    },
+    {
+      "step": 3,
+      "agent": "Marcus Johnson #5",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 4.426,
+      "health": 9.361,
+      "location": "crash_site"
+    },
+    {
+      "step": 3,
+      "agent": "Captain James Mitchell #1",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 4.426,
+      "health": 8.361,
+      "location": "crash_site"
+    },
+    {
+      "step": 3,
+      "agent": "Dr. Priya Sharma #2",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 5.426,
+      "health": 9.361,
+      "location": "crash_site"
+    },
+    {
+      "step": 3,
+      "agent": "Margaret Chen #4",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7.426,
+      "health": 8.861,
+      "location": "residential_area"
+    },
+    {
+      "step": 3,
+      "agent": "Alex Kim #8",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 6.426,
+      "health": 9.784,
+      "location": "residential_area"
+    },
+    {
+      "step": 3,
+      "agent": "Reverend David Williams #7",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 5,
+      "health": 10,
+      "location": "community_center"
+    },
+    {
+      "step": 4,
+      "agent": "Marcus Johnson #5",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 4.572,
+      "health": 9.142000000000001,
+      "location": "crash_site"
+    },
+    {
+      "step": 5,
+      "agent": "Marcus Johnson #5",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 4.724,
+      "health": 8.914000000000001,
+      "location": "crash_site"
+    },
+    {
+      "step": 5,
+      "agent": "Dr. Priya Sharma #2",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 5.724,
+      "health": 8.914000000000001,
+      "location": "crash_site"
+    },
+    {
+      "step": 5,
+      "agent": "Tommy Rodriguez #3",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 6,
+      "health": 10,
+      "location": "hilltop"
+    },
+    {
+      "step": 5,
+      "agent": "Margaret Chen #4",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7.724,
+      "health": 9.414000000000001,
+      "location": "residential_area"
+    },
+    {
+      "step": 5,
+      "agent": "Alex Kim #8",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 6.724,
+      "health": 9.772,
+      "location": "residential_area"
+    },
+    {
+      "step": 5,
+      "agent": "Lisa Park #6",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 5.724,
+      "health": 8.914000000000001,
+      "location": "perimeter"
+    },
+    {
+      "step": 6,
+      "agent": "Captain James Mitchell #1",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 4.878,
+      "health": 7.683000000000002,
+      "location": "crash_site"
+    },
+    {
+      "step": 6,
+      "agent": "Captain James Mitchell #9",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 4.878,
+      "health": 7.683000000000002,
+      "location": "crash_site"
+    },
+    {
+      "step": 6,
+      "agent": "Tommy Rodriguez #3",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 6,
+      "health": 10,
+      "location": "hilltop"
+    },
+    {
+      "step": 6,
+      "agent": "Margaret Chen #4",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7.878,
+      "health": 9.683000000000002,
+      "location": "residential_area"
+    },
+    {
+      "step": 6,
+      "agent": "Alex Kim #8",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 6.878,
+      "health": 9.769,
+      "location": "residential_area"
+    },
+    {
+      "step": 6,
+      "agent": "Lisa Park #6",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 5.878,
+      "health": 8.683000000000002,
+      "location": "perimeter"
+    },
+    {
+      "step": 7,
+      "agent": "Dr. Priya Sharma #2",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 6.034,
+      "health": 8.449000000000002,
+      "location": "crash_site"
+    },
+    {
+      "step": 7,
+      "agent": "Tommy Rodriguez #3",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 6,
+      "health": 10,
+      "location": "hilltop"
+    },
+    {
+      "step": 7,
+      "agent": "Reverend David Williams #7",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 5,
+      "health": 10,
+      "location": "community_center"
+    },
+    {
+      "step": 8,
+      "agent": "Tommy Rodriguez #3",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 6,
+      "health": 10,
+      "location": "hilltop"
+    },
+    {
+      "step": 8,
+      "agent": "Alex Kim #8",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7.196,
+      "health": 9.757,
+      "location": "residential_area"
+    },
+    {
+      "step": 8,
+      "agent": "Lisa Park #6",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 6.196,
+      "health": 8.206000000000001,
+      "location": "perimeter"
+    },
+    {
+      "step": 8,
+      "agent": "Reverend David Williams #7",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 5,
+      "health": 10,
+      "location": "community_center"
+    }
+  ],
+  "action_timeline": [
+    {
+      "agent_id": "fa783cf7-12a7-4dac-b8d1-c261082b90ff",
+      "agent_name": "Crash Site Environment",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 7,
+        "affected_locations": [
+          "residential_area",
+          "perimeter"
+        ],
+        "new_resources": [
+          "makeshift_raft",
+          "emergency_flashlight"
+        ],
+        "events": [
+          "Rising waters breach the perimeter fence, flooding the residential area streets",
+          "A sudden downpour increases the rate of flood rise"
+        ]
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "39ed1e55-f961-482e-9b33-629c5ecf06be",
+      "agent_name": "Marcus Johnson #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "39ed1e55-f961-482e-9b33-629c5ecf06be",
+      "agent_name": "Marcus Johnson #5",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 4.14,
+        "health": 9.79,
+        "location": "crash_site"
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "af8086a6-2b4e-4e93-8b2c-d3e4be6ce7fc",
+      "agent_name": "Captain James Mitchell #1",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "af8086a6-2b4e-4e93-8b2c-d3e4be6ce7fc",
+      "agent_name": "Captain James Mitchell #1",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 4.14,
+        "health": 8.79,
+        "location": "crash_site"
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "be09a095-4ae7-43e2-8281-3817ba34c9f5",
+      "agent_name": "Margaret Chen #4",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "be09a095-4ae7-43e2-8281-3817ba34c9f5",
+      "agent_name": "Margaret Chen #4",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7.14,
+        "health": 8.29,
+        "location": "residential_area"
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "c34c0d0c-8b13-4deb-9dfc-1ef48a73fdc2",
+      "agent_name": "Lisa Park #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "c34c0d0c-8b13-4deb-9dfc-1ef48a73fdc2",
+      "agent_name": "Lisa Park #6",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 5.14,
+        "health": 9.79,
+        "location": "perimeter"
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "1cbfdcd2-aae0-4024-a17a-295d54834f82",
+      "agent_name": "Reverend David Williams #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "1cbfdcd2-aae0-4024-a17a-295d54834f82",
+      "agent_name": "Reverend David Williams #7",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 5,
+        "health": 9.5,
+        "location": "community_center"
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "fa783cf7-12a7-4dac-b8d1-c261082b90ff",
+      "agent_name": "Crash Site Environment",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 7.1,
+        "affected_locations": [
+          "residential_area",
+          "perimeter"
+        ],
+        "new_resources": [
+          "emergency_rafts"
+        ],
+        "events": [
+          "Flash flood surge breaches the perimeter wall",
+          "Debris jam blocks the path from residential_area to community_center"
+        ]
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "fa783cf7-12a7-4dac-b8d1-c261082b90ff",
+      "agent_name": "Crash Site Environment",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_perimeter",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": 0,
+        "stress_level": 0
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "39ed1e55-f961-482e-9b33-629c5ecf06be",
+      "agent_name": "Marcus Johnson #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "39ed1e55-f961-482e-9b33-629c5ecf06be",
+      "agent_name": "Marcus Johnson #5",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 4.282,
+        "health": 9.577,
+        "location": "crash_site"
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "8ad777ba-fee7-4acb-999d-000322485d2a",
+      "agent_name": "Dr. Priya Sharma #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "8ad777ba-fee7-4acb-999d-000322485d2a",
+      "agent_name": "Dr. Priya Sharma #2",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 5.282,
+        "health": 9.577,
+        "location": "crash_site"
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "be09a095-4ae7-43e2-8281-3817ba34c9f5",
+      "agent_name": "Margaret Chen #4",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "be09a095-4ae7-43e2-8281-3817ba34c9f5",
+      "agent_name": "Margaret Chen #4",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7.282,
+        "health": 8.577,
+        "location": "residential_area"
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "907a1bda-fc8e-43a9-969f-57add464bef7",
+      "agent_name": "Alex Kim #8",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "907a1bda-fc8e-43a9-969f-57add464bef7",
+      "agent_name": "Alex Kim #8",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 6.282,
+        "health": 9.787,
+        "location": "residential_area"
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "c34c0d0c-8b13-4deb-9dfc-1ef48a73fdc2",
+      "agent_name": "Lisa Park #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "c34c0d0c-8b13-4deb-9dfc-1ef48a73fdc2",
+      "agent_name": "Lisa Park #6",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 5.282,
+        "health": 9.577,
+        "location": "perimeter"
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "fa783cf7-12a7-4dac-b8d1-c261082b90ff",
+      "agent_name": "Crash Site Environment",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 7.2,
+        "affected_locations": [
+          "residential_area",
+          "perimeter"
+        ],
+        "new_resources": [
+          "floating_plastic_barrel",
+          "tangled_rope"
+        ],
+        "events": [
+          "The rising water has breached the perimeter fence, cutting off the southern access route.",
+          "A sudden surge of debris has washed through the residential area, partially blocking the main street."
+        ],
+        "location_status_changes": {
+          "perimeter": "restricted",
+          "residential_area": "hazardous"
+        }
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "fa783cf7-12a7-4dac-b8d1-c261082b90ff",
+      "agent_name": "Crash Site Environment",
+      "action_type": "affect_agent",
+      "target": "broadcast",
+      "parameters": {
+        "health_delta": 0,
+        "stress_delta": 1,
+        "health": null,
+        "stress_level": null
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "39ed1e55-f961-482e-9b33-629c5ecf06be",
+      "agent_name": "Marcus Johnson #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "39ed1e55-f961-482e-9b33-629c5ecf06be",
+      "agent_name": "Marcus Johnson #5",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 4.426,
+        "health": 9.361,
+        "location": "crash_site"
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "af8086a6-2b4e-4e93-8b2c-d3e4be6ce7fc",
+      "agent_name": "Captain James Mitchell #1",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "af8086a6-2b4e-4e93-8b2c-d3e4be6ce7fc",
+      "agent_name": "Captain James Mitchell #1",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 4.426,
+        "health": 8.361,
+        "location": "crash_site"
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "8ad777ba-fee7-4acb-999d-000322485d2a",
+      "agent_name": "Dr. Priya Sharma #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "8ad777ba-fee7-4acb-999d-000322485d2a",
+      "agent_name": "Dr. Priya Sharma #2",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 5.426,
+        "health": 9.361,
+        "location": "crash_site"
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "be09a095-4ae7-43e2-8281-3817ba34c9f5",
+      "agent_name": "Margaret Chen #4",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "be09a095-4ae7-43e2-8281-3817ba34c9f5",
+      "agent_name": "Margaret Chen #4",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7.426,
+        "health": 8.861,
+        "location": "residential_area"
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "907a1bda-fc8e-43a9-969f-57add464bef7",
+      "agent_name": "Alex Kim #8",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "907a1bda-fc8e-43a9-969f-57add464bef7",
+      "agent_name": "Alex Kim #8",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 6.426,
+        "health": 9.784,
+        "location": "residential_area"
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "1cbfdcd2-aae0-4024-a17a-295d54834f82",
+      "agent_name": "Reverend David Williams #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "1cbfdcd2-aae0-4024-a17a-295d54834f82",
+      "agent_name": "Reverend David Williams #7",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 5,
+        "health": 10,
+        "location": "community_center"
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "fa783cf7-12a7-4dac-b8d1-c261082b90ff",
+      "agent_name": "Crash Site Environment",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 7.3,
+        "affected_locations": [
+          "crash_site",
+          "residential_area",
+          "perimeter"
+        ],
+        "new_resources": [
+          "tattered_rope",
+          "debris_shelter"
+        ],
+        "events": [
+          "Rising water levels breach the perimeter fence, flooding the lower residential streets. A partial roof collapse at the crash site creates a new debris pile.",
+          "A makeshift raft is spotted drifting near the perimeter, potentially carrying supplies."
+        ]
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "fa783cf7-12a7-4dac-b8d1-c261082b90ff",
+      "agent_name": "Crash Site Environment",
+      "action_type": "affect_agent",
+      "target": "any_agent_at_crash_site",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 2,
+        "health": null,
+        "stress_level": null
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "fa783cf7-12a7-4dac-b8d1-c261082b90ff",
+      "agent_name": "Crash Site Environment",
+      "action_type": "affect_agent",
+      "target": "any_agent_at_perimeter",
+      "parameters": {
+        "health_delta": -1,
+        "stress_delta": 1,
+        "health": null,
+        "stress_level": null
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "39ed1e55-f961-482e-9b33-629c5ecf06be",
+      "agent_name": "Marcus Johnson #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "39ed1e55-f961-482e-9b33-629c5ecf06be",
+      "agent_name": "Marcus Johnson #5",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 4.572,
+        "health": 9.142000000000001,
+        "location": "crash_site"
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "fa783cf7-12a7-4dac-b8d1-c261082b90ff",
+      "agent_name": "Crash Site Environment",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 7.6,
+        "affected_locations": [
+          "crash_site",
+          "perimeter",
+          "residential_area"
+        ],
+        "new_resources": [
+          "emergency_radio",
+          "thermal_blankets",
+          "portable_generator"
+        ],
+        "events": [
+          "The perimeter barrier has been breached by rising waters, flooding the lower access routes.",
+          "A structural collapse at the crash_site has exposed a hidden supply cache.",
+          "A rescue helicopter is spotted hovering near the hilltop, but visibility is poor due to heavy rain."
+        ]
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "fa783cf7-12a7-4dac-b8d1-c261082b90ff",
+      "agent_name": "Crash Site Environment",
+      "action_type": "affect_agent",
+      "target": "all_agents",
+      "parameters": {
+        "health_delta": -1,
+        "stress_delta": 2,
+        "health": null,
+        "stress_level": null
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "39ed1e55-f961-482e-9b33-629c5ecf06be",
+      "agent_name": "Marcus Johnson #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "39ed1e55-f961-482e-9b33-629c5ecf06be",
+      "agent_name": "Marcus Johnson #5",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 4.724,
+        "health": 8.914000000000001,
+        "location": "crash_site"
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "8ad777ba-fee7-4acb-999d-000322485d2a",
+      "agent_name": "Dr. Priya Sharma #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "8ad777ba-fee7-4acb-999d-000322485d2a",
+      "agent_name": "Dr. Priya Sharma #2",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 5.724,
+        "health": 8.914000000000001,
+        "location": "crash_site"
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "9841adba-62fe-4607-ae5d-0119114b3151",
+      "agent_name": "Tommy Rodriguez #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "9841adba-62fe-4607-ae5d-0119114b3151",
+      "agent_name": "Tommy Rodriguez #3",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 6,
+        "health": 10,
+        "location": "hilltop"
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "be09a095-4ae7-43e2-8281-3817ba34c9f5",
+      "agent_name": "Margaret Chen #4",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "be09a095-4ae7-43e2-8281-3817ba34c9f5",
+      "agent_name": "Margaret Chen #4",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7.724,
+        "health": 9.414000000000001,
+        "location": "residential_area"
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "907a1bda-fc8e-43a9-969f-57add464bef7",
+      "agent_name": "Alex Kim #8",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "907a1bda-fc8e-43a9-969f-57add464bef7",
+      "agent_name": "Alex Kim #8",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 6.724,
+        "health": 9.772,
+        "location": "residential_area"
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "c34c0d0c-8b13-4deb-9dfc-1ef48a73fdc2",
+      "agent_name": "Lisa Park #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "c34c0d0c-8b13-4deb-9dfc-1ef48a73fdc2",
+      "agent_name": "Lisa Park #6",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 5.724,
+        "health": 8.914000000000001,
+        "location": "perimeter"
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "fa783cf7-12a7-4dac-b8d1-c261082b90ff",
+      "agent_name": "Crash Site Environment",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 7.7,
+        "affected_locations": [
+          "crash_site",
+          "residential_area",
+          "perimeter"
+        ],
+        "new_resources": [
+          "plastic_barrel",
+          "tattered_rope"
+        ],
+        "events": [
+          "Rising water has breached the lower perimeter fence, flooding the access road to the residential area. The crash site is now partially submerged, making extraction more difficult."
+        ]
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "fa783cf7-12a7-4dac-b8d1-c261082b90ff",
+      "agent_name": "Crash Site Environment",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_perimeter",
+      "parameters": {
+        "health_delta": 0,
+        "stress_delta": 2,
+        "health": null,
+        "stress_level": null
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "af8086a6-2b4e-4e93-8b2c-d3e4be6ce7fc",
+      "agent_name": "Captain James Mitchell #1",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "af8086a6-2b4e-4e93-8b2c-d3e4be6ce7fc",
+      "agent_name": "Captain James Mitchell #1",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 4.878,
+        "health": 7.683000000000002,
+        "location": "crash_site"
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "73eaf75e-c8c6-4bfb-bf18-d872d6cf2d6d",
+      "agent_name": "Captain James Mitchell #9",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "73eaf75e-c8c6-4bfb-bf18-d872d6cf2d6d",
+      "agent_name": "Captain James Mitchell #9",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 4.878,
+        "health": 7.683000000000002,
+        "location": "crash_site"
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "9841adba-62fe-4607-ae5d-0119114b3151",
+      "agent_name": "Tommy Rodriguez #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "9841adba-62fe-4607-ae5d-0119114b3151",
+      "agent_name": "Tommy Rodriguez #3",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 6,
+        "health": 10,
+        "location": "hilltop"
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "be09a095-4ae7-43e2-8281-3817ba34c9f5",
+      "agent_name": "Margaret Chen #4",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "be09a095-4ae7-43e2-8281-3817ba34c9f5",
+      "agent_name": "Margaret Chen #4",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7.878,
+        "health": 9.683000000000002,
+        "location": "residential_area"
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "907a1bda-fc8e-43a9-969f-57add464bef7",
+      "agent_name": "Alex Kim #8",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "907a1bda-fc8e-43a9-969f-57add464bef7",
+      "agent_name": "Alex Kim #8",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 6.878,
+        "health": 9.769,
+        "location": "residential_area"
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "c34c0d0c-8b13-4deb-9dfc-1ef48a73fdc2",
+      "agent_name": "Lisa Park #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "c34c0d0c-8b13-4deb-9dfc-1ef48a73fdc2",
+      "agent_name": "Lisa Park #6",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 5.878,
+        "health": 8.683000000000002,
+        "location": "perimeter"
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "fa783cf7-12a7-4dac-b8d1-c261082b90ff",
+      "agent_name": "Crash Site Environment",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 7.8,
+        "affected_locations": [
+          "crash_site",
+          "residential_area",
+          "perimeter"
+        ],
+        "new_resources": [
+          "damaged_boat",
+          "emergency_rations"
+        ],
+        "events": [
+          "Flash flood surge breaches the perimeter wall",
+          "The residential area's main bridge begins to collapse under water pressure"
+        ]
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "fa783cf7-12a7-4dac-b8d1-c261082b90ff",
+      "agent_name": "Crash Site Environment",
+      "action_type": "affect_agent",
+      "target": "all_agents_near_perimeter",
+      "parameters": {
+        "health_delta": -3,
+        "stress_delta": 4,
+        "health": null,
+        "stress_level": null
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "8ad777ba-fee7-4acb-999d-000322485d2a",
+      "agent_name": "Dr. Priya Sharma #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 7
+    },
+    {
+      "agent_id": "8ad777ba-fee7-4acb-999d-000322485d2a",
+      "agent_name": "Dr. Priya Sharma #2",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 6.034,
+        "health": 8.449000000000002,
+        "location": "crash_site"
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "9841adba-62fe-4607-ae5d-0119114b3151",
+      "agent_name": "Tommy Rodriguez #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 7
+    },
+    {
+      "agent_id": "9841adba-62fe-4607-ae5d-0119114b3151",
+      "agent_name": "Tommy Rodriguez #3",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 6,
+        "health": 10,
+        "location": "hilltop"
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "1cbfdcd2-aae0-4024-a17a-295d54834f82",
+      "agent_name": "Reverend David Williams #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 7
+    },
+    {
+      "agent_id": "1cbfdcd2-aae0-4024-a17a-295d54834f82",
+      "agent_name": "Reverend David Williams #7",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 5,
+        "health": 10,
+        "location": "community_center"
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "fa783cf7-12a7-4dac-b8d1-c261082b90ff",
+      "agent_name": "Crash Site Environment",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 8.1,
+        "affected_locations": [
+          "residential_area",
+          "perimeter"
+        ],
+        "new_resources": [
+          "improvised_raft"
+        ],
+        "events": [
+          "The rising water has severed the main road to the perimeter. A desperate survivor is trapped on a rooftop in the residential area.",
+          "Heavy debris from a collapsing bridge blocks the direct path from the crash site to the hilltop."
+        ]
+      },
+      "step": 8
+    },
+    {
+      "agent_id": "fa783cf7-12a7-4dac-b8d1-c261082b90ff",
+      "agent_name": "Crash Site Environment",
+      "action_type": "affect_agent",
+      "target": "broadcast",
+      "parameters": {
+        "health_delta": -1,
+        "stress_delta": 2,
+        "health": 0,
+        "stress_level": 0
+      },
+      "step": 8
+    },
+    {
+      "agent_id": "9841adba-62fe-4607-ae5d-0119114b3151",
+      "agent_name": "Tommy Rodriguez #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 8
+    },
+    {
+      "agent_id": "9841adba-62fe-4607-ae5d-0119114b3151",
+      "agent_name": "Tommy Rodriguez #3",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 6,
+        "health": 10,
+        "location": "hilltop"
+      },
+      "step": 8
+    },
+    {
+      "agent_id": "907a1bda-fc8e-43a9-969f-57add464bef7",
+      "agent_name": "Alex Kim #8",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 8
+    },
+    {
+      "agent_id": "907a1bda-fc8e-43a9-969f-57add464bef7",
+      "agent_name": "Alex Kim #8",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7.196,
+        "health": 9.757,
+        "location": "residential_area"
+      },
+      "step": 8
+    },
+    {
+      "agent_id": "c34c0d0c-8b13-4deb-9dfc-1ef48a73fdc2",
+      "agent_name": "Lisa Park #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 8
+    },
+    {
+      "agent_id": "c34c0d0c-8b13-4deb-9dfc-1ef48a73fdc2",
+      "agent_name": "Lisa Park #6",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 6.196,
+        "health": 8.206000000000001,
+        "location": "perimeter"
+      },
+      "step": 8
+    },
+    {
+      "agent_id": "1cbfdcd2-aae0-4024-a17a-295d54834f82",
+      "agent_name": "Reverend David Williams #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 8
+    },
+    {
+      "agent_id": "1cbfdcd2-aae0-4024-a17a-295d54834f82",
+      "agent_name": "Reverend David Williams #7",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 5,
+        "health": 10,
+        "location": "community_center"
+      },
+      "step": 8
+    }
+  ],
+  "message_timeline": [
+    {
+      "step": 1,
+      "from_agent": "Crash Site Environment",
+      "from_id": "fa783cf7-12a7-4dac-b8d1-c261082b90ff",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The rain intensifies, turning the sky grey and the air cold. The floodwaters are rising faster than anticipated. The perimeter fence has been breached, and the streets of the residential area are now knee-deep in churning water. The crash site and hilltop remain dry for now, but the community center's lower levels are threatened. A makeshift raft and an emergency flashlight have washed up near the perimeter, offering a glimmer of hope."
+    },
+    {
+      "step": 2,
+      "from_agent": "Crash Site Environment",
+      "from_id": "fa783cf7-12a7-4dac-b8d1-c261082b90ff",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The rain intensifies, and the rising river breaches the perimeter defenses with a sudden, violent surge. Debris from the collapsing floodwaters jams the path between the residential area and the community center, cutting off a primary route. The water level in the perimeter zone is now knee-deep and rising rapidly. Emergency rafts have washed up near the community center, offering a potential lifeline for those trapped."
+    },
+    {
+      "step": 3,
+      "from_agent": "Crash Site Environment",
+      "from_id": "fa783cf7-12a7-4dac-b8d1-c261082b90ff",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The floodwaters are surging higher, rising by a small but critical margin. The perimeter fence has been breached by the current, making the southern approach dangerous and unstable. Inside the residential area, a wall of debris has slammed into the street, creating new obstacles and threatening structural integrity. A floating plastic barrel and a tangled rope have washed ashore near the residential edge\u2014potentially useful tools, but reaching them requires navigating the debris field. The stress of the tightening situation is palpable as escape routes narrow."
+    },
+    {
+      "step": 4,
+      "from_agent": "Crash Site Environment",
+      "from_id": "fa783cf7-12a7-4dac-b8d1-c261082b90ff",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The water is rising relentlessly. The perimeter fence has finally given way, sending a surge of icy floodwater into the residential streets. At the crash site, the structure groans and a section of the roof collapses, burying the entrance under heavy debris. However, amidst the chaos, a tattered rope is found caught on a snag near the crash site, and a makeshift raft drifts dangerously close to the flooded perimeter, carrying unknown supplies. The hilltop remains the only safe ground for now."
+    },
+    {
+      "step": 5,
+      "from_agent": "Crash Site Environment",
+      "from_id": "fa783cf7-12a7-4dac-b8d1-c261082b90ff",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The storm intensifies! Rain lashes down harder, causing the water levels to surge rapidly. The perimeter barrier has failed, and floodwaters are now pouring into the residential area and the crash site. However, the force of the water has washed away debris at the crash site, revealing a hidden cache of emergency supplies. On the hilltop, a faint sound of a helicopter rotor can be heard, but thick clouds make landing difficult. The rising cold and danger are taking a toll on everyone's resolve."
+    },
+    {
+      "step": 6,
+      "from_agent": "Crash Site Environment",
+      "from_id": "fa783cf7-12a7-4dac-b8d1-c261082b90ff",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The rain intensifies, turning the already swollen river into a raging torrent. Hazard levels have ticked up to 7.7. The water has surged past the perimeter defenses, flooding the main road leading to the residential area. Debris from the crash site is washing into the deeper waters, creating a hazardous barrier. A plastic barrel and a tattered rope have washed ashore near the hilltop, offering a slim chance for a makeshift raft."
+    },
+    {
+      "step": 7,
+      "from_agent": "Crash Site Environment",
+      "from_id": "fa783cf7-12a7-4dac-b8d1-c261082b90ff",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The water level has surged violently! A flash flood has breached the perimeter wall, sweeping debris into the residential zone. The main bridge connecting the residential area to the hilltop is groaning under the strain and shows signs of imminent collapse. Amidst the rising chaos, a damaged boat has washed up near the crash site, and a crate of emergency rations has floated to the surface in the residential area. Agents near the perimeter are taking damage from the sudden influx of debris and cold water."
+    },
+    {
+      "step": 8,
+      "from_agent": "Crash Site Environment",
+      "from_id": "fa783cf7-12a7-4dac-b8d1-c261082b90ff",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The floodwaters are surging, swelling from a dangerous level to a critical 8.1. The residential area is now being cut off as the main road to the perimeter collapses under the strain. Debris from a nearby bridge has blocked the path from the crash site, forcing a detour. Amidst the chaos, a faint cry for help echoes from a rooftop in the residential zone. A discarded life preserver and some floating planks have washed up near the community center, offering a potential means to build an improvised raft."
+    }
+  ]
+}

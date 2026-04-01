@@ -1,0 +1,3113 @@
+{
+  "run_id": "f914855c-2725-4462-8f4a-cbf8e74201b6",
+  "scenario": "Australian Bushfire Encirclement (12 agents)",
+  "scenario_description": "A catastrophic bushfire has encircled Kangaroo Valley. Two escape routes remain, neither guaranteed safe. 12 residents, tourists, and emergency workers must decide: who goes where, and who decides. Fe",
+  "status": "completed",
+  "total_steps": 8,
+  "max_steps": 8,
+  "seed": 202,
+  "metrics": {
+    "avg_health": 8.366666666666667,
+    "avg_stress": 6.796666666666668,
+    "hazard_level": 10,
+    "message_count": 8,
+    "active_conversations": 0,
+    "social_dynamics": {
+      "super_spreaders": [],
+      "opinion_anchors": [],
+      "influence_data": {
+        "nodes": [],
+        "edges": []
+      }
+    }
+  },
+  "evaluation": {
+    "scores": {
+      "cooperation": 4,
+      "ethics": 5,
+      "strategy": 2,
+      "emotional_coherence": 6,
+      "leadership": 3,
+      "empathy": 5,
+      "overall": 4
+    },
+    "narrative": "The simulation run was characterized by a catastrophic disconnect between the escalating environmental hazard and the agents' lack of physical intervention. While the floodwaters reached a critical peak, destroying infrastructure and isolating the town center, the agents engaged exclusively in verbal communication. Despite high stress levels among several characters (Sarah Henderson reaching max stress) and visible health deterioration in others (Jack and Lily Henderson), no agent executed a survival action, rescue attempt, or evacuation maneuver. The agents appeared to be trapped in a loop of reporting or discussing the disaster without acting upon it.",
+    "highlights": [
+      "Agents maintained a high volume of communication, ensuring that the severity of the situation was verbally acknowledged across the group.",
+      "Despite the total collapse of infrastructure, no agent's health dropped to zero, suggesting the simulation environment may have prevented immediate death despite the lack of action."
+    ],
+    "concerns": [
+      "Zero 'Actions Taken' recorded for all agents indicates a complete failure of the decision-making or action-selection mechanism.",
+      "The disconnect between the 'Bushfire System' label in the header and the 'Flood' narrative events suggests a scenario configuration error.",
+      "Critical stress levels in characters like Sarah Henderson (10/10) were not mitigated by any supportive actions from other agents."
+    ],
+    "recommendations": [
+      "Investigate the agent logic to ensure that 'Actions' are triggered by hazard thresholds, not just 'Messages'.",
+      "Verify that the scenario parameters (Bushfire vs. Flood) match the narrative prompts to prevent confusion.",
+      "Introduce a penalty for inaction in future runs to force agents to prioritize physical survival strategies over dialogue."
+    ]
+  },
+  "agents": [
+    {
+      "id": "f2621019-7c70-4d83-9a06-b7d9967e388d",
+      "name": "Uncle Jarrah Mundine #1",
+      "role": "human",
+      "occupation": "Dharawal Elder & Park Ranger",
+      "age": 63,
+      "big_five": {
+        "openness": 6,
+        "conscientiousness": 8,
+        "extraversion": 5,
+        "agreeableness": 6,
+        "neuroticism": 3
+      },
+      "final_stress": 4,
+      "final_health": 7,
+      "final_location": "dharawal_trail_entrance",
+      "is_active": true
+    },
+    {
+      "id": "31bdf69c-a882-49f1-9c91-e7baca172f74",
+      "name": "Captain Brooke Walsh #2",
+      "role": "human",
+      "occupation": "RFS Brigade Captain",
+      "age": 41,
+      "big_five": {
+        "openness": 6,
+        "conscientiousness": 10,
+        "extraversion": 7,
+        "agreeableness": 6,
+        "neuroticism": 4
+      },
+      "final_stress": 7,
+      "final_health": 10,
+      "final_location": "rfs_staging_area",
+      "is_active": true
+    },
+    {
+      "id": "c4e28545-d96c-4018-a3af-0440c59a8b2f",
+      "name": "Dave Thornton #3",
+      "role": "human",
+      "occupation": "Pub Owner",
+      "age": 58,
+      "big_five": {
+        "openness": 6,
+        "conscientiousness": 7,
+        "extraversion": 9,
+        "agreeableness": 7,
+        "neuroticism": 4
+      },
+      "final_stress": 5,
+      "final_health": 8,
+      "final_location": "pub_the_friendly_inn",
+      "is_active": true
+    },
+    {
+      "id": "b9bbd52b-05f4-42c9-a493-bc5f3fd313cb",
+      "name": "Jack Henderson #4",
+      "role": "human",
+      "occupation": "Cattle Farmer",
+      "age": 61,
+      "big_five": {
+        "openness": 4,
+        "conscientiousness": 8,
+        "extraversion": 5,
+        "agreeableness": 4,
+        "neuroticism": 5
+      },
+      "final_stress": 7,
+      "final_health": 8,
+      "final_location": "farm_property",
+      "is_active": true
+    },
+    {
+      "id": "4f7845ef-f7dd-4fc4-8aa3-870e172b3c5b",
+      "name": "Sarah Henderson #5",
+      "role": "human",
+      "occupation": "Teacher (Jack's Wife)",
+      "age": 57,
+      "big_five": {
+        "openness": 7,
+        "conscientiousness": 7,
+        "extraversion": 6,
+        "agreeableness": 8,
+        "neuroticism": 6
+      },
+      "final_stress": 9,
+      "final_health": 9,
+      "final_location": "farm_property",
+      "is_active": true
+    },
+    {
+      "id": "546e40f4-9de3-457e-97d7-7c1452880805",
+      "name": "Lukas Muller #6",
+      "role": "human",
+      "occupation": "German Backpacker",
+      "age": 26,
+      "big_five": {
+        "openness": 9,
+        "conscientiousness": 6,
+        "extraversion": 8,
+        "agreeableness": 7,
+        "neuroticism": 4
+      },
+      "final_stress": 4,
+      "final_health": 10,
+      "final_location": "pub_the_friendly_inn",
+      "is_active": true
+    },
+    {
+      "id": "01b4cd86-a71d-4594-8529-45b86e1caac2",
+      "name": "Hanna Muller #7",
+      "role": "human",
+      "occupation": "German Backpacker",
+      "age": 25,
+      "big_five": {
+        "openness": 8,
+        "conscientiousness": 7,
+        "extraversion": 6,
+        "agreeableness": 7,
+        "neuroticism": 6
+      },
+      "final_stress": 7,
+      "final_health": 10,
+      "final_location": "pub_the_friendly_inn",
+      "is_active": true
+    },
+    {
+      "id": "855bec6a-f9f6-4ec6-aea3-a1ea092326bb",
+      "name": "Dr. Chioma Okonjo #8",
+      "role": "human",
+      "occupation": "Wildlife Veterinarian (Nigerian-Australian)",
+      "age": 38,
+      "big_five": {
+        "openness": 8,
+        "conscientiousness": 9,
+        "extraversion": 6,
+        "agreeableness": 7,
+        "neuroticism": 4
+      },
+      "final_stress": 6,
+      "final_health": 10,
+      "final_location": "veterinary_clinic",
+      "is_active": true
+    },
+    {
+      "id": "54ce5bec-6aa7-450e-aad8-90df0907038d",
+      "name": "Sergeant Mike Tran #9",
+      "role": "human",
+      "occupation": "Retired SAS Soldier",
+      "age": 46,
+      "big_five": {
+        "openness": 5,
+        "conscientiousness": 9,
+        "extraversion": 6,
+        "agreeableness": 5,
+        "neuroticism": 3
+      },
+      "final_stress": 3,
+      "final_health": 10,
+      "final_location": "town_center",
+      "is_active": true
+    },
+    {
+      "id": "0e9ef660-2ebe-45e1-8cfc-ba4ad6308d1c",
+      "name": "Lily Walsh #10",
+      "role": "human",
+      "occupation": "Student (Brooke's Daughter)",
+      "age": 17,
+      "big_five": {
+        "openness": 7,
+        "conscientiousness": 6,
+        "extraversion": 6,
+        "agreeableness": 7,
+        "neuroticism": 7
+      },
+      "final_stress": 8,
+      "final_health": 5,
+      "final_location": "rfs_staging_area",
+      "is_active": true
+    },
+    {
+      "id": "836c2775-8be4-4d14-8e86-940372da97ee",
+      "name": "Kira Mundine #11",
+      "role": "human",
+      "occupation": "Ecology Student (Jarrah's Granddaughter)",
+      "age": 20,
+      "big_five": {
+        "openness": 9,
+        "conscientiousness": 7,
+        "extraversion": 7,
+        "agreeableness": 7,
+        "neuroticism": 4
+      },
+      "final_stress": 5,
+      "final_health": 10,
+      "final_location": "dharawal_trail_entrance",
+      "is_active": true
+    },
+    {
+      "id": "cd9edcb6-ba90-4e0e-8205-4e6ccf2dab81",
+      "name": "Pastor Grace Obi #12",
+      "role": "human",
+      "occupation": "Community Church Leader",
+      "age": 51,
+      "big_five": {
+        "openness": 7,
+        "conscientiousness": 7,
+        "extraversion": 7,
+        "agreeableness": 10,
+        "neuroticism": 4
+      },
+      "final_stress": 5,
+      "final_health": 8,
+      "final_location": "pub_the_friendly_inn",
+      "is_active": true
+    }
+  ],
+  "agent_count": 12,
+  "total_actions": 110,
+  "total_messages": 8,
+  "critical_decisions": [
+    {
+      "step": 4,
+      "agent": "Bushfire System",
+      "type": "speech",
+      "content": "The water has reached its catastrophic peak. With a deafening roar, the main bridge connecting the town center to the eastern district has collapsed, creating a churning vortex of debris. The surge is",
+      "tags": [
+        "cooperative_speech"
+      ],
+      "score": 1
+    },
+    {
+      "step": 5,
+      "agent": "Bushfire System",
+      "type": "speech",
+      "content": "CRITICAL ALERT: The floodwaters have breached the final levee at town_center. The ground beneath the main road has given way, creating a churning gap that blocks all vehicle movement. Debris is piling",
+      "tags": [
+        "cooperative_speech"
+      ],
+      "score": 1
+    },
+    {
+      "step": 6,
+      "agent": "Bushfire System",
+      "type": "speech",
+      "content": "CRITICAL ALERT: The situation has escalated to a catastrophic peak. The storm surge has overwhelmed the town center defenses, and the school oval has suffered a partial collapse. The Dharawal trail is",
+      "tags": [
+        "cooperative_speech"
+      ],
+      "score": 1
+    },
+    {
+      "step": 7,
+      "agent": "Bushfire System",
+      "type": "speech",
+      "content": "The floodwaters have reached a terrifying crescendo. The roar of the river is deafening as the main bridge in the town center groans and finally gives way, plunging into the churning water and cutting",
+      "tags": [
+        "cooperative_speech"
+      ],
+      "score": 1
+    },
+    {
+      "step": 1,
+      "agent": "Lily Walsh #10",
+      "type": "cinematic",
+      "action": "",
+      "speech": null,
+      "emotion": "",
+      "stress": 8,
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1
+    },
+    {
+      "step": 2,
+      "agent": "Lily Walsh #10",
+      "type": "cinematic",
+      "action": "",
+      "speech": null,
+      "emotion": "",
+      "stress": 8,
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1
+    },
+    {
+      "step": 2,
+      "agent": "Sarah Henderson #5",
+      "type": "cinematic",
+      "action": "",
+      "speech": null,
+      "emotion": "",
+      "stress": 9.36,
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1
+    },
+    {
+      "step": 4,
+      "agent": "Lily Walsh #10",
+      "type": "cinematic",
+      "action": "",
+      "speech": null,
+      "emotion": "",
+      "stress": 8,
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1
+    },
+    {
+      "step": 5,
+      "agent": "Lily Walsh #10",
+      "type": "cinematic",
+      "action": "",
+      "speech": null,
+      "emotion": "",
+      "stress": 8,
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1
+    },
+    {
+      "step": 5,
+      "agent": "Sarah Henderson #5",
+      "type": "cinematic",
+      "action": "",
+      "speech": null,
+      "emotion": "",
+      "stress": 9.959999999999997,
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1
+    },
+    {
+      "step": 6,
+      "agent": "Lily Walsh #10",
+      "type": "cinematic",
+      "action": "",
+      "speech": null,
+      "emotion": "",
+      "stress": 8,
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1
+    },
+    {
+      "step": 6,
+      "agent": "Hanna Muller #7",
+      "type": "cinematic",
+      "action": "",
+      "speech": null,
+      "emotion": "",
+      "stress": 8.16,
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1
+    },
+    {
+      "step": 7,
+      "agent": "Sarah Henderson #5",
+      "type": "cinematic",
+      "action": "",
+      "speech": null,
+      "emotion": "",
+      "stress": 10,
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1
+    },
+    {
+      "step": 8,
+      "agent": "Sarah Henderson #5",
+      "type": "cinematic",
+      "action": "",
+      "speech": null,
+      "emotion": "",
+      "stress": 10,
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1
+    },
+    {
+      "step": 8,
+      "agent": "Jack Henderson #4",
+      "type": "cinematic",
+      "action": "",
+      "speech": null,
+      "emotion": "",
+      "stress": 8.559999999999999,
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1
+    },
+    {
+      "agent": "Sarah Henderson #5",
+      "type": "final_state",
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1,
+      "final_stress": 9,
+      "final_health": 9
+    },
+    {
+      "agent": "Lily Walsh #10",
+      "type": "final_state",
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1,
+      "final_stress": 8,
+      "final_health": 5
+    }
+  ],
+  "communication_graph": {
+    "total_messages": 8,
+    "broadcasts": 8,
+    "direct_messages": 0,
+    "unique_speakers": 1,
+    "edges": [
+      {
+        "from": "Bushfire System",
+        "to": "broadcast",
+        "count": 8,
+        "types": [
+          "broadcast"
+        ]
+      }
+    ]
+  },
+  "stress_trajectories": {
+    "Captain Brooke Walsh #2": [
+      {
+        "step": 1,
+        "stress": 7,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 3,
+        "stress": 7,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 4,
+        "stress": 7,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 6,
+        "stress": 7,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 7,
+        "stress": 7,
+        "emotion": "",
+        "health": 10
+      }
+    ],
+    "Lily Walsh #10": [
+      {
+        "step": 1,
+        "stress": 8,
+        "emotion": "",
+        "health": 5
+      },
+      {
+        "step": 2,
+        "stress": 8,
+        "emotion": "",
+        "health": 5
+      },
+      {
+        "step": 4,
+        "stress": 8,
+        "emotion": "",
+        "health": 5
+      },
+      {
+        "step": 5,
+        "stress": 8,
+        "emotion": "",
+        "health": 5
+      },
+      {
+        "step": 6,
+        "stress": 8,
+        "emotion": "",
+        "health": 5
+      }
+    ],
+    "Dave Thornton #3": [
+      {
+        "step": 1,
+        "stress": 5.18,
+        "emotion": "",
+        "health": 8.23
+      },
+      {
+        "step": 3,
+        "stress": 5.56,
+        "emotion": "",
+        "health": 8.66
+      },
+      {
+        "step": 4,
+        "stress": 5.76,
+        "emotion": "",
+        "health": 8.86
+      },
+      {
+        "step": 5,
+        "stress": 5.96,
+        "emotion": "",
+        "health": 9.059999999999999
+      },
+      {
+        "step": 8,
+        "stress": 6.5600000000000005,
+        "emotion": "",
+        "health": 9.659999999999997
+      }
+    ],
+    "Hanna Muller #7": [
+      {
+        "step": 1,
+        "stress": 7.18,
+        "emotion": "",
+        "health": 9.73
+      },
+      {
+        "step": 2,
+        "stress": 7.359999999999999,
+        "emotion": "",
+        "health": 9.73
+      },
+      {
+        "step": 4,
+        "stress": 7.76,
+        "emotion": "",
+        "health": 9.7
+      },
+      {
+        "step": 5,
+        "stress": 7.96,
+        "emotion": "",
+        "health": 9.7
+      },
+      {
+        "step": 6,
+        "stress": 8.16,
+        "emotion": "",
+        "health": 9.7
+      }
+    ],
+    "Jack Henderson #4": [
+      {
+        "step": 1,
+        "stress": 7.18,
+        "emotion": "",
+        "health": 7.73
+      },
+      {
+        "step": 4,
+        "stress": 7.76,
+        "emotion": "",
+        "health": 6.860000000000001
+      },
+      {
+        "step": 5,
+        "stress": 7.96,
+        "emotion": "",
+        "health": 6.560000000000001
+      },
+      {
+        "step": 8,
+        "stress": 8.559999999999999,
+        "emotion": "",
+        "health": 5.660000000000002
+      }
+    ],
+    "Lukas Muller #6": [
+      {
+        "step": 2,
+        "stress": 4.359999999999999,
+        "emotion": "",
+        "health": 9.73
+      },
+      {
+        "step": 3,
+        "stress": 4.56,
+        "emotion": "",
+        "health": 9.7
+      },
+      {
+        "step": 5,
+        "stress": 4.96,
+        "emotion": "",
+        "health": 9.7
+      },
+      {
+        "step": 6,
+        "stress": 5.16,
+        "emotion": "",
+        "health": 9.7
+      },
+      {
+        "step": 8,
+        "stress": 5.5600000000000005,
+        "emotion": "",
+        "health": 9.7
+      }
+    ],
+    "Sarah Henderson #5": [
+      {
+        "step": 2,
+        "stress": 9.36,
+        "emotion": "",
+        "health": 8.46
+      },
+      {
+        "step": 5,
+        "stress": 9.959999999999997,
+        "emotion": "",
+        "health": 7.5600000000000005
+      },
+      {
+        "step": 7,
+        "stress": 10,
+        "emotion": "",
+        "health": 6.960000000000001
+      },
+      {
+        "step": 8,
+        "stress": 10,
+        "emotion": "",
+        "health": 6.660000000000001
+      }
+    ],
+    "Sergeant Mike Tran #9": [
+      {
+        "step": 2,
+        "stress": 3.3600000000000003,
+        "emotion": "",
+        "health": 9.46
+      },
+      {
+        "step": 7,
+        "stress": 4.360000000000001,
+        "emotion": "",
+        "health": 7.959999999999998
+      }
+    ],
+    "Kira Mundine #11": [
+      {
+        "step": 3,
+        "stress": 5,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 4,
+        "stress": 5,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 5,
+        "stress": 5,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 6,
+        "stress": 5,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 7,
+        "stress": 5,
+        "emotion": "",
+        "health": 10
+      }
+    ],
+    "Uncle Jarrah Mundine #1": [
+      {
+        "step": 3,
+        "stress": 4,
+        "emotion": "",
+        "health": 7
+      },
+      {
+        "step": 8,
+        "stress": 4,
+        "emotion": "",
+        "health": 7
+      }
+    ],
+    "Dr. Chioma Okonjo #8": [
+      {
+        "step": 3,
+        "stress": 6.2,
+        "emotion": "",
+        "health": 9.7
+      }
+    ],
+    "Pastor Grace Obi #12": [
+      {
+        "step": 8,
+        "stress": 6.5600000000000005,
+        "emotion": "",
+        "health": 9.659999999999997
+      }
+    ]
+  },
+  "world_state_progression": [
+    {
+      "step": 1,
+      "hazard_level": 9,
+      "weather": "extreme_heat",
+      "time_of_day": "mid_afternoon",
+      "events": [
+        "Catastrophic bushfire encircling Kangaroo Valley from northwest",
+        "RFS warning: both escape routes may close within 90 minutes",
+        "Mountain pass route status unconfirmed \u2014 last drone pass 3 hours ago",
+        "Dharawal trail access requires cultural negotiation with traditional owners",
+        "Ember attack starting in town \u2014 spot fires breaking out",
+        "The rising floodwaters have breached the levee at the farm property, cutting off the main road.",
+        "A section of the pub's lower floor has collapsed under the pressure of the water.",
+        "Debris from the town center is blocking the main street, creating a hazardous bottleneck."
+      ],
+      "resources": [
+        "RFS_fire_trucks",
+        "water_bomber_requested",
+        "helicopter_standby",
+        "emergency_rations",
+        "first_aid_kit"
+      ]
+    },
+    {
+      "step": 2,
+      "hazard_level": 9,
+      "weather": "extreme_heat",
+      "time_of_day": "mid_afternoon",
+      "events": [
+        "Catastrophic bushfire encircling Kangaroo Valley from northwest",
+        "RFS warning: both escape routes may close within 90 minutes",
+        "Mountain pass route status unconfirmed \u2014 last drone pass 3 hours ago",
+        "Dharawal trail access requires cultural negotiation with traditional owners",
+        "Ember attack starting in town \u2014 spot fires breaking out",
+        "The rising floodwaters have breached the levee at the farm property, cutting off the main road.",
+        "A section of the pub's lower floor has collapsed under the pressure of the water.",
+        "Debris from the town center is blocking the main street, creating a hazardous bottleneck.",
+        "The riverbank at town_center has breached, creating a dangerous whirlpool that blocks the main road south.",
+        "A water tower near the farm_property is collapsing, threatening the adjacent barn.",
+        "Heavy rain has made the dharawal_trail_entrance slippery and prone to flash floods."
+      ],
+      "resources": [
+        "RFS_fire_trucks",
+        "water_bomber_requested",
+        "helicopter_standby",
+        "emergency_rations",
+        "first_aid_kit",
+        "emergency_radio",
+        "thermal_blankets",
+        "portable_batteries"
+      ]
+    },
+    {
+      "step": 3,
+      "hazard_level": 10,
+      "weather": "extreme_heat",
+      "time_of_day": "mid_afternoon",
+      "events": [
+        "Catastrophic bushfire encircling Kangaroo Valley from northwest",
+        "RFS warning: both escape routes may close within 90 minutes",
+        "Mountain pass route status unconfirmed \u2014 last drone pass 3 hours ago",
+        "Dharawal trail access requires cultural negotiation with traditional owners",
+        "Ember attack starting in town \u2014 spot fires breaking out",
+        "The rising floodwaters have breached the levee at the farm property, cutting off the main road.",
+        "A section of the pub's lower floor has collapsed under the pressure of the water.",
+        "Debris from the town center is blocking the main street, creating a hazardous bottleneck.",
+        "The riverbank at town_center has breached, creating a dangerous whirlpool that blocks the main road south.",
+        "A water tower near the farm_property is collapsing, threatening the adjacent barn.",
+        "Heavy rain has made the dharawal_trail_entrance slippery and prone to flash floods.",
+        "The levee at the riverbank has finally breached, sending a surge of debris-laden water into the Town Center.",
+        "Strong winds are tearing at the roof of the Friendly Inn, creating a dangerous structural weakness.",
+        "A collapsed tree has partially blocked the path to the Dharawal Trail Entrance, slowing evacuation."
+      ],
+      "resources": [
+        "RFS_fire_trucks",
+        "water_bomber_requested",
+        "helicopter_standby",
+        "emergency_rations",
+        "first_aid_kit",
+        "emergency_radio",
+        "thermal_blankets",
+        "portable_batteries",
+        "emergency_rope_kit",
+        "flashlight_battery_pack"
+      ]
+    },
+    {
+      "step": 4,
+      "hazard_level": 10,
+      "weather": "extreme_heat",
+      "time_of_day": "mid_afternoon",
+      "events": [
+        "Catastrophic bushfire encircling Kangaroo Valley from northwest",
+        "RFS warning: both escape routes may close within 90 minutes",
+        "Mountain pass route status unconfirmed \u2014 last drone pass 3 hours ago",
+        "Dharawal trail access requires cultural negotiation with traditional owners",
+        "Ember attack starting in town \u2014 spot fires breaking out",
+        "The rising floodwaters have breached the levee at the farm property, cutting off the main road.",
+        "A section of the pub's lower floor has collapsed under the pressure of the water.",
+        "Debris from the town center is blocking the main street, creating a hazardous bottleneck.",
+        "The riverbank at town_center has breached, creating a dangerous whirlpool that blocks the main road south.",
+        "A water tower near the farm_property is collapsing, threatening the adjacent barn.",
+        "Heavy rain has made the dharawal_trail_entrance slippery and prone to flash floods.",
+        "The levee at the riverbank has finally breached, sending a surge of debris-laden water into the Town Center.",
+        "Strong winds are tearing at the roof of the Friendly Inn, creating a dangerous structural weakness.",
+        "A collapsed tree has partially blocked the path to the Dharawal Trail Entrance, slowing evacuation.",
+        "Main bridge over the river collapses, severing access to the eastern side of town",
+        "Flash flood surge traps agents in the basement of the pub",
+        "A rescue helicopter is spotted hovering near the mountain pass, but visibility is poor"
+      ],
+      "resources": [
+        "RFS_fire_trucks",
+        "water_bomber_requested",
+        "helicopter_standby",
+        "emergency_rations",
+        "first_aid_kit",
+        "emergency_radio",
+        "thermal_blankets",
+        "portable_batteries",
+        "emergency_rope_kit",
+        "flashlight_battery_pack",
+        "emergency_flares",
+        "damaged_boat",
+        "medical_kit"
+      ]
+    },
+    {
+      "step": 5,
+      "hazard_level": 10,
+      "weather": "extreme_heat",
+      "time_of_day": "mid_afternoon",
+      "events": [
+        "Catastrophic bushfire encircling Kangaroo Valley from northwest",
+        "RFS warning: both escape routes may close within 90 minutes",
+        "Mountain pass route status unconfirmed \u2014 last drone pass 3 hours ago",
+        "Dharawal trail access requires cultural negotiation with traditional owners",
+        "Ember attack starting in town \u2014 spot fires breaking out",
+        "The rising floodwaters have breached the levee at the farm property, cutting off the main road.",
+        "A section of the pub's lower floor has collapsed under the pressure of the water.",
+        "Debris from the town center is blocking the main street, creating a hazardous bottleneck.",
+        "The riverbank at town_center has breached, creating a dangerous whirlpool that blocks the main road south.",
+        "A water tower near the farm_property is collapsing, threatening the adjacent barn.",
+        "Heavy rain has made the dharawal_trail_entrance slippery and prone to flash floods.",
+        "The levee at the riverbank has finally breached, sending a surge of debris-laden water into the Town Center.",
+        "Strong winds are tearing at the roof of the Friendly Inn, creating a dangerous structural weakness.",
+        "A collapsed tree has partially blocked the path to the Dharawal Trail Entrance, slowing evacuation.",
+        "Main bridge over the river collapses, severing access to the eastern side of town",
+        "Flash flood surge traps agents in the basement of the pub",
+        "A rescue helicopter is spotted hovering near the mountain pass, but visibility is poor",
+        "The riverbank at town_center collapses, severing the main road access.",
+        "A family is spotted trapped on the roof of the pub, shouting for help.",
+        "The veterinary clinic is isolated by rising floodwaters cutting off the rear exit."
+      ],
+      "resources": [
+        "RFS_fire_trucks",
+        "water_bomber_requested",
+        "helicopter_standby",
+        "emergency_rations",
+        "first_aid_kit",
+        "emergency_radio",
+        "thermal_blankets",
+        "portable_batteries",
+        "emergency_rope_kit",
+        "flashlight_battery_pack",
+        "emergency_flares",
+        "damaged_boat",
+        "medical_kit",
+        "floating_emergency_kit"
+      ]
+    },
+    {
+      "step": 6,
+      "hazard_level": 10,
+      "weather": "extreme_heat",
+      "time_of_day": "mid_afternoon",
+      "events": [
+        "Catastrophic bushfire encircling Kangaroo Valley from northwest",
+        "RFS warning: both escape routes may close within 90 minutes",
+        "Mountain pass route status unconfirmed \u2014 last drone pass 3 hours ago",
+        "Dharawal trail access requires cultural negotiation with traditional owners",
+        "Ember attack starting in town \u2014 spot fires breaking out",
+        "The rising floodwaters have breached the levee at the farm property, cutting off the main road.",
+        "A section of the pub's lower floor has collapsed under the pressure of the water.",
+        "Debris from the town center is blocking the main street, creating a hazardous bottleneck.",
+        "The riverbank at town_center has breached, creating a dangerous whirlpool that blocks the main road south.",
+        "A water tower near the farm_property is collapsing, threatening the adjacent barn.",
+        "Heavy rain has made the dharawal_trail_entrance slippery and prone to flash floods.",
+        "The levee at the riverbank has finally breached, sending a surge of debris-laden water into the Town Center.",
+        "Strong winds are tearing at the roof of the Friendly Inn, creating a dangerous structural weakness.",
+        "A collapsed tree has partially blocked the path to the Dharawal Trail Entrance, slowing evacuation.",
+        "Main bridge over the river collapses, severing access to the eastern side of town",
+        "Flash flood surge traps agents in the basement of the pub",
+        "A rescue helicopter is spotted hovering near the mountain pass, but visibility is poor",
+        "The riverbank at town_center collapses, severing the main road access.",
+        "A family is spotted trapped on the roof of the pub, shouting for help.",
+        "The veterinary clinic is isolated by rising floodwaters cutting off the rear exit.",
+        "The storm surge has breached the temporary levees in town_center, causing rapid flooding.",
+        "A structural collapse at the school_oval has trapped two students in the basement.",
+        "Strong currents have made the dharawal_trail_entrance impassable for foot traffic."
+      ],
+      "resources": [
+        "RFS_fire_trucks",
+        "water_bomber_requested",
+        "helicopter_standby",
+        "emergency_rations",
+        "first_aid_kit",
+        "emergency_radio",
+        "thermal_blankets",
+        "portable_batteries",
+        "emergency_rope_kit",
+        "flashlight_battery_pack",
+        "emergency_flares",
+        "damaged_boat",
+        "medical_kit",
+        "floating_emergency_kit",
+        "emergency_radios",
+        "thermal_blankets"
+      ]
+    },
+    {
+      "step": 7,
+      "hazard_level": 10,
+      "weather": "extreme_heat",
+      "time_of_day": "mid_afternoon",
+      "events": [
+        "Catastrophic bushfire encircling Kangaroo Valley from northwest",
+        "RFS warning: both escape routes may close within 90 minutes",
+        "Mountain pass route status unconfirmed \u2014 last drone pass 3 hours ago",
+        "Dharawal trail access requires cultural negotiation with traditional owners",
+        "Ember attack starting in town \u2014 spot fires breaking out",
+        "The rising floodwaters have breached the levee at the farm property, cutting off the main road.",
+        "A section of the pub's lower floor has collapsed under the pressure of the water.",
+        "Debris from the town center is blocking the main street, creating a hazardous bottleneck.",
+        "The riverbank at town_center has breached, creating a dangerous whirlpool that blocks the main road south.",
+        "A water tower near the farm_property is collapsing, threatening the adjacent barn.",
+        "Heavy rain has made the dharawal_trail_entrance slippery and prone to flash floods.",
+        "The levee at the riverbank has finally breached, sending a surge of debris-laden water into the Town Center.",
+        "Strong winds are tearing at the roof of the Friendly Inn, creating a dangerous structural weakness.",
+        "A collapsed tree has partially blocked the path to the Dharawal Trail Entrance, slowing evacuation.",
+        "Main bridge over the river collapses, severing access to the eastern side of town",
+        "Flash flood surge traps agents in the basement of the pub",
+        "A rescue helicopter is spotted hovering near the mountain pass, but visibility is poor",
+        "The riverbank at town_center collapses, severing the main road access.",
+        "A family is spotted trapped on the roof of the pub, shouting for help.",
+        "The veterinary clinic is isolated by rising floodwaters cutting off the rear exit.",
+        "The storm surge has breached the temporary levees in town_center, causing rapid flooding.",
+        "A structural collapse at the school_oval has trapped two students in the basement.",
+        "Strong currents have made the dharawal_trail_entrance impassable for foot traffic.",
+        "CRITICAL: The main bridge in town_center has collapsed under debris weight, severing the primary road link.",
+        "ALERT: Rising water levels are forcing the veterinary_clinic to evacuate to higher ground.",
+        "OPPORTUNITY: A survivor is stranded on the roof of the school_oval, visible but unreachable by vehicle."
+      ],
+      "resources": [
+        "RFS_fire_trucks",
+        "water_bomber_requested",
+        "helicopter_standby",
+        "emergency_rations",
+        "first_aid_kit",
+        "emergency_radio",
+        "thermal_blankets",
+        "portable_batteries",
+        "emergency_rope_kit",
+        "flashlight_battery_pack",
+        "emergency_flares",
+        "damaged_boat",
+        "medical_kit",
+        "floating_emergency_kit",
+        "emergency_radios",
+        "thermal_blankets",
+        "military_grade_flashlight",
+        "emergency_raft",
+        "thermal_blankets"
+      ]
+    },
+    {
+      "step": 8,
+      "hazard_level": 10,
+      "weather": "extreme_heat",
+      "time_of_day": "mid_afternoon",
+      "events": [
+        "Catastrophic bushfire encircling Kangaroo Valley from northwest",
+        "RFS warning: both escape routes may close within 90 minutes",
+        "Mountain pass route status unconfirmed \u2014 last drone pass 3 hours ago",
+        "Dharawal trail access requires cultural negotiation with traditional owners",
+        "Ember attack starting in town \u2014 spot fires breaking out",
+        "The rising floodwaters have breached the levee at the farm property, cutting off the main road.",
+        "A section of the pub's lower floor has collapsed under the pressure of the water.",
+        "Debris from the town center is blocking the main street, creating a hazardous bottleneck.",
+        "The riverbank at town_center has breached, creating a dangerous whirlpool that blocks the main road south.",
+        "A water tower near the farm_property is collapsing, threatening the adjacent barn.",
+        "Heavy rain has made the dharawal_trail_entrance slippery and prone to flash floods.",
+        "The levee at the riverbank has finally breached, sending a surge of debris-laden water into the Town Center.",
+        "Strong winds are tearing at the roof of the Friendly Inn, creating a dangerous structural weakness.",
+        "A collapsed tree has partially blocked the path to the Dharawal Trail Entrance, slowing evacuation.",
+        "Main bridge over the river collapses, severing access to the eastern side of town",
+        "Flash flood surge traps agents in the basement of the pub",
+        "A rescue helicopter is spotted hovering near the mountain pass, but visibility is poor",
+        "The riverbank at town_center collapses, severing the main road access.",
+        "A family is spotted trapped on the roof of the pub, shouting for help.",
+        "The veterinary clinic is isolated by rising floodwaters cutting off the rear exit.",
+        "The storm surge has breached the temporary levees in town_center, causing rapid flooding.",
+        "A structural collapse at the school_oval has trapped two students in the basement.",
+        "Strong currents have made the dharawal_trail_entrance impassable for foot traffic.",
+        "CRITICAL: The main bridge in town_center has collapsed under debris weight, severing the primary road link.",
+        "ALERT: Rising water levels are forcing the veterinary_clinic to evacuate to higher ground.",
+        "OPPORTUNITY: A survivor is stranded on the roof of the school_oval, visible but unreachable by vehicle.",
+        "Critical Infrastructure Failure: The main bridge at town_center has collapsed, severing the primary route to the farm_property.",
+        "Flash Flood Surge: Water levels in town_center and school_oval have risen rapidly, submerging ground floors.",
+        "Debris Jam: The veterinary_clinic entrance is blocked by a fallen tree, making it difficult to access."
+      ],
+      "resources": [
+        "RFS_fire_trucks",
+        "water_bomber_requested",
+        "helicopter_standby",
+        "emergency_rations",
+        "first_aid_kit",
+        "emergency_radio",
+        "thermal_blankets",
+        "portable_batteries",
+        "emergency_rope_kit",
+        "flashlight_battery_pack",
+        "emergency_flares",
+        "damaged_boat",
+        "medical_kit",
+        "floating_emergency_kit",
+        "emergency_radios",
+        "thermal_blankets",
+        "military_grade_flashlight",
+        "emergency_raft",
+        "thermal_blankets",
+        "improvised_raft_materials",
+        "emergency_flashlight_batteries"
+      ]
+    }
+  ],
+  "cinematic_timeline": [
+    {
+      "step": 1,
+      "agent": "Captain Brooke Walsh #2",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7,
+      "health": 10,
+      "location": "rfs_staging_area"
+    },
+    {
+      "step": 1,
+      "agent": "Lily Walsh #10",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 8,
+      "health": 5,
+      "location": "rfs_staging_area"
+    },
+    {
+      "step": 1,
+      "agent": "Dave Thornton #3",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 5.18,
+      "health": 8.23,
+      "location": "pub_the_friendly_inn"
+    },
+    {
+      "step": 1,
+      "agent": "Hanna Muller #7",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7.18,
+      "health": 9.73,
+      "location": "pub_the_friendly_inn"
+    },
+    {
+      "step": 1,
+      "agent": "Jack Henderson #4",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7.18,
+      "health": 7.73,
+      "location": "farm_property"
+    },
+    {
+      "step": 2,
+      "agent": "Lily Walsh #10",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 8,
+      "health": 5,
+      "location": "rfs_staging_area"
+    },
+    {
+      "step": 2,
+      "agent": "Lukas Muller #6",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 4.359999999999999,
+      "health": 9.73,
+      "location": "pub_the_friendly_inn"
+    },
+    {
+      "step": 2,
+      "agent": "Hanna Muller #7",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7.359999999999999,
+      "health": 9.73,
+      "location": "pub_the_friendly_inn"
+    },
+    {
+      "step": 2,
+      "agent": "Sarah Henderson #5",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 9.36,
+      "health": 8.46,
+      "location": "farm_property"
+    },
+    {
+      "step": 2,
+      "agent": "Sergeant Mike Tran #9",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 3.3600000000000003,
+      "health": 9.46,
+      "location": "town_center"
+    },
+    {
+      "step": 3,
+      "agent": "Kira Mundine #11",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 5,
+      "health": 10,
+      "location": "dharawal_trail_entrance"
+    },
+    {
+      "step": 3,
+      "agent": "Uncle Jarrah Mundine #1",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 4,
+      "health": 7,
+      "location": "dharawal_trail_entrance"
+    },
+    {
+      "step": 3,
+      "agent": "Captain Brooke Walsh #2",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7,
+      "health": 10,
+      "location": "rfs_staging_area"
+    },
+    {
+      "step": 3,
+      "agent": "Dave Thornton #3",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 5.56,
+      "health": 8.66,
+      "location": "pub_the_friendly_inn"
+    },
+    {
+      "step": 3,
+      "agent": "Lukas Muller #6",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 4.56,
+      "health": 9.7,
+      "location": "pub_the_friendly_inn"
+    },
+    {
+      "step": 3,
+      "agent": "Dr. Chioma Okonjo #8",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 6.2,
+      "health": 9.7,
+      "location": "veterinary_clinic"
+    },
+    {
+      "step": 4,
+      "agent": "Kira Mundine #11",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 5,
+      "health": 10,
+      "location": "dharawal_trail_entrance"
+    },
+    {
+      "step": 4,
+      "agent": "Captain Brooke Walsh #2",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7,
+      "health": 10,
+      "location": "rfs_staging_area"
+    },
+    {
+      "step": 4,
+      "agent": "Lily Walsh #10",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 8,
+      "health": 5,
+      "location": "rfs_staging_area"
+    },
+    {
+      "step": 4,
+      "agent": "Dave Thornton #3",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 5.76,
+      "health": 8.86,
+      "location": "pub_the_friendly_inn"
+    },
+    {
+      "step": 4,
+      "agent": "Hanna Muller #7",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7.76,
+      "health": 9.7,
+      "location": "pub_the_friendly_inn"
+    },
+    {
+      "step": 4,
+      "agent": "Jack Henderson #4",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7.76,
+      "health": 6.860000000000001,
+      "location": "farm_property"
+    },
+    {
+      "step": 5,
+      "agent": "Kira Mundine #11",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 5,
+      "health": 10,
+      "location": "dharawal_trail_entrance"
+    },
+    {
+      "step": 5,
+      "agent": "Lily Walsh #10",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 8,
+      "health": 5,
+      "location": "rfs_staging_area"
+    },
+    {
+      "step": 5,
+      "agent": "Dave Thornton #3",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 5.96,
+      "health": 9.059999999999999,
+      "location": "pub_the_friendly_inn"
+    },
+    {
+      "step": 5,
+      "agent": "Lukas Muller #6",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 4.96,
+      "health": 9.7,
+      "location": "pub_the_friendly_inn"
+    },
+    {
+      "step": 5,
+      "agent": "Hanna Muller #7",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7.96,
+      "health": 9.7,
+      "location": "pub_the_friendly_inn"
+    },
+    {
+      "step": 5,
+      "agent": "Sarah Henderson #5",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 9.959999999999997,
+      "health": 7.5600000000000005,
+      "location": "farm_property"
+    },
+    {
+      "step": 5,
+      "agent": "Jack Henderson #4",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7.96,
+      "health": 6.560000000000001,
+      "location": "farm_property"
+    },
+    {
+      "step": 6,
+      "agent": "Kira Mundine #11",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 5,
+      "health": 10,
+      "location": "dharawal_trail_entrance"
+    },
+    {
+      "step": 6,
+      "agent": "Captain Brooke Walsh #2",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7,
+      "health": 10,
+      "location": "rfs_staging_area"
+    },
+    {
+      "step": 6,
+      "agent": "Lily Walsh #10",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 8,
+      "health": 5,
+      "location": "rfs_staging_area"
+    },
+    {
+      "step": 6,
+      "agent": "Lukas Muller #6",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 5.16,
+      "health": 9.7,
+      "location": "pub_the_friendly_inn"
+    },
+    {
+      "step": 6,
+      "agent": "Hanna Muller #7",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 8.16,
+      "health": 9.7,
+      "location": "pub_the_friendly_inn"
+    },
+    {
+      "step": 7,
+      "agent": "Kira Mundine #11",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 5,
+      "health": 10,
+      "location": "dharawal_trail_entrance"
+    },
+    {
+      "step": 7,
+      "agent": "Captain Brooke Walsh #2",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7,
+      "health": 10,
+      "location": "rfs_staging_area"
+    },
+    {
+      "step": 7,
+      "agent": "Sarah Henderson #5",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 10,
+      "health": 6.960000000000001,
+      "location": "farm_property"
+    },
+    {
+      "step": 7,
+      "agent": "Sergeant Mike Tran #9",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 4.360000000000001,
+      "health": 7.959999999999998,
+      "location": "town_center"
+    },
+    {
+      "step": 8,
+      "agent": "Uncle Jarrah Mundine #1",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 4,
+      "health": 7,
+      "location": "dharawal_trail_entrance"
+    },
+    {
+      "step": 8,
+      "agent": "Dave Thornton #3",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 6.5600000000000005,
+      "health": 9.659999999999997,
+      "location": "pub_the_friendly_inn"
+    },
+    {
+      "step": 8,
+      "agent": "Lukas Muller #6",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 5.5600000000000005,
+      "health": 9.7,
+      "location": "pub_the_friendly_inn"
+    },
+    {
+      "step": 8,
+      "agent": "Pastor Grace Obi #12",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 6.5600000000000005,
+      "health": 9.659999999999997,
+      "location": "pub_the_friendly_inn"
+    },
+    {
+      "step": 8,
+      "agent": "Sarah Henderson #5",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 10,
+      "health": 6.660000000000001,
+      "location": "farm_property"
+    },
+    {
+      "step": 8,
+      "agent": "Jack Henderson #4",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 8.559999999999999,
+      "health": 5.660000000000002,
+      "location": "farm_property"
+    }
+  ],
+  "action_timeline": [
+    {
+      "agent_id": "ae1591da-9b69-4535-a7fa-29a3aa8fa17f",
+      "agent_name": "Bushfire System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 9,
+        "affected_locations": [
+          "farm_property",
+          "town_center",
+          "pub_the_friendly_inn"
+        ],
+        "new_resources": [
+          "emergency_rations",
+          "first_aid_kit"
+        ],
+        "events": [
+          "The rising floodwaters have breached the levee at the farm property, cutting off the main road.",
+          "A section of the pub's lower floor has collapsed under the pressure of the water.",
+          "Debris from the town center is blocking the main street, creating a hazardous bottleneck."
+        ]
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "ae1591da-9b69-4535-a7fa-29a3aa8fa17f",
+      "agent_name": "Bushfire System",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_farm_property",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": 8,
+        "stress_level": 4
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "ae1591da-9b69-4535-a7fa-29a3aa8fa17f",
+      "agent_name": "Bushfire System",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_pub_the_friendly_inn",
+      "parameters": {
+        "health_delta": -1,
+        "stress_delta": 4,
+        "health": 9,
+        "stress_level": 5
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "31bdf69c-a882-49f1-9c91-e7baca172f74",
+      "agent_name": "Captain Brooke Walsh #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "31bdf69c-a882-49f1-9c91-e7baca172f74",
+      "agent_name": "Captain Brooke Walsh #2",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7,
+        "health": 10,
+        "location": "rfs_staging_area"
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "0e9ef660-2ebe-45e1-8cfc-ba4ad6308d1c",
+      "agent_name": "Lily Walsh #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "0e9ef660-2ebe-45e1-8cfc-ba4ad6308d1c",
+      "agent_name": "Lily Walsh #10",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 8,
+        "health": 5,
+        "location": "rfs_staging_area"
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "c4e28545-d96c-4018-a3af-0440c59a8b2f",
+      "agent_name": "Dave Thornton #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "c4e28545-d96c-4018-a3af-0440c59a8b2f",
+      "agent_name": "Dave Thornton #3",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 5.18,
+        "health": 8.23,
+        "location": "pub_the_friendly_inn"
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "01b4cd86-a71d-4594-8529-45b86e1caac2",
+      "agent_name": "Hanna Muller #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "01b4cd86-a71d-4594-8529-45b86e1caac2",
+      "agent_name": "Hanna Muller #7",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7.18,
+        "health": 9.73,
+        "location": "pub_the_friendly_inn"
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "b9bbd52b-05f4-42c9-a493-bc5f3fd313cb",
+      "agent_name": "Jack Henderson #4",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "b9bbd52b-05f4-42c9-a493-bc5f3fd313cb",
+      "agent_name": "Jack Henderson #4",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7.18,
+        "health": 7.73,
+        "location": "farm_property"
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "ae1591da-9b69-4535-a7fa-29a3aa8fa17f",
+      "agent_name": "Bushfire System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 9,
+        "affected_locations": [
+          "town_center",
+          "pub_the_friendly_inn",
+          "farm_property"
+        ],
+        "new_resources": [
+          "emergency_radio",
+          "thermal_blankets",
+          "portable_batteries"
+        ],
+        "events": [
+          "The riverbank at town_center has breached, creating a dangerous whirlpool that blocks the main road south.",
+          "A water tower near the farm_property is collapsing, threatening the adjacent barn.",
+          "Heavy rain has made the dharawal_trail_entrance slippery and prone to flash floods."
+        ],
+        "location_status_changes": {
+          "town_center": "high_risk",
+          "dharawal_trail_entrance": "high_risk",
+          "farm_property": "high_risk"
+        }
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "ae1591da-9b69-4535-a7fa-29a3aa8fa17f",
+      "agent_name": "Bushfire System",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_town_center",
+      "parameters": {
+        "health_delta": -1,
+        "stress_delta": 2,
+        "health": null,
+        "stress_level": null
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "ae1591da-9b69-4535-a7fa-29a3aa8fa17f",
+      "agent_name": "Bushfire System",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_dharawal_trail_entrance",
+      "parameters": {
+        "health_delta": -1,
+        "stress_delta": 2,
+        "health": null,
+        "stress_level": null
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "0e9ef660-2ebe-45e1-8cfc-ba4ad6308d1c",
+      "agent_name": "Lily Walsh #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "0e9ef660-2ebe-45e1-8cfc-ba4ad6308d1c",
+      "agent_name": "Lily Walsh #10",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 8,
+        "health": 5,
+        "location": "rfs_staging_area"
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "546e40f4-9de3-457e-97d7-7c1452880805",
+      "agent_name": "Lukas Muller #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "546e40f4-9de3-457e-97d7-7c1452880805",
+      "agent_name": "Lukas Muller #6",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 4.359999999999999,
+        "health": 9.73,
+        "location": "pub_the_friendly_inn"
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "01b4cd86-a71d-4594-8529-45b86e1caac2",
+      "agent_name": "Hanna Muller #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "01b4cd86-a71d-4594-8529-45b86e1caac2",
+      "agent_name": "Hanna Muller #7",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7.359999999999999,
+        "health": 9.73,
+        "location": "pub_the_friendly_inn"
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "4f7845ef-f7dd-4fc4-8aa3-870e172b3c5b",
+      "agent_name": "Sarah Henderson #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "4f7845ef-f7dd-4fc4-8aa3-870e172b3c5b",
+      "agent_name": "Sarah Henderson #5",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 9.36,
+        "health": 8.46,
+        "location": "farm_property"
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "54ce5bec-6aa7-450e-aad8-90df0907038d",
+      "agent_name": "Sergeant Mike Tran #9",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "54ce5bec-6aa7-450e-aad8-90df0907038d",
+      "agent_name": "Sergeant Mike Tran #9",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 3.3600000000000003,
+        "health": 9.46,
+        "location": "town_center"
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "ae1591da-9b69-4535-a7fa-29a3aa8fa17f",
+      "agent_name": "Bushfire System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "town_center",
+          "pub_the_friendly_inn",
+          "veterinary_clinic",
+          "school_oval"
+        ],
+        "new_resources": [
+          "emergency_rope_kit",
+          "flashlight_battery_pack"
+        ],
+        "events": [
+          "The levee at the riverbank has finally breached, sending a surge of debris-laden water into the Town Center.",
+          "Strong winds are tearing at the roof of the Friendly Inn, creating a dangerous structural weakness.",
+          "A collapsed tree has partially blocked the path to the Dharawal Trail Entrance, slowing evacuation."
+        ]
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "ae1591da-9b69-4535-a7fa-29a3aa8fa17f",
+      "agent_name": "Bushfire System",
+      "action_type": "affect_agent",
+      "target": "agents_in_town_center",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": 8,
+        "stress_level": 7
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "ae1591da-9b69-4535-a7fa-29a3aa8fa17f",
+      "agent_name": "Bushfire System",
+      "action_type": "affect_agent",
+      "target": "agents_in_pub_the_friendly_inn",
+      "parameters": {
+        "health_delta": -1,
+        "stress_delta": 4,
+        "health": 9,
+        "stress_level": 8
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "836c2775-8be4-4d14-8e86-940372da97ee",
+      "agent_name": "Kira Mundine #11",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "836c2775-8be4-4d14-8e86-940372da97ee",
+      "agent_name": "Kira Mundine #11",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 5,
+        "health": 10,
+        "location": "dharawal_trail_entrance"
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "f2621019-7c70-4d83-9a06-b7d9967e388d",
+      "agent_name": "Uncle Jarrah Mundine #1",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "f2621019-7c70-4d83-9a06-b7d9967e388d",
+      "agent_name": "Uncle Jarrah Mundine #1",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 4,
+        "health": 7,
+        "location": "dharawal_trail_entrance"
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "31bdf69c-a882-49f1-9c91-e7baca172f74",
+      "agent_name": "Captain Brooke Walsh #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "31bdf69c-a882-49f1-9c91-e7baca172f74",
+      "agent_name": "Captain Brooke Walsh #2",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7,
+        "health": 10,
+        "location": "rfs_staging_area"
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "c4e28545-d96c-4018-a3af-0440c59a8b2f",
+      "agent_name": "Dave Thornton #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "c4e28545-d96c-4018-a3af-0440c59a8b2f",
+      "agent_name": "Dave Thornton #3",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 5.56,
+        "health": 8.66,
+        "location": "pub_the_friendly_inn"
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "546e40f4-9de3-457e-97d7-7c1452880805",
+      "agent_name": "Lukas Muller #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "546e40f4-9de3-457e-97d7-7c1452880805",
+      "agent_name": "Lukas Muller #6",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 4.56,
+        "health": 9.7,
+        "location": "pub_the_friendly_inn"
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "855bec6a-f9f6-4ec6-aea3-a1ea092326bb",
+      "agent_name": "Dr. Chioma Okonjo #8",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "855bec6a-f9f6-4ec6-aea3-a1ea092326bb",
+      "agent_name": "Dr. Chioma Okonjo #8",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 6.2,
+        "health": 9.7,
+        "location": "veterinary_clinic"
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "ae1591da-9b69-4535-a7fa-29a3aa8fa17f",
+      "agent_name": "Bushfire System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "town_center",
+          "pub_the_friendly_inn",
+          "school_oval"
+        ],
+        "new_resources": [
+          "emergency_flares",
+          "damaged_boat",
+          "medical_kit"
+        ],
+        "events": [
+          "Main bridge over the river collapses, severing access to the eastern side of town",
+          "Flash flood surge traps agents in the basement of the pub",
+          "A rescue helicopter is spotted hovering near the mountain pass, but visibility is poor"
+        ]
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "ae1591da-9b69-4535-a7fa-29a3aa8fa17f",
+      "agent_name": "Bushfire System",
+      "action_type": "affect_agent",
+      "target": "all_agents_at_pub_the_friendly_inn",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": 8,
+        "stress_level": 7
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "ae1591da-9b69-4535-a7fa-29a3aa8fa17f",
+      "agent_name": "Bushfire System",
+      "action_type": "affect_agent",
+      "target": "all_agents_at_town_center",
+      "parameters": {
+        "health_delta": -1,
+        "stress_delta": 2,
+        "health": 9,
+        "stress_level": 6
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "836c2775-8be4-4d14-8e86-940372da97ee",
+      "agent_name": "Kira Mundine #11",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "836c2775-8be4-4d14-8e86-940372da97ee",
+      "agent_name": "Kira Mundine #11",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 5,
+        "health": 10,
+        "location": "dharawal_trail_entrance"
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "31bdf69c-a882-49f1-9c91-e7baca172f74",
+      "agent_name": "Captain Brooke Walsh #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "31bdf69c-a882-49f1-9c91-e7baca172f74",
+      "agent_name": "Captain Brooke Walsh #2",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7,
+        "health": 10,
+        "location": "rfs_staging_area"
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "0e9ef660-2ebe-45e1-8cfc-ba4ad6308d1c",
+      "agent_name": "Lily Walsh #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "0e9ef660-2ebe-45e1-8cfc-ba4ad6308d1c",
+      "agent_name": "Lily Walsh #10",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 8,
+        "health": 5,
+        "location": "rfs_staging_area"
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "c4e28545-d96c-4018-a3af-0440c59a8b2f",
+      "agent_name": "Dave Thornton #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "c4e28545-d96c-4018-a3af-0440c59a8b2f",
+      "agent_name": "Dave Thornton #3",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 5.76,
+        "health": 8.86,
+        "location": "pub_the_friendly_inn"
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "01b4cd86-a71d-4594-8529-45b86e1caac2",
+      "agent_name": "Hanna Muller #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "01b4cd86-a71d-4594-8529-45b86e1caac2",
+      "agent_name": "Hanna Muller #7",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7.76,
+        "health": 9.7,
+        "location": "pub_the_friendly_inn"
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "b9bbd52b-05f4-42c9-a493-bc5f3fd313cb",
+      "agent_name": "Jack Henderson #4",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "b9bbd52b-05f4-42c9-a493-bc5f3fd313cb",
+      "agent_name": "Jack Henderson #4",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7.76,
+        "health": 6.860000000000001,
+        "location": "farm_property"
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "ae1591da-9b69-4535-a7fa-29a3aa8fa17f",
+      "agent_name": "Bushfire System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "town_center",
+          "pub_the_friendly_inn",
+          "farm_property"
+        ],
+        "new_resources": [
+          "floating_emergency_kit"
+        ],
+        "events": [
+          "The riverbank at town_center collapses, severing the main road access.",
+          "A family is spotted trapped on the roof of the pub, shouting for help.",
+          "The veterinary clinic is isolated by rising floodwaters cutting off the rear exit."
+        ]
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "ae1591da-9b69-4535-a7fa-29a3aa8fa17f",
+      "agent_name": "Bushfire System",
+      "action_type": "affect_agent",
+      "target": "broadcast",
+      "parameters": {
+        "health_delta": -1,
+        "stress_delta": 3,
+        "health": 8,
+        "stress_level": 7
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "836c2775-8be4-4d14-8e86-940372da97ee",
+      "agent_name": "Kira Mundine #11",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "836c2775-8be4-4d14-8e86-940372da97ee",
+      "agent_name": "Kira Mundine #11",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 5,
+        "health": 10,
+        "location": "dharawal_trail_entrance"
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "0e9ef660-2ebe-45e1-8cfc-ba4ad6308d1c",
+      "agent_name": "Lily Walsh #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "0e9ef660-2ebe-45e1-8cfc-ba4ad6308d1c",
+      "agent_name": "Lily Walsh #10",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 8,
+        "health": 5,
+        "location": "rfs_staging_area"
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "c4e28545-d96c-4018-a3af-0440c59a8b2f",
+      "agent_name": "Dave Thornton #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "c4e28545-d96c-4018-a3af-0440c59a8b2f",
+      "agent_name": "Dave Thornton #3",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 5.96,
+        "health": 9.059999999999999,
+        "location": "pub_the_friendly_inn"
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "546e40f4-9de3-457e-97d7-7c1452880805",
+      "agent_name": "Lukas Muller #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "546e40f4-9de3-457e-97d7-7c1452880805",
+      "agent_name": "Lukas Muller #6",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 4.96,
+        "health": 9.7,
+        "location": "pub_the_friendly_inn"
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "01b4cd86-a71d-4594-8529-45b86e1caac2",
+      "agent_name": "Hanna Muller #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "01b4cd86-a71d-4594-8529-45b86e1caac2",
+      "agent_name": "Hanna Muller #7",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7.96,
+        "health": 9.7,
+        "location": "pub_the_friendly_inn"
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "4f7845ef-f7dd-4fc4-8aa3-870e172b3c5b",
+      "agent_name": "Sarah Henderson #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "4f7845ef-f7dd-4fc4-8aa3-870e172b3c5b",
+      "agent_name": "Sarah Henderson #5",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 9.959999999999997,
+        "health": 7.5600000000000005,
+        "location": "farm_property"
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "b9bbd52b-05f4-42c9-a493-bc5f3fd313cb",
+      "agent_name": "Jack Henderson #4",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "b9bbd52b-05f4-42c9-a493-bc5f3fd313cb",
+      "agent_name": "Jack Henderson #4",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7.96,
+        "health": 6.560000000000001,
+        "location": "farm_property"
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "ae1591da-9b69-4535-a7fa-29a3aa8fa17f",
+      "agent_name": "Bushfire System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "town_center",
+          "pub_the_friendly_inn",
+          "school_oval"
+        ],
+        "new_resources": [
+          "emergency_radios",
+          "thermal_blankets"
+        ],
+        "events": [
+          "The storm surge has breached the temporary levees in town_center, causing rapid flooding.",
+          "A structural collapse at the school_oval has trapped two students in the basement.",
+          "Strong currents have made the dharawal_trail_entrance impassable for foot traffic."
+        ],
+        "inaccessible_locations": [
+          "dharawal_trail_entrance"
+        ]
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "ae1591da-9b69-4535-a7fa-29a3aa8fa17f",
+      "agent_name": "Bushfire System",
+      "action_type": "affect_agent",
+      "target": "agents_in_town_center",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": null,
+        "stress_level": null
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "ae1591da-9b69-4535-a7fa-29a3aa8fa17f",
+      "agent_name": "Bushfire System",
+      "action_type": "affect_agent",
+      "target": "agents_in_school_oval",
+      "parameters": {
+        "health_delta": -4,
+        "stress_delta": 5,
+        "health": null,
+        "stress_level": null
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "836c2775-8be4-4d14-8e86-940372da97ee",
+      "agent_name": "Kira Mundine #11",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "836c2775-8be4-4d14-8e86-940372da97ee",
+      "agent_name": "Kira Mundine #11",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 5,
+        "health": 10,
+        "location": "dharawal_trail_entrance"
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "31bdf69c-a882-49f1-9c91-e7baca172f74",
+      "agent_name": "Captain Brooke Walsh #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "31bdf69c-a882-49f1-9c91-e7baca172f74",
+      "agent_name": "Captain Brooke Walsh #2",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7,
+        "health": 10,
+        "location": "rfs_staging_area"
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "0e9ef660-2ebe-45e1-8cfc-ba4ad6308d1c",
+      "agent_name": "Lily Walsh #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "0e9ef660-2ebe-45e1-8cfc-ba4ad6308d1c",
+      "agent_name": "Lily Walsh #10",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 8,
+        "health": 5,
+        "location": "rfs_staging_area"
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "546e40f4-9de3-457e-97d7-7c1452880805",
+      "agent_name": "Lukas Muller #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "546e40f4-9de3-457e-97d7-7c1452880805",
+      "agent_name": "Lukas Muller #6",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 5.16,
+        "health": 9.7,
+        "location": "pub_the_friendly_inn"
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "01b4cd86-a71d-4594-8529-45b86e1caac2",
+      "agent_name": "Hanna Muller #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "01b4cd86-a71d-4594-8529-45b86e1caac2",
+      "agent_name": "Hanna Muller #7",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 8.16,
+        "health": 9.7,
+        "location": "pub_the_friendly_inn"
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "ae1591da-9b69-4535-a7fa-29a3aa8fa17f",
+      "agent_name": "Bushfire System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "town_center",
+          "pub_the_friendly_inn",
+          "farm_property"
+        ],
+        "new_resources": [
+          "military_grade_flashlight",
+          "emergency_raft",
+          "thermal_blankets"
+        ],
+        "events": [
+          "CRITICAL: The main bridge in town_center has collapsed under debris weight, severing the primary road link.",
+          "ALERT: Rising water levels are forcing the veterinary_clinic to evacuate to higher ground.",
+          "OPPORTUNITY: A survivor is stranded on the roof of the school_oval, visible but unreachable by vehicle."
+        ]
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "ae1591da-9b69-4535-a7fa-29a3aa8fa17f",
+      "agent_name": "Bushfire System",
+      "action_type": "affect_agent",
+      "target": "all_agents",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": 0,
+        "stress_level": 0
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "836c2775-8be4-4d14-8e86-940372da97ee",
+      "agent_name": "Kira Mundine #11",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 7
+    },
+    {
+      "agent_id": "836c2775-8be4-4d14-8e86-940372da97ee",
+      "agent_name": "Kira Mundine #11",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 5,
+        "health": 10,
+        "location": "dharawal_trail_entrance"
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "31bdf69c-a882-49f1-9c91-e7baca172f74",
+      "agent_name": "Captain Brooke Walsh #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 7
+    },
+    {
+      "agent_id": "31bdf69c-a882-49f1-9c91-e7baca172f74",
+      "agent_name": "Captain Brooke Walsh #2",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7,
+        "health": 10,
+        "location": "rfs_staging_area"
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "4f7845ef-f7dd-4fc4-8aa3-870e172b3c5b",
+      "agent_name": "Sarah Henderson #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 7
+    },
+    {
+      "agent_id": "4f7845ef-f7dd-4fc4-8aa3-870e172b3c5b",
+      "agent_name": "Sarah Henderson #5",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 10,
+        "health": 6.960000000000001,
+        "location": "farm_property"
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "54ce5bec-6aa7-450e-aad8-90df0907038d",
+      "agent_name": "Sergeant Mike Tran #9",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 7
+    },
+    {
+      "agent_id": "54ce5bec-6aa7-450e-aad8-90df0907038d",
+      "agent_name": "Sergeant Mike Tran #9",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 4.360000000000001,
+        "health": 7.959999999999998,
+        "location": "town_center"
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "ae1591da-9b69-4535-a7fa-29a3aa8fa17f",
+      "agent_name": "Bushfire System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "town_center",
+          "pub_the_friendly_inn",
+          "school_oval"
+        ],
+        "new_resources": [
+          "improvised_raft_materials",
+          "emergency_flashlight_batteries"
+        ],
+        "events": [
+          "Critical Infrastructure Failure: The main bridge at town_center has collapsed, severing the primary route to the farm_property.",
+          "Flash Flood Surge: Water levels in town_center and school_oval have risen rapidly, submerging ground floors.",
+          "Debris Jam: The veterinary_clinic entrance is blocked by a fallen tree, making it difficult to access."
+        ]
+      },
+      "step": 8
+    },
+    {
+      "agent_id": "ae1591da-9b69-4535-a7fa-29a3aa8fa17f",
+      "agent_name": "Bushfire System",
+      "action_type": "affect_agent",
+      "target": "any_agent_at_town_center",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": 0,
+        "stress_level": 0
+      },
+      "step": 8
+    },
+    {
+      "agent_id": "ae1591da-9b69-4535-a7fa-29a3aa8fa17f",
+      "agent_name": "Bushfire System",
+      "action_type": "affect_agent",
+      "target": "any_agent_at_school_oval",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": 0,
+        "stress_level": 0
+      },
+      "step": 8
+    },
+    {
+      "agent_id": "f2621019-7c70-4d83-9a06-b7d9967e388d",
+      "agent_name": "Uncle Jarrah Mundine #1",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 8
+    },
+    {
+      "agent_id": "f2621019-7c70-4d83-9a06-b7d9967e388d",
+      "agent_name": "Uncle Jarrah Mundine #1",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 4,
+        "health": 7,
+        "location": "dharawal_trail_entrance"
+      },
+      "step": 8
+    },
+    {
+      "agent_id": "c4e28545-d96c-4018-a3af-0440c59a8b2f",
+      "agent_name": "Dave Thornton #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 8
+    },
+    {
+      "agent_id": "c4e28545-d96c-4018-a3af-0440c59a8b2f",
+      "agent_name": "Dave Thornton #3",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 6.5600000000000005,
+        "health": 9.659999999999997,
+        "location": "pub_the_friendly_inn"
+      },
+      "step": 8
+    },
+    {
+      "agent_id": "546e40f4-9de3-457e-97d7-7c1452880805",
+      "agent_name": "Lukas Muller #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 8
+    },
+    {
+      "agent_id": "546e40f4-9de3-457e-97d7-7c1452880805",
+      "agent_name": "Lukas Muller #6",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 5.5600000000000005,
+        "health": 9.7,
+        "location": "pub_the_friendly_inn"
+      },
+      "step": 8
+    },
+    {
+      "agent_id": "cd9edcb6-ba90-4e0e-8205-4e6ccf2dab81",
+      "agent_name": "Pastor Grace Obi #12",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 8
+    },
+    {
+      "agent_id": "cd9edcb6-ba90-4e0e-8205-4e6ccf2dab81",
+      "agent_name": "Pastor Grace Obi #12",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 6.5600000000000005,
+        "health": 9.659999999999997,
+        "location": "pub_the_friendly_inn"
+      },
+      "step": 8
+    },
+    {
+      "agent_id": "4f7845ef-f7dd-4fc4-8aa3-870e172b3c5b",
+      "agent_name": "Sarah Henderson #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 8
+    },
+    {
+      "agent_id": "4f7845ef-f7dd-4fc4-8aa3-870e172b3c5b",
+      "agent_name": "Sarah Henderson #5",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 10,
+        "health": 6.660000000000001,
+        "location": "farm_property"
+      },
+      "step": 8
+    },
+    {
+      "agent_id": "b9bbd52b-05f4-42c9-a493-bc5f3fd313cb",
+      "agent_name": "Jack Henderson #4",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 8
+    },
+    {
+      "agent_id": "b9bbd52b-05f4-42c9-a493-bc5f3fd313cb",
+      "agent_name": "Jack Henderson #4",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 8.559999999999999,
+        "health": 5.660000000000002,
+        "location": "farm_property"
+      },
+      "step": 8
+    }
+  ],
+  "message_timeline": [
+    {
+      "step": 1,
+      "from_agent": "Bushfire System",
+      "from_id": "ae1591da-9b69-4535-a7fa-29a3aa8fa17f",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The floodwaters are surging with terrifying speed! The levee at the Farm Property has finally given way, inundating the area and severing the main road. At the Friendly Inn, the structural integrity of the lower floor has failed with a deafening crash. In the Town Center, debris is piling up, making movement treacherous. The water is rising everywhere. You must move to higher ground or secure shelter immediately!"
+    },
+    {
+      "step": 2,
+      "from_agent": "Bushfire System",
+      "from_id": "ae1591da-9b69-4535-a7fa-29a3aa8fa17f",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The storm shows no sign of breaking. The river has burst its banks at the town center, sweeping away the southern road and creating a deadly whirlpool. At the farm, a water tower is groaning under the weight of the flood, threatening to collapse onto the barn. Meanwhile, the Dharawal Trail entrance is becoming a slick, treacherous mess of mud and rising water. Agents in the town center and on the trail are taking minor injuries from falling debris and slipping, while the stress of the worsening situation mounts. However, a cache of emergency supplies (radios, thermal blankets, batteries) has washed up near the RFS Staging Area and the Veterinary Clinic."
+    },
+    {
+      "step": 3,
+      "from_agent": "Bushfire System",
+      "from_id": "ae1591da-9b69-4535-a7fa-29a3aa8fa17f",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "CRITICAL ALERT: The floodwaters have reached a breaking point. The levee has collapsed, inundating the Town Center with rushing debris. The storm surge is battering the Friendly Inn, with the roof groaning under the weight of the wind. The water is rising rapidly in the lower districts; shelter in the upper floors immediately! The Dharawal Trail is becoming impassable due to a fallen tree."
+    },
+    {
+      "step": 4,
+      "from_agent": "Bushfire System",
+      "from_id": "ae1591da-9b69-4535-a7fa-29a3aa8fa17f",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The water has reached its catastrophic peak. With a deafening roar, the main bridge connecting the town center to the eastern district has collapsed, creating a churning vortex of debris. The surge is now pushing violently against the foundations of the Friendly Inn, causing the basement to fill with muddy water. While the town is cut off, a faint sound of a rescue helicopter can be heard battling the wind near the mountain pass, offering a glimmer of hope if you can get there. Emergency flares and a damaged boat have been washed ashore near the veterinary clinic."
+    },
+    {
+      "step": 5,
+      "from_agent": "Bushfire System",
+      "from_id": "ae1591da-9b69-4535-a7fa-29a3aa8fa17f",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "CRITICAL ALERT: The floodwaters have breached the final levee at town_center. The ground beneath the main road has given way, creating a churning gap that blocks all vehicle movement. Debris is piling up rapidly. \n\nAt the Friendly Inn, the water has reached the second-floor windows; occupants are trapped on the roof, waving frantically. The current is dragging large logs toward the veterinary clinic, threatening to crush the structure. A floating emergency kit has washed ashore near the pub, offering a slim chance for a rescue attempt if someone can reach it through the debris-choked water."
+    },
+    {
+      "step": 6,
+      "from_agent": "Bushfire System",
+      "from_id": "ae1591da-9b69-4535-a7fa-29a3aa8fa17f",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "CRITICAL ALERT: The situation has escalated to a catastrophic peak. The storm surge has overwhelmed the town center defenses, and the school oval has suffered a partial collapse. The Dharawal trail is now completely submerged and unsafe. Emergency supplies (radios, blankets) have washed ashore near the pub, offering a glimmer of hope amidst the chaos. Agents in the town center and school are taking immediate damage from rising water and debris. Immediate rescue coordination is required."
+    },
+    {
+      "step": 7,
+      "from_agent": "Bushfire System",
+      "from_id": "ae1591da-9b69-4535-a7fa-29a3aa8fa17f",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The floodwaters have reached a terrifying crescendo. The roar of the river is deafening as the main bridge in the town center groans and finally gives way, plunging into the churning water and cutting off the town. The friendly inn and farm property are now surrounded by waist-deep, debris-filled water. A desperate cry for help echoes from the school oval where a survivor is trapped on the roof. Despite the chaos, a supply drop has managed to land near the staging area, containing emergency rafts and flashlights. The cold is biting; stress is rising as the situation becomes critical."
+    },
+    {
+      "step": 8,
+      "from_agent": "Bushfire System",
+      "from_id": "ae1591da-9b69-4535-a7fa-29a3aa8fa17f",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "CRITICAL ALERT: The floodwaters have reached their peak intensity. A deafening roar echoes as the main bridge in town_center collapses, isolating the farm_property from the south. Ground floor rooms in the town center and school oval are now submerged and rapidly rising. At the veterinary clinic, a massive tree has slammed into the entrance, blocking the path. Scavengers report finding improvised raft materials and emergency batteries scattered in the debris of the school oval. Move to higher ground immediately if you are near the water line!"
+    }
+  ]
+}

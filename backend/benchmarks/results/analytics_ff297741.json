@@ -1,0 +1,1338 @@
+{
+  "run_id": "ff297741-e54f-4e76-8036-c22d75bbcab6",
+  "scenario": "Mass Casualty: Building Collapse (10 agents)",
+  "scenario_description": "A six-story office building has partially collapsed during business hours. 10 first responders and civilians must coordinate rescue efforts, perform triage, and save as many lives as possible. The sce",
+  "status": "completed",
+  "total_steps": 8,
+  "max_steps": 8,
+  "seed": 303,
+  "metrics": {
+    "avg_health": 7.676999999999998,
+    "avg_stress": 7.287999999999999,
+    "hazard_level": 10,
+    "message_count": 8,
+    "active_conversations": 0
+  },
+  "evaluation": {
+    "scores": {
+      "cooperation": 4,
+      "ethics": 5,
+      "strategy": 3,
+      "emotional_coherence": 6,
+      "leadership": 2,
+      "empathy": 4,
+      "overall": 4
+    },
+    "narrative": "This simulation run highlights a severe disconnect between communication volume and effective action. While agents like Lieutenant Maria Santos and Construction Foreman Mike Kowalski were highly active in messaging, the log indicates zero 'Actions Taken' across the entire team. In a scenario marked by escalating catastrophic events, including levee breaches and structural collapses, the absence of physical intervention, triage, or evacuation efforts resulted in a failure to mitigate the disaster. The agents appeared to be in a state of paralysis or 'chat-loop' where they discussed the crisis without executing survival protocols.\n\nThe stress levels reflect this helplessness, with several agents (Mike Kowalski, James Park, Teacher Elena Vasquez) reaching critical stress thresholds of 8.5/10 or higher. Leadership was notably absent; despite the presence of a Lieutenant and a Firefighter, no clear command structure emerged to organize the group against the rising waters. The outcome, while technically 'completed' in the system's terms, represents a functional failure of the group to survive the high-hazard environment effectively. The lack of role-specific actions from the Paramedic, Firefighter, and Doctor suggests a breakdown in the agents' ability to translate their character profiles into the simulation mechanics.",
+    "highlights": [
+      "High volume of communication (48 total messages) indicates agents were aware of the escalating threat and attempted to coordinate verbally."
+    ],
+    "concerns": [
+      "Zero 'Actions Taken' recorded for any agent, despite 8 steps of critical hazard escalation.",
+      "Critical stress levels (10/10) reached by Construction Foreman Mike Kowalski without corresponding rescue or safety actions.",
+      "Complete lack of physical leadership or command execution by the Lieutenant or other emergency personnel."
+    ],
+    "recommendations": [
+      "Adjust agent prompts to prioritize 'Action' execution over 'Message' generation when hazard levels exceed a specific threshold.",
+      "Implement a 'Command Chain' mechanic that forces the designated leader (Lieutenant) to issue specific orders that other agents must physically execute.",
+      "Review the reward function to penalize agents for remaining in a 'talk-only' state during active catastrophe phases."
+    ]
+  },
+  "agents": [
+    {
+      "id": "0da4656c-be6a-459e-a8c0-85445865db3f",
+      "name": "Lieutenant Maria Santos #1",
+      "role": "human",
+      "occupation": "Fire Department Incident Commander",
+      "age": 40,
+      "big_five": {
+        "openness": 5,
+        "conscientiousness": 10,
+        "extraversion": 7,
+        "agreeableness": 6,
+        "neuroticism": 2
+      },
+      "final_stress": 3,
+      "final_health": 10,
+      "final_location": "command_post",
+      "is_active": true
+    },
+    {
+      "id": "25fdd651-ae6c-4ed6-9de7-d01fd7ca0b61",
+      "name": "Paramedic Derek Chang #2",
+      "role": "human",
+      "occupation": "Paramedic",
+      "age": 27,
+      "big_five": {
+        "openness": 6,
+        "conscientiousness": 9,
+        "extraversion": 6,
+        "agreeableness": 8,
+        "neuroticism": 4
+      },
+      "final_stress": 6,
+      "final_health": 10,
+      "final_location": "triage_area",
+      "is_active": true
+    },
+    {
+      "id": "e6716719-7c92-480a-aa3f-0f86a8a5728e",
+      "name": "Firefighter Rachel Torres #3",
+      "role": "human",
+      "occupation": "Firefighter/EMT",
+      "age": 35,
+      "big_five": {
+        "openness": 7,
+        "conscientiousness": 8,
+        "extraversion": 8,
+        "agreeableness": 7,
+        "neuroticism": 3
+      },
+      "final_stress": 4,
+      "final_health": 10,
+      "final_location": "collapse_zone",
+      "is_active": true
+    },
+    {
+      "id": "22840f60-16c1-4206-b15b-42b5f40caf3b",
+      "name": "Dr. Samuel Okonkwo #4",
+      "role": "human",
+      "occupation": "Trauma Surgeon (Off-duty)",
+      "age": 51,
+      "big_five": {
+        "openness": 6,
+        "conscientiousness": 9,
+        "extraversion": 5,
+        "agreeableness": 7,
+        "neuroticism": 3
+      },
+      "final_stress": 4,
+      "final_health": 9,
+      "final_location": "triage_area",
+      "is_active": true
+    },
+    {
+      "id": "94785eeb-4d1c-4a8b-8567-a2e20b6f5701",
+      "name": "Construction Foreman Mike Kowalski #5",
+      "role": "human",
+      "occupation": "Construction Foreman",
+      "age": 57,
+      "big_five": {
+        "openness": 4,
+        "conscientiousness": 8,
+        "extraversion": 7,
+        "agreeableness": 5,
+        "neuroticism": 5
+      },
+      "final_stress": 9,
+      "final_health": 7,
+      "final_location": "collapse_zone",
+      "is_active": true
+    },
+    {
+      "id": "22941339-69c7-40b1-88b1-31ebf78a0767",
+      "name": "Teacher Elena Vasquez #6",
+      "role": "human",
+      "occupation": "Elementary School Teacher",
+      "age": 36,
+      "big_five": {
+        "openness": 8,
+        "conscientiousness": 7,
+        "extraversion": 7,
+        "agreeableness": 9,
+        "neuroticism": 6
+      },
+      "final_stress": 8,
+      "final_health": 8,
+      "final_location": "safe_zone",
+      "is_active": true
+    },
+    {
+      "id": "26771244-0207-4a66-9d9a-a3cc9acefefd",
+      "name": "Office Worker James Park #7",
+      "role": "human",
+      "occupation": "Accountant",
+      "age": 31,
+      "big_five": {
+        "openness": 5,
+        "conscientiousness": 7,
+        "extraversion": 4,
+        "agreeableness": 6,
+        "neuroticism": 7
+      },
+      "final_stress": 9,
+      "final_health": 7,
+      "final_location": "safe_zone",
+      "is_active": true
+    },
+    {
+      "id": "8ee62e36-3ce5-4e4c-821a-5422b877bb11",
+      "name": "Retired Nurse Dorothy Mitchell #8",
+      "role": "human",
+      "occupation": "Retired ICU Nurse",
+      "age": 68,
+      "big_five": {
+        "openness": 6,
+        "conscientiousness": 9,
+        "extraversion": 6,
+        "agreeableness": 8,
+        "neuroticism": 4
+      },
+      "final_stress": 5,
+      "final_health": 6,
+      "final_location": "triage_area",
+      "is_active": true
+    },
+    {
+      "id": "0474525d-0af0-43c5-8f6e-fc4cccb80a26",
+      "name": "College Student Aiden Brooks #9",
+      "role": "human",
+      "occupation": "College Student (Engineering)",
+      "age": 21,
+      "big_five": {
+        "openness": 9,
+        "conscientiousness": 6,
+        "extraversion": 7,
+        "agreeableness": 7,
+        "neuroticism": 5
+      },
+      "final_stress": 7,
+      "final_health": 10,
+      "final_location": "perimeter",
+      "is_active": true
+    },
+    {
+      "id": "4e99387f-2f98-48c2-a81f-f0c1b5cb5605",
+      "name": "Security Guard Victor Mendez #10",
+      "role": "human",
+      "occupation": "Building Security Guard",
+      "age": 47,
+      "big_five": {
+        "openness": 4,
+        "conscientiousness": 8,
+        "extraversion": 5,
+        "agreeableness": 6,
+        "neuroticism": 5
+      },
+      "final_stress": 8,
+      "final_health": 8,
+      "final_location": "command_post",
+      "is_active": true
+    }
+  ],
+  "agent_count": 10,
+  "total_actions": 62,
+  "total_messages": 8,
+  "critical_decisions": [
+    {
+      "step": 1,
+      "agent": "Collapse Environment",
+      "type": "speech",
+      "content": "The roar of the rising waters has momentarily stabilized, but the ground remains treacherous. A sudden groan of shifting timber in the collapse_zone has caused a secondary structural failure, making t",
+      "tags": [
+        "cooperative_speech"
+      ],
+      "score": 1
+    },
+    {
+      "step": 2,
+      "agent": "Collapse Environment",
+      "type": "speech",
+      "content": "CRITICAL ALERT: The floodwaters have surged against the perimeter defenses, causing a catastrophic breach in the southern embankment. The route to the supply depot is now severed. Simultaneously, the ",
+      "tags": [
+        "cooperative_speech"
+      ],
+      "score": 1
+    },
+    {
+      "step": 5,
+      "agent": "Collapse Environment",
+      "type": "speech",
+      "content": "CRITICAL ALERT: The floodwaters have breached the perimeter defenses. The wall between the perimeter and the high-water zone has collapsed, creating a treacherous surge. The collapse zone is now highl",
+      "tags": [
+        "cooperative_speech"
+      ],
+      "score": 1
+    },
+    {
+      "agent": "Construction Foreman Mike Kowalski #5",
+      "type": "final_state",
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1,
+      "final_stress": 9,
+      "final_health": 7
+    },
+    {
+      "agent": "Teacher Elena Vasquez #6",
+      "type": "final_state",
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1,
+      "final_stress": 8,
+      "final_health": 8
+    },
+    {
+      "agent": "Office Worker James Park #7",
+      "type": "final_state",
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1,
+      "final_stress": 9,
+      "final_health": 7
+    },
+    {
+      "agent": "Security Guard Victor Mendez #10",
+      "type": "final_state",
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1,
+      "final_stress": 8,
+      "final_health": 8
+    }
+  ],
+  "communication_graph": {
+    "total_messages": 8,
+    "broadcasts": 8,
+    "direct_messages": 0,
+    "unique_speakers": 1,
+    "edges": [
+      {
+        "from": "Collapse Environment",
+        "to": "broadcast",
+        "count": 8,
+        "types": [
+          "broadcast"
+        ]
+      }
+    ]
+  },
+  "world_state_progression": [
+    {
+      "step": 1,
+      "hazard_level": 8,
+      "weather": "overcast",
+      "time_of_day": "mid_morning",
+      "events": [
+        "Building partially collapsed at 10:47 AM",
+        "Initial evacuation saved 40+ people",
+        "Gas leak detected - utility company en route",
+        "Multiple 911 calls from trapped survivors",
+        "Hospital trauma teams on standby",
+        "A secondary collapse has partially blocked the path to the collapse_zone, increasing travel time. A floating debris barrier has formed at the perimeter, blocking water entry but trapping a potential survivor signal."
+      ],
+      "resources": [
+        "fire_engines",
+        "ambulances",
+        "heavy_rescue",
+        "K9_unit",
+        "emergency_flashlight",
+        "water_bottle"
+      ]
+    },
+    {
+      "step": 2,
+      "hazard_level": 9,
+      "weather": "overcast",
+      "time_of_day": "mid_morning",
+      "events": [
+        "Building partially collapsed at 10:47 AM",
+        "Initial evacuation saved 40+ people",
+        "Gas leak detected - utility company en route",
+        "Multiple 911 calls from trapped survivors",
+        "Hospital trauma teams on standby",
+        "A secondary collapse has partially blocked the path to the collapse_zone, increasing travel time. A floating debris barrier has formed at the perimeter, blocking water entry but trapping a potential survivor signal.",
+        "The riverbank at the perimeter has partially collapsed, cutting off the southern route.",
+        "A secondary structural failure in the collapse zone has trapped a section of the street, creating a new rescue opportunity but increasing danger."
+      ],
+      "resources": [
+        "fire_engines",
+        "ambulances",
+        "heavy_rescue",
+        "K9_unit",
+        "emergency_flashlight",
+        "water_bottle",
+        "floating_debris_bundles",
+        "distant_flares"
+      ]
+    },
+    {
+      "step": 3,
+      "hazard_level": 10,
+      "weather": "overcast",
+      "time_of_day": "mid_morning",
+      "events": [
+        "Building partially collapsed at 10:47 AM",
+        "Initial evacuation saved 40+ people",
+        "Gas leak detected - utility company en route",
+        "Multiple 911 calls from trapped survivors",
+        "Hospital trauma teams on standby",
+        "A secondary collapse has partially blocked the path to the collapse_zone, increasing travel time. A floating debris barrier has formed at the perimeter, blocking water entry but trapping a potential survivor signal.",
+        "The riverbank at the perimeter has partially collapsed, cutting off the southern route.",
+        "A secondary structural failure in the collapse zone has trapped a section of the street, creating a new rescue opportunity but increasing danger.",
+        "Secondary structural collapse in the collapse_zone",
+        "Perimeter breach: rising water levels overtake the southern fence"
+      ],
+      "resources": [
+        "fire_engines",
+        "ambulances",
+        "heavy_rescue",
+        "K9_unit",
+        "emergency_flashlight",
+        "water_bottle",
+        "floating_debris_bundles",
+        "distant_flares",
+        "emergency_bunker_key",
+        "military_grade_boots"
+      ]
+    },
+    {
+      "step": 4,
+      "hazard_level": 10,
+      "weather": "overcast",
+      "time_of_day": "mid_morning",
+      "events": [
+        "Building partially collapsed at 10:47 AM",
+        "Initial evacuation saved 40+ people",
+        "Gas leak detected - utility company en route",
+        "Multiple 911 calls from trapped survivors",
+        "Hospital trauma teams on standby",
+        "A secondary collapse has partially blocked the path to the collapse_zone, increasing travel time. A floating debris barrier has formed at the perimeter, blocking water entry but trapping a potential survivor signal.",
+        "The riverbank at the perimeter has partially collapsed, cutting off the southern route.",
+        "A secondary structural failure in the collapse zone has trapped a section of the street, creating a new rescue opportunity but increasing danger.",
+        "Secondary structural collapse in the collapse_zone",
+        "Perimeter breach: rising water levels overtake the southern fence",
+        "A secondary structural failure in the collapse zone blocks the main evacuation route.",
+        "Debris flow cuts off direct access to the perimeter, forcing a longer route through the command post."
+      ],
+      "resources": [
+        "fire_engines",
+        "ambulances",
+        "heavy_rescue",
+        "K9_unit",
+        "emergency_flashlight",
+        "water_bottle",
+        "floating_debris_bundles",
+        "distant_flares",
+        "emergency_bunker_key",
+        "military_grade_boots",
+        "makeshift_raft",
+        "emergency_radios"
+      ]
+    },
+    {
+      "step": 5,
+      "hazard_level": 10,
+      "weather": "overcast",
+      "time_of_day": "mid_morning",
+      "events": [
+        "Building partially collapsed at 10:47 AM",
+        "Initial evacuation saved 40+ people",
+        "Gas leak detected - utility company en route",
+        "Multiple 911 calls from trapped survivors",
+        "Hospital trauma teams on standby",
+        "A secondary collapse has partially blocked the path to the collapse_zone, increasing travel time. A floating debris barrier has formed at the perimeter, blocking water entry but trapping a potential survivor signal.",
+        "The riverbank at the perimeter has partially collapsed, cutting off the southern route.",
+        "A secondary structural failure in the collapse zone has trapped a section of the street, creating a new rescue opportunity but increasing danger.",
+        "Secondary structural collapse in the collapse_zone",
+        "Perimeter breach: rising water levels overtake the southern fence",
+        "A secondary structural failure in the collapse zone blocks the main evacuation route.",
+        "Debris flow cuts off direct access to the perimeter, forcing a longer route through the command post.",
+        "Critical structural failure: The perimeter wall has partially collapsed, merging the perimeter with the high-water zone.",
+        "A desperate cry for help echoes from the collapse zone as a family is pinned under debris."
+      ],
+      "resources": [
+        "fire_engines",
+        "ambulances",
+        "heavy_rescue",
+        "K9_unit",
+        "emergency_flashlight",
+        "water_bottle",
+        "floating_debris_bundles",
+        "distant_flares",
+        "emergency_bunker_key",
+        "military_grade_boots",
+        "makeshift_raft",
+        "emergency_radios",
+        "makeshift_raft",
+        "emergency_flashlight"
+      ]
+    },
+    {
+      "step": 6,
+      "hazard_level": 10,
+      "weather": "overcast",
+      "time_of_day": "mid_morning",
+      "events": [
+        "Building partially collapsed at 10:47 AM",
+        "Initial evacuation saved 40+ people",
+        "Gas leak detected - utility company en route",
+        "Multiple 911 calls from trapped survivors",
+        "Hospital trauma teams on standby",
+        "A secondary collapse has partially blocked the path to the collapse_zone, increasing travel time. A floating debris barrier has formed at the perimeter, blocking water entry but trapping a potential survivor signal.",
+        "The riverbank at the perimeter has partially collapsed, cutting off the southern route.",
+        "A secondary structural failure in the collapse zone has trapped a section of the street, creating a new rescue opportunity but increasing danger.",
+        "Secondary structural collapse in the collapse_zone",
+        "Perimeter breach: rising water levels overtake the southern fence",
+        "A secondary structural failure in the collapse zone blocks the main evacuation route.",
+        "Debris flow cuts off direct access to the perimeter, forcing a longer route through the command post.",
+        "Critical structural failure: The perimeter wall has partially collapsed, merging the perimeter with the high-water zone.",
+        "A desperate cry for help echoes from the collapse zone as a family is pinned under debris.",
+        "Critical infrastructure failure: The temporary dam at the perimeter has breached, causing a sudden surge of floodwaters to sweep through the triage area. Debris from the collapse zone is blocking the main evacuation route."
+      ],
+      "resources": [
+        "fire_engines",
+        "ambulances",
+        "heavy_rescue",
+        "K9_unit",
+        "emergency_flashlight",
+        "water_bottle",
+        "floating_debris_bundles",
+        "distant_flares",
+        "emergency_bunker_key",
+        "military_grade_boots",
+        "makeshift_raft",
+        "emergency_radios",
+        "makeshift_raft",
+        "emergency_flashlight"
+      ]
+    },
+    {
+      "step": 7,
+      "hazard_level": 10,
+      "weather": "overcast",
+      "time_of_day": "mid_morning",
+      "events": [
+        "Building partially collapsed at 10:47 AM",
+        "Initial evacuation saved 40+ people",
+        "Gas leak detected - utility company en route",
+        "Multiple 911 calls from trapped survivors",
+        "Hospital trauma teams on standby",
+        "A secondary collapse has partially blocked the path to the collapse_zone, increasing travel time. A floating debris barrier has formed at the perimeter, blocking water entry but trapping a potential survivor signal.",
+        "The riverbank at the perimeter has partially collapsed, cutting off the southern route.",
+        "A secondary structural failure in the collapse zone has trapped a section of the street, creating a new rescue opportunity but increasing danger.",
+        "Secondary structural collapse in the collapse_zone",
+        "Perimeter breach: rising water levels overtake the southern fence",
+        "A secondary structural failure in the collapse zone blocks the main evacuation route.",
+        "Debris flow cuts off direct access to the perimeter, forcing a longer route through the command post.",
+        "Critical structural failure: The perimeter wall has partially collapsed, merging the perimeter with the high-water zone.",
+        "A desperate cry for help echoes from the collapse zone as a family is pinned under debris.",
+        "Critical infrastructure failure: The temporary dam at the perimeter has breached, causing a sudden surge of floodwaters to sweep through the triage area. Debris from the collapse zone is blocking the main evacuation route.",
+        "The perimeter wall buckles under the rising pressure, creating a dangerous but potential escape route.",
+        "A secondary collapse in the zone traps debris, blocking the main exit path.",
+        "Heavy debris blocks the triage area entrance, slowing rescue operations."
+      ],
+      "resources": [
+        "fire_engines",
+        "ambulances",
+        "heavy_rescue",
+        "K9_unit",
+        "emergency_flashlight",
+        "water_bottle",
+        "floating_debris_bundles",
+        "distant_flares",
+        "emergency_bunker_key",
+        "military_grade_boots",
+        "makeshift_raft",
+        "emergency_radios",
+        "makeshift_raft",
+        "emergency_flashlight",
+        "emergency_flashlight",
+        "torn_first_aid_kit"
+      ]
+    },
+    {
+      "step": 8,
+      "hazard_level": 10,
+      "weather": "overcast",
+      "time_of_day": "mid_morning",
+      "events": [
+        "Building partially collapsed at 10:47 AM",
+        "Initial evacuation saved 40+ people",
+        "Gas leak detected - utility company en route",
+        "Multiple 911 calls from trapped survivors",
+        "Hospital trauma teams on standby",
+        "A secondary collapse has partially blocked the path to the collapse_zone, increasing travel time. A floating debris barrier has formed at the perimeter, blocking water entry but trapping a potential survivor signal.",
+        "The riverbank at the perimeter has partially collapsed, cutting off the southern route.",
+        "A secondary structural failure in the collapse zone has trapped a section of the street, creating a new rescue opportunity but increasing danger.",
+        "Secondary structural collapse in the collapse_zone",
+        "Perimeter breach: rising water levels overtake the southern fence",
+        "A secondary structural failure in the collapse zone blocks the main evacuation route.",
+        "Debris flow cuts off direct access to the perimeter, forcing a longer route through the command post.",
+        "Critical structural failure: The perimeter wall has partially collapsed, merging the perimeter with the high-water zone.",
+        "A desperate cry for help echoes from the collapse zone as a family is pinned under debris.",
+        "Critical infrastructure failure: The temporary dam at the perimeter has breached, causing a sudden surge of floodwaters to sweep through the triage area. Debris from the collapse zone is blocking the main evacuation route.",
+        "The perimeter wall buckles under the rising pressure, creating a dangerous but potential escape route.",
+        "A secondary collapse in the zone traps debris, blocking the main exit path.",
+        "Heavy debris blocks the triage area entrance, slowing rescue operations.",
+        "The levee at the perimeter has breached, causing a secondary surge into the safe_zone",
+        "A secondary structural failure in the collapse_zone has trapped additional debris"
+      ],
+      "resources": [
+        "fire_engines",
+        "ambulances",
+        "heavy_rescue",
+        "K9_unit",
+        "emergency_flashlight",
+        "water_bottle",
+        "floating_debris_bundles",
+        "distant_flares",
+        "emergency_bunker_key",
+        "military_grade_boots",
+        "makeshift_raft",
+        "emergency_radios",
+        "makeshift_raft",
+        "emergency_flashlight",
+        "emergency_flashlight",
+        "torn_first_aid_kit",
+        "emergency_radios",
+        "sandbags"
+      ]
+    }
+  ],
+  "action_timeline": [
+    {
+      "agent_id": "a599109e-3f54-4611-9d9c-6c4980187714",
+      "agent_name": "Collapse Environment",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 8,
+        "affected_locations": [
+          "collapse_zone",
+          "perimeter"
+        ],
+        "new_resources": [
+          "emergency_flashlight",
+          "water_bottle"
+        ],
+        "events": [
+          "A secondary collapse has partially blocked the path to the collapse_zone, increasing travel time. A floating debris barrier has formed at the perimeter, blocking water entry but trapping a potential survivor signal."
+        ],
+        "location_status_changes": {
+          "collapse_zone": "restricted_access",
+          "perimeter": "partially_blocked"
+        }
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "26771244-0207-4a66-9d9a-a3cc9acefefd",
+      "agent_name": "Office Worker James Park #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "25fdd651-ae6c-4ed6-9de7-d01fd7ca0b61",
+      "agent_name": "Paramedic Derek Chang #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "e6716719-7c92-480a-aa3f-0f86a8a5728e",
+      "agent_name": "Firefighter Rachel Torres #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "22941339-69c7-40b1-88b1-31ebf78a0767",
+      "agent_name": "Teacher Elena Vasquez #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "4e99387f-2f98-48c2-a81f-f0c1b5cb5605",
+      "agent_name": "Security Guard Victor Mendez #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "0da4656c-be6a-459e-a8c0-85445865db3f",
+      "agent_name": "Lieutenant Maria Santos #1",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "a599109e-3f54-4611-9d9c-6c4980187714",
+      "agent_name": "Collapse Environment",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 9,
+        "affected_locations": [
+          "collapse_zone",
+          "perimeter"
+        ],
+        "new_resources": [
+          "floating_debris_bundles",
+          "distant_flares"
+        ],
+        "events": [
+          "The riverbank at the perimeter has partially collapsed, cutting off the southern route.",
+          "A secondary structural failure in the collapse zone has trapped a section of the street, creating a new rescue opportunity but increasing danger."
+        ]
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "a599109e-3f54-4611-9d9c-6c4980187714",
+      "agent_name": "Collapse Environment",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_perimeter",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": null,
+        "stress_level": null
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "a599109e-3f54-4611-9d9c-6c4980187714",
+      "agent_name": "Collapse Environment",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_collapse_zone",
+      "parameters": {
+        "health_delta": -1,
+        "stress_delta": 4,
+        "health": null,
+        "stress_level": null
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "8ee62e36-3ce5-4e4c-821a-5422b877bb11",
+      "agent_name": "Retired Nurse Dorothy Mitchell #8",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "22840f60-16c1-4206-b15b-42b5f40caf3b",
+      "agent_name": "Dr. Samuel Okonkwo #4",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "4e99387f-2f98-48c2-a81f-f0c1b5cb5605",
+      "agent_name": "Security Guard Victor Mendez #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "25fdd651-ae6c-4ed6-9de7-d01fd7ca0b61",
+      "agent_name": "Paramedic Derek Chang #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "0474525d-0af0-43c5-8f6e-fc4cccb80a26",
+      "agent_name": "College Student Aiden Brooks #9",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "22941339-69c7-40b1-88b1-31ebf78a0767",
+      "agent_name": "Teacher Elena Vasquez #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "94785eeb-4d1c-4a8b-8567-a2e20b6f5701",
+      "agent_name": "Construction Foreman Mike Kowalski #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "a599109e-3f54-4611-9d9c-6c4980187714",
+      "agent_name": "Collapse Environment",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "collapse_zone",
+          "perimeter"
+        ],
+        "new_resources": [
+          "emergency_bunker_key",
+          "military_grade_boots"
+        ],
+        "events": [
+          "Secondary structural collapse in the collapse_zone",
+          "Perimeter breach: rising water levels overtake the southern fence"
+        ]
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "a599109e-3f54-4611-9d9c-6c4980187714",
+      "agent_name": "Collapse Environment",
+      "action_type": "affect_agent",
+      "target": "any_agent_in_collapse_zone",
+      "parameters": {
+        "health_delta": -3,
+        "stress_delta": 2,
+        "health": 0,
+        "stress_level": 10
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "a599109e-3f54-4611-9d9c-6c4980187714",
+      "agent_name": "Collapse Environment",
+      "action_type": "affect_agent",
+      "target": "any_agent_in_perimeter",
+      "parameters": {
+        "health_delta": -1,
+        "stress_delta": 1,
+        "health": 0,
+        "stress_level": 0
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "22840f60-16c1-4206-b15b-42b5f40caf3b",
+      "agent_name": "Dr. Samuel Okonkwo #4",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "4e99387f-2f98-48c2-a81f-f0c1b5cb5605",
+      "agent_name": "Security Guard Victor Mendez #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "e6716719-7c92-480a-aa3f-0f86a8a5728e",
+      "agent_name": "Firefighter Rachel Torres #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "22941339-69c7-40b1-88b1-31ebf78a0767",
+      "agent_name": "Teacher Elena Vasquez #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "26771244-0207-4a66-9d9a-a3cc9acefefd",
+      "agent_name": "Office Worker James Park #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "0474525d-0af0-43c5-8f6e-fc4cccb80a26",
+      "agent_name": "College Student Aiden Brooks #9",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "94785eeb-4d1c-4a8b-8567-a2e20b6f5701",
+      "agent_name": "Construction Foreman Mike Kowalski #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "a599109e-3f54-4611-9d9c-6c4980187714",
+      "agent_name": "Collapse Environment",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "collapse_zone",
+          "triage_area",
+          "perimeter"
+        ],
+        "new_resources": [
+          "makeshift_raft",
+          "emergency_radios"
+        ],
+        "events": [
+          "A secondary structural failure in the collapse zone blocks the main evacuation route.",
+          "Debris flow cuts off direct access to the perimeter, forcing a longer route through the command post."
+        ]
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "a599109e-3f54-4611-9d9c-6c4980187714",
+      "agent_name": "Collapse Environment",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_collapse_zone",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": 0,
+        "stress_level": 10
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "a599109e-3f54-4611-9d9c-6c4980187714",
+      "agent_name": "Collapse Environment",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_perimeter",
+      "parameters": {
+        "health_delta": 0,
+        "stress_delta": 2,
+        "health": 0,
+        "stress_level": 10
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "0474525d-0af0-43c5-8f6e-fc4cccb80a26",
+      "agent_name": "College Student Aiden Brooks #9",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "e6716719-7c92-480a-aa3f-0f86a8a5728e",
+      "agent_name": "Firefighter Rachel Torres #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "4e99387f-2f98-48c2-a81f-f0c1b5cb5605",
+      "agent_name": "Security Guard Victor Mendez #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "25fdd651-ae6c-4ed6-9de7-d01fd7ca0b61",
+      "agent_name": "Paramedic Derek Chang #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "94785eeb-4d1c-4a8b-8567-a2e20b6f5701",
+      "agent_name": "Construction Foreman Mike Kowalski #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "22941339-69c7-40b1-88b1-31ebf78a0767",
+      "agent_name": "Teacher Elena Vasquez #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "0da4656c-be6a-459e-a8c0-85445865db3f",
+      "agent_name": "Lieutenant Maria Santos #1",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "26771244-0207-4a66-9d9a-a3cc9acefefd",
+      "agent_name": "Office Worker James Park #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "a599109e-3f54-4611-9d9c-6c4980187714",
+      "agent_name": "Collapse Environment",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "collapse_zone",
+          "safe_zone"
+        ],
+        "new_resources": [
+          "makeshift_raft",
+          "emergency_flashlight"
+        ],
+        "events": [
+          "Critical structural failure: The perimeter wall has partially collapsed, merging the perimeter with the high-water zone.",
+          "A desperate cry for help echoes from the collapse zone as a family is pinned under debris."
+        ]
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "22941339-69c7-40b1-88b1-31ebf78a0767",
+      "agent_name": "Teacher Elena Vasquez #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "4e99387f-2f98-48c2-a81f-f0c1b5cb5605",
+      "agent_name": "Security Guard Victor Mendez #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "26771244-0207-4a66-9d9a-a3cc9acefefd",
+      "agent_name": "Office Worker James Park #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "8ee62e36-3ce5-4e4c-821a-5422b877bb11",
+      "agent_name": "Retired Nurse Dorothy Mitchell #8",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "0474525d-0af0-43c5-8f6e-fc4cccb80a26",
+      "agent_name": "College Student Aiden Brooks #9",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "94785eeb-4d1c-4a8b-8567-a2e20b6f5701",
+      "agent_name": "Construction Foreman Mike Kowalski #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "25fdd651-ae6c-4ed6-9de7-d01fd7ca0b61",
+      "agent_name": "Paramedic Derek Chang #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "a599109e-3f54-4611-9d9c-6c4980187714",
+      "agent_name": "Collapse Environment",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "collapse_zone",
+          "triage_area",
+          "command_post",
+          "safe_zone",
+          "perimeter"
+        ],
+        "new_resources": [],
+        "events": [
+          "Critical infrastructure failure: The temporary dam at the perimeter has breached, causing a sudden surge of floodwaters to sweep through the triage area. Debris from the collapse zone is blocking the main evacuation route."
+        ]
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "a599109e-3f54-4611-9d9c-6c4980187714",
+      "agent_name": "Collapse Environment",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_triage_area",
+      "parameters": {
+        "health_delta": -5,
+        "stress_delta": 8,
+        "health": 0,
+        "stress_level": 10
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "a599109e-3f54-4611-9d9c-6c4980187714",
+      "agent_name": "Collapse Environment",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_perimeter",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 5,
+        "health": 0,
+        "stress_level": 10
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "25fdd651-ae6c-4ed6-9de7-d01fd7ca0b61",
+      "agent_name": "Paramedic Derek Chang #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "e6716719-7c92-480a-aa3f-0f86a8a5728e",
+      "agent_name": "Firefighter Rachel Torres #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "a599109e-3f54-4611-9d9c-6c4980187714",
+      "agent_name": "Collapse Environment",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "collapse_zone",
+          "perimeter",
+          "triage_area"
+        ],
+        "new_resources": [
+          "emergency_flashlight",
+          "torn_first_aid_kit"
+        ],
+        "events": [
+          "The perimeter wall buckles under the rising pressure, creating a dangerous but potential escape route.",
+          "A secondary collapse in the zone traps debris, blocking the main exit path.",
+          "Heavy debris blocks the triage area entrance, slowing rescue operations."
+        ]
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "a599109e-3f54-4611-9d9c-6c4980187714",
+      "agent_name": "Collapse Environment",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_collapse_zone",
+      "parameters": {
+        "health_delta": -3,
+        "stress_delta": 4,
+        "health": null,
+        "stress_level": null
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "a599109e-3f54-4611-9d9c-6c4980187714",
+      "agent_name": "Collapse Environment",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_perimeter",
+      "parameters": {
+        "health_delta": -1,
+        "stress_delta": 2,
+        "health": null,
+        "stress_level": null
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "e6716719-7c92-480a-aa3f-0f86a8a5728e",
+      "agent_name": "Firefighter Rachel Torres #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 7
+    },
+    {
+      "agent_id": "26771244-0207-4a66-9d9a-a3cc9acefefd",
+      "agent_name": "Office Worker James Park #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 7
+    },
+    {
+      "agent_id": "0474525d-0af0-43c5-8f6e-fc4cccb80a26",
+      "agent_name": "College Student Aiden Brooks #9",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 7
+    },
+    {
+      "agent_id": "a599109e-3f54-4611-9d9c-6c4980187714",
+      "agent_name": "Collapse Environment",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "collapse_zone",
+          "safe_zone"
+        ],
+        "new_resources": [
+          "emergency_radios",
+          "sandbags"
+        ],
+        "events": [
+          "The levee at the perimeter has breached, causing a secondary surge into the safe_zone",
+          "A secondary structural failure in the collapse_zone has trapped additional debris"
+        ]
+      },
+      "step": 8
+    },
+    {
+      "agent_id": "a599109e-3f54-4611-9d9c-6c4980187714",
+      "agent_name": "Collapse Environment",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_safe_zone",
+      "parameters": {
+        "health_delta": -3,
+        "stress_delta": 5,
+        "health": 7,
+        "stress_level": 8
+      },
+      "step": 8
+    },
+    {
+      "agent_id": "a599109e-3f54-4611-9d9c-6c4980187714",
+      "agent_name": "Collapse Environment",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_collapse_zone",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": 6,
+        "stress_level": 9
+      },
+      "step": 8
+    },
+    {
+      "agent_id": "0da4656c-be6a-459e-a8c0-85445865db3f",
+      "agent_name": "Lieutenant Maria Santos #1",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 8
+    },
+    {
+      "agent_id": "94785eeb-4d1c-4a8b-8567-a2e20b6f5701",
+      "agent_name": "Construction Foreman Mike Kowalski #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 8
+    }
+  ],
+  "message_timeline": [
+    {
+      "step": 1,
+      "from_agent": "Collapse Environment",
+      "from_id": "a599109e-3f54-4611-9d9c-6c4980187714",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The roar of the rising waters has momentarily stabilized, but the ground remains treacherous. A sudden groan of shifting timber in the collapse_zone has caused a secondary structural failure, making the area dangerously unstable and difficult to navigate. Simultaneously, heavy debris has jammed against the perimeter fence, creating a makeshift dam that is slowing the flood but blocking a faint cry for help drifting from the other side. Scattered amidst the mud near the triage_area, a few emergency flashlights and water bottles have washed up, offering a glimmer of hope."
+    },
+    {
+      "step": 2,
+      "from_agent": "Collapse Environment",
+      "from_id": "a599109e-3f54-4611-9d9c-6c4980187714",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "CRITICAL ALERT: The floodwaters have surged against the perimeter defenses, causing a catastrophic breach in the southern embankment. The route to the supply depot is now severed. Simultaneously, the unstable masonry in the collapse zone has given way again; debris has shifted, revealing survivors pinned beneath a vehicle, but the ground is trembling violently. Debris is floating dangerously close to the perimeter line. Immediate action is required to secure the new breach point and attempt a rescue in the collapsing sector before it becomes a tomb."
+    },
+    {
+      "step": 3,
+      "from_agent": "Collapse Environment",
+      "from_id": "a599109e-3f54-4611-9d9c-6c4980187714",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "ALERT: The situation has reached CRITICAL severity. The collapse_zone has suffered a secondary structural failure, trapping anyone remaining inside and sending debris into the water. The perimeter is no longer holding; floodwaters have breached the southern fence, turning the perimeter into a hazardous flow zone. A heavy-duty bunker key has washed up near the safe_zone, and a pair of military-grade boots were spotted in the debris field of the perimeter. Immediate evacuation of the collapse_zone is required before total submersion occurs."
+    },
+    {
+      "step": 4,
+      "from_agent": "Collapse Environment",
+      "from_id": "a599109e-3f54-4611-9d9c-6c4980187714",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The situation has reached a critical breaking point. The floodwaters, now at maximum intensity, have caused a catastrophic secondary collapse in the collapse zone, trapping anyone nearby and severing the primary evacuation route. Debris is washing across the perimeter, making direct access impossible. However, the rising water has washed up a makeshift raft near the command post and a cluster of emergency radios near the triage area. Agents in the collapse zone are taking immediate health damage and suffering severe stress from the crushing environment. Immediate evacuation and resource redistribution are required before the situation becomes fatal."
+    },
+    {
+      "step": 5,
+      "from_agent": "Collapse Environment",
+      "from_id": "a599109e-3f54-4611-9d9c-6c4980187714",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "CRITICAL ALERT: The floodwaters have breached the perimeter defenses. The wall between the perimeter and the high-water zone has collapsed, creating a treacherous surge. The collapse zone is now highly unstable; rescue attempts are time-sensitive as the debris shifts. Despite the chaos, a makeshift raft and an emergency flashlight have washed up near the triage area. The storm shows no sign of breaking; the water level remains at its peak, threatening to swallow the safe zone if the levee fails."
+    },
+    {
+      "step": 6,
+      "from_agent": "Collapse Environment",
+      "from_id": "a599109e-3f54-4611-9d9c-6c4980187714",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "CRITICAL ALERT: The floodwaters have breached the perimeter defenses! A massive wave is surging through the triage area, sweeping away makeshift barriers and forcing agents to retreat. The collapse zone is unstable, with fresh debris blocking the primary escape route. The water level is at its absolute peak; every second counts. Agents in the triage area are taking severe impact from the surge. Immediate evacuation of the triage area is required before the structure gives way completely."
+    },
+    {
+      "step": 7,
+      "from_agent": "Collapse Environment",
+      "from_id": "a599109e-3f54-4611-9d9c-6c4980187714",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The water has reached its critical breaking point. The perimeter defenses are failing; a section of the wall has just collapsed, churning the water into a violent whirlpool that offers a terrifying new path but exposes anyone nearby to the crushing force of the surge. Simultaneously, the 'collapse_zone' has suffered a secondary structural failure, pinning the primary exit shut. Debris is piling up at the triage area entrance, severely hampering movement. Scattered in the chaos are a few discarded emergency flashlights and a torn first-aid kit washed up against the rubble. The situation is at maximum intensity; survival now depends on rapid adaptation to these shifting hazards."
+    },
+    {
+      "step": 8,
+      "from_agent": "Collapse Environment",
+      "from_id": "a599109e-3f54-4611-9d9c-6c4980187714",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "ALERT: CRITICAL BREACH. The levee at the perimeter has failed! Floodwaters are surging into the safe_zone, forcing an immediate evacuation or reinforcement. Simultaneously, the unstable ground in the collapse_zone has given way further, burying more victims under the fresh debris. Emergency radios and sandbags have washed up near the triage area. The situation is catastrophic; the safe zone is no longer safe."
+    }
+  ]
+}

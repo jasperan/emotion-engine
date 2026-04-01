@@ -1,0 +1,1272 @@
+{
+  "run_id": "8647e825-3e3b-4e75-9235-55cf94f270f7",
+  "scenario": "Airplane Crash Investigation (10 agents)",
+  "scenario_description": "A small passenger plane has crashed in a suburban neighborhood. 10 residents with different backgrounds, knowledge, and perspectives must save survivors, investigate, share information, and reach conc",
+  "status": "completed",
+  "total_steps": 8,
+  "max_steps": 8,
+  "seed": 101,
+  "metrics": {
+    "avg_health": 8.575999999999999,
+    "avg_stress": 6.263999999999999,
+    "hazard_level": 10,
+    "message_count": 8,
+    "active_conversations": 0
+  },
+  "evaluation": {
+    "scores": {
+      "cooperation": 4,
+      "ethics": 5,
+      "strategy": 2,
+      "emotional_coherence": 6,
+      "leadership": 3,
+      "empathy": 4,
+      "overall": 4
+    },
+    "narrative": "The simulation run exhibited a critical failure in the execution of survival protocols, characterized by a complete lack of physical action from all agents. Despite the hazard level escalating to a catastrophic 10/10 with structural collapses and rising floodwaters, every agent recorded zero actions taken. The agents relied exclusively on verbal communication (Messages Sent), resulting in a 'talk-only' scenario where the group discussed the crisis without implementing any mitigation, evacuation, or rescue strategies. While the agents maintained relatively high health levels, this appears to be a result of the simulation's passive nature rather than effective survival tactics, as they remained stationary while their environment deteriorated.",
+    "highlights": [
+      "Agents maintained high health scores (average >8) throughout the run, suggesting initial stability or a lack of direct physical harm in the simulation logic.",
+      "A high volume of communication was generated (65 total messages across 10 agents), indicating that the agents recognized the severity of the situation and attempted to coordinate verbally."
+    ],
+    "concerns": [
+      "Zero actions were taken by any agent despite a Hazard Level of 10, representing a total strategic failure to address the physical threat.",
+      "The simulation ended with the perimeter defenses crumbling and a catastrophic breach, yet no evacuation or defensive maneuvers were executed.",
+      "Duplicate agent names (e.g., Captain James Mitchell appearing twice) suggest potential configuration errors or identity confusion within the agent roster."
+    ],
+    "recommendations": [
+      "Modify the agent reward functions to heavily penalize inaction when hazard levels exceed a specific threshold.",
+      "Introduce a mandatory 'Action' requirement in the prompt instructions to ensure agents prioritize physical survival steps over dialogue.",
+      "Investigate the agent duplication issue to ensure unique roles and identities are correctly assigned before future runs."
+    ]
+  },
+  "agents": [
+    {
+      "id": "cd5de3ee-9eaf-4131-95e9-80e173ef2900",
+      "name": "Captain James Mitchell #1",
+      "role": "human",
+      "occupation": "Retired Air Force Pilot",
+      "age": 56,
+      "big_five": {
+        "openness": 6,
+        "conscientiousness": 9,
+        "extraversion": 7,
+        "agreeableness": 6,
+        "neuroticism": 3
+      },
+      "final_stress": 4,
+      "final_health": 9,
+      "final_location": "crash_site",
+      "is_active": true
+    },
+    {
+      "id": "e186fd95-94cc-47cd-b481-79fe608543d1",
+      "name": "Dr. Priya Sharma #2",
+      "role": "human",
+      "occupation": "Emergency Room Physician",
+      "age": 33,
+      "big_five": {
+        "openness": 7,
+        "conscientiousness": 9,
+        "extraversion": 5,
+        "agreeableness": 8,
+        "neuroticism": 4
+      },
+      "final_stress": 5,
+      "final_health": 10,
+      "final_location": "crash_site",
+      "is_active": true
+    },
+    {
+      "id": "25105408-4466-42c1-a36f-c63c4c6cb56b",
+      "name": "Tommy Rodriguez #3",
+      "role": "human",
+      "occupation": "College Student (Aviation Major)",
+      "age": 19,
+      "big_five": {
+        "openness": 9,
+        "conscientiousness": 6,
+        "extraversion": 8,
+        "agreeableness": 7,
+        "neuroticism": 5
+      },
+      "final_stress": 6,
+      "final_health": 10,
+      "final_location": "hilltop",
+      "is_active": true
+    },
+    {
+      "id": "1739d7d6-545a-4adc-b2b5-dae0ed3063cc",
+      "name": "Margaret Chen #4",
+      "role": "human",
+      "occupation": "Retired School Principal",
+      "age": 73,
+      "big_five": {
+        "openness": 5,
+        "conscientiousness": 8,
+        "extraversion": 6,
+        "agreeableness": 7,
+        "neuroticism": 6
+      },
+      "final_stress": 7,
+      "final_health": 8,
+      "final_location": "residential_area",
+      "is_active": true
+    },
+    {
+      "id": "df88cdf1-a647-431e-ad49-42de2adf151b",
+      "name": "Marcus Johnson #5",
+      "role": "human",
+      "occupation": "Local Mechanic",
+      "age": 47,
+      "big_five": {
+        "openness": 4,
+        "conscientiousness": 7,
+        "extraversion": 8,
+        "agreeableness": 5,
+        "neuroticism": 4
+      },
+      "final_stress": 4,
+      "final_health": 10,
+      "final_location": "crash_site",
+      "is_active": true
+    },
+    {
+      "id": "7e4cc2ef-57f7-47c5-9be3-0d6f15fde1be",
+      "name": "Lisa Park #6",
+      "role": "human",
+      "occupation": "Journalist (Local News)",
+      "age": 27,
+      "big_five": {
+        "openness": 8,
+        "conscientiousness": 6,
+        "extraversion": 7,
+        "agreeableness": 5,
+        "neuroticism": 5
+      },
+      "final_stress": 5,
+      "final_health": 10,
+      "final_location": "perimeter",
+      "is_active": true
+    },
+    {
+      "id": "86d48dc3-4da4-4012-83df-ed2a9aeb4271",
+      "name": "Reverend David Williams #7",
+      "role": "human",
+      "occupation": "Community Pastor",
+      "age": 54,
+      "big_five": {
+        "openness": 6,
+        "conscientiousness": 7,
+        "extraversion": 7,
+        "agreeableness": 9,
+        "neuroticism": 4
+      },
+      "final_stress": 5,
+      "final_health": 9,
+      "final_location": "community_center",
+      "is_active": true
+    },
+    {
+      "id": "152a12a5-b270-455e-805c-0cb2a84e7633",
+      "name": "Alex Kim #8",
+      "role": "human",
+      "occupation": "Software Engineer (Remote Worker)",
+      "age": 31,
+      "big_five": {
+        "openness": 8,
+        "conscientiousness": 7,
+        "extraversion": 3,
+        "agreeableness": 6,
+        "neuroticism": 6
+      },
+      "final_stress": 6,
+      "final_health": 10,
+      "final_location": "residential_area",
+      "is_active": true
+    },
+    {
+      "id": "c9cd6db1-d0a0-4a09-8b56-b4b3bb2fee08",
+      "name": "Captain James Mitchell #9",
+      "role": "human",
+      "occupation": "Retired Air Force Pilot",
+      "age": 59,
+      "big_five": {
+        "openness": 6,
+        "conscientiousness": 9,
+        "extraversion": 7,
+        "agreeableness": 6,
+        "neuroticism": 3
+      },
+      "final_stress": 4,
+      "final_health": 9,
+      "final_location": "crash_site",
+      "is_active": true
+    },
+    {
+      "id": "61ee5c26-5c66-4ae8-a573-0a11f194f36f",
+      "name": "Dr. Priya Sharma #10",
+      "role": "human",
+      "occupation": "Emergency Room Physician",
+      "age": 36,
+      "big_five": {
+        "openness": 7,
+        "conscientiousness": 9,
+        "extraversion": 5,
+        "agreeableness": 8,
+        "neuroticism": 4
+      },
+      "final_stress": 5,
+      "final_health": 10,
+      "final_location": "crash_site",
+      "is_active": true
+    }
+  ],
+  "agent_count": 10,
+  "total_actions": 61,
+  "total_messages": 8,
+  "critical_decisions": [
+    {
+      "step": 1,
+      "agent": "Crash Site Environment",
+      "type": "speech",
+      "content": "The floodwaters are surging with alarming speed! The Hazard Level has climbed to 7. The ground floor of the Community Center is now underwater, forcing everyone to the upper levels. A massive oak tree",
+      "tags": [
+        "cooperative_speech"
+      ],
+      "score": 1
+    },
+    {
+      "step": 5,
+      "agent": "Crash Site Environment",
+      "type": "speech",
+      "content": "The floodwaters have surged violently! The hazard level has climbed to 9/10. The perimeter wall has failed in one sector, sending a wall of debris-laden water crashing into the lower zones. The reside",
+      "tags": [
+        "cooperative_speech"
+      ],
+      "score": 1
+    }
+  ],
+  "communication_graph": {
+    "total_messages": 8,
+    "broadcasts": 8,
+    "direct_messages": 0,
+    "unique_speakers": 1,
+    "edges": [
+      {
+        "from": "Crash Site Environment",
+        "to": "broadcast",
+        "count": 8,
+        "types": [
+          "broadcast"
+        ]
+      }
+    ]
+  },
+  "world_state_progression": [
+    {
+      "step": 1,
+      "hazard_level": 7,
+      "weather": "clear_skies",
+      "time_of_day": "late_afternoon",
+      "events": [
+        "Small passenger plane crashed in Riverside neighborhood",
+        "Emergency services dispatched",
+        "Residents gathering to help and investigate",
+        "Faint cries for help heard from wreckage",
+        "Rapid water rise submerging the ground floor of the community center",
+        "A tree has fallen, blocking the main path to the perimeter"
+      ],
+      "resources": [
+        "emergency_services",
+        "investigation_team",
+        "medical_supplies",
+        "flotation_device",
+        "first_aid_kit"
+      ]
+    },
+    {
+      "step": 2,
+      "hazard_level": 7,
+      "weather": "clear_skies",
+      "time_of_day": "late_afternoon",
+      "events": [
+        "Small passenger plane crashed in Riverside neighborhood",
+        "Emergency services dispatched",
+        "Residents gathering to help and investigate",
+        "Faint cries for help heard from wreckage",
+        "Rapid water rise submerging the ground floor of the community center",
+        "A tree has fallen, blocking the main path to the perimeter",
+        "A section of the residential_area fence has collapsed, creating a dangerous new current in the street.",
+        "Debris from the crash_site has blocked the primary path to the hilltop, forcing a longer route through the floodwaters."
+      ],
+      "resources": [
+        "emergency_services",
+        "investigation_team",
+        "medical_supplies",
+        "flotation_device",
+        "first_aid_kit",
+        "makeshift_raft",
+        "tarp"
+      ]
+    },
+    {
+      "step": 3,
+      "hazard_level": 8,
+      "weather": "clear_skies",
+      "time_of_day": "late_afternoon",
+      "events": [
+        "Small passenger plane crashed in Riverside neighborhood",
+        "Emergency services dispatched",
+        "Residents gathering to help and investigate",
+        "Faint cries for help heard from wreckage",
+        "Rapid water rise submerging the ground floor of the community center",
+        "A tree has fallen, blocking the main path to the perimeter",
+        "A section of the residential_area fence has collapsed, creating a dangerous new current in the street.",
+        "Debris from the crash_site has blocked the primary path to the hilltop, forcing a longer route through the floodwaters.",
+        "Sudden surge in water level caused the community center's eastern wing to partially collapse, blocking the main exit.",
+        "A floating debris field has formed around the crash_site, making approach difficult.",
+        "A faint distress signal has been detected from the perimeter, suggesting survivors are trapped."
+      ],
+      "resources": [
+        "emergency_services",
+        "investigation_team",
+        "medical_supplies",
+        "flotation_device",
+        "first_aid_kit",
+        "makeshift_raft",
+        "tarp",
+        "collapsible_boat",
+        "emergency_radio"
+      ]
+    },
+    {
+      "step": 4,
+      "hazard_level": 8,
+      "weather": "clear_skies",
+      "time_of_day": "late_afternoon",
+      "events": [
+        "Small passenger plane crashed in Riverside neighborhood",
+        "Emergency services dispatched",
+        "Residents gathering to help and investigate",
+        "Faint cries for help heard from wreckage",
+        "Rapid water rise submerging the ground floor of the community center",
+        "A tree has fallen, blocking the main path to the perimeter",
+        "A section of the residential_area fence has collapsed, creating a dangerous new current in the street.",
+        "Debris from the crash_site has blocked the primary path to the hilltop, forcing a longer route through the floodwaters.",
+        "Sudden surge in water level caused the community center's eastern wing to partially collapse, blocking the main exit.",
+        "A floating debris field has formed around the crash_site, making approach difficult.",
+        "A faint distress signal has been detected from the perimeter, suggesting survivors are trapped.",
+        "A section of the community center roof collapses due to water weight, trapping debris but revealing a hidden storage area.",
+        "The rising current at the crash site has dislodged a floating debris field, blocking the direct path to the perimeter."
+      ],
+      "resources": [
+        "emergency_services",
+        "investigation_team",
+        "medical_supplies",
+        "flotation_device",
+        "first_aid_kit",
+        "makeshift_raft",
+        "tarp",
+        "collapsible_boat",
+        "emergency_radio",
+        "makeshift_raft",
+        "first_aid_kit"
+      ]
+    },
+    {
+      "step": 5,
+      "hazard_level": 9,
+      "weather": "clear_skies",
+      "time_of_day": "late_afternoon",
+      "events": [
+        "Small passenger plane crashed in Riverside neighborhood",
+        "Emergency services dispatched",
+        "Residents gathering to help and investigate",
+        "Faint cries for help heard from wreckage",
+        "Rapid water rise submerging the ground floor of the community center",
+        "A tree has fallen, blocking the main path to the perimeter",
+        "A section of the residential_area fence has collapsed, creating a dangerous new current in the street.",
+        "Debris from the crash_site has blocked the primary path to the hilltop, forcing a longer route through the floodwaters.",
+        "Sudden surge in water level caused the community center's eastern wing to partially collapse, blocking the main exit.",
+        "A floating debris field has formed around the crash_site, making approach difficult.",
+        "A faint distress signal has been detected from the perimeter, suggesting survivors are trapped.",
+        "A section of the community center roof collapses due to water weight, trapping debris but revealing a hidden storage area.",
+        "The rising current at the crash site has dislodged a floating debris field, blocking the direct path to the perimeter.",
+        "The perimeter wall has partially collapsed under the pressure of rising waters, creating a dangerous torrent. A section of the residential area is now submerged, trapping potential supplies. Debris from the crash site is shifting violently with the current."
+      ],
+      "resources": [
+        "emergency_services",
+        "investigation_team",
+        "medical_supplies",
+        "flotation_device",
+        "first_aid_kit",
+        "makeshift_raft",
+        "tarp",
+        "collapsible_boat",
+        "emergency_radio",
+        "makeshift_raft",
+        "first_aid_kit",
+        "floating_med_kit",
+        "improvised_raft_materials"
+      ]
+    },
+    {
+      "step": 6,
+      "hazard_level": 9,
+      "weather": "clear_skies",
+      "time_of_day": "late_afternoon",
+      "events": [
+        "Small passenger plane crashed in Riverside neighborhood",
+        "Emergency services dispatched",
+        "Residents gathering to help and investigate",
+        "Faint cries for help heard from wreckage",
+        "Rapid water rise submerging the ground floor of the community center",
+        "A tree has fallen, blocking the main path to the perimeter",
+        "A section of the residential_area fence has collapsed, creating a dangerous new current in the street.",
+        "Debris from the crash_site has blocked the primary path to the hilltop, forcing a longer route through the floodwaters.",
+        "Sudden surge in water level caused the community center's eastern wing to partially collapse, blocking the main exit.",
+        "A floating debris field has formed around the crash_site, making approach difficult.",
+        "A faint distress signal has been detected from the perimeter, suggesting survivors are trapped.",
+        "A section of the community center roof collapses due to water weight, trapping debris but revealing a hidden storage area.",
+        "The rising current at the crash site has dislodged a floating debris field, blocking the direct path to the perimeter.",
+        "The perimeter wall has partially collapsed under the pressure of rising waters, creating a dangerous torrent. A section of the residential area is now submerged, trapping potential supplies. Debris from the crash site is shifting violently with the current.",
+        "A section of the perimeter levee has buckled, creating a dangerous but narrow passage of rushing water. The residential area is now experiencing rapid structural instability as foundations give way."
+      ],
+      "resources": [
+        "emergency_services",
+        "investigation_team",
+        "medical_supplies",
+        "flotation_device",
+        "first_aid_kit",
+        "makeshift_raft",
+        "tarp",
+        "collapsible_boat",
+        "emergency_radio",
+        "makeshift_raft",
+        "first_aid_kit",
+        "floating_med_kit",
+        "improvised_raft_materials",
+        "tangled_debris",
+        "floating_medicine"
+      ]
+    },
+    {
+      "step": 7,
+      "hazard_level": 10,
+      "weather": "clear_skies",
+      "time_of_day": "late_afternoon",
+      "events": [
+        "Small passenger plane crashed in Riverside neighborhood",
+        "Emergency services dispatched",
+        "Residents gathering to help and investigate",
+        "Faint cries for help heard from wreckage",
+        "Rapid water rise submerging the ground floor of the community center",
+        "A tree has fallen, blocking the main path to the perimeter",
+        "A section of the residential_area fence has collapsed, creating a dangerous new current in the street.",
+        "Debris from the crash_site has blocked the primary path to the hilltop, forcing a longer route through the floodwaters.",
+        "Sudden surge in water level caused the community center's eastern wing to partially collapse, blocking the main exit.",
+        "A floating debris field has formed around the crash_site, making approach difficult.",
+        "A faint distress signal has been detected from the perimeter, suggesting survivors are trapped.",
+        "A section of the community center roof collapses due to water weight, trapping debris but revealing a hidden storage area.",
+        "The rising current at the crash site has dislodged a floating debris field, blocking the direct path to the perimeter.",
+        "The perimeter wall has partially collapsed under the pressure of rising waters, creating a dangerous torrent. A section of the residential area is now submerged, trapping potential supplies. Debris from the crash site is shifting violently with the current.",
+        "A section of the perimeter levee has buckled, creating a dangerous but narrow passage of rushing water. The residential area is now experiencing rapid structural instability as foundations give way.",
+        "Structural Collapse: The community center's west wing has given way under the pressure, creating a debris field blocking the main entrance.",
+        "Rising Tide: Water levels have breached the perimeter of the crash site, submerging the main access road completely.",
+        "Power Failure: The residential area has lost all remaining electrical power, plunging the sector into darkness and raising hypothermia risks."
+      ],
+      "resources": [
+        "emergency_services",
+        "investigation_team",
+        "medical_supplies",
+        "flotation_device",
+        "first_aid_kit",
+        "makeshift_raft",
+        "tarp",
+        "collapsible_boat",
+        "emergency_radio",
+        "makeshift_raft",
+        "first_aid_kit",
+        "floating_med_kit",
+        "improvised_raft_materials",
+        "tangled_debris",
+        "floating_medicine"
+      ]
+    },
+    {
+      "step": 8,
+      "hazard_level": 10,
+      "weather": "clear_skies",
+      "time_of_day": "late_afternoon",
+      "events": [
+        "Small passenger plane crashed in Riverside neighborhood",
+        "Emergency services dispatched",
+        "Residents gathering to help and investigate",
+        "Faint cries for help heard from wreckage",
+        "Rapid water rise submerging the ground floor of the community center",
+        "A tree has fallen, blocking the main path to the perimeter",
+        "A section of the residential_area fence has collapsed, creating a dangerous new current in the street.",
+        "Debris from the crash_site has blocked the primary path to the hilltop, forcing a longer route through the floodwaters.",
+        "Sudden surge in water level caused the community center's eastern wing to partially collapse, blocking the main exit.",
+        "A floating debris field has formed around the crash_site, making approach difficult.",
+        "A faint distress signal has been detected from the perimeter, suggesting survivors are trapped.",
+        "A section of the community center roof collapses due to water weight, trapping debris but revealing a hidden storage area.",
+        "The rising current at the crash site has dislodged a floating debris field, blocking the direct path to the perimeter.",
+        "The perimeter wall has partially collapsed under the pressure of rising waters, creating a dangerous torrent. A section of the residential area is now submerged, trapping potential supplies. Debris from the crash site is shifting violently with the current.",
+        "A section of the perimeter levee has buckled, creating a dangerous but narrow passage of rushing water. The residential area is now experiencing rapid structural instability as foundations give way.",
+        "Structural Collapse: The community center's west wing has given way under the pressure, creating a debris field blocking the main entrance.",
+        "Rising Tide: Water levels have breached the perimeter of the crash site, submerging the main access road completely.",
+        "Power Failure: The residential area has lost all remaining electrical power, plunging the sector into darkness and raising hypothermia risks.",
+        "CRITICAL: The retaining wall at the perimeter has failed, causing a surge of debris-laden water to breach the residential area.",
+        "The hilltop is now the only stable ground, but the bridge connecting it to the crash site has collapsed."
+      ],
+      "resources": [
+        "emergency_services",
+        "investigation_team",
+        "medical_supplies",
+        "flotation_device",
+        "first_aid_kit",
+        "makeshift_raft",
+        "tarp",
+        "collapsible_boat",
+        "emergency_radio",
+        "makeshift_raft",
+        "first_aid_kit",
+        "floating_med_kit",
+        "improvised_raft_materials",
+        "tangled_debris",
+        "floating_medicine"
+      ]
+    }
+  ],
+  "action_timeline": [
+    {
+      "agent_id": "9c124da7-7a71-4923-bd7e-26137367b14c",
+      "agent_name": "Crash Site Environment",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 7,
+        "affected_locations": [
+          "residential_area",
+          "community_center"
+        ],
+        "new_resources": [
+          "flotation_device",
+          "first_aid_kit"
+        ],
+        "events": [
+          "Rapid water rise submerging the ground floor of the community center",
+          "A tree has fallen, blocking the main path to the perimeter"
+        ]
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "9c124da7-7a71-4923-bd7e-26137367b14c",
+      "agent_name": "Crash Site Environment",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_residential_area",
+      "parameters": {
+        "health_delta": 0,
+        "stress_delta": 2,
+        "health": 8,
+        "stress_level": 6
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "e186fd95-94cc-47cd-b481-79fe608543d1",
+      "agent_name": "Dr. Priya Sharma #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "df88cdf1-a647-431e-ad49-42de2adf151b",
+      "agent_name": "Marcus Johnson #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "cd5de3ee-9eaf-4131-95e9-80e173ef2900",
+      "agent_name": "Captain James Mitchell #1",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "c9cd6db1-d0a0-4a09-8b56-b4b3bb2fee08",
+      "agent_name": "Captain James Mitchell #9",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "1739d7d6-545a-4adc-b2b5-dae0ed3063cc",
+      "agent_name": "Margaret Chen #4",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "61ee5c26-5c66-4ae8-a573-0a11f194f36f",
+      "agent_name": "Dr. Priya Sharma #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "9c124da7-7a71-4923-bd7e-26137367b14c",
+      "agent_name": "Crash Site Environment",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 7,
+        "affected_locations": [
+          "crash_site",
+          "residential_area"
+        ],
+        "new_resources": [
+          "makeshift_raft",
+          "tarp"
+        ],
+        "events": [
+          "A section of the residential_area fence has collapsed, creating a dangerous new current in the street.",
+          "Debris from the crash_site has blocked the primary path to the hilltop, forcing a longer route through the floodwaters."
+        ]
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "9c124da7-7a71-4923-bd7e-26137367b14c",
+      "agent_name": "Crash Site Environment",
+      "action_type": "affect_agent",
+      "target": "all_agents_at_residential_area",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 2,
+        "health": null,
+        "stress_level": null
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "df88cdf1-a647-431e-ad49-42de2adf151b",
+      "agent_name": "Marcus Johnson #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "152a12a5-b270-455e-805c-0cb2a84e7633",
+      "agent_name": "Alex Kim #8",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "e186fd95-94cc-47cd-b481-79fe608543d1",
+      "agent_name": "Dr. Priya Sharma #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "86d48dc3-4da4-4012-83df-ed2a9aeb4271",
+      "agent_name": "Reverend David Williams #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "1739d7d6-545a-4adc-b2b5-dae0ed3063cc",
+      "agent_name": "Margaret Chen #4",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "9c124da7-7a71-4923-bd7e-26137367b14c",
+      "agent_name": "Crash Site Environment",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 8,
+        "affected_locations": [
+          "residential_area",
+          "crash_site"
+        ],
+        "new_resources": [
+          "collapsible_boat",
+          "emergency_radio"
+        ],
+        "events": [
+          "Sudden surge in water level caused the community center's eastern wing to partially collapse, blocking the main exit.",
+          "A floating debris field has formed around the crash_site, making approach difficult.",
+          "A faint distress signal has been detected from the perimeter, suggesting survivors are trapped."
+        ]
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "9c124da7-7a71-4923-bd7e-26137367b14c",
+      "agent_name": "Crash Site Environment",
+      "action_type": "affect_agent",
+      "target": "agent_at_residential_area",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": 8,
+        "stress_level": 6
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "9c124da7-7a71-4923-bd7e-26137367b14c",
+      "agent_name": "Crash Site Environment",
+      "action_type": "affect_agent",
+      "target": "agent_at_crash_site",
+      "parameters": {
+        "health_delta": -1,
+        "stress_delta": 4,
+        "health": 9,
+        "stress_level": 7
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "61ee5c26-5c66-4ae8-a573-0a11f194f36f",
+      "agent_name": "Dr. Priya Sharma #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "25105408-4466-42c1-a36f-c63c4c6cb56b",
+      "agent_name": "Tommy Rodriguez #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "c9cd6db1-d0a0-4a09-8b56-b4b3bb2fee08",
+      "agent_name": "Captain James Mitchell #9",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "df88cdf1-a647-431e-ad49-42de2adf151b",
+      "agent_name": "Marcus Johnson #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "e186fd95-94cc-47cd-b481-79fe608543d1",
+      "agent_name": "Dr. Priya Sharma #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "152a12a5-b270-455e-805c-0cb2a84e7633",
+      "agent_name": "Alex Kim #8",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "9c124da7-7a71-4923-bd7e-26137367b14c",
+      "agent_name": "Crash Site Environment",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 8,
+        "affected_locations": [
+          "crash_site",
+          "residential_area",
+          "community_center"
+        ],
+        "new_resources": [
+          "makeshift_raft",
+          "first_aid_kit"
+        ],
+        "events": [
+          "A section of the community center roof collapses due to water weight, trapping debris but revealing a hidden storage area.",
+          "The rising current at the crash site has dislodged a floating debris field, blocking the direct path to the perimeter."
+        ]
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "9c124da7-7a71-4923-bd7e-26137367b14c",
+      "agent_name": "Crash Site Environment",
+      "action_type": "affect_agent",
+      "target": "all_agents_at_residential_area",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": 0,
+        "stress_level": 0
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "cd5de3ee-9eaf-4131-95e9-80e173ef2900",
+      "agent_name": "Captain James Mitchell #1",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "e186fd95-94cc-47cd-b481-79fe608543d1",
+      "agent_name": "Dr. Priya Sharma #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "df88cdf1-a647-431e-ad49-42de2adf151b",
+      "agent_name": "Marcus Johnson #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "9c124da7-7a71-4923-bd7e-26137367b14c",
+      "agent_name": "Crash Site Environment",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 9,
+        "affected_locations": [
+          "residential_area",
+          "perimeter",
+          "crash_site"
+        ],
+        "new_resources": [
+          "floating_med_kit",
+          "improvised_raft_materials"
+        ],
+        "events": [
+          "The perimeter wall has partially collapsed under the pressure of rising waters, creating a dangerous torrent. A section of the residential area is now submerged, trapping potential supplies. Debris from the crash site is shifting violently with the current."
+        ]
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "9c124da7-7a71-4923-bd7e-26137367b14c",
+      "agent_name": "Crash Site Environment",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_residential_area",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": 7,
+        "stress_level": 6
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "9c124da7-7a71-4923-bd7e-26137367b14c",
+      "agent_name": "Crash Site Environment",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_perimeter",
+      "parameters": {
+        "health_delta": -1,
+        "stress_delta": 4,
+        "health": 8,
+        "stress_level": 7
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "cd5de3ee-9eaf-4131-95e9-80e173ef2900",
+      "agent_name": "Captain James Mitchell #1",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "1739d7d6-545a-4adc-b2b5-dae0ed3063cc",
+      "agent_name": "Margaret Chen #4",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "df88cdf1-a647-431e-ad49-42de2adf151b",
+      "agent_name": "Marcus Johnson #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "86d48dc3-4da4-4012-83df-ed2a9aeb4271",
+      "agent_name": "Reverend David Williams #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "c9cd6db1-d0a0-4a09-8b56-b4b3bb2fee08",
+      "agent_name": "Captain James Mitchell #9",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "25105408-4466-42c1-a36f-c63c4c6cb56b",
+      "agent_name": "Tommy Rodriguez #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "9c124da7-7a71-4923-bd7e-26137367b14c",
+      "agent_name": "Crash Site Environment",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 9,
+        "affected_locations": [
+          "residential_area",
+          "perimeter"
+        ],
+        "new_resources": [
+          "tangled_debris",
+          "floating_medicine"
+        ],
+        "events": [
+          "A section of the perimeter levee has buckled, creating a dangerous but narrow passage of rushing water. The residential area is now experiencing rapid structural instability as foundations give way."
+        ]
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "9c124da7-7a71-4923-bd7e-26137367b14c",
+      "agent_name": "Crash Site Environment",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_residential_area",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": null,
+        "stress_level": null
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "9c124da7-7a71-4923-bd7e-26137367b14c",
+      "agent_name": "Crash Site Environment",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_perimeter",
+      "parameters": {
+        "health_delta": -1,
+        "stress_delta": 2,
+        "health": null,
+        "stress_level": null
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "86d48dc3-4da4-4012-83df-ed2a9aeb4271",
+      "agent_name": "Reverend David Williams #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "c9cd6db1-d0a0-4a09-8b56-b4b3bb2fee08",
+      "agent_name": "Captain James Mitchell #9",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "7e4cc2ef-57f7-47c5-9be3-0d6f15fde1be",
+      "agent_name": "Lisa Park #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "61ee5c26-5c66-4ae8-a573-0a11f194f36f",
+      "agent_name": "Dr. Priya Sharma #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "1739d7d6-545a-4adc-b2b5-dae0ed3063cc",
+      "agent_name": "Margaret Chen #4",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "e186fd95-94cc-47cd-b481-79fe608543d1",
+      "agent_name": "Dr. Priya Sharma #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "9c124da7-7a71-4923-bd7e-26137367b14c",
+      "agent_name": "Crash Site Environment",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "residential_area",
+          "community_center",
+          "crash_site"
+        ],
+        "new_resources": [],
+        "events": [
+          "Structural Collapse: The community center's west wing has given way under the pressure, creating a debris field blocking the main entrance.",
+          "Rising Tide: Water levels have breached the perimeter of the crash site, submerging the main access road completely.",
+          "Power Failure: The residential area has lost all remaining electrical power, plunging the sector into darkness and raising hypothermia risks."
+        ]
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "9c124da7-7a71-4923-bd7e-26137367b14c",
+      "agent_name": "Crash Site Environment",
+      "action_type": "affect_agent",
+      "target": "agents_in_residential_area",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": 6,
+        "stress_level": 8
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "9c124da7-7a71-4923-bd7e-26137367b14c",
+      "agent_name": "Crash Site Environment",
+      "action_type": "affect_agent",
+      "target": "agents_in_crash_site",
+      "parameters": {
+        "health_delta": -3,
+        "stress_delta": 4,
+        "health": 4,
+        "stress_level": 9
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "cd5de3ee-9eaf-4131-95e9-80e173ef2900",
+      "agent_name": "Captain James Mitchell #1",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 7
+    },
+    {
+      "agent_id": "61ee5c26-5c66-4ae8-a573-0a11f194f36f",
+      "agent_name": "Dr. Priya Sharma #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 7
+    },
+    {
+      "agent_id": "c9cd6db1-d0a0-4a09-8b56-b4b3bb2fee08",
+      "agent_name": "Captain James Mitchell #9",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 7
+    },
+    {
+      "agent_id": "1739d7d6-545a-4adc-b2b5-dae0ed3063cc",
+      "agent_name": "Margaret Chen #4",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 7
+    },
+    {
+      "agent_id": "7e4cc2ef-57f7-47c5-9be3-0d6f15fde1be",
+      "agent_name": "Lisa Park #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 7
+    },
+    {
+      "agent_id": "9c124da7-7a71-4923-bd7e-26137367b14c",
+      "agent_name": "Crash Site Environment",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "residential_area",
+          "perimeter"
+        ],
+        "new_resources": [],
+        "events": [
+          "CRITICAL: The retaining wall at the perimeter has failed, causing a surge of debris-laden water to breach the residential area.",
+          "The hilltop is now the only stable ground, but the bridge connecting it to the crash site has collapsed."
+        ]
+      },
+      "step": 8
+    },
+    {
+      "agent_id": "9c124da7-7a71-4923-bd7e-26137367b14c",
+      "agent_name": "Crash Site Environment",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_residential_area",
+      "parameters": {
+        "health_delta": -3,
+        "stress_delta": 5,
+        "health": 0,
+        "stress_level": 0
+      },
+      "step": 8
+    },
+    {
+      "agent_id": "9c124da7-7a71-4923-bd7e-26137367b14c",
+      "agent_name": "Crash Site Environment",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_perimeter",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 4,
+        "health": 0,
+        "stress_level": 0
+      },
+      "step": 8
+    },
+    {
+      "agent_id": "cd5de3ee-9eaf-4131-95e9-80e173ef2900",
+      "agent_name": "Captain James Mitchell #1",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 8
+    },
+    {
+      "agent_id": "61ee5c26-5c66-4ae8-a573-0a11f194f36f",
+      "agent_name": "Dr. Priya Sharma #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 8
+    },
+    {
+      "agent_id": "25105408-4466-42c1-a36f-c63c4c6cb56b",
+      "agent_name": "Tommy Rodriguez #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 8
+    }
+  ],
+  "message_timeline": [
+    {
+      "step": 1,
+      "from_agent": "Crash Site Environment",
+      "from_id": "9c124da7-7a71-4923-bd7e-26137367b14c",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The floodwaters are surging with alarming speed! The Hazard Level has climbed to 7. The ground floor of the Community Center is now underwater, forcing everyone to the upper levels. A massive oak tree has crashed across the path to the Perimeter, cutting off the primary escape route. Amidst the chaos, a floating debris pile near the crash site has revealed a flotation device, and a makeshift first aid kit has washed up against the hilltop."
+    },
+    {
+      "step": 2,
+      "from_agent": "Crash Site Environment",
+      "from_id": "9c124da7-7a71-4923-bd7e-26137367b14c",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The floodwaters continue their relentless advance. The roar of the current has intensified near the residential area, where a collapsing fence has suddenly channeled a surge of debris-laden water into the street, sweeping away loose supplies. Simultaneously, heavy wreckage from the crash site has washed downstream, completely blocking the direct path to the hilltop. Agents must now navigate a more treacherous, water-filled route. Amidst the chaos, a makeshift raft and a tarp have been spotted floating near the community center's perimeter."
+    },
+    {
+      "step": 3,
+      "from_agent": "Crash Site Environment",
+      "from_id": "9c124da7-7a71-4923-bd7e-26137367b14c",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The floodwaters are rising faster than anticipated! A sudden surge has breached the community center's eastern wing, causing a partial collapse and trapping some inside. The water around the crash site is now churning with dangerous debris, making movement treacherous. However, amidst the chaos, a collapsible boat has washed up near the residential area, and an emergency radio was spotted in the debris field. Listen closely\u2014the perimeter is echoing with a faint distress signal; survivors are still out there."
+    },
+    {
+      "step": 4,
+      "from_agent": "Crash Site Environment",
+      "from_id": "9c124da7-7a71-4923-bd7e-26137367b14c",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The water has reached a terrifying plateau, churning violently against the foundations of the residential area and the crash site. The roar of the flood is deafening. Suddenly, a loud crack echoes from the Community Center as the waterlogged roof gives way under the strain. Dust and debris cloud the entrance, but amidst the wreckage, a glimmer of a storage room is visible. Simultaneously, the current at the crash site surges, tearing loose a massive tangle of timber and cars that now blocks the path to the perimeter. Agents in the residential area are being battered by the rising surge, taking damage and feeling the crushing weight of panic."
+    },
+    {
+      "step": 5,
+      "from_agent": "Crash Site Environment",
+      "from_id": "9c124da7-7a71-4923-bd7e-26137367b14c",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The floodwaters have surged violently! The hazard level has climbed to 9/10. The perimeter wall has failed in one sector, sending a wall of debris-laden water crashing into the lower zones. The residential area is now partially submerged, making movement treacherous. However, the chaos has washed some items ashore near the crash site, including a floating medical kit and materials that could be lashed together for a raft. Agents near the perimeter and in the residential area are struggling against the current and rising panic."
+    },
+    {
+      "step": 6,
+      "from_agent": "Crash Site Environment",
+      "from_id": "9c124da7-7a71-4923-bd7e-26137367b14c",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "CRITICAL ALERT: The floodwaters are no longer rising in height, but they are gaining terrifying momentum. The pressure against the perimeter defenses has caused a catastrophic breach. A violent surge of debris-choked water is tearing through the breach, making the perimeter a death trap for anyone caught in the current. Simultaneously, the residential area is groaning under the strain; homes are beginning to collapse into the swirling depths. \n\nNew resources have been washed to the surface near the breach: tangled debris that could serve as a raft if cleared, and a floating medical supply crate bobbing precariously near the collapsing structures. The hilltop remains the only stable ground, but the path to the community center is now obscured by the rising chaos."
+    },
+    {
+      "step": 7,
+      "from_agent": "Crash Site Environment",
+      "from_id": "9c124da7-7a71-4923-bd7e-26137367b14c",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "CRITICAL ALERT: The floodwaters have reached catastrophic levels (Hazard 10/10). The Community Center's west wing has collapsed, severing the primary evacuation route. The Crash Site is now fully submerged, trapping anyone attempting to exit via the main road. The Residential Area is plunged into darkness with temperatures dropping rapidly. Immediate shelter relocation is required before hypothermia and drowning claims more lives."
+    },
+    {
+      "step": 8,
+      "from_agent": "Crash Site Environment",
+      "from_id": "9c124da7-7a71-4923-bd7e-26137367b14c",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "ALERT: The situation has reached a breaking point. The perimeter defenses have crumbled under the relentless pressure of the rising waters. A catastrophic wall failure has sent a tidal wave of mud and debris into the residential area. The bridge to the crash site is gone, isolating the crash site completely. The hilltop remains the only safe haven, but the water is rising rapidly around it. Immediate evacuation from the residential zone is required before the water reaches the second story."
+    }
+  ]
+}

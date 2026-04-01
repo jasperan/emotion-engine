@@ -1,0 +1,162 @@
+{
+  "benchmark_id": "20260330_043832",
+  "models": [
+    "qwen3.5:9b",
+    "qwen3.5:4b",
+    "gemma3:latest"
+  ],
+  "backend": "ollama",
+  "total_time_seconds": 9874.9,
+  "runs": [
+    {
+      "run_id": "86edea29-9162-4516-be37-10c399bc3f91",
+      "scenario": "Rising Flood (10 agents)",
+      "model": "qwen3.5:9b",
+      "seed": 42,
+      "max_steps": 8,
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_seconds": 596.8
+    },
+    {
+      "run_id": "6b530305-e143-4141-a69e-ec743ab4682e",
+      "scenario": "Airplane Crash Investigation (10 agents)",
+      "model": "qwen3.5:9b",
+      "seed": 101,
+      "max_steps": 8,
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_seconds": 613.4
+    },
+    {
+      "run_id": "ff9cd1c8-e2d4-4ea2-b8c7-4e73b36299bb",
+      "scenario": "Australian Bushfire Encirclement (12 agents)",
+      "model": "qwen3.5:9b",
+      "seed": 202,
+      "max_steps": 8,
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_seconds": 716.7
+    },
+    {
+      "run_id": "19018eea-adca-4e07-adff-1afcc190628e",
+      "scenario": "Mass Casualty: Building Collapse (10 agents)",
+      "model": "qwen3.5:9b",
+      "seed": 303,
+      "max_steps": 8,
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_seconds": 566.9
+    },
+    {
+      "run_id": "70c069b6-8579-4e55-a265-19c93a4b71a7",
+      "scenario": "Philippines Mega-Tsunami (12 agents)",
+      "model": "qwen3.5:9b",
+      "seed": 404,
+      "max_steps": 8,
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_seconds": 797.2
+    },
+    {
+      "run_id": "cd9d6765-08d6-4fb9-9a00-d4e449129b80",
+      "scenario": "Rising Flood (10 agents)",
+      "model": "qwen3.5:4b",
+      "seed": 42,
+      "max_steps": 8,
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_seconds": 591.4
+    },
+    {
+      "run_id": "b12f26fb-4bca-4168-8ef4-2f3633b31d93",
+      "scenario": "Airplane Crash Investigation (10 agents)",
+      "model": "qwen3.5:4b",
+      "seed": 101,
+      "max_steps": 8,
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_seconds": 590.1
+    },
+    {
+      "run_id": "3ab39ab1-3409-426d-ae0b-06beada96f9c",
+      "scenario": "Australian Bushfire Encirclement (12 agents)",
+      "model": "qwen3.5:4b",
+      "seed": 202,
+      "max_steps": 8,
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_seconds": 720.1
+    },
+    {
+      "run_id": "9088815b-120e-4dce-bc82-4304db3e8157",
+      "scenario": "Mass Casualty: Building Collapse (10 agents)",
+      "model": "qwen3.5:4b",
+      "seed": 303,
+      "max_steps": 8,
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_seconds": 586.3
+    },
+    {
+      "run_id": "f4748ab3-4f7b-43fb-843e-126d6d5f6640",
+      "scenario": "Philippines Mega-Tsunami (12 agents)",
+      "model": "qwen3.5:4b",
+      "seed": 404,
+      "max_steps": 8,
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_seconds": 782.5
+    },
+    {
+      "run_id": "76115b5e-92fd-44d1-a2ec-4f9dacafa2dc",
+      "scenario": "Rising Flood (10 agents)",
+      "model": "gemma3:latest",
+      "seed": 42,
+      "max_steps": 8,
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_seconds": 603.9
+    },
+    {
+      "run_id": "7db20a55-d60e-4c61-8f38-fd11d0fe6e29",
+      "scenario": "Airplane Crash Investigation (10 agents)",
+      "model": "gemma3:latest",
+      "seed": 101,
+      "max_steps": 8,
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_seconds": 584.9
+    },
+    {
+      "run_id": "609a3a8c-d1eb-4ed3-ad16-e12851cf5344",
+      "scenario": "Australian Bushfire Encirclement (12 agents)",
+      "model": "gemma3:latest",
+      "seed": 202,
+      "max_steps": 8,
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_seconds": 718.9
+    },
+    {
+      "run_id": "246c4a1b-edcd-4402-ab57-8d52c53c8eba",
+      "scenario": "Mass Casualty: Building Collapse (10 agents)",
+      "model": "gemma3:latest",
+      "seed": 303,
+      "max_steps": 8,
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_seconds": 583.9
+    },
+    {
+      "run_id": "8fa2b560-7887-4ed2-9199-051394976be1",
+      "scenario": "Philippines Mega-Tsunami (12 agents)",
+      "model": "gemma3:latest",
+      "seed": 404,
+      "max_steps": 8,
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_seconds": 768.6
+    }
+  ]
+}

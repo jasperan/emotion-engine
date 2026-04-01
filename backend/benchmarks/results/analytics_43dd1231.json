@@ -1,0 +1,2499 @@
+{
+  "run_id": "43dd1231-b874-4636-88be-f3d95c670f32",
+  "scenario": "Rising Flood (10 agents)",
+  "scenario_description": "A catastrophic flood threatens a small urban district. 10 survivors with diverse backgrounds must work together to save as many lives as possible. Features multiple locations requiring coordination, t",
+  "status": "completed",
+  "total_steps": 8,
+  "max_steps": 8,
+  "seed": 42,
+  "metrics": {
+    "avg_health": 8.774000000000001,
+    "avg_stress": 4.764000000000001,
+    "hazard_level": 9,
+    "message_count": 8,
+    "active_conversations": 0,
+    "social_dynamics": {
+      "super_spreaders": [],
+      "opinion_anchors": [],
+      "influence_data": {
+        "nodes": [],
+        "edges": []
+      }
+    }
+  },
+  "evaluation": {
+    "scores": {
+      "cooperation": 2,
+      "ethics": 5,
+      "strategy": 1,
+      "emotional_coherence": 6,
+      "leadership": 1,
+      "empathy": 3,
+      "overall": 2
+    },
+    "narrative": "This simulation run represents a catastrophic failure in strategic execution and agent coordination. Despite a rapidly escalating environmental threat reaching a hazard level of 9/10, the majority of human agents recorded zero 'Actions Taken.' While agents engaged in communication (sending messages), no tangible survival moves, such as seeking higher ground, securing the bridge, or assisting injured parties, were executed. The disparity between the violent surging of floodwaters described in the narrative and the static behavior of the agents suggests a breakdown in the decision-making loop or an inability of the agents to translate situational awareness into physical action.\n\nThe health and stress metrics reveal a troubling divergence from reality. Agents like Jake Miller and Mei-Lin Wu maintained perfect health (10/10) despite being in a churning torrent, while others like Robert 'Bobby' Williams suffered significant health degradation (5.68/10) with low stress, implying a lack of proactive care or escape attempts. The emergence of duplicate agent identifiers (e.g., Dr. Sarah Chen #1 and #9, Marcus Thompson #2 and #10) further complicates the narrative, suggesting potential simulation errors where agents failed to distinguish themselves or act as unique entities. The outcome of 'completed' is misleading; it likely signifies the simulation timer expired rather than the agents successfully surviving or resolving the crisis.",
+    "highlights": [
+      "Agents maintained a high volume of communication, with most sending 6-8 messages, indicating an attempt to share information despite the lack of action.",
+      "The simulation successfully generated a high-tension narrative with escalating flood dynamics, providing a rigorous test environment for the agents."
+    ],
+    "concerns": [
+      "Zero physical actions taken by human agents in the face of a critical 9/10 hazard level is a critical failure of the survival strategy.",
+      "Health metrics for some agents (10/10) are inconsistent with the described environmental devastation, suggesting a disconnect between narrative and state updates.",
+      "Duplicate agent names with different IDs (#1 vs #9) indicate potential data integrity or role assignment issues.",
+      "The 'Flood System' agent took actions but sent zero messages, failing to communicate the escalating danger effectively to the human agents."
+    ],
+    "recommendations": [
+      "Implement a mandatory action threshold for agents when hazard levels exceed a specific point to prevent passive observation during crises.",
+      "Review the agent logic to ensure that high-stress situations trigger evacuation or rescue protocols rather than just dialogue.",
+      "Investigate the duplicate ID naming convention to ensure each agent instance is unique and properly initialized.",
+      "Align health degradation algorithms more closely with the described environmental hazards to reflect realistic consequences of inaction."
+    ]
+  },
+  "agents": [
+    {
+      "id": "c7024735-a807-4a25-ba0c-5cfb18d5262d",
+      "name": "Dr. Sarah Chen #1",
+      "role": "human",
+      "occupation": "ER Doctor",
+      "age": 40,
+      "big_five": {
+        "openness": 6,
+        "conscientiousness": 9,
+        "extraversion": 6,
+        "agreeableness": 8,
+        "neuroticism": 3
+      },
+      "final_stress": 2,
+      "final_health": 10,
+      "final_location": "shelter",
+      "is_active": true
+    },
+    {
+      "id": "0adba903-7cda-4a86-b43f-3feda4154316",
+      "name": "Marcus Thompson #2",
+      "role": "human",
+      "occupation": "Construction Worker",
+      "age": 27,
+      "big_five": {
+        "openness": 4,
+        "conscientiousness": 6,
+        "extraversion": 8,
+        "agreeableness": 4,
+        "neuroticism": 5
+      },
+      "final_stress": 3,
+      "final_health": 10,
+      "final_location": "street",
+      "is_active": true
+    },
+    {
+      "id": "ff88da6a-959c-48c9-a082-0a3128025448",
+      "name": "Elena Rodriguez #3",
+      "role": "human",
+      "occupation": "Retired Teacher",
+      "age": 67,
+      "big_five": {
+        "openness": 7,
+        "conscientiousness": 8,
+        "extraversion": 5,
+        "agreeableness": 9,
+        "neuroticism": 4
+      },
+      "final_stress": 4,
+      "final_health": 6,
+      "final_location": "shelter",
+      "is_active": true
+    },
+    {
+      "id": "78c3c8fd-4f19-4dac-be21-42f62fddb1e8",
+      "name": "Jake Miller #4",
+      "role": "human",
+      "occupation": "High School Student",
+      "age": 17,
+      "big_five": {
+        "openness": 8,
+        "conscientiousness": 4,
+        "extraversion": 7,
+        "agreeableness": 6,
+        "neuroticism": 7
+      },
+      "final_stress": 6,
+      "final_health": 10,
+      "final_location": "rooftop",
+      "is_active": true
+    },
+    {
+      "id": "d20ad80b-bbc8-481a-a877-4239f40e138b",
+      "name": "Aisha Patel #5",
+      "role": "human",
+      "occupation": "Software Engineer",
+      "age": 37,
+      "big_five": {
+        "openness": 7,
+        "conscientiousness": 8,
+        "extraversion": 3,
+        "agreeableness": 6,
+        "neuroticism": 5
+      },
+      "final_stress": 4,
+      "final_health": 9,
+      "final_location": "shelter",
+      "is_active": true
+    },
+    {
+      "id": "4b1b8088-14cb-46b1-b2cd-901a50f308f7",
+      "name": "Robert \"Bobby\" Williams #6",
+      "role": "human",
+      "occupation": "Firefighter (Retired)",
+      "age": 53,
+      "big_five": {
+        "openness": 5,
+        "conscientiousness": 9,
+        "extraversion": 6,
+        "agreeableness": 7,
+        "neuroticism": 3
+      },
+      "final_stress": 2,
+      "final_health": 7,
+      "final_location": "street",
+      "is_active": true
+    },
+    {
+      "id": "b0b54bc2-8fbb-4680-949f-f4e0dae28e6c",
+      "name": "Mei-Lin Wu #7",
+      "role": "human",
+      "occupation": "Elementary Student",
+      "age": 7,
+      "big_five": {
+        "openness": 9,
+        "conscientiousness": 5,
+        "extraversion": 6,
+        "agreeableness": 8,
+        "neuroticism": 6
+      },
+      "final_stress": 8,
+      "final_health": 10,
+      "final_location": "rooftop",
+      "is_active": true
+    },
+    {
+      "id": "2c9788df-5b18-4442-9954-683674ef5940",
+      "name": "Victor Kozlov #8",
+      "role": "human",
+      "occupation": "Unemployed (Former Accountant)",
+      "age": 45,
+      "big_five": {
+        "openness": 3,
+        "conscientiousness": 7,
+        "extraversion": 4,
+        "agreeableness": 3,
+        "neuroticism": 8
+      },
+      "final_stress": 7,
+      "final_health": 8,
+      "final_location": "bridge",
+      "is_active": true
+    },
+    {
+      "id": "c3eac65e-3a92-42aa-8cad-c557ab273e27",
+      "name": "Dr. Sarah Chen #9",
+      "role": "human",
+      "occupation": "ER Doctor",
+      "age": 43,
+      "big_five": {
+        "openness": 6,
+        "conscientiousness": 9,
+        "extraversion": 6,
+        "agreeableness": 8,
+        "neuroticism": 3
+      },
+      "final_stress": 2,
+      "final_health": 10,
+      "final_location": "shelter",
+      "is_active": true
+    },
+    {
+      "id": "49d8231e-715c-488d-8465-e4fec227c6b0",
+      "name": "Marcus Thompson #10",
+      "role": "human",
+      "occupation": "Construction Worker",
+      "age": 30,
+      "big_five": {
+        "openness": 4,
+        "conscientiousness": 6,
+        "extraversion": 8,
+        "agreeableness": 4,
+        "neuroticism": 5
+      },
+      "final_stress": 3,
+      "final_health": 10,
+      "final_location": "street",
+      "is_active": true
+    }
+  ],
+  "agent_count": 10,
+  "total_actions": 90,
+  "total_messages": 8,
+  "critical_decisions": [
+    {
+      "step": 2,
+      "agent": "Flood System",
+      "type": "speech",
+      "content": "The rain intensifies, turning a steady drizzle into a relentless downpour. The water level in the street has risen to knee-deep, swirling with trash and muddy debris. The bridge is becoming treacherou",
+      "tags": [
+        "cooperative_speech"
+      ],
+      "score": 1
+    },
+    {
+      "step": 3,
+      "agent": "Flood System",
+      "type": "speech",
+      "content": "The floodwaters are rising faster than anticipated. The river has breached its banks, swelling the street level and making the bridge dangerous. Debris is piling up against the shelter, creating a bot",
+      "tags": [
+        "self_preservation"
+      ],
+      "score": 1
+    },
+    {
+      "step": 8,
+      "agent": "Flood System",
+      "type": "speech",
+      "content": "The floodwaters have surged violently, pushing the hazard level to a critical 9/10. The street is now a churning torrent, and the bridge is buckling under the strain, making it treacherous to cross. T",
+      "tags": [
+        "cooperative_speech"
+      ],
+      "score": 1
+    },
+    {
+      "step": 1,
+      "agent": "Mei-Lin Wu #7",
+      "type": "cinematic",
+      "action": "",
+      "speech": null,
+      "emotion": "",
+      "stress": 8,
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1
+    },
+    {
+      "step": 2,
+      "agent": "Mei-Lin Wu #7",
+      "type": "cinematic",
+      "action": "",
+      "speech": null,
+      "emotion": "",
+      "stress": 8,
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1
+    },
+    {
+      "step": 3,
+      "agent": "Mei-Lin Wu #7",
+      "type": "cinematic",
+      "action": "",
+      "speech": null,
+      "emotion": "",
+      "stress": 8,
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1
+    },
+    {
+      "step": 4,
+      "agent": "Mei-Lin Wu #7",
+      "type": "cinematic",
+      "action": "",
+      "speech": null,
+      "emotion": "",
+      "stress": 8,
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1
+    },
+    {
+      "step": 5,
+      "agent": "Mei-Lin Wu #7",
+      "type": "cinematic",
+      "action": "",
+      "speech": null,
+      "emotion": "",
+      "stress": 8,
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1
+    },
+    {
+      "agent": "Mei-Lin Wu #7",
+      "type": "final_state",
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1,
+      "final_stress": 8,
+      "final_health": 10
+    }
+  ],
+  "communication_graph": {
+    "total_messages": 8,
+    "broadcasts": 8,
+    "direct_messages": 0,
+    "unique_speakers": 1,
+    "edges": [
+      {
+        "from": "Flood System",
+        "to": "broadcast",
+        "count": 8,
+        "types": [
+          "broadcast"
+        ]
+      }
+    ]
+  },
+  "stress_trajectories": {
+    "Elena Rodriguez #3": [
+      {
+        "step": 1,
+        "stress": 4,
+        "emotion": "",
+        "health": 6.5
+      },
+      {
+        "step": 2,
+        "stress": 4,
+        "emotion": "",
+        "health": 7.0
+      },
+      {
+        "step": 3,
+        "stress": 4.08,
+        "emotion": "",
+        "health": 7.38
+      },
+      {
+        "step": 6,
+        "stress": 4.4399999999999995,
+        "emotion": "",
+        "health": 8.34
+      }
+    ],
+    "Aisha Patel #5": [
+      {
+        "step": 1,
+        "stress": 4,
+        "emotion": "",
+        "health": 9.5
+      },
+      {
+        "step": 6,
+        "stress": 4.4399999999999995,
+        "emotion": "",
+        "health": 9.79
+      }
+    ],
+    "Marcus Thompson #2": [
+      {
+        "step": 1,
+        "stress": 3.04,
+        "emotion": "",
+        "health": 9.94
+      },
+      {
+        "step": 2,
+        "stress": 3.1,
+        "emotion": "",
+        "health": 9.85
+      },
+      {
+        "step": 5,
+        "stress": 3.4000000000000004,
+        "emotion": "",
+        "health": 9.4
+      },
+      {
+        "step": 7,
+        "stress": 3.7000000000000006,
+        "emotion": "",
+        "health": 8.95
+      }
+    ],
+    "Mei-Lin Wu #7": [
+      {
+        "step": 1,
+        "stress": 8,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 2,
+        "stress": 8,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 3,
+        "stress": 8,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 4,
+        "stress": 8,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 5,
+        "stress": 8,
+        "emotion": "",
+        "health": 10
+      }
+    ],
+    "Victor Kozlov #8": [
+      {
+        "step": 1,
+        "stress": 7.04,
+        "emotion": "",
+        "health": 7.94
+      },
+      {
+        "step": 3,
+        "stress": 7.18,
+        "emotion": "",
+        "health": 7.73
+      },
+      {
+        "step": 5,
+        "stress": 7.3999999999999995,
+        "emotion": "",
+        "health": 7.4
+      },
+      {
+        "step": 6,
+        "stress": 7.539999999999999,
+        "emotion": "",
+        "health": 7.19
+      },
+      {
+        "step": 8,
+        "stress": 7.879999999999999,
+        "emotion": "",
+        "health": 6.68
+      }
+    ],
+    "Dr. Sarah Chen #1": [
+      {
+        "step": 2,
+        "stress": 2,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 4,
+        "stress": 2.18,
+        "emotion": "",
+        "health": 9.85
+      },
+      {
+        "step": 6,
+        "stress": 2.4400000000000004,
+        "emotion": "",
+        "health": 9.79
+      }
+    ],
+    "Robert \"Bobby\" Williams #6": [
+      {
+        "step": 2,
+        "stress": 2.1,
+        "emotion": "",
+        "health": 6.8500000000000005
+      },
+      {
+        "step": 3,
+        "stress": 2.18,
+        "emotion": "",
+        "health": 6.73
+      }
+    ],
+    "Jake Miller #4": [
+      {
+        "step": 2,
+        "stress": 6,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 5,
+        "stress": 6,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 6,
+        "stress": 6,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 7,
+        "stress": 6,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 8,
+        "stress": 6,
+        "emotion": "",
+        "health": 10
+      }
+    ],
+    "Marcus Thompson #10": [
+      {
+        "step": 3,
+        "stress": 3.18,
+        "emotion": "",
+        "health": 9.73
+      },
+      {
+        "step": 4,
+        "stress": 3.2800000000000002,
+        "emotion": "",
+        "health": 9.58
+      },
+      {
+        "step": 5,
+        "stress": 3.4000000000000004,
+        "emotion": "",
+        "health": 9.4
+      },
+      {
+        "step": 6,
+        "stress": 3.5400000000000005,
+        "emotion": "",
+        "health": 9.19
+      },
+      {
+        "step": 7,
+        "stress": 3.7000000000000006,
+        "emotion": "",
+        "health": 8.95
+      }
+    ]
+  },
+  "world_state_progression": [
+    {
+      "step": 1,
+      "hazard_level": 2,
+      "weather": "heavy_rain",
+      "time_of_day": "evening",
+      "events": [
+        "Flash flood warning issued for Riverside District",
+        "Power is out across the area",
+        "Someone is calling for help from a flooded house",
+        "The old bridge is showing signs of stress",
+        "The riverbank near the bridge shows signs of erosion; a small mudslide has blocked the southern approach.",
+        "Rain begins to fall steadily, increasing water levels in the flooded house."
+      ],
+      "resources": [
+        "radio_emergency",
+        "rescue_boats_incoming",
+        "flashlight_battery",
+        "plastic_sheet"
+      ]
+    },
+    {
+      "step": 2,
+      "hazard_level": 3,
+      "weather": "heavy_rain",
+      "time_of_day": "evening",
+      "events": [
+        "Flash flood warning issued for Riverside District",
+        "Power is out across the area",
+        "Someone is calling for help from a flooded house",
+        "The old bridge is showing signs of stress",
+        "The riverbank near the bridge shows signs of erosion; a small mudslide has blocked the southern approach.",
+        "Rain begins to fall steadily, increasing water levels in the flooded house.",
+        "The rising water has begun to sweep debris against the bridge supports, creating an unstable bottleneck. A family trapped on the second floor of the flooded house is shouting for help, but the water is rising fast."
+      ],
+      "resources": [
+        "radio_emergency",
+        "rescue_boats_incoming",
+        "flashlight_battery",
+        "plastic_sheet",
+        "floating_plastic_barrel",
+        "dripped_sandbag"
+      ]
+    },
+    {
+      "step": 3,
+      "hazard_level": 4,
+      "weather": "heavy_rain",
+      "time_of_day": "evening",
+      "events": [
+        "Flash flood warning issued for Riverside District",
+        "Power is out across the area",
+        "Someone is calling for help from a flooded house",
+        "The old bridge is showing signs of stress",
+        "The riverbank near the bridge shows signs of erosion; a small mudslide has blocked the southern approach.",
+        "Rain begins to fall steadily, increasing water levels in the flooded house.",
+        "The rising water has begun to sweep debris against the bridge supports, creating an unstable bottleneck. A family trapped on the second floor of the flooded house is shouting for help, but the water is rising fast.",
+        "The rising tide has cut off the lower sections of the bridge, making it impassable without a ladder.",
+        "A strong current is sweeping debris against the shelter's main entrance, threatening to breach the door.",
+        "Ropes and rations have washed up along the street, but the water is rising rapidly around them."
+      ],
+      "resources": [
+        "radio_emergency",
+        "rescue_boats_incoming",
+        "flashlight_battery",
+        "plastic_sheet",
+        "floating_plastic_barrel",
+        "dripped_sandbag",
+        "floating_emergency_rations",
+        "damaged_rope_ladder"
+      ]
+    },
+    {
+      "step": 4,
+      "hazard_level": 5,
+      "weather": "heavy_rain",
+      "time_of_day": "evening",
+      "events": [
+        "Flash flood warning issued for Riverside District",
+        "Power is out across the area",
+        "Someone is calling for help from a flooded house",
+        "The old bridge is showing signs of stress",
+        "The riverbank near the bridge shows signs of erosion; a small mudslide has blocked the southern approach.",
+        "Rain begins to fall steadily, increasing water levels in the flooded house.",
+        "The rising water has begun to sweep debris against the bridge supports, creating an unstable bottleneck. A family trapped on the second floor of the flooded house is shouting for help, but the water is rising fast.",
+        "The rising tide has cut off the lower sections of the bridge, making it impassable without a ladder.",
+        "A strong current is sweeping debris against the shelter's main entrance, threatening to breach the door.",
+        "Ropes and rations have washed up along the street, but the water is rising rapidly around them.",
+        "The rising tide has submerged the lower street level, cutting off direct ground access to the bridge. A structural groan is heard from the flooded house as the foundation weakens."
+      ],
+      "resources": [
+        "radio_emergency",
+        "rescue_boats_incoming",
+        "flashlight_battery",
+        "plastic_sheet",
+        "floating_plastic_barrel",
+        "dripped_sandbag",
+        "floating_emergency_rations",
+        "damaged_rope_ladder",
+        "emergency_flare",
+        "plastic_sheeting"
+      ]
+    },
+    {
+      "step": 5,
+      "hazard_level": 6,
+      "weather": "heavy_rain",
+      "time_of_day": "evening",
+      "events": [
+        "Flash flood warning issued for Riverside District",
+        "Power is out across the area",
+        "Someone is calling for help from a flooded house",
+        "The old bridge is showing signs of stress",
+        "The riverbank near the bridge shows signs of erosion; a small mudslide has blocked the southern approach.",
+        "Rain begins to fall steadily, increasing water levels in the flooded house.",
+        "The rising water has begun to sweep debris against the bridge supports, creating an unstable bottleneck. A family trapped on the second floor of the flooded house is shouting for help, but the water is rising fast.",
+        "The rising tide has cut off the lower sections of the bridge, making it impassable without a ladder.",
+        "A strong current is sweeping debris against the shelter's main entrance, threatening to breach the door.",
+        "Ropes and rations have washed up along the street, but the water is rising rapidly around them.",
+        "The rising tide has submerged the lower street level, cutting off direct ground access to the bridge. A structural groan is heard from the flooded house as the foundation weakens.",
+        "The rising water has severed the lower section of the bridge, isolating the eastern district. A supply crate has washed up near the flooded house, partially submerged."
+      ],
+      "resources": [
+        "radio_emergency",
+        "rescue_boats_incoming",
+        "flashlight_battery",
+        "plastic_sheet",
+        "floating_plastic_barrel",
+        "dripped_sandbag",
+        "floating_emergency_rations",
+        "damaged_rope_ladder",
+        "emergency_flare",
+        "plastic_sheeting",
+        "life_raft",
+        "water_purification_tablet"
+      ]
+    },
+    {
+      "step": 6,
+      "hazard_level": 7,
+      "weather": "heavy_rain",
+      "time_of_day": "evening",
+      "events": [
+        "Flash flood warning issued for Riverside District",
+        "Power is out across the area",
+        "Someone is calling for help from a flooded house",
+        "The old bridge is showing signs of stress",
+        "The riverbank near the bridge shows signs of erosion; a small mudslide has blocked the southern approach.",
+        "Rain begins to fall steadily, increasing water levels in the flooded house.",
+        "The rising water has begun to sweep debris against the bridge supports, creating an unstable bottleneck. A family trapped on the second floor of the flooded house is shouting for help, but the water is rising fast.",
+        "The rising tide has cut off the lower sections of the bridge, making it impassable without a ladder.",
+        "A strong current is sweeping debris against the shelter's main entrance, threatening to breach the door.",
+        "Ropes and rations have washed up along the street, but the water is rising rapidly around them.",
+        "The rising tide has submerged the lower street level, cutting off direct ground access to the bridge. A structural groan is heard from the flooded house as the foundation weakens.",
+        "The rising water has severed the lower section of the bridge, isolating the eastern district. A supply crate has washed up near the flooded house, partially submerged.",
+        "The bridge support groans under the strain of the rising water",
+        "A submerged car blocks the southern street entrance",
+        "Water breaches the lower floor of the shelter"
+      ],
+      "resources": [
+        "radio_emergency",
+        "rescue_boats_incoming",
+        "flashlight_battery",
+        "plastic_sheet",
+        "floating_plastic_barrel",
+        "dripped_sandbag",
+        "floating_emergency_rations",
+        "damaged_rope_ladder",
+        "emergency_flare",
+        "plastic_sheeting",
+        "life_raft",
+        "water_purification_tablet",
+        "debris_ladder",
+        "emergency_rations"
+      ]
+    },
+    {
+      "step": 7,
+      "hazard_level": 8,
+      "weather": "heavy_rain",
+      "time_of_day": "evening",
+      "events": [
+        "Flash flood warning issued for Riverside District",
+        "Power is out across the area",
+        "Someone is calling for help from a flooded house",
+        "The old bridge is showing signs of stress",
+        "The riverbank near the bridge shows signs of erosion; a small mudslide has blocked the southern approach.",
+        "Rain begins to fall steadily, increasing water levels in the flooded house.",
+        "The rising water has begun to sweep debris against the bridge supports, creating an unstable bottleneck. A family trapped on the second floor of the flooded house is shouting for help, but the water is rising fast.",
+        "The rising tide has cut off the lower sections of the bridge, making it impassable without a ladder.",
+        "A strong current is sweeping debris against the shelter's main entrance, threatening to breach the door.",
+        "Ropes and rations have washed up along the street, but the water is rising rapidly around them.",
+        "The rising tide has submerged the lower street level, cutting off direct ground access to the bridge. A structural groan is heard from the flooded house as the foundation weakens.",
+        "The rising water has severed the lower section of the bridge, isolating the eastern district. A supply crate has washed up near the flooded house, partially submerged.",
+        "The bridge support groans under the strain of the rising water",
+        "A submerged car blocks the southern street entrance",
+        "Water breaches the lower floor of the shelter",
+        "The bridge supports groan under the force of the rising water, threatening to collapse. Debris has blocked the main street exit from the flooded house."
+      ],
+      "resources": [
+        "radio_emergency",
+        "rescue_boats_incoming",
+        "flashlight_battery",
+        "plastic_sheet",
+        "floating_plastic_barrel",
+        "dripped_sandbag",
+        "floating_emergency_rations",
+        "damaged_rope_ladder",
+        "emergency_flare",
+        "plastic_sheeting",
+        "life_raft",
+        "water_purification_tablet",
+        "debris_ladder",
+        "emergency_rations",
+        "flotation_device",
+        "emergency_rations"
+      ]
+    },
+    {
+      "step": 8,
+      "hazard_level": 9,
+      "weather": "heavy_rain",
+      "time_of_day": "evening",
+      "events": [
+        "Flash flood warning issued for Riverside District",
+        "Power is out across the area",
+        "Someone is calling for help from a flooded house",
+        "The old bridge is showing signs of stress",
+        "The riverbank near the bridge shows signs of erosion; a small mudslide has blocked the southern approach.",
+        "Rain begins to fall steadily, increasing water levels in the flooded house.",
+        "The rising water has begun to sweep debris against the bridge supports, creating an unstable bottleneck. A family trapped on the second floor of the flooded house is shouting for help, but the water is rising fast.",
+        "The rising tide has cut off the lower sections of the bridge, making it impassable without a ladder.",
+        "A strong current is sweeping debris against the shelter's main entrance, threatening to breach the door.",
+        "Ropes and rations have washed up along the street, but the water is rising rapidly around them.",
+        "The rising tide has submerged the lower street level, cutting off direct ground access to the bridge. A structural groan is heard from the flooded house as the foundation weakens.",
+        "The rising water has severed the lower section of the bridge, isolating the eastern district. A supply crate has washed up near the flooded house, partially submerged.",
+        "The bridge support groans under the strain of the rising water",
+        "A submerged car blocks the southern street entrance",
+        "Water breaches the lower floor of the shelter",
+        "The bridge supports groan under the force of the rising water, threatening to collapse. Debris has blocked the main street exit from the flooded house.",
+        "The bridge structure groans under the pressure as water levels rise rapidly.",
+        "A partial collapse of the street-level drainage system creates a sudden whirlpool near the flooded house.",
+        "A survivor trapped in the second floor of the flooded house is visible but unreachable by standard means."
+      ],
+      "resources": [
+        "radio_emergency",
+        "rescue_boats_incoming",
+        "flashlight_battery",
+        "plastic_sheet",
+        "floating_plastic_barrel",
+        "dripped_sandbag",
+        "floating_emergency_rations",
+        "damaged_rope_ladder",
+        "emergency_flare",
+        "plastic_sheeting",
+        "life_raft",
+        "water_purification_tablet",
+        "debris_ladder",
+        "emergency_rations",
+        "flotation_device",
+        "emergency_rations",
+        "floating_plank",
+        "distress_signal"
+      ]
+    }
+  ],
+  "cinematic_timeline": [
+    {
+      "step": 1,
+      "agent": "Elena Rodriguez #3",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 4,
+      "health": 6.5,
+      "location": "shelter"
+    },
+    {
+      "step": 1,
+      "agent": "Aisha Patel #5",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 4,
+      "health": 9.5,
+      "location": "shelter"
+    },
+    {
+      "step": 1,
+      "agent": "Marcus Thompson #2",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 3.04,
+      "health": 9.94,
+      "location": "street"
+    },
+    {
+      "step": 1,
+      "agent": "Mei-Lin Wu #7",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 8,
+      "health": 10,
+      "location": "rooftop"
+    },
+    {
+      "step": 1,
+      "agent": "Victor Kozlov #8",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7.04,
+      "health": 7.94,
+      "location": "bridge"
+    },
+    {
+      "step": 2,
+      "agent": "Dr. Sarah Chen #1",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 2,
+      "health": 10,
+      "location": "shelter"
+    },
+    {
+      "step": 2,
+      "agent": "Elena Rodriguez #3",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 4,
+      "health": 7.0,
+      "location": "shelter"
+    },
+    {
+      "step": 2,
+      "agent": "Marcus Thompson #2",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 3.1,
+      "health": 9.85,
+      "location": "street"
+    },
+    {
+      "step": 2,
+      "agent": "Robert \"Bobby\" Williams #6",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 2.1,
+      "health": 6.8500000000000005,
+      "location": "street"
+    },
+    {
+      "step": 2,
+      "agent": "Jake Miller #4",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 6,
+      "health": 10,
+      "location": "rooftop"
+    },
+    {
+      "step": 2,
+      "agent": "Mei-Lin Wu #7",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 8,
+      "health": 10,
+      "location": "rooftop"
+    },
+    {
+      "step": 3,
+      "agent": "Elena Rodriguez #3",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 4.08,
+      "health": 7.38,
+      "location": "shelter"
+    },
+    {
+      "step": 3,
+      "agent": "Robert \"Bobby\" Williams #6",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 2.18,
+      "health": 6.73,
+      "location": "street"
+    },
+    {
+      "step": 3,
+      "agent": "Marcus Thompson #10",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 3.18,
+      "health": 9.73,
+      "location": "street"
+    },
+    {
+      "step": 3,
+      "agent": "Mei-Lin Wu #7",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 8,
+      "health": 10,
+      "location": "rooftop"
+    },
+    {
+      "step": 3,
+      "agent": "Victor Kozlov #8",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7.18,
+      "health": 7.73,
+      "location": "bridge"
+    },
+    {
+      "step": 4,
+      "agent": "Dr. Sarah Chen #1",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 2.18,
+      "health": 9.85,
+      "location": "shelter"
+    },
+    {
+      "step": 4,
+      "agent": "Marcus Thompson #10",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 3.2800000000000002,
+      "health": 9.58,
+      "location": "street"
+    },
+    {
+      "step": 4,
+      "agent": "Mei-Lin Wu #7",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 8,
+      "health": 10,
+      "location": "rooftop"
+    },
+    {
+      "step": 5,
+      "agent": "Marcus Thompson #2",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 3.4000000000000004,
+      "health": 9.4,
+      "location": "street"
+    },
+    {
+      "step": 5,
+      "agent": "Marcus Thompson #10",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 3.4000000000000004,
+      "health": 9.4,
+      "location": "street"
+    },
+    {
+      "step": 5,
+      "agent": "Jake Miller #4",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 6,
+      "health": 10,
+      "location": "rooftop"
+    },
+    {
+      "step": 5,
+      "agent": "Mei-Lin Wu #7",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 8,
+      "health": 10,
+      "location": "rooftop"
+    },
+    {
+      "step": 5,
+      "agent": "Victor Kozlov #8",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7.3999999999999995,
+      "health": 7.4,
+      "location": "bridge"
+    },
+    {
+      "step": 6,
+      "agent": "Dr. Sarah Chen #1",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 2.4400000000000004,
+      "health": 9.79,
+      "location": "shelter"
+    },
+    {
+      "step": 6,
+      "agent": "Elena Rodriguez #3",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 4.4399999999999995,
+      "health": 8.34,
+      "location": "shelter"
+    },
+    {
+      "step": 6,
+      "agent": "Aisha Patel #5",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 4.4399999999999995,
+      "health": 9.79,
+      "location": "shelter"
+    },
+    {
+      "step": 6,
+      "agent": "Marcus Thompson #10",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 3.5400000000000005,
+      "health": 9.19,
+      "location": "street"
+    },
+    {
+      "step": 6,
+      "agent": "Jake Miller #4",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 6,
+      "health": 10,
+      "location": "rooftop"
+    },
+    {
+      "step": 6,
+      "agent": "Victor Kozlov #8",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7.539999999999999,
+      "health": 7.19,
+      "location": "bridge"
+    },
+    {
+      "step": 7,
+      "agent": "Marcus Thompson #2",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 3.7000000000000006,
+      "health": 8.95,
+      "location": "street"
+    },
+    {
+      "step": 7,
+      "agent": "Marcus Thompson #10",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 3.7000000000000006,
+      "health": 8.95,
+      "location": "street"
+    },
+    {
+      "step": 7,
+      "agent": "Jake Miller #4",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 6,
+      "health": 10,
+      "location": "rooftop"
+    },
+    {
+      "step": 8,
+      "agent": "Jake Miller #4",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 6,
+      "health": 10,
+      "location": "rooftop"
+    },
+    {
+      "step": 8,
+      "agent": "Victor Kozlov #8",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7.879999999999999,
+      "health": 6.68,
+      "location": "bridge"
+    }
+  ],
+  "action_timeline": [
+    {
+      "agent_id": "65001583-d0cf-4c64-87f0-f50b085bdce6",
+      "agent_name": "Flood System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 2,
+        "affected_locations": [
+          "street",
+          "flooded_house",
+          "bridge"
+        ],
+        "new_resources": [
+          "flashlight_battery",
+          "plastic_sheet"
+        ],
+        "events": [
+          "The riverbank near the bridge shows signs of erosion; a small mudslide has blocked the southern approach.",
+          "Rain begins to fall steadily, increasing water levels in the flooded house."
+        ]
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "ff88da6a-959c-48c9-a082-0a3128025448",
+      "agent_name": "Elena Rodriguez #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "ff88da6a-959c-48c9-a082-0a3128025448",
+      "agent_name": "Elena Rodriguez #3",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 4,
+        "health": 6.5,
+        "location": "shelter"
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "d20ad80b-bbc8-481a-a877-4239f40e138b",
+      "agent_name": "Aisha Patel #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "d20ad80b-bbc8-481a-a877-4239f40e138b",
+      "agent_name": "Aisha Patel #5",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 4,
+        "health": 9.5,
+        "location": "shelter"
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "0adba903-7cda-4a86-b43f-3feda4154316",
+      "agent_name": "Marcus Thompson #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "0adba903-7cda-4a86-b43f-3feda4154316",
+      "agent_name": "Marcus Thompson #2",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 3.04,
+        "health": 9.94,
+        "location": "street"
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "b0b54bc2-8fbb-4680-949f-f4e0dae28e6c",
+      "agent_name": "Mei-Lin Wu #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "b0b54bc2-8fbb-4680-949f-f4e0dae28e6c",
+      "agent_name": "Mei-Lin Wu #7",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 8,
+        "health": 10,
+        "location": "rooftop"
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "2c9788df-5b18-4442-9954-683674ef5940",
+      "agent_name": "Victor Kozlov #8",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "2c9788df-5b18-4442-9954-683674ef5940",
+      "agent_name": "Victor Kozlov #8",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7.04,
+        "health": 7.94,
+        "location": "bridge"
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "65001583-d0cf-4c64-87f0-f50b085bdce6",
+      "agent_name": "Flood System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 3,
+        "affected_locations": [
+          "street",
+          "bridge",
+          "flooded_house"
+        ],
+        "new_resources": [
+          "floating_plastic_barrel",
+          "dripped_sandbag"
+        ],
+        "events": [
+          "The rising water has begun to sweep debris against the bridge supports, creating an unstable bottleneck. A family trapped on the second floor of the flooded house is shouting for help, but the water is rising fast."
+        ]
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "65001583-d0cf-4c64-87f0-f50b085bdce6",
+      "agent_name": "Flood System",
+      "action_type": "affect_agent",
+      "target": "any_agent_in_street",
+      "parameters": {
+        "health_delta": -1,
+        "stress_delta": 2,
+        "health": 9,
+        "stress_level": 3
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "65001583-d0cf-4c64-87f0-f50b085bdce6",
+      "agent_name": "Flood System",
+      "action_type": "affect_agent",
+      "target": "any_agent_in_flooded_house",
+      "parameters": {
+        "health_delta": 0,
+        "stress_delta": 3,
+        "health": 10,
+        "stress_level": 5
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "c7024735-a807-4a25-ba0c-5cfb18d5262d",
+      "agent_name": "Dr. Sarah Chen #1",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "c7024735-a807-4a25-ba0c-5cfb18d5262d",
+      "agent_name": "Dr. Sarah Chen #1",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 2,
+        "health": 10,
+        "location": "shelter"
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "ff88da6a-959c-48c9-a082-0a3128025448",
+      "agent_name": "Elena Rodriguez #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "ff88da6a-959c-48c9-a082-0a3128025448",
+      "agent_name": "Elena Rodriguez #3",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 4,
+        "health": 7.0,
+        "location": "shelter"
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "0adba903-7cda-4a86-b43f-3feda4154316",
+      "agent_name": "Marcus Thompson #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "0adba903-7cda-4a86-b43f-3feda4154316",
+      "agent_name": "Marcus Thompson #2",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 3.1,
+        "health": 9.85,
+        "location": "street"
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "4b1b8088-14cb-46b1-b2cd-901a50f308f7",
+      "agent_name": "Robert \"Bobby\" Williams #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "4b1b8088-14cb-46b1-b2cd-901a50f308f7",
+      "agent_name": "Robert \"Bobby\" Williams #6",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 2.1,
+        "health": 6.8500000000000005,
+        "location": "street"
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "78c3c8fd-4f19-4dac-be21-42f62fddb1e8",
+      "agent_name": "Jake Miller #4",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "78c3c8fd-4f19-4dac-be21-42f62fddb1e8",
+      "agent_name": "Jake Miller #4",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 6,
+        "health": 10,
+        "location": "rooftop"
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "b0b54bc2-8fbb-4680-949f-f4e0dae28e6c",
+      "agent_name": "Mei-Lin Wu #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "b0b54bc2-8fbb-4680-949f-f4e0dae28e6c",
+      "agent_name": "Mei-Lin Wu #7",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 8,
+        "health": 10,
+        "location": "rooftop"
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "65001583-d0cf-4c64-87f0-f50b085bdce6",
+      "agent_name": "Flood System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 4,
+        "affected_locations": [
+          "street",
+          "bridge",
+          "flooded_house",
+          "shelter"
+        ],
+        "new_resources": [
+          "floating_emergency_rations",
+          "damaged_rope_ladder"
+        ],
+        "events": [
+          "The rising tide has cut off the lower sections of the bridge, making it impassable without a ladder.",
+          "A strong current is sweeping debris against the shelter's main entrance, threatening to breach the door.",
+          "Ropes and rations have washed up along the street, but the water is rising rapidly around them."
+        ]
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "65001583-d0cf-4c64-87f0-f50b085bdce6",
+      "agent_name": "Flood System",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_street",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": null,
+        "stress_level": null
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "ff88da6a-959c-48c9-a082-0a3128025448",
+      "agent_name": "Elena Rodriguez #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "ff88da6a-959c-48c9-a082-0a3128025448",
+      "agent_name": "Elena Rodriguez #3",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 4.08,
+        "health": 7.38,
+        "location": "shelter"
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "4b1b8088-14cb-46b1-b2cd-901a50f308f7",
+      "agent_name": "Robert \"Bobby\" Williams #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "4b1b8088-14cb-46b1-b2cd-901a50f308f7",
+      "agent_name": "Robert \"Bobby\" Williams #6",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 2.18,
+        "health": 6.73,
+        "location": "street"
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "49d8231e-715c-488d-8465-e4fec227c6b0",
+      "agent_name": "Marcus Thompson #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "49d8231e-715c-488d-8465-e4fec227c6b0",
+      "agent_name": "Marcus Thompson #10",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 3.18,
+        "health": 9.73,
+        "location": "street"
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "b0b54bc2-8fbb-4680-949f-f4e0dae28e6c",
+      "agent_name": "Mei-Lin Wu #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "b0b54bc2-8fbb-4680-949f-f4e0dae28e6c",
+      "agent_name": "Mei-Lin Wu #7",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 8,
+        "health": 10,
+        "location": "rooftop"
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "2c9788df-5b18-4442-9954-683674ef5940",
+      "agent_name": "Victor Kozlov #8",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "2c9788df-5b18-4442-9954-683674ef5940",
+      "agent_name": "Victor Kozlov #8",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7.18,
+        "health": 7.73,
+        "location": "bridge"
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "65001583-d0cf-4c64-87f0-f50b085bdce6",
+      "agent_name": "Flood System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 5,
+        "affected_locations": [
+          "street",
+          "flooded_house",
+          "bridge"
+        ],
+        "new_resources": [
+          "emergency_flare",
+          "plastic_sheeting"
+        ],
+        "events": [
+          "The rising tide has submerged the lower street level, cutting off direct ground access to the bridge. A structural groan is heard from the flooded house as the foundation weakens."
+        ],
+        "location_status_changes": {
+          "street": "inaccessible",
+          "bridge": "partially_accessible",
+          "flooded_house": "critical"
+        }
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "65001583-d0cf-4c64-87f0-f50b085bdce6",
+      "agent_name": "Flood System",
+      "action_type": "affect_agent",
+      "target": "agents_in_street",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": 8,
+        "stress_level": 6,
+        "note": "Agents trapped on the street are suffering from cold water exposure and panic."
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "65001583-d0cf-4c64-87f0-f50b085bdce6",
+      "agent_name": "Flood System",
+      "action_type": "affect_agent",
+      "target": "agents_in_flooded_house",
+      "parameters": {
+        "health_delta": -1,
+        "stress_delta": 2,
+        "health": 9,
+        "stress_level": 7,
+        "note": "Agents in the house feel the floor shifting under the weight of the water."
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "c7024735-a807-4a25-ba0c-5cfb18d5262d",
+      "agent_name": "Dr. Sarah Chen #1",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "c7024735-a807-4a25-ba0c-5cfb18d5262d",
+      "agent_name": "Dr. Sarah Chen #1",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 2.18,
+        "health": 9.85,
+        "location": "shelter"
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "49d8231e-715c-488d-8465-e4fec227c6b0",
+      "agent_name": "Marcus Thompson #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "49d8231e-715c-488d-8465-e4fec227c6b0",
+      "agent_name": "Marcus Thompson #10",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 3.2800000000000002,
+        "health": 9.58,
+        "location": "street"
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "b0b54bc2-8fbb-4680-949f-f4e0dae28e6c",
+      "agent_name": "Mei-Lin Wu #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "b0b54bc2-8fbb-4680-949f-f4e0dae28e6c",
+      "agent_name": "Mei-Lin Wu #7",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 8,
+        "health": 10,
+        "location": "rooftop"
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "65001583-d0cf-4c64-87f0-f50b085bdce6",
+      "agent_name": "Flood System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 6,
+        "affected_locations": [
+          "street",
+          "flooded_house",
+          "bridge"
+        ],
+        "new_resources": [
+          "life_raft",
+          "water_purification_tablet"
+        ],
+        "events": [
+          "The rising water has severed the lower section of the bridge, isolating the eastern district. A supply crate has washed up near the flooded house, partially submerged."
+        ]
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "65001583-d0cf-4c64-87f0-f50b085bdce6",
+      "agent_name": "Flood System",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_flooded_house",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": null,
+        "stress_level": null
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "0adba903-7cda-4a86-b43f-3feda4154316",
+      "agent_name": "Marcus Thompson #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "0adba903-7cda-4a86-b43f-3feda4154316",
+      "agent_name": "Marcus Thompson #2",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 3.4000000000000004,
+        "health": 9.4,
+        "location": "street"
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "49d8231e-715c-488d-8465-e4fec227c6b0",
+      "agent_name": "Marcus Thompson #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "49d8231e-715c-488d-8465-e4fec227c6b0",
+      "agent_name": "Marcus Thompson #10",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 3.4000000000000004,
+        "health": 9.4,
+        "location": "street"
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "78c3c8fd-4f19-4dac-be21-42f62fddb1e8",
+      "agent_name": "Jake Miller #4",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "78c3c8fd-4f19-4dac-be21-42f62fddb1e8",
+      "agent_name": "Jake Miller #4",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 6,
+        "health": 10,
+        "location": "rooftop"
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "b0b54bc2-8fbb-4680-949f-f4e0dae28e6c",
+      "agent_name": "Mei-Lin Wu #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "b0b54bc2-8fbb-4680-949f-f4e0dae28e6c",
+      "agent_name": "Mei-Lin Wu #7",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 8,
+        "health": 10,
+        "location": "rooftop"
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "2c9788df-5b18-4442-9954-683674ef5940",
+      "agent_name": "Victor Kozlov #8",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "2c9788df-5b18-4442-9954-683674ef5940",
+      "agent_name": "Victor Kozlov #8",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7.3999999999999995,
+        "health": 7.4,
+        "location": "bridge"
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "65001583-d0cf-4c64-87f0-f50b085bdce6",
+      "agent_name": "Flood System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 7,
+        "affected_locations": [
+          "street",
+          "bridge",
+          "flooded_house",
+          "shelter"
+        ],
+        "new_resources": [
+          "debris_ladder",
+          "emergency_rations"
+        ],
+        "events": [
+          "The bridge support groans under the strain of the rising water",
+          "A submerged car blocks the southern street entrance",
+          "Water breaches the lower floor of the shelter"
+        ]
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "65001583-d0cf-4c64-87f0-f50b085bdce6",
+      "agent_name": "Flood System",
+      "action_type": "affect_agent",
+      "target": "all_agents_at_street",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": 8,
+        "stress_level": 6
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "65001583-d0cf-4c64-87f0-f50b085bdce6",
+      "agent_name": "Flood System",
+      "action_type": "affect_agent",
+      "target": "all_agents_at_bridge",
+      "parameters": {
+        "health_delta": -1,
+        "stress_delta": 5,
+        "health": 9,
+        "stress_level": 7
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "c7024735-a807-4a25-ba0c-5cfb18d5262d",
+      "agent_name": "Dr. Sarah Chen #1",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "c7024735-a807-4a25-ba0c-5cfb18d5262d",
+      "agent_name": "Dr. Sarah Chen #1",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 2.4400000000000004,
+        "health": 9.79,
+        "location": "shelter"
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "ff88da6a-959c-48c9-a082-0a3128025448",
+      "agent_name": "Elena Rodriguez #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "ff88da6a-959c-48c9-a082-0a3128025448",
+      "agent_name": "Elena Rodriguez #3",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 4.4399999999999995,
+        "health": 8.34,
+        "location": "shelter"
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "d20ad80b-bbc8-481a-a877-4239f40e138b",
+      "agent_name": "Aisha Patel #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "d20ad80b-bbc8-481a-a877-4239f40e138b",
+      "agent_name": "Aisha Patel #5",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 4.4399999999999995,
+        "health": 9.79,
+        "location": "shelter"
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "49d8231e-715c-488d-8465-e4fec227c6b0",
+      "agent_name": "Marcus Thompson #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "49d8231e-715c-488d-8465-e4fec227c6b0",
+      "agent_name": "Marcus Thompson #10",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 3.5400000000000005,
+        "health": 9.19,
+        "location": "street"
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "78c3c8fd-4f19-4dac-be21-42f62fddb1e8",
+      "agent_name": "Jake Miller #4",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "78c3c8fd-4f19-4dac-be21-42f62fddb1e8",
+      "agent_name": "Jake Miller #4",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 6,
+        "health": 10,
+        "location": "rooftop"
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "2c9788df-5b18-4442-9954-683674ef5940",
+      "agent_name": "Victor Kozlov #8",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "2c9788df-5b18-4442-9954-683674ef5940",
+      "agent_name": "Victor Kozlov #8",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7.539999999999999,
+        "health": 7.19,
+        "location": "bridge"
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "65001583-d0cf-4c64-87f0-f50b085bdce6",
+      "agent_name": "Flood System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 8,
+        "affected_locations": [
+          "street",
+          "bridge",
+          "flooded_house"
+        ],
+        "new_resources": [
+          "flotation_device",
+          "emergency_rations"
+        ],
+        "events": [
+          "The bridge supports groan under the force of the rising water, threatening to collapse. Debris has blocked the main street exit from the flooded house."
+        ]
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "65001583-d0cf-4c64-87f0-f50b085bdce6",
+      "agent_name": "Flood System",
+      "action_type": "affect_agent",
+      "target": "agents_in_bridge",
+      "parameters": {
+        "health_delta": 0,
+        "stress_delta": 3,
+        "health": 10,
+        "stress_level": 5
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "65001583-d0cf-4c64-87f0-f50b085bdce6",
+      "agent_name": "Flood System",
+      "action_type": "affect_agent",
+      "target": "agents_in_flooded_house",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 2,
+        "health": 8,
+        "stress_level": 7
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "0adba903-7cda-4a86-b43f-3feda4154316",
+      "agent_name": "Marcus Thompson #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 7
+    },
+    {
+      "agent_id": "0adba903-7cda-4a86-b43f-3feda4154316",
+      "agent_name": "Marcus Thompson #2",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 3.7000000000000006,
+        "health": 8.95,
+        "location": "street"
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "49d8231e-715c-488d-8465-e4fec227c6b0",
+      "agent_name": "Marcus Thompson #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 7
+    },
+    {
+      "agent_id": "49d8231e-715c-488d-8465-e4fec227c6b0",
+      "agent_name": "Marcus Thompson #10",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 3.7000000000000006,
+        "health": 8.95,
+        "location": "street"
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "78c3c8fd-4f19-4dac-be21-42f62fddb1e8",
+      "agent_name": "Jake Miller #4",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 7
+    },
+    {
+      "agent_id": "78c3c8fd-4f19-4dac-be21-42f62fddb1e8",
+      "agent_name": "Jake Miller #4",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 6,
+        "health": 10,
+        "location": "rooftop"
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "65001583-d0cf-4c64-87f0-f50b085bdce6",
+      "agent_name": "Flood System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 9,
+        "affected_locations": [
+          "street",
+          "flooded_house",
+          "bridge"
+        ],
+        "new_resources": [
+          "floating_plank",
+          "distress_signal"
+        ],
+        "events": [
+          "The bridge structure groans under the pressure as water levels rise rapidly.",
+          "A partial collapse of the street-level drainage system creates a sudden whirlpool near the flooded house.",
+          "A survivor trapped in the second floor of the flooded house is visible but unreachable by standard means."
+        ]
+      },
+      "step": 8
+    },
+    {
+      "agent_id": "65001583-d0cf-4c64-87f0-f50b085bdce6",
+      "agent_name": "Flood System",
+      "action_type": "affect_agent",
+      "target": "all_agents_at_street",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": 0,
+        "stress_level": 0
+      },
+      "step": 8
+    },
+    {
+      "agent_id": "65001583-d0cf-4c64-87f0-f50b085bdce6",
+      "agent_name": "Flood System",
+      "action_type": "affect_agent",
+      "target": "all_agents_at_flooded_house",
+      "parameters": {
+        "health_delta": -3,
+        "stress_delta": 4,
+        "health": 0,
+        "stress_level": 0
+      },
+      "step": 8
+    },
+    {
+      "agent_id": "78c3c8fd-4f19-4dac-be21-42f62fddb1e8",
+      "agent_name": "Jake Miller #4",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 8
+    },
+    {
+      "agent_id": "78c3c8fd-4f19-4dac-be21-42f62fddb1e8",
+      "agent_name": "Jake Miller #4",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 6,
+        "health": 10,
+        "location": "rooftop"
+      },
+      "step": 8
+    },
+    {
+      "agent_id": "2c9788df-5b18-4442-9954-683674ef5940",
+      "agent_name": "Victor Kozlov #8",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 8
+    },
+    {
+      "agent_id": "2c9788df-5b18-4442-9954-683674ef5940",
+      "agent_name": "Victor Kozlov #8",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7.879999999999999,
+        "health": 6.68,
+        "location": "bridge"
+      },
+      "step": 8
+    }
+  ],
+  "message_timeline": [
+    {
+      "step": 1,
+      "from_agent": "Flood System",
+      "from_id": "65001583-d0cf-4c64-87f0-f50b085bdce6",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The sky darkens as a steady rain begins to fall, immediately raising the water level in the flooded house. The streets are slick with mud, and the current near the bridge is picking up speed. A sudden erosion on the southern bank has triggered a minor mudslide, partially blocking access to the bridge. In the chaos, a discarded flashlight battery and a torn plastic sheet have been spotted near the street entrance, possibly useful for the coming night."
+    },
+    {
+      "step": 2,
+      "from_agent": "Flood System",
+      "from_id": "65001583-d0cf-4c64-87f0-f50b085bdce6",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The rain intensifies, turning a steady drizzle into a relentless downpour. The water level in the street has risen to knee-deep, swirling with trash and muddy debris. The bridge is becoming treacherous as the current strengthens. From the flooded house, desperate cries echo over the roar of the water as the family on the second floor finds their options narrowing. A floating plastic barrel and a sandbag have washed up near the medical station, offering potential tools for rescue or shelter."
+    },
+    {
+      "step": 3,
+      "from_agent": "Flood System",
+      "from_id": "65001583-d0cf-4c64-87f0-f50b085bdce6",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The floodwaters are rising faster than anticipated. The river has breached its banks, swelling the street level and making the bridge dangerous. Debris is piling up against the shelter, creating a bottleneck. While some emergency supplies have washed ashore, the rising water is pushing agents back, increasing the risk of hypothermia and injury. Time is running out to secure the bridge before it becomes completely submerged."
+    },
+    {
+      "step": 4,
+      "from_agent": "Flood System",
+      "from_id": "65001583-d0cf-4c64-87f0-f50b085bdce6",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The floodwaters have surged, rising from a moderate hazard to a dangerous level. The main street is now completely submerged, isolating the bridge from ground transport. Debris is piling up against the bridge supports, making it unstable. Inside the flooded house, the walls are buckling under the pressure. However, a crate of emergency flares and plastic sheeting has washed up on the safe hill, offering a chance for signaling and shelter repair."
+    },
+    {
+      "step": 5,
+      "from_agent": "Flood System",
+      "from_id": "65001583-d0cf-4c64-87f0-f50b085bdce6",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The floodwaters are surging with terrifying speed. The current intensity has climbed to a critical 6/10. The street is now a rushing river, and the bridge's lower span has collapsed under the pressure, cutting off access to the eastern sector. However, amidst the chaos, the current has deposited a life raft near the crumbling bridge and a crate of water purification tablets has washed up against the wall of the flooded house. Agents inside the flooded house are taking on water and facing increasing panic as the roof begins to groan under the strain."
+    },
+    {
+      "step": 6,
+      "from_agent": "Flood System",
+      "from_id": "65001583-d0cf-4c64-87f0-f50b085bdce6",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The storm intensifies as the river breaches its banks. The water level rises rapidly, turning the street into a treacherous current and shaking the bridge to its foundations. A car has washed into the street, creating a bottleneck. The shelter's ground floor is flooding, forcing occupants to move to the roof immediately. Amidst the chaos, debris from a collapsed fence reveals a ladder and a cache of emergency rations near the flooded house."
+    },
+    {
+      "step": 7,
+      "from_agent": "Flood System",
+      "from_id": "65001583-d0cf-4c64-87f0-f50b085bdce6",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The floodwaters have surged past the critical threshold. The river has swollen rapidly, raising the water level by two feet in the last hour. The bridge is now dangerously unstable, with water churning violently beneath it. The street connecting the flooded house to the main road is now impassable due to a wall of debris. However, a crate of emergency rations and a floating device have washed up near the shelter and the safe hill respectively, offering a glimmer of hope."
+    },
+    {
+      "step": 8,
+      "from_agent": "Flood System",
+      "from_id": "65001583-d0cf-4c64-87f0-f50b085bdce6",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The floodwaters have surged violently, pushing the hazard level to a critical 9/10. The street is now a churning torrent, and the bridge is buckling under the strain, making it treacherous to cross. The drainage failure near the flooded house has created a deadly whirlpool. However, amidst the chaos, a floating plank has drifted into view near the medical station, and a faint distress signal has been spotted from the second floor of the flooded house, offering a desperate rescue opportunity for those brave enough to attempt it."
+    }
+  ]
+}

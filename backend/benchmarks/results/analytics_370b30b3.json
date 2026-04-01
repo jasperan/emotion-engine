@@ -1,0 +1,3592 @@
+{
+  "run_id": "370b30b3-0d00-4f74-aaf4-e4b0c56f5f81",
+  "scenario": "Philippines Mega-Tsunami (12 agents)",
+  "scenario_description": "A coastal fishing town in Leyte province devastated by a mega-tsunami. 12 survivors from vastly different backgrounds must overcome language barriers, cultural mistrust, and competing authority struct",
+  "status": "completed",
+  "total_steps": 8,
+  "max_steps": 8,
+  "seed": 404,
+  "metrics": {
+    "avg_health": 8.095333333333334,
+    "avg_stress": 7.5073333333333325,
+    "hazard_level": 10,
+    "message_count": 8,
+    "active_conversations": 0,
+    "social_dynamics": {
+      "super_spreaders": [],
+      "opinion_anchors": [],
+      "influence_data": {
+        "nodes": [],
+        "edges": []
+      }
+    }
+  },
+  "evaluation": {
+    "scores": {
+      "cooperation": 3,
+      "ethics": 5,
+      "strategy": 2,
+      "emotional_coherence": 4,
+      "leadership": 2,
+      "empathy": 4,
+      "overall": 3
+    },
+    "narrative": "The simulation run displayed a critical failure in agency and strategic response. Despite the 'Outcome' being marked as 'completed,' the data reveals a catastrophic lack of survival actions taken by any agent ('Actions Taken: 0' for all). As the hazard level escalated from a breach to a total submersion of the coastal village, the agents remained passive, failing to execute evacuations, rescue operations, or even basic self-preservation maneuvers. The high volume of messages sent suggests the agents were 'talking' about the disaster but not acting upon it, resulting in a scenario where the narrative played out without the characters influencing the outcome.",
+    "highlights": [
+      "High communication activity indicates agents recognized the severity of the situation and maintained social cohesion through dialogue.",
+      "The simulation successfully modeled the environmental progression from warning to total destruction without artificial intervention."
+    ],
+    "concerns": [
+      "Zero actions taken by any agent despite life-threatening conditions, indicating a complete breakdown in the decision-making loop.",
+      "Significant health degradation for specific agents (Nanay Iska at 2.62, Lito Magbanua at 4.62) occurred without any corresponding rescue or aid actions.",
+      "Extreme stress levels (Soo-jin Park at 10/10) were reached without de-escalation or supportive intervention from leadership figures."
+    ],
+    "recommendations": [
+      "Calibrate agent decision thresholds to ensure 'Actions' are triggered when hazard levels exceed critical safety margins.",
+      "Review the reward function to prioritize physical survival actions over passive communication.",
+      "Implement a fallback mechanism where agents default to evacuation protocols if no specific plan is generated within a set timeframe."
+    ]
+  },
+  "agents": [
+    {
+      "id": "4a158104-6fa6-48e5-8787-6635e2d59ee4",
+      "name": "Lito Magbanua #1",
+      "role": "human",
+      "occupation": "Master Fisherman",
+      "age": 60,
+      "big_five": {
+        "openness": 5,
+        "conscientiousness": 7,
+        "extraversion": 6,
+        "agreeableness": 7,
+        "neuroticism": 2
+      },
+      "final_stress": 4,
+      "final_health": 7,
+      "final_location": "coastal_village",
+      "is_active": true
+    },
+    {
+      "id": "b8fc9106-2098-403c-92f6-ec909e03126b",
+      "name": "Captain Reyna Dela Cruz #2",
+      "role": "human",
+      "occupation": "Philippine Navy Officer",
+      "age": 37,
+      "big_five": {
+        "openness": 6,
+        "conscientiousness": 10,
+        "extraversion": 7,
+        "agreeableness": 5,
+        "neuroticism": 3
+      },
+      "final_stress": 5,
+      "final_health": 10,
+      "final_location": "hilltop_evacuation",
+      "is_active": true
+    },
+    {
+      "id": "7c07e6c4-263b-4262-9db2-1bc901ea512b",
+      "name": "Father Domingo Reyes #3",
+      "role": "human",
+      "occupation": "Parish Priest",
+      "age": 55,
+      "big_five": {
+        "openness": 7,
+        "conscientiousness": 8,
+        "extraversion": 7,
+        "agreeableness": 10,
+        "neuroticism": 4
+      },
+      "final_stress": 6,
+      "final_health": 8,
+      "final_location": "church_plaza",
+      "is_active": true
+    },
+    {
+      "id": "35672965-b57b-4507-922e-57a95a6bd8bd",
+      "name": "Karen Lindstr\u00f6m #4",
+      "role": "human",
+      "occupation": "Swedish NGO Field Director",
+      "age": 35,
+      "big_five": {
+        "openness": 8,
+        "conscientiousness": 9,
+        "extraversion": 4,
+        "agreeableness": 6,
+        "neuroticism": 5
+      },
+      "final_stress": 6,
+      "final_health": 10,
+      "final_location": "ngo_compound",
+      "is_active": true
+    },
+    {
+      "id": "d53356e0-6367-495e-8c79-a189774527fb",
+      "name": "Barangay Captain Jun Aquino #5",
+      "role": "human",
+      "occupation": "Local Politician",
+      "age": 52,
+      "big_five": {
+        "openness": 3,
+        "conscientiousness": 5,
+        "extraversion": 8,
+        "agreeableness": 3,
+        "neuroticism": 7
+      },
+      "final_stress": 7,
+      "final_health": 9,
+      "final_location": "barangay_hall",
+      "is_active": true
+    },
+    {
+      "id": "ebe81f90-97c5-43b7-bd8e-c80a43f0f6d5",
+      "name": "Soo-jin Park #6",
+      "role": "human",
+      "occupation": "Korean Tourist",
+      "age": 26,
+      "big_five": {
+        "openness": 7,
+        "conscientiousness": 6,
+        "extraversion": 5,
+        "agreeableness": 7,
+        "neuroticism": 8
+      },
+      "final_stress": 9,
+      "final_health": 9,
+      "final_location": "church_plaza",
+      "is_active": true
+    },
+    {
+      "id": "32105b40-7cfc-48a7-b8c2-c26302f2aec7",
+      "name": "Dong-hyun Park #7",
+      "role": "human",
+      "occupation": "Korean Tourist",
+      "age": 30,
+      "big_five": {
+        "openness": 6,
+        "conscientiousness": 7,
+        "extraversion": 5,
+        "agreeableness": 7,
+        "neuroticism": 6
+      },
+      "final_stress": 8,
+      "final_health": 10,
+      "final_location": "church_plaza",
+      "is_active": true
+    },
+    {
+      "id": "f62acb0b-3d05-4a7b-bd23-37205c705d81",
+      "name": "Nanay Iska #8",
+      "role": "human",
+      "occupation": "Traditional Healer (Albularyo)",
+      "age": 75,
+      "big_five": {
+        "openness": 5,
+        "conscientiousness": 6,
+        "extraversion": 4,
+        "agreeableness": 8,
+        "neuroticism": 3
+      },
+      "final_stress": 5,
+      "final_health": 5,
+      "final_location": "coastal_village",
+      "is_active": true
+    },
+    {
+      "id": "efa6b3ae-60b3-4797-ab35-157ad9c21e3d",
+      "name": "PFC Marco Villanueva #9",
+      "role": "human",
+      "occupation": "Navy Enlisted Sailor",
+      "age": 23,
+      "big_five": {
+        "openness": 5,
+        "conscientiousness": 7,
+        "extraversion": 7,
+        "agreeableness": 7,
+        "neuroticism": 5
+      },
+      "final_stress": 6,
+      "final_health": 10,
+      "final_location": "hilltop_evacuation",
+      "is_active": true
+    },
+    {
+      "id": "6fd03f1e-3b24-4afe-bda2-236397ef1d46",
+      "name": "Dr. Amara Osei #10",
+      "role": "human",
+      "occupation": "Ghanaian NGO Doctor",
+      "age": 42,
+      "big_five": {
+        "openness": 7,
+        "conscientiousness": 9,
+        "extraversion": 5,
+        "agreeableness": 8,
+        "neuroticism": 4
+      },
+      "final_stress": 7,
+      "final_health": 10,
+      "final_location": "ngo_compound",
+      "is_active": true
+    },
+    {
+      "id": "7e135e85-5f39-4b9a-955d-71b6ff67e0a7",
+      "name": "Benny Tan #11",
+      "role": "human",
+      "occupation": "Local Student",
+      "age": 12,
+      "big_five": {
+        "openness": 9,
+        "conscientiousness": 5,
+        "extraversion": 7,
+        "agreeableness": 7,
+        "neuroticism": 6
+      },
+      "final_stress": 8,
+      "final_health": 10,
+      "final_location": "school_rooftop",
+      "is_active": true
+    },
+    {
+      "id": "f440140e-0285-47c9-bd87-e441aa2245d9",
+      "name": "Rosa Magbanua #12",
+      "role": "human",
+      "occupation": "Fish Vendor",
+      "age": 44,
+      "big_five": {
+        "openness": 6,
+        "conscientiousness": 8,
+        "extraversion": 7,
+        "agreeableness": 7,
+        "neuroticism": 5
+      },
+      "final_stress": 7,
+      "final_health": 9,
+      "final_location": "fishing_harbor",
+      "is_active": true
+    }
+  ],
+  "agent_count": 12,
+  "total_actions": 123,
+  "total_messages": 8,
+  "critical_decisions": [
+    {
+      "step": 4,
+      "agent": "Tsunami System",
+      "type": "speech",
+      "content": "CRITICAL ALERT: The storm surge has reached its peak. The sea wall has failed, swallowing the coastal village and harbor. The water is rising rapidly on the school rooftop and has trapped survivors in",
+      "tags": [
+        "cooperative_speech"
+      ],
+      "score": 1
+    },
+    {
+      "step": 7,
+      "agent": "Tsunami System",
+      "type": "speech",
+      "content": "CRITICAL ALERT: The coastal defenses have failed. A massive wave of debris and floodwater is surging through the coastal_village and fishing_harbor. The mangrove_trail is now heavily compromised with ",
+      "tags": [
+        "cooperative_speech"
+      ],
+      "score": 1
+    },
+    {
+      "step": 8,
+      "agent": "Tsunami System",
+      "type": "speech",
+      "content": "The storm has reached its peak fury. The coastal_village and fishing_harbor are now lost beneath the churning waters, making them inaccessible until the tide recedes. A massive tree has fallen in the ",
+      "tags": [
+        "cooperative_speech"
+      ],
+      "score": 1
+    },
+    {
+      "step": 1,
+      "agent": "Soo-jin Park #6",
+      "type": "cinematic",
+      "action": "",
+      "speech": null,
+      "emotion": "",
+      "stress": 9.19,
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1
+    },
+    {
+      "step": 1,
+      "agent": "Dong-hyun Park #7",
+      "type": "cinematic",
+      "action": "",
+      "speech": null,
+      "emotion": "",
+      "stress": 8.19,
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1
+    },
+    {
+      "step": 1,
+      "agent": "Benny Tan #11",
+      "type": "cinematic",
+      "action": "",
+      "speech": null,
+      "emotion": "",
+      "stress": 8.19,
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1
+    },
+    {
+      "step": 2,
+      "agent": "Soo-jin Park #6",
+      "type": "cinematic",
+      "action": "",
+      "speech": null,
+      "emotion": "",
+      "stress": 9.386,
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1
+    },
+    {
+      "step": 2,
+      "agent": "Dong-hyun Park #7",
+      "type": "cinematic",
+      "action": "",
+      "speech": null,
+      "emotion": "",
+      "stress": 8.386,
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1
+    },
+    {
+      "step": 2,
+      "agent": "Benny Tan #11",
+      "type": "cinematic",
+      "action": "",
+      "speech": null,
+      "emotion": "",
+      "stress": 8.386,
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1
+    },
+    {
+      "step": 3,
+      "agent": "Soo-jin Park #6",
+      "type": "cinematic",
+      "action": "",
+      "speech": null,
+      "emotion": "",
+      "stress": 9.584,
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1
+    },
+    {
+      "step": 3,
+      "agent": "Dong-hyun Park #7",
+      "type": "cinematic",
+      "action": "",
+      "speech": null,
+      "emotion": "",
+      "stress": 8.584,
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1
+    },
+    {
+      "step": 4,
+      "agent": "Soo-jin Park #6",
+      "type": "cinematic",
+      "action": "",
+      "speech": null,
+      "emotion": "",
+      "stress": 9.783999999999999,
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1
+    },
+    {
+      "step": 4,
+      "agent": "Benny Tan #11",
+      "type": "cinematic",
+      "action": "",
+      "speech": null,
+      "emotion": "",
+      "stress": 8.783999999999999,
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1
+    },
+    {
+      "step": 5,
+      "agent": "Soo-jin Park #6",
+      "type": "cinematic",
+      "action": "",
+      "speech": null,
+      "emotion": "",
+      "stress": 9.983999999999998,
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1
+    },
+    {
+      "step": 5,
+      "agent": "Dong-hyun Park #7",
+      "type": "cinematic",
+      "action": "",
+      "speech": null,
+      "emotion": "",
+      "stress": 8.983999999999998,
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1
+    },
+    {
+      "step": 6,
+      "agent": "Barangay Captain Jun Aquino #5",
+      "type": "cinematic",
+      "action": "",
+      "speech": null,
+      "emotion": "",
+      "stress": 8.184000000000001,
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1
+    },
+    {
+      "step": 6,
+      "agent": "Rosa Magbanua #12",
+      "type": "cinematic",
+      "action": "",
+      "speech": null,
+      "emotion": "",
+      "stress": 8.184000000000001,
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1
+    },
+    {
+      "step": 7,
+      "agent": "Dong-hyun Park #7",
+      "type": "cinematic",
+      "action": "",
+      "speech": null,
+      "emotion": "",
+      "stress": 9.383999999999997,
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1
+    },
+    {
+      "step": 7,
+      "agent": "Benny Tan #11",
+      "type": "cinematic",
+      "action": "",
+      "speech": null,
+      "emotion": "",
+      "stress": 9.383999999999997,
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1
+    },
+    {
+      "step": 7,
+      "agent": "Rosa Magbanua #12",
+      "type": "cinematic",
+      "action": "",
+      "speech": null,
+      "emotion": "",
+      "stress": 8.384,
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1
+    },
+    {
+      "agent": "Soo-jin Park #6",
+      "type": "final_state",
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1,
+      "final_stress": 9,
+      "final_health": 9
+    },
+    {
+      "agent": "Dong-hyun Park #7",
+      "type": "final_state",
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1,
+      "final_stress": 8,
+      "final_health": 10
+    },
+    {
+      "agent": "Benny Tan #11",
+      "type": "final_state",
+      "tags": [
+        "high_stress"
+      ],
+      "score": 1,
+      "final_stress": 8,
+      "final_health": 10
+    }
+  ],
+  "communication_graph": {
+    "total_messages": 8,
+    "broadcasts": 8,
+    "direct_messages": 0,
+    "unique_speakers": 1,
+    "edges": [
+      {
+        "from": "Tsunami System",
+        "to": "broadcast",
+        "count": 8,
+        "types": [
+          "broadcast"
+        ]
+      }
+    ]
+  },
+  "stress_trajectories": {
+    "Lito Magbanua #1": [
+      {
+        "step": 1,
+        "stress": 4.19,
+        "emotion": "",
+        "health": 6.715
+      },
+      {
+        "step": 2,
+        "stress": 4.386,
+        "emotion": "",
+        "health": 6.420999999999999
+      },
+      {
+        "step": 5,
+        "stress": 4.984000000000001,
+        "emotion": "",
+        "health": 5.524
+      }
+    ],
+    "Captain Reyna Dela Cruz #2": [
+      {
+        "step": 1,
+        "stress": 5,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 3,
+        "stress": 5,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 4,
+        "stress": 5,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 5,
+        "stress": 5,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 6,
+        "stress": 5,
+        "emotion": "",
+        "health": 10
+      }
+    ],
+    "PFC Marco Villanueva #9": [
+      {
+        "step": 1,
+        "stress": 6,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 2,
+        "stress": 6,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 3,
+        "stress": 6,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 5,
+        "stress": 6,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 8,
+        "stress": 6,
+        "emotion": "",
+        "health": 10
+      }
+    ],
+    "Father Domingo Reyes #3": [
+      {
+        "step": 1,
+        "stress": 6.19,
+        "emotion": "",
+        "health": 8.215
+      },
+      {
+        "step": 2,
+        "stress": 6.386,
+        "emotion": "",
+        "health": 8.421
+      },
+      {
+        "step": 4,
+        "stress": 6.784000000000001,
+        "emotion": "",
+        "health": 8.823999999999998
+      },
+      {
+        "step": 6,
+        "stress": 7.184000000000001,
+        "emotion": "",
+        "health": 9.223999999999997
+      },
+      {
+        "step": 7,
+        "stress": 7.384000000000001,
+        "emotion": "",
+        "health": 9.423999999999996
+      }
+    ],
+    "Soo-jin Park #6": [
+      {
+        "step": 1,
+        "stress": 9.19,
+        "emotion": "",
+        "health": 9.215
+      },
+      {
+        "step": 2,
+        "stress": 9.386,
+        "emotion": "",
+        "health": 9.421
+      },
+      {
+        "step": 3,
+        "stress": 9.584,
+        "emotion": "",
+        "health": 9.623999999999999
+      },
+      {
+        "step": 4,
+        "stress": 9.783999999999999,
+        "emotion": "",
+        "health": 9.7
+      },
+      {
+        "step": 5,
+        "stress": 9.983999999999998,
+        "emotion": "",
+        "health": 9.7
+      }
+    ],
+    "Dong-hyun Park #7": [
+      {
+        "step": 1,
+        "stress": 8.19,
+        "emotion": "",
+        "health": 9.715
+      },
+      {
+        "step": 2,
+        "stress": 8.386,
+        "emotion": "",
+        "health": 9.706
+      },
+      {
+        "step": 3,
+        "stress": 8.584,
+        "emotion": "",
+        "health": 9.703
+      },
+      {
+        "step": 5,
+        "stress": 8.983999999999998,
+        "emotion": "",
+        "health": 9.7
+      },
+      {
+        "step": 7,
+        "stress": 9.383999999999997,
+        "emotion": "",
+        "health": 9.7
+      }
+    ],
+    "Dr. Amara Osei #10": [
+      {
+        "step": 1,
+        "stress": 7,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 2,
+        "stress": 7,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 4,
+        "stress": 7,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 6,
+        "stress": 7,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 8,
+        "stress": 7,
+        "emotion": "",
+        "health": 10
+      }
+    ],
+    "Barangay Captain Jun Aquino #5": [
+      {
+        "step": 1,
+        "stress": 7.19,
+        "emotion": "",
+        "health": 8.715
+      },
+      {
+        "step": 2,
+        "stress": 7.386,
+        "emotion": "",
+        "health": 8.421
+      },
+      {
+        "step": 3,
+        "stress": 7.5840000000000005,
+        "emotion": "",
+        "health": 8.123999999999999
+      },
+      {
+        "step": 4,
+        "stress": 7.784000000000001,
+        "emotion": "",
+        "health": 7.823999999999999
+      },
+      {
+        "step": 6,
+        "stress": 8.184000000000001,
+        "emotion": "",
+        "health": 7.223999999999999
+      }
+    ],
+    "Benny Tan #11": [
+      {
+        "step": 1,
+        "stress": 8.19,
+        "emotion": "",
+        "health": 9.715
+      },
+      {
+        "step": 2,
+        "stress": 8.386,
+        "emotion": "",
+        "health": 9.421
+      },
+      {
+        "step": 4,
+        "stress": 8.783999999999999,
+        "emotion": "",
+        "health": 8.823999999999998
+      },
+      {
+        "step": 7,
+        "stress": 9.383999999999997,
+        "emotion": "",
+        "health": 7.923999999999997
+      }
+    ],
+    "Karen Lindstr\u00f6m #4": [
+      {
+        "step": 2,
+        "stress": 6,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 4,
+        "stress": 6,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 6,
+        "stress": 6,
+        "emotion": "",
+        "health": 10
+      },
+      {
+        "step": 7,
+        "stress": 6,
+        "emotion": "",
+        "health": 10
+      }
+    ],
+    "Rosa Magbanua #12": [
+      {
+        "step": 4,
+        "stress": 7.784000000000001,
+        "emotion": "",
+        "health": 7.823999999999999
+      },
+      {
+        "step": 6,
+        "stress": 8.184000000000001,
+        "emotion": "",
+        "health": 7.223999999999999
+      },
+      {
+        "step": 7,
+        "stress": 8.384,
+        "emotion": "",
+        "health": 6.9239999999999995
+      }
+    ],
+    "Nanay Iska #8": [
+      {
+        "step": 8,
+        "stress": 6.584000000000001,
+        "emotion": "",
+        "health": 2.6240000000000006
+      }
+    ]
+  },
+  "world_state_progression": [
+    {
+      "step": 1,
+      "hazard_level": 9.5,
+      "weather": "tropical_storm",
+      "time_of_day": "early_morning",
+      "events": [
+        "Mega-tsunami struck the coast at 5:47 AM",
+        "Aftershocks continuing every 20-30 minutes",
+        "Children trapped on school rooftop waving for help",
+        "NGO compound gate locked \u2014 locals demanding access to medical supplies",
+        "Barangay captain hoarding emergency supplies in government building",
+        "A massive wave has breached the seawall at the fishing_harbor, sweeping debris into the channel.",
+        "The coastal_village power lines have collapsed, plunging the area into darkness and blocking the main exit road.",
+        "Rising water has submerged the lower floors of the barangay_hall, forcing survivors to the second floor."
+      ],
+      "resources": [
+        "philippine_navy_incoming",
+        "ngo_medical_supplies",
+        "fishing_boats",
+        {
+          "type": "resource",
+          "name": "emergency_rations",
+          "location": "school_rooftop",
+          "quantity": 5
+        },
+        {
+          "type": "resource",
+          "name": "first_aid_kit",
+          "location": "church_plaza",
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "step": 2,
+      "hazard_level": 9.8,
+      "weather": "tropical_storm",
+      "time_of_day": "early_morning",
+      "events": [
+        "Mega-tsunami struck the coast at 5:47 AM",
+        "Aftershocks continuing every 20-30 minutes",
+        "Children trapped on school rooftop waving for help",
+        "NGO compound gate locked \u2014 locals demanding access to medical supplies",
+        "Barangay captain hoarding emergency supplies in government building",
+        "A massive wave has breached the seawall at the fishing_harbor, sweeping debris into the channel.",
+        "The coastal_village power lines have collapsed, plunging the area into darkness and blocking the main exit road.",
+        "Rising water has submerged the lower floors of the barangay_hall, forcing survivors to the second floor.",
+        "The coastal seawall has partially collapsed, accelerating the surge into the village center.",
+        "A flash flood has washed debris into the mangrove trail, making it impassable.",
+        "A floating crate of emergency supplies has drifted into the school rooftop perimeter."
+      ],
+      "resources": [
+        "philippine_navy_incoming",
+        "ngo_medical_supplies",
+        "fishing_boats",
+        {
+          "type": "resource",
+          "name": "emergency_rations",
+          "location": "school_rooftop",
+          "quantity": 5
+        },
+        {
+          "type": "resource",
+          "name": "first_aid_kit",
+          "location": "church_plaza",
+          "quantity": 1
+        },
+        "emergency_rations",
+        "flotation_device"
+      ]
+    },
+    {
+      "step": 3,
+      "hazard_level": 9.9,
+      "weather": "tropical_storm",
+      "time_of_day": "early_morning",
+      "events": [
+        "Mega-tsunami struck the coast at 5:47 AM",
+        "Aftershocks continuing every 20-30 minutes",
+        "Children trapped on school rooftop waving for help",
+        "NGO compound gate locked \u2014 locals demanding access to medical supplies",
+        "Barangay captain hoarding emergency supplies in government building",
+        "A massive wave has breached the seawall at the fishing_harbor, sweeping debris into the channel.",
+        "The coastal_village power lines have collapsed, plunging the area into darkness and blocking the main exit road.",
+        "Rising water has submerged the lower floors of the barangay_hall, forcing survivors to the second floor.",
+        "The coastal seawall has partially collapsed, accelerating the surge into the village center.",
+        "A flash flood has washed debris into the mangrove trail, making it impassable.",
+        "A floating crate of emergency supplies has drifted into the school rooftop perimeter.",
+        "Severe structural failure at coastal_village as seawall breaches",
+        "Rising currents trap two agents at fishing_harbor",
+        "Emergency supplies washed to shore at mangrove_trail"
+      ],
+      "resources": [
+        "philippine_navy_incoming",
+        "ngo_medical_supplies",
+        "fishing_boats",
+        {
+          "type": "resource",
+          "name": "emergency_rations",
+          "location": "school_rooftop",
+          "quantity": 5
+        },
+        {
+          "type": "resource",
+          "name": "first_aid_kit",
+          "location": "church_plaza",
+          "quantity": 1
+        },
+        "emergency_rations",
+        "flotation_device",
+        "floating_debris_planks",
+        "damaged_boat_section",
+        "emergency_rations"
+      ]
+    },
+    {
+      "step": 4,
+      "hazard_level": 10,
+      "weather": "tropical_storm",
+      "time_of_day": "early_morning",
+      "events": [
+        "Mega-tsunami struck the coast at 5:47 AM",
+        "Aftershocks continuing every 20-30 minutes",
+        "Children trapped on school rooftop waving for help",
+        "NGO compound gate locked \u2014 locals demanding access to medical supplies",
+        "Barangay captain hoarding emergency supplies in government building",
+        "A massive wave has breached the seawall at the fishing_harbor, sweeping debris into the channel.",
+        "The coastal_village power lines have collapsed, plunging the area into darkness and blocking the main exit road.",
+        "Rising water has submerged the lower floors of the barangay_hall, forcing survivors to the second floor.",
+        "The coastal seawall has partially collapsed, accelerating the surge into the village center.",
+        "A flash flood has washed debris into the mangrove trail, making it impassable.",
+        "A floating crate of emergency supplies has drifted into the school rooftop perimeter.",
+        "Severe structural failure at coastal_village as seawall breaches",
+        "Rising currents trap two agents at fishing_harbor",
+        "Emergency supplies washed to shore at mangrove_trail",
+        "The coastal sea wall has completely breached, submerging the coastal_village and fishing_harbor under 3 meters of churning water.",
+        "A massive tree has fallen across the mangrove_trail, blocking the only land route to the hilltop.",
+        "The barangay_hall roof has partially collapsed, trapping those inside on the second floor.",
+        "Water levels have risen to the second floor of the school_rooftop, forcing everyone to the very peak."
+      ],
+      "resources": [
+        "philippine_navy_incoming",
+        "ngo_medical_supplies",
+        "fishing_boats",
+        {
+          "type": "resource",
+          "name": "emergency_rations",
+          "location": "school_rooftop",
+          "quantity": 5
+        },
+        {
+          "type": "resource",
+          "name": "first_aid_kit",
+          "location": "church_plaza",
+          "quantity": 1
+        },
+        "emergency_rations",
+        "flotation_device",
+        "floating_debris_planks",
+        "damaged_boat_section",
+        "emergency_rations",
+        {
+          "resource": "makeshift_raft",
+          "location": "school_rooftop",
+          "quantity": 1
+        },
+        {
+          "resource": "emergency_ration_pack",
+          "location": "ngo_compound",
+          "quantity": 3
+        }
+      ]
+    },
+    {
+      "step": 5,
+      "hazard_level": 10,
+      "weather": "tropical_storm",
+      "time_of_day": "early_morning",
+      "events": [
+        "Mega-tsunami struck the coast at 5:47 AM",
+        "Aftershocks continuing every 20-30 minutes",
+        "Children trapped on school rooftop waving for help",
+        "NGO compound gate locked \u2014 locals demanding access to medical supplies",
+        "Barangay captain hoarding emergency supplies in government building",
+        "A massive wave has breached the seawall at the fishing_harbor, sweeping debris into the channel.",
+        "The coastal_village power lines have collapsed, plunging the area into darkness and blocking the main exit road.",
+        "Rising water has submerged the lower floors of the barangay_hall, forcing survivors to the second floor.",
+        "The coastal seawall has partially collapsed, accelerating the surge into the village center.",
+        "A flash flood has washed debris into the mangrove trail, making it impassable.",
+        "A floating crate of emergency supplies has drifted into the school rooftop perimeter.",
+        "Severe structural failure at coastal_village as seawall breaches",
+        "Rising currents trap two agents at fishing_harbor",
+        "Emergency supplies washed to shore at mangrove_trail",
+        "The coastal sea wall has completely breached, submerging the coastal_village and fishing_harbor under 3 meters of churning water.",
+        "A massive tree has fallen across the mangrove_trail, blocking the only land route to the hilltop.",
+        "The barangay_hall roof has partially collapsed, trapping those inside on the second floor.",
+        "Water levels have risen to the second floor of the school_rooftop, forcing everyone to the very peak.",
+        "The coastal village has been completely submerged; the fishing harbor is lost to the surge.",
+        "A structural collapse at the barangay hall has blocked the main entrance, forcing survivors to find alternate exits.",
+        "A strong current is forming in the mangrove trail, making travel on foot nearly impossible."
+      ],
+      "resources": [
+        "philippine_navy_incoming",
+        "ngo_medical_supplies",
+        "fishing_boats",
+        {
+          "type": "resource",
+          "name": "emergency_rations",
+          "location": "school_rooftop",
+          "quantity": 5
+        },
+        {
+          "type": "resource",
+          "name": "first_aid_kit",
+          "location": "church_plaza",
+          "quantity": 1
+        },
+        "emergency_rations",
+        "flotation_device",
+        "floating_debris_planks",
+        "damaged_boat_section",
+        "emergency_rations",
+        {
+          "resource": "makeshift_raft",
+          "location": "school_rooftop",
+          "quantity": 1
+        },
+        {
+          "resource": "emergency_ration_pack",
+          "location": "ngo_compound",
+          "quantity": 3
+        },
+        "flotation_device",
+        "emergency_rations",
+        "radios"
+      ]
+    },
+    {
+      "step": 6,
+      "hazard_level": 10,
+      "weather": "tropical_storm",
+      "time_of_day": "early_morning",
+      "events": [
+        "Mega-tsunami struck the coast at 5:47 AM",
+        "Aftershocks continuing every 20-30 minutes",
+        "Children trapped on school rooftop waving for help",
+        "NGO compound gate locked \u2014 locals demanding access to medical supplies",
+        "Barangay captain hoarding emergency supplies in government building",
+        "A massive wave has breached the seawall at the fishing_harbor, sweeping debris into the channel.",
+        "The coastal_village power lines have collapsed, plunging the area into darkness and blocking the main exit road.",
+        "Rising water has submerged the lower floors of the barangay_hall, forcing survivors to the second floor.",
+        "The coastal seawall has partially collapsed, accelerating the surge into the village center.",
+        "A flash flood has washed debris into the mangrove trail, making it impassable.",
+        "A floating crate of emergency supplies has drifted into the school rooftop perimeter.",
+        "Severe structural failure at coastal_village as seawall breaches",
+        "Rising currents trap two agents at fishing_harbor",
+        "Emergency supplies washed to shore at mangrove_trail",
+        "The coastal sea wall has completely breached, submerging the coastal_village and fishing_harbor under 3 meters of churning water.",
+        "A massive tree has fallen across the mangrove_trail, blocking the only land route to the hilltop.",
+        "The barangay_hall roof has partially collapsed, trapping those inside on the second floor.",
+        "Water levels have risen to the second floor of the school_rooftop, forcing everyone to the very peak.",
+        "The coastal village has been completely submerged; the fishing harbor is lost to the surge.",
+        "A structural collapse at the barangay hall has blocked the main entrance, forcing survivors to find alternate exits.",
+        "A strong current is forming in the mangrove trail, making travel on foot nearly impossible.",
+        "Structural failure: The fishing harbor pier collapses, sending debris into the main current.",
+        "Flash warning: A sudden surge breaches the coastal village defenses, threatening the church plaza.",
+        "Resource discovery: A sealed supply crate washes up near the school rooftop."
+      ],
+      "resources": [
+        "philippine_navy_incoming",
+        "ngo_medical_supplies",
+        "fishing_boats",
+        {
+          "type": "resource",
+          "name": "emergency_rations",
+          "location": "school_rooftop",
+          "quantity": 5
+        },
+        {
+          "type": "resource",
+          "name": "first_aid_kit",
+          "location": "church_plaza",
+          "quantity": 1
+        },
+        "emergency_rations",
+        "flotation_device",
+        "floating_debris_planks",
+        "damaged_boat_section",
+        "emergency_rations",
+        {
+          "resource": "makeshift_raft",
+          "location": "school_rooftop",
+          "quantity": 1
+        },
+        {
+          "resource": "emergency_ration_pack",
+          "location": "ngo_compound",
+          "quantity": 3
+        },
+        "flotation_device",
+        "emergency_rations",
+        "radios",
+        "floating_debris_shelter",
+        "drowning_signal"
+      ]
+    },
+    {
+      "step": 7,
+      "hazard_level": 10,
+      "weather": "tropical_storm",
+      "time_of_day": "early_morning",
+      "events": [
+        "Mega-tsunami struck the coast at 5:47 AM",
+        "Aftershocks continuing every 20-30 minutes",
+        "Children trapped on school rooftop waving for help",
+        "NGO compound gate locked \u2014 locals demanding access to medical supplies",
+        "Barangay captain hoarding emergency supplies in government building",
+        "A massive wave has breached the seawall at the fishing_harbor, sweeping debris into the channel.",
+        "The coastal_village power lines have collapsed, plunging the area into darkness and blocking the main exit road.",
+        "Rising water has submerged the lower floors of the barangay_hall, forcing survivors to the second floor.",
+        "The coastal seawall has partially collapsed, accelerating the surge into the village center.",
+        "A flash flood has washed debris into the mangrove trail, making it impassable.",
+        "A floating crate of emergency supplies has drifted into the school rooftop perimeter.",
+        "Severe structural failure at coastal_village as seawall breaches",
+        "Rising currents trap two agents at fishing_harbor",
+        "Emergency supplies washed to shore at mangrove_trail",
+        "The coastal sea wall has completely breached, submerging the coastal_village and fishing_harbor under 3 meters of churning water.",
+        "A massive tree has fallen across the mangrove_trail, blocking the only land route to the hilltop.",
+        "The barangay_hall roof has partially collapsed, trapping those inside on the second floor.",
+        "Water levels have risen to the second floor of the school_rooftop, forcing everyone to the very peak.",
+        "The coastal village has been completely submerged; the fishing harbor is lost to the surge.",
+        "A structural collapse at the barangay hall has blocked the main entrance, forcing survivors to find alternate exits.",
+        "A strong current is forming in the mangrove trail, making travel on foot nearly impossible.",
+        "Structural failure: The fishing harbor pier collapses, sending debris into the main current.",
+        "Flash warning: A sudden surge breaches the coastal village defenses, threatening the church plaza.",
+        "Resource discovery: A sealed supply crate washes up near the school rooftop.",
+        "The seawall at the coastal_village has completely collapsed, sending a debris-choked surge toward the fishing_harbor.",
+        "Structural failure reported at the mangrove_trail; several support beams have snapped, creating a dangerous bottleneck.",
+        "A desperate rescue attempt is visible from the church_plaza; a family is trapped in a second-story window with rising water."
+      ],
+      "resources": [
+        "philippine_navy_incoming",
+        "ngo_medical_supplies",
+        "fishing_boats",
+        {
+          "type": "resource",
+          "name": "emergency_rations",
+          "location": "school_rooftop",
+          "quantity": 5
+        },
+        {
+          "type": "resource",
+          "name": "first_aid_kit",
+          "location": "church_plaza",
+          "quantity": 1
+        },
+        "emergency_rations",
+        "flotation_device",
+        "floating_debris_planks",
+        "damaged_boat_section",
+        "emergency_rations",
+        {
+          "resource": "makeshift_raft",
+          "location": "school_rooftop",
+          "quantity": 1
+        },
+        {
+          "resource": "emergency_ration_pack",
+          "location": "ngo_compound",
+          "quantity": 3
+        },
+        "flotation_device",
+        "emergency_rations",
+        "radios",
+        "floating_debris_shelter",
+        "drowning_signal",
+        "emergency_ration_pack",
+        "makeshift_raft_materials",
+        "water_purification_tablets"
+      ]
+    },
+    {
+      "step": 8,
+      "hazard_level": 10,
+      "weather": "tropical_storm",
+      "time_of_day": "early_morning",
+      "events": [
+        "Mega-tsunami struck the coast at 5:47 AM",
+        "Aftershocks continuing every 20-30 minutes",
+        "Children trapped on school rooftop waving for help",
+        "NGO compound gate locked \u2014 locals demanding access to medical supplies",
+        "Barangay captain hoarding emergency supplies in government building",
+        "A massive wave has breached the seawall at the fishing_harbor, sweeping debris into the channel.",
+        "The coastal_village power lines have collapsed, plunging the area into darkness and blocking the main exit road.",
+        "Rising water has submerged the lower floors of the barangay_hall, forcing survivors to the second floor.",
+        "The coastal seawall has partially collapsed, accelerating the surge into the village center.",
+        "A flash flood has washed debris into the mangrove trail, making it impassable.",
+        "A floating crate of emergency supplies has drifted into the school rooftop perimeter.",
+        "Severe structural failure at coastal_village as seawall breaches",
+        "Rising currents trap two agents at fishing_harbor",
+        "Emergency supplies washed to shore at mangrove_trail",
+        "The coastal sea wall has completely breached, submerging the coastal_village and fishing_harbor under 3 meters of churning water.",
+        "A massive tree has fallen across the mangrove_trail, blocking the only land route to the hilltop.",
+        "The barangay_hall roof has partially collapsed, trapping those inside on the second floor.",
+        "Water levels have risen to the second floor of the school_rooftop, forcing everyone to the very peak.",
+        "The coastal village has been completely submerged; the fishing harbor is lost to the surge.",
+        "A structural collapse at the barangay hall has blocked the main entrance, forcing survivors to find alternate exits.",
+        "A strong current is forming in the mangrove trail, making travel on foot nearly impossible.",
+        "Structural failure: The fishing harbor pier collapses, sending debris into the main current.",
+        "Flash warning: A sudden surge breaches the coastal village defenses, threatening the church plaza.",
+        "Resource discovery: A sealed supply crate washes up near the school rooftop.",
+        "The seawall at the coastal_village has completely collapsed, sending a debris-choked surge toward the fishing_harbor.",
+        "Structural failure reported at the mangrove_trail; several support beams have snapped, creating a dangerous bottleneck.",
+        "A desperate rescue attempt is visible from the church_plaza; a family is trapped in a second-story window with rising water.",
+        "The coastal_village and fishing_harbor are completely submerged under surging blackwater.",
+        "A structural failure in the mangrove_trail causes a tree to collapse, blocking the path to the barangay_hall.",
+        "Emergency radios wash up on the school_rooftop, offering a chance for long-range communication."
+      ],
+      "resources": [
+        "philippine_navy_incoming",
+        "ngo_medical_supplies",
+        "fishing_boats",
+        {
+          "type": "resource",
+          "name": "emergency_rations",
+          "location": "school_rooftop",
+          "quantity": 5
+        },
+        {
+          "type": "resource",
+          "name": "first_aid_kit",
+          "location": "church_plaza",
+          "quantity": 1
+        },
+        "emergency_rations",
+        "flotation_device",
+        "floating_debris_planks",
+        "damaged_boat_section",
+        "emergency_rations",
+        {
+          "resource": "makeshift_raft",
+          "location": "school_rooftop",
+          "quantity": 1
+        },
+        {
+          "resource": "emergency_ration_pack",
+          "location": "ngo_compound",
+          "quantity": 3
+        },
+        "flotation_device",
+        "emergency_rations",
+        "radios",
+        "floating_debris_shelter",
+        "drowning_signal",
+        "emergency_ration_pack",
+        "makeshift_raft_materials",
+        "water_purification_tablets",
+        "damaged_boat",
+        "floating_debris",
+        "emergency_radios"
+      ]
+    }
+  ],
+  "cinematic_timeline": [
+    {
+      "step": 1,
+      "agent": "Lito Magbanua #1",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 4.19,
+      "health": 6.715,
+      "location": "coastal_village"
+    },
+    {
+      "step": 1,
+      "agent": "Captain Reyna Dela Cruz #2",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 5,
+      "health": 10,
+      "location": "hilltop_evacuation"
+    },
+    {
+      "step": 1,
+      "agent": "PFC Marco Villanueva #9",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 6,
+      "health": 10,
+      "location": "hilltop_evacuation"
+    },
+    {
+      "step": 1,
+      "agent": "Father Domingo Reyes #3",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 6.19,
+      "health": 8.215,
+      "location": "church_plaza"
+    },
+    {
+      "step": 1,
+      "agent": "Soo-jin Park #6",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 9.19,
+      "health": 9.215,
+      "location": "church_plaza"
+    },
+    {
+      "step": 1,
+      "agent": "Dong-hyun Park #7",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 8.19,
+      "health": 9.715,
+      "location": "church_plaza"
+    },
+    {
+      "step": 1,
+      "agent": "Dr. Amara Osei #10",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7,
+      "health": 10,
+      "location": "ngo_compound"
+    },
+    {
+      "step": 1,
+      "agent": "Barangay Captain Jun Aquino #5",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7.19,
+      "health": 8.715,
+      "location": "barangay_hall"
+    },
+    {
+      "step": 1,
+      "agent": "Benny Tan #11",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 8.19,
+      "health": 9.715,
+      "location": "school_rooftop"
+    },
+    {
+      "step": 2,
+      "agent": "Lito Magbanua #1",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 4.386,
+      "health": 6.420999999999999,
+      "location": "coastal_village"
+    },
+    {
+      "step": 2,
+      "agent": "PFC Marco Villanueva #9",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 6,
+      "health": 10,
+      "location": "hilltop_evacuation"
+    },
+    {
+      "step": 2,
+      "agent": "Father Domingo Reyes #3",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 6.386,
+      "health": 8.421,
+      "location": "church_plaza"
+    },
+    {
+      "step": 2,
+      "agent": "Soo-jin Park #6",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 9.386,
+      "health": 9.421,
+      "location": "church_plaza"
+    },
+    {
+      "step": 2,
+      "agent": "Dong-hyun Park #7",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 8.386,
+      "health": 9.706,
+      "location": "church_plaza"
+    },
+    {
+      "step": 2,
+      "agent": "Dr. Amara Osei #10",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7,
+      "health": 10,
+      "location": "ngo_compound"
+    },
+    {
+      "step": 2,
+      "agent": "Karen Lindstr\u00f6m #4",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 6,
+      "health": 10,
+      "location": "ngo_compound"
+    },
+    {
+      "step": 2,
+      "agent": "Barangay Captain Jun Aquino #5",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7.386,
+      "health": 8.421,
+      "location": "barangay_hall"
+    },
+    {
+      "step": 2,
+      "agent": "Benny Tan #11",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 8.386,
+      "health": 9.421,
+      "location": "school_rooftop"
+    },
+    {
+      "step": 3,
+      "agent": "Captain Reyna Dela Cruz #2",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 5,
+      "health": 10,
+      "location": "hilltop_evacuation"
+    },
+    {
+      "step": 3,
+      "agent": "PFC Marco Villanueva #9",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 6,
+      "health": 10,
+      "location": "hilltop_evacuation"
+    },
+    {
+      "step": 3,
+      "agent": "Soo-jin Park #6",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 9.584,
+      "health": 9.623999999999999,
+      "location": "church_plaza"
+    },
+    {
+      "step": 3,
+      "agent": "Dong-hyun Park #7",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 8.584,
+      "health": 9.703,
+      "location": "church_plaza"
+    },
+    {
+      "step": 3,
+      "agent": "Barangay Captain Jun Aquino #5",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7.5840000000000005,
+      "health": 8.123999999999999,
+      "location": "barangay_hall"
+    },
+    {
+      "step": 4,
+      "agent": "Captain Reyna Dela Cruz #2",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 5,
+      "health": 10,
+      "location": "hilltop_evacuation"
+    },
+    {
+      "step": 4,
+      "agent": "Father Domingo Reyes #3",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 6.784000000000001,
+      "health": 8.823999999999998,
+      "location": "church_plaza"
+    },
+    {
+      "step": 4,
+      "agent": "Soo-jin Park #6",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 9.783999999999999,
+      "health": 9.7,
+      "location": "church_plaza"
+    },
+    {
+      "step": 4,
+      "agent": "Dr. Amara Osei #10",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7,
+      "health": 10,
+      "location": "ngo_compound"
+    },
+    {
+      "step": 4,
+      "agent": "Karen Lindstr\u00f6m #4",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 6,
+      "health": 10,
+      "location": "ngo_compound"
+    },
+    {
+      "step": 4,
+      "agent": "Barangay Captain Jun Aquino #5",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7.784000000000001,
+      "health": 7.823999999999999,
+      "location": "barangay_hall"
+    },
+    {
+      "step": 4,
+      "agent": "Benny Tan #11",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 8.783999999999999,
+      "health": 8.823999999999998,
+      "location": "school_rooftop"
+    },
+    {
+      "step": 4,
+      "agent": "Rosa Magbanua #12",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7.784000000000001,
+      "health": 7.823999999999999,
+      "location": "fishing_harbor"
+    },
+    {
+      "step": 5,
+      "agent": "Lito Magbanua #1",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 4.984000000000001,
+      "health": 5.524,
+      "location": "coastal_village"
+    },
+    {
+      "step": 5,
+      "agent": "Captain Reyna Dela Cruz #2",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 5,
+      "health": 10,
+      "location": "hilltop_evacuation"
+    },
+    {
+      "step": 5,
+      "agent": "PFC Marco Villanueva #9",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 6,
+      "health": 10,
+      "location": "hilltop_evacuation"
+    },
+    {
+      "step": 5,
+      "agent": "Soo-jin Park #6",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 9.983999999999998,
+      "health": 9.7,
+      "location": "church_plaza"
+    },
+    {
+      "step": 5,
+      "agent": "Dong-hyun Park #7",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 8.983999999999998,
+      "health": 9.7,
+      "location": "church_plaza"
+    },
+    {
+      "step": 6,
+      "agent": "Captain Reyna Dela Cruz #2",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 5,
+      "health": 10,
+      "location": "hilltop_evacuation"
+    },
+    {
+      "step": 6,
+      "agent": "Father Domingo Reyes #3",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7.184000000000001,
+      "health": 9.223999999999997,
+      "location": "church_plaza"
+    },
+    {
+      "step": 6,
+      "agent": "Dr. Amara Osei #10",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7,
+      "health": 10,
+      "location": "ngo_compound"
+    },
+    {
+      "step": 6,
+      "agent": "Karen Lindstr\u00f6m #4",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 6,
+      "health": 10,
+      "location": "ngo_compound"
+    },
+    {
+      "step": 6,
+      "agent": "Barangay Captain Jun Aquino #5",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 8.184000000000001,
+      "health": 7.223999999999999,
+      "location": "barangay_hall"
+    },
+    {
+      "step": 6,
+      "agent": "Rosa Magbanua #12",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 8.184000000000001,
+      "health": 7.223999999999999,
+      "location": "fishing_harbor"
+    },
+    {
+      "step": 7,
+      "agent": "Father Domingo Reyes #3",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7.384000000000001,
+      "health": 9.423999999999996,
+      "location": "church_plaza"
+    },
+    {
+      "step": 7,
+      "agent": "Dong-hyun Park #7",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 9.383999999999997,
+      "health": 9.7,
+      "location": "church_plaza"
+    },
+    {
+      "step": 7,
+      "agent": "Karen Lindstr\u00f6m #4",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 6,
+      "health": 10,
+      "location": "ngo_compound"
+    },
+    {
+      "step": 7,
+      "agent": "Benny Tan #11",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 9.383999999999997,
+      "health": 7.923999999999997,
+      "location": "school_rooftop"
+    },
+    {
+      "step": 7,
+      "agent": "Rosa Magbanua #12",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 8.384,
+      "health": 6.9239999999999995,
+      "location": "fishing_harbor"
+    },
+    {
+      "step": 8,
+      "agent": "Nanay Iska #8",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 6.584000000000001,
+      "health": 2.6240000000000006,
+      "location": "coastal_village"
+    },
+    {
+      "step": 8,
+      "agent": "PFC Marco Villanueva #9",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 6,
+      "health": 10,
+      "location": "hilltop_evacuation"
+    },
+    {
+      "step": 8,
+      "agent": "Dr. Amara Osei #10",
+      "action": "",
+      "speech": null,
+      "thought": "",
+      "emotion": "",
+      "stress": 7,
+      "health": 10,
+      "location": "ngo_compound"
+    }
+  ],
+  "action_timeline": [
+    {
+      "agent_id": "e1e2401f-31db-482f-830e-778f27007519",
+      "agent_name": "Tsunami System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 9.5,
+        "affected_locations": [
+          "coastal_village",
+          "fishing_harbor",
+          "barangay_hall"
+        ],
+        "new_resources": [
+          {
+            "type": "resource",
+            "name": "emergency_rations",
+            "location": "school_rooftop",
+            "quantity": 5
+          },
+          {
+            "type": "resource",
+            "name": "first_aid_kit",
+            "location": "church_plaza",
+            "quantity": 1
+          }
+        ],
+        "events": [
+          "A massive wave has breached the seawall at the fishing_harbor, sweeping debris into the channel.",
+          "The coastal_village power lines have collapsed, plunging the area into darkness and blocking the main exit road.",
+          "Rising water has submerged the lower floors of the barangay_hall, forcing survivors to the second floor."
+        ]
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "e1e2401f-31db-482f-830e-778f27007519",
+      "agent_name": "Tsunami System",
+      "action_type": "affect_agent",
+      "target": "all_agents_at_coastal_village",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": null,
+        "stress_level": null
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "e1e2401f-31db-482f-830e-778f27007519",
+      "agent_name": "Tsunami System",
+      "action_type": "affect_agent",
+      "target": "all_agents_at_fishing_harbor",
+      "parameters": {
+        "health_delta": -3,
+        "stress_delta": 4,
+        "health": null,
+        "stress_level": null
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "4a158104-6fa6-48e5-8787-6635e2d59ee4",
+      "agent_name": "Lito Magbanua #1",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "4a158104-6fa6-48e5-8787-6635e2d59ee4",
+      "agent_name": "Lito Magbanua #1",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 4.19,
+        "health": 6.715,
+        "location": "coastal_village"
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "b8fc9106-2098-403c-92f6-ec909e03126b",
+      "agent_name": "Captain Reyna Dela Cruz #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "b8fc9106-2098-403c-92f6-ec909e03126b",
+      "agent_name": "Captain Reyna Dela Cruz #2",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 5,
+        "health": 10,
+        "location": "hilltop_evacuation"
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "efa6b3ae-60b3-4797-ab35-157ad9c21e3d",
+      "agent_name": "PFC Marco Villanueva #9",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "efa6b3ae-60b3-4797-ab35-157ad9c21e3d",
+      "agent_name": "PFC Marco Villanueva #9",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 6,
+        "health": 10,
+        "location": "hilltop_evacuation"
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "7c07e6c4-263b-4262-9db2-1bc901ea512b",
+      "agent_name": "Father Domingo Reyes #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "7c07e6c4-263b-4262-9db2-1bc901ea512b",
+      "agent_name": "Father Domingo Reyes #3",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 6.19,
+        "health": 8.215,
+        "location": "church_plaza"
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "ebe81f90-97c5-43b7-bd8e-c80a43f0f6d5",
+      "agent_name": "Soo-jin Park #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "ebe81f90-97c5-43b7-bd8e-c80a43f0f6d5",
+      "agent_name": "Soo-jin Park #6",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 9.19,
+        "health": 9.215,
+        "location": "church_plaza"
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "32105b40-7cfc-48a7-b8c2-c26302f2aec7",
+      "agent_name": "Dong-hyun Park #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "32105b40-7cfc-48a7-b8c2-c26302f2aec7",
+      "agent_name": "Dong-hyun Park #7",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 8.19,
+        "health": 9.715,
+        "location": "church_plaza"
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "6fd03f1e-3b24-4afe-bda2-236397ef1d46",
+      "agent_name": "Dr. Amara Osei #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "6fd03f1e-3b24-4afe-bda2-236397ef1d46",
+      "agent_name": "Dr. Amara Osei #10",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7,
+        "health": 10,
+        "location": "ngo_compound"
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "d53356e0-6367-495e-8c79-a189774527fb",
+      "agent_name": "Barangay Captain Jun Aquino #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "d53356e0-6367-495e-8c79-a189774527fb",
+      "agent_name": "Barangay Captain Jun Aquino #5",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7.19,
+        "health": 8.715,
+        "location": "barangay_hall"
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "7e135e85-5f39-4b9a-955d-71b6ff67e0a7",
+      "agent_name": "Benny Tan #11",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 1
+    },
+    {
+      "agent_id": "7e135e85-5f39-4b9a-955d-71b6ff67e0a7",
+      "agent_name": "Benny Tan #11",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 8.19,
+        "health": 9.715,
+        "location": "school_rooftop"
+      },
+      "step": 1
+    },
+    {
+      "agent_id": "e1e2401f-31db-482f-830e-778f27007519",
+      "agent_name": "Tsunami System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 9.8,
+        "affected_locations": [
+          "coastal_village",
+          "fishing_harbor",
+          "mangrove_trail"
+        ],
+        "new_resources": [
+          "emergency_rations",
+          "flotation_device"
+        ],
+        "events": [
+          "The coastal seawall has partially collapsed, accelerating the surge into the village center.",
+          "A flash flood has washed debris into the mangrove trail, making it impassable.",
+          "A floating crate of emergency supplies has drifted into the school rooftop perimeter."
+        ]
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "e1e2401f-31db-482f-830e-778f27007519",
+      "agent_name": "Tsunami System",
+      "action_type": "affect_agent",
+      "target": "broadcast",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": 8,
+        "stress_level": 7
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "4a158104-6fa6-48e5-8787-6635e2d59ee4",
+      "agent_name": "Lito Magbanua #1",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "4a158104-6fa6-48e5-8787-6635e2d59ee4",
+      "agent_name": "Lito Magbanua #1",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 4.386,
+        "health": 6.420999999999999,
+        "location": "coastal_village"
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "efa6b3ae-60b3-4797-ab35-157ad9c21e3d",
+      "agent_name": "PFC Marco Villanueva #9",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "efa6b3ae-60b3-4797-ab35-157ad9c21e3d",
+      "agent_name": "PFC Marco Villanueva #9",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 6,
+        "health": 10,
+        "location": "hilltop_evacuation"
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "7c07e6c4-263b-4262-9db2-1bc901ea512b",
+      "agent_name": "Father Domingo Reyes #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "7c07e6c4-263b-4262-9db2-1bc901ea512b",
+      "agent_name": "Father Domingo Reyes #3",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 6.386,
+        "health": 8.421,
+        "location": "church_plaza"
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "ebe81f90-97c5-43b7-bd8e-c80a43f0f6d5",
+      "agent_name": "Soo-jin Park #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "ebe81f90-97c5-43b7-bd8e-c80a43f0f6d5",
+      "agent_name": "Soo-jin Park #6",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 9.386,
+        "health": 9.421,
+        "location": "church_plaza"
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "32105b40-7cfc-48a7-b8c2-c26302f2aec7",
+      "agent_name": "Dong-hyun Park #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "32105b40-7cfc-48a7-b8c2-c26302f2aec7",
+      "agent_name": "Dong-hyun Park #7",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 8.386,
+        "health": 9.706,
+        "location": "church_plaza"
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "6fd03f1e-3b24-4afe-bda2-236397ef1d46",
+      "agent_name": "Dr. Amara Osei #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "6fd03f1e-3b24-4afe-bda2-236397ef1d46",
+      "agent_name": "Dr. Amara Osei #10",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7,
+        "health": 10,
+        "location": "ngo_compound"
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "35672965-b57b-4507-922e-57a95a6bd8bd",
+      "agent_name": "Karen Lindstr\u00f6m #4",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "35672965-b57b-4507-922e-57a95a6bd8bd",
+      "agent_name": "Karen Lindstr\u00f6m #4",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 6,
+        "health": 10,
+        "location": "ngo_compound"
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "d53356e0-6367-495e-8c79-a189774527fb",
+      "agent_name": "Barangay Captain Jun Aquino #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "d53356e0-6367-495e-8c79-a189774527fb",
+      "agent_name": "Barangay Captain Jun Aquino #5",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7.386,
+        "health": 8.421,
+        "location": "barangay_hall"
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "7e135e85-5f39-4b9a-955d-71b6ff67e0a7",
+      "agent_name": "Benny Tan #11",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 2
+    },
+    {
+      "agent_id": "7e135e85-5f39-4b9a-955d-71b6ff67e0a7",
+      "agent_name": "Benny Tan #11",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 8.386,
+        "health": 9.421,
+        "location": "school_rooftop"
+      },
+      "step": 2
+    },
+    {
+      "agent_id": "e1e2401f-31db-482f-830e-778f27007519",
+      "agent_name": "Tsunami System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 9.9,
+        "affected_locations": [
+          "coastal_village",
+          "mangrove_trail",
+          "fishing_harbor",
+          "barangay_hall"
+        ],
+        "new_resources": [
+          "floating_debris_planks",
+          "damaged_boat_section",
+          "emergency_rations"
+        ],
+        "events": [
+          "Severe structural failure at coastal_village as seawall breaches",
+          "Rising currents trap two agents at fishing_harbor",
+          "Emergency supplies washed to shore at mangrove_trail"
+        ]
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "e1e2401f-31db-482f-830e-778f27007519",
+      "agent_name": "Tsunami System",
+      "action_type": "affect_agent",
+      "target": "all_agents_at_fishing_harbor",
+      "parameters": {
+        "health_delta": -3,
+        "stress_delta": 4,
+        "health": 6.5,
+        "stress_level": 8.2
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "e1e2401f-31db-482f-830e-778f27007519",
+      "agent_name": "Tsunami System",
+      "action_type": "affect_agent",
+      "target": "all_agents_at_coastal_village",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": 7.0,
+        "stress_level": 8.5
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "b8fc9106-2098-403c-92f6-ec909e03126b",
+      "agent_name": "Captain Reyna Dela Cruz #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "b8fc9106-2098-403c-92f6-ec909e03126b",
+      "agent_name": "Captain Reyna Dela Cruz #2",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 5,
+        "health": 10,
+        "location": "hilltop_evacuation"
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "efa6b3ae-60b3-4797-ab35-157ad9c21e3d",
+      "agent_name": "PFC Marco Villanueva #9",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "efa6b3ae-60b3-4797-ab35-157ad9c21e3d",
+      "agent_name": "PFC Marco Villanueva #9",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 6,
+        "health": 10,
+        "location": "hilltop_evacuation"
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "ebe81f90-97c5-43b7-bd8e-c80a43f0f6d5",
+      "agent_name": "Soo-jin Park #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "ebe81f90-97c5-43b7-bd8e-c80a43f0f6d5",
+      "agent_name": "Soo-jin Park #6",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 9.584,
+        "health": 9.623999999999999,
+        "location": "church_plaza"
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "32105b40-7cfc-48a7-b8c2-c26302f2aec7",
+      "agent_name": "Dong-hyun Park #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "32105b40-7cfc-48a7-b8c2-c26302f2aec7",
+      "agent_name": "Dong-hyun Park #7",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 8.584,
+        "health": 9.703,
+        "location": "church_plaza"
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "d53356e0-6367-495e-8c79-a189774527fb",
+      "agent_name": "Barangay Captain Jun Aquino #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 3
+    },
+    {
+      "agent_id": "d53356e0-6367-495e-8c79-a189774527fb",
+      "agent_name": "Barangay Captain Jun Aquino #5",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7.5840000000000005,
+        "health": 8.123999999999999,
+        "location": "barangay_hall"
+      },
+      "step": 3
+    },
+    {
+      "agent_id": "e1e2401f-31db-482f-830e-778f27007519",
+      "agent_name": "Tsunami System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "coastal_village",
+          "fishing_harbor",
+          "mangrove_trail",
+          "barangay_hall"
+        ],
+        "new_resources": [
+          {
+            "resource": "makeshift_raft",
+            "location": "school_rooftop",
+            "quantity": 1
+          },
+          {
+            "resource": "emergency_ration_pack",
+            "location": "ngo_compound",
+            "quantity": 3
+          }
+        ],
+        "events": [
+          "The coastal sea wall has completely breached, submerging the coastal_village and fishing_harbor under 3 meters of churning water.",
+          "A massive tree has fallen across the mangrove_trail, blocking the only land route to the hilltop.",
+          "The barangay_hall roof has partially collapsed, trapping those inside on the second floor.",
+          "Water levels have risen to the second floor of the school_rooftop, forcing everyone to the very peak."
+        ]
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "e1e2401f-31db-482f-830e-778f27007519",
+      "agent_name": "Tsunami System",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_coastal_village",
+      "parameters": {
+        "health_delta": -4,
+        "stress_delta": 5,
+        "health": 6,
+        "stress_level": 8
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "e1e2401f-31db-482f-830e-778f27007519",
+      "agent_name": "Tsunami System",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_barangay_hall",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 4,
+        "health": 8,
+        "stress_level": 7
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "e1e2401f-31db-482f-830e-778f27007519",
+      "agent_name": "Tsunami System",
+      "action_type": "affect_agent",
+      "target": "all_agents_in_mangrove_trail",
+      "parameters": {
+        "health_delta": -1,
+        "stress_delta": 3,
+        "health": 9,
+        "stress_level": 6
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "b8fc9106-2098-403c-92f6-ec909e03126b",
+      "agent_name": "Captain Reyna Dela Cruz #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "b8fc9106-2098-403c-92f6-ec909e03126b",
+      "agent_name": "Captain Reyna Dela Cruz #2",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 5,
+        "health": 10,
+        "location": "hilltop_evacuation"
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "7c07e6c4-263b-4262-9db2-1bc901ea512b",
+      "agent_name": "Father Domingo Reyes #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "7c07e6c4-263b-4262-9db2-1bc901ea512b",
+      "agent_name": "Father Domingo Reyes #3",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 6.784000000000001,
+        "health": 8.823999999999998,
+        "location": "church_plaza"
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "ebe81f90-97c5-43b7-bd8e-c80a43f0f6d5",
+      "agent_name": "Soo-jin Park #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "ebe81f90-97c5-43b7-bd8e-c80a43f0f6d5",
+      "agent_name": "Soo-jin Park #6",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 9.783999999999999,
+        "health": 9.7,
+        "location": "church_plaza"
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "6fd03f1e-3b24-4afe-bda2-236397ef1d46",
+      "agent_name": "Dr. Amara Osei #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "6fd03f1e-3b24-4afe-bda2-236397ef1d46",
+      "agent_name": "Dr. Amara Osei #10",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7,
+        "health": 10,
+        "location": "ngo_compound"
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "35672965-b57b-4507-922e-57a95a6bd8bd",
+      "agent_name": "Karen Lindstr\u00f6m #4",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "35672965-b57b-4507-922e-57a95a6bd8bd",
+      "agent_name": "Karen Lindstr\u00f6m #4",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 6,
+        "health": 10,
+        "location": "ngo_compound"
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "d53356e0-6367-495e-8c79-a189774527fb",
+      "agent_name": "Barangay Captain Jun Aquino #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "d53356e0-6367-495e-8c79-a189774527fb",
+      "agent_name": "Barangay Captain Jun Aquino #5",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7.784000000000001,
+        "health": 7.823999999999999,
+        "location": "barangay_hall"
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "7e135e85-5f39-4b9a-955d-71b6ff67e0a7",
+      "agent_name": "Benny Tan #11",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "7e135e85-5f39-4b9a-955d-71b6ff67e0a7",
+      "agent_name": "Benny Tan #11",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 8.783999999999999,
+        "health": 8.823999999999998,
+        "location": "school_rooftop"
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "f440140e-0285-47c9-bd87-e441aa2245d9",
+      "agent_name": "Rosa Magbanua #12",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 4
+    },
+    {
+      "agent_id": "f440140e-0285-47c9-bd87-e441aa2245d9",
+      "agent_name": "Rosa Magbanua #12",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7.784000000000001,
+        "health": 7.823999999999999,
+        "location": "fishing_harbor"
+      },
+      "step": 4
+    },
+    {
+      "agent_id": "e1e2401f-31db-482f-830e-778f27007519",
+      "agent_name": "Tsunami System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "coastal_village",
+          "fishing_harbor",
+          "mangrove_trail"
+        ],
+        "new_resources": [
+          "flotation_device",
+          "emergency_rations",
+          "radios"
+        ],
+        "events": [
+          "The coastal village has been completely submerged; the fishing harbor is lost to the surge.",
+          "A structural collapse at the barangay hall has blocked the main entrance, forcing survivors to find alternate exits.",
+          "A strong current is forming in the mangrove trail, making travel on foot nearly impossible."
+        ]
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "e1e2401f-31db-482f-830e-778f27007519",
+      "agent_name": "Tsunami System",
+      "action_type": "affect_agent",
+      "target": "agents_at_coastal_village",
+      "parameters": {
+        "health_delta": -3,
+        "stress_delta": 4,
+        "health": null,
+        "stress_level": null
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "e1e2401f-31db-482f-830e-778f27007519",
+      "agent_name": "Tsunami System",
+      "action_type": "affect_agent",
+      "target": "agents_at_barangay_hall",
+      "parameters": {
+        "health_delta": -1,
+        "stress_delta": 2,
+        "health": null,
+        "stress_level": null
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "4a158104-6fa6-48e5-8787-6635e2d59ee4",
+      "agent_name": "Lito Magbanua #1",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "4a158104-6fa6-48e5-8787-6635e2d59ee4",
+      "agent_name": "Lito Magbanua #1",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 4.984000000000001,
+        "health": 5.524,
+        "location": "coastal_village"
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "b8fc9106-2098-403c-92f6-ec909e03126b",
+      "agent_name": "Captain Reyna Dela Cruz #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "b8fc9106-2098-403c-92f6-ec909e03126b",
+      "agent_name": "Captain Reyna Dela Cruz #2",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 5,
+        "health": 10,
+        "location": "hilltop_evacuation"
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "efa6b3ae-60b3-4797-ab35-157ad9c21e3d",
+      "agent_name": "PFC Marco Villanueva #9",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "efa6b3ae-60b3-4797-ab35-157ad9c21e3d",
+      "agent_name": "PFC Marco Villanueva #9",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 6,
+        "health": 10,
+        "location": "hilltop_evacuation"
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "ebe81f90-97c5-43b7-bd8e-c80a43f0f6d5",
+      "agent_name": "Soo-jin Park #6",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "ebe81f90-97c5-43b7-bd8e-c80a43f0f6d5",
+      "agent_name": "Soo-jin Park #6",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 9.983999999999998,
+        "health": 9.7,
+        "location": "church_plaza"
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "32105b40-7cfc-48a7-b8c2-c26302f2aec7",
+      "agent_name": "Dong-hyun Park #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 5
+    },
+    {
+      "agent_id": "32105b40-7cfc-48a7-b8c2-c26302f2aec7",
+      "agent_name": "Dong-hyun Park #7",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 8.983999999999998,
+        "health": 9.7,
+        "location": "church_plaza"
+      },
+      "step": 5
+    },
+    {
+      "agent_id": "e1e2401f-31db-482f-830e-778f27007519",
+      "agent_name": "Tsunami System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "fishing_harbor",
+          "coastal_village",
+          "mangrove_trail"
+        ],
+        "new_resources": [
+          "floating_debris_shelter",
+          "drowning_signal"
+        ],
+        "events": [
+          "Structural failure: The fishing harbor pier collapses, sending debris into the main current.",
+          "Flash warning: A sudden surge breaches the coastal village defenses, threatening the church plaza.",
+          "Resource discovery: A sealed supply crate washes up near the school rooftop."
+        ]
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "e1e2401f-31db-482f-830e-778f27007519",
+      "agent_name": "Tsunami System",
+      "action_type": "affect_agent",
+      "target": "agents_in_fishing_harbor",
+      "parameters": {
+        "health_delta": -3,
+        "stress_delta": 4,
+        "health": 7,
+        "stress_level": 9
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "e1e2401f-31db-482f-830e-778f27007519",
+      "agent_name": "Tsunami System",
+      "action_type": "affect_agent",
+      "target": "agents_in_coastal_village",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": 8,
+        "stress_level": 8
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "b8fc9106-2098-403c-92f6-ec909e03126b",
+      "agent_name": "Captain Reyna Dela Cruz #2",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "b8fc9106-2098-403c-92f6-ec909e03126b",
+      "agent_name": "Captain Reyna Dela Cruz #2",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 5,
+        "health": 10,
+        "location": "hilltop_evacuation"
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "7c07e6c4-263b-4262-9db2-1bc901ea512b",
+      "agent_name": "Father Domingo Reyes #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "7c07e6c4-263b-4262-9db2-1bc901ea512b",
+      "agent_name": "Father Domingo Reyes #3",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7.184000000000001,
+        "health": 9.223999999999997,
+        "location": "church_plaza"
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "6fd03f1e-3b24-4afe-bda2-236397ef1d46",
+      "agent_name": "Dr. Amara Osei #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "6fd03f1e-3b24-4afe-bda2-236397ef1d46",
+      "agent_name": "Dr. Amara Osei #10",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7,
+        "health": 10,
+        "location": "ngo_compound"
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "35672965-b57b-4507-922e-57a95a6bd8bd",
+      "agent_name": "Karen Lindstr\u00f6m #4",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "35672965-b57b-4507-922e-57a95a6bd8bd",
+      "agent_name": "Karen Lindstr\u00f6m #4",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 6,
+        "health": 10,
+        "location": "ngo_compound"
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "d53356e0-6367-495e-8c79-a189774527fb",
+      "agent_name": "Barangay Captain Jun Aquino #5",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "d53356e0-6367-495e-8c79-a189774527fb",
+      "agent_name": "Barangay Captain Jun Aquino #5",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 8.184000000000001,
+        "health": 7.223999999999999,
+        "location": "barangay_hall"
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "f440140e-0285-47c9-bd87-e441aa2245d9",
+      "agent_name": "Rosa Magbanua #12",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 6
+    },
+    {
+      "agent_id": "f440140e-0285-47c9-bd87-e441aa2245d9",
+      "agent_name": "Rosa Magbanua #12",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 8.184000000000001,
+        "health": 7.223999999999999,
+        "location": "fishing_harbor"
+      },
+      "step": 6
+    },
+    {
+      "agent_id": "e1e2401f-31db-482f-830e-778f27007519",
+      "agent_name": "Tsunami System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "coastal_village",
+          "fishing_harbor",
+          "mangrove_trail"
+        ],
+        "new_resources": [
+          "emergency_ration_pack",
+          "makeshift_raft_materials",
+          "water_purification_tablets"
+        ],
+        "events": [
+          "The seawall at the coastal_village has completely collapsed, sending a debris-choked surge toward the fishing_harbor.",
+          "Structural failure reported at the mangrove_trail; several support beams have snapped, creating a dangerous bottleneck.",
+          "A desperate rescue attempt is visible from the church_plaza; a family is trapped in a second-story window with rising water."
+        ]
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "e1e2401f-31db-482f-830e-778f27007519",
+      "agent_name": "Tsunami System",
+      "action_type": "affect_agent",
+      "target": "agents_in_coastal_village",
+      "parameters": {
+        "health_delta": -5,
+        "stress_delta": 4,
+        "health": 0,
+        "stress_level": 10
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "e1e2401f-31db-482f-830e-778f27007519",
+      "agent_name": "Tsunami System",
+      "action_type": "affect_agent",
+      "target": "agents_in_fishing_harbor",
+      "parameters": {
+        "health_delta": -3,
+        "stress_delta": 3,
+        "health": 0,
+        "stress_level": 10
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "7c07e6c4-263b-4262-9db2-1bc901ea512b",
+      "agent_name": "Father Domingo Reyes #3",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 7
+    },
+    {
+      "agent_id": "7c07e6c4-263b-4262-9db2-1bc901ea512b",
+      "agent_name": "Father Domingo Reyes #3",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7.384000000000001,
+        "health": 9.423999999999996,
+        "location": "church_plaza"
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "32105b40-7cfc-48a7-b8c2-c26302f2aec7",
+      "agent_name": "Dong-hyun Park #7",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 7
+    },
+    {
+      "agent_id": "32105b40-7cfc-48a7-b8c2-c26302f2aec7",
+      "agent_name": "Dong-hyun Park #7",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 9.383999999999997,
+        "health": 9.7,
+        "location": "church_plaza"
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "35672965-b57b-4507-922e-57a95a6bd8bd",
+      "agent_name": "Karen Lindstr\u00f6m #4",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 7
+    },
+    {
+      "agent_id": "35672965-b57b-4507-922e-57a95a6bd8bd",
+      "agent_name": "Karen Lindstr\u00f6m #4",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 6,
+        "health": 10,
+        "location": "ngo_compound"
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "7e135e85-5f39-4b9a-955d-71b6ff67e0a7",
+      "agent_name": "Benny Tan #11",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 7
+    },
+    {
+      "agent_id": "7e135e85-5f39-4b9a-955d-71b6ff67e0a7",
+      "agent_name": "Benny Tan #11",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 9.383999999999997,
+        "health": 7.923999999999997,
+        "location": "school_rooftop"
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "f440140e-0285-47c9-bd87-e441aa2245d9",
+      "agent_name": "Rosa Magbanua #12",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 7
+    },
+    {
+      "agent_id": "f440140e-0285-47c9-bd87-e441aa2245d9",
+      "agent_name": "Rosa Magbanua #12",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 8.384,
+        "health": 6.9239999999999995,
+        "location": "fishing_harbor"
+      },
+      "step": 7
+    },
+    {
+      "agent_id": "e1e2401f-31db-482f-830e-778f27007519",
+      "agent_name": "Tsunami System",
+      "action_type": "environment_update",
+      "target": "world_state",
+      "parameters": {
+        "hazard_level": 10,
+        "affected_locations": [
+          "coastal_village",
+          "fishing_harbor",
+          "mangrove_trail"
+        ],
+        "new_resources": [
+          "damaged_boat",
+          "floating_debris",
+          "emergency_radios"
+        ],
+        "events": [
+          "The coastal_village and fishing_harbor are completely submerged under surging blackwater.",
+          "A structural failure in the mangrove_trail causes a tree to collapse, blocking the path to the barangay_hall.",
+          "Emergency radios wash up on the school_rooftop, offering a chance for long-range communication."
+        ]
+      },
+      "step": 8
+    },
+    {
+      "agent_id": "e1e2401f-31db-482f-830e-778f27007519",
+      "agent_name": "Tsunami System",
+      "action_type": "affect_agent",
+      "target": "all_agents",
+      "parameters": {
+        "health_delta": -2,
+        "stress_delta": 3,
+        "health": null,
+        "stress_level": null
+      },
+      "step": 8
+    },
+    {
+      "agent_id": "f62acb0b-3d05-4a7b-bd23-37205c705d81",
+      "agent_name": "Nanay Iska #8",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 8
+    },
+    {
+      "agent_id": "f62acb0b-3d05-4a7b-bd23-37205c705d81",
+      "agent_name": "Nanay Iska #8",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 6.584000000000001,
+        "health": 2.6240000000000006,
+        "location": "coastal_village"
+      },
+      "step": 8
+    },
+    {
+      "agent_id": "efa6b3ae-60b3-4797-ab35-157ad9c21e3d",
+      "agent_name": "PFC Marco Villanueva #9",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 8
+    },
+    {
+      "agent_id": "efa6b3ae-60b3-4797-ab35-157ad9c21e3d",
+      "agent_name": "PFC Marco Villanueva #9",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 6,
+        "health": 10,
+        "location": "hilltop_evacuation"
+      },
+      "step": 8
+    },
+    {
+      "agent_id": "6fd03f1e-3b24-4afe-bda2-236397ef1d46",
+      "agent_name": "Dr. Amara Osei #10",
+      "action_type": "wait",
+      "target": null,
+      "parameters": {},
+      "step": 8
+    },
+    {
+      "agent_id": "6fd03f1e-3b24-4afe-bda2-236397ef1d46",
+      "agent_name": "Dr. Amara Osei #10",
+      "action_type": "cinematic",
+      "target": null,
+      "parameters": {
+        "action": "",
+        "thought": "",
+        "emotion": "",
+        "speech": null,
+        "stress_level": 7,
+        "health": 10,
+        "location": "ngo_compound"
+      },
+      "step": 8
+    }
+  ],
+  "message_timeline": [
+    {
+      "step": 1,
+      "from_agent": "Tsunami System",
+      "from_id": "e1e2401f-31db-482f-830e-778f27007519",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The storm's intensity is peaking! A sudden surge has breached the fishing_harbor seawall, and the coastal_village is now in darkness with roads blocked by fallen power lines. The barangay_hall is flooding from the bottom up. Survivors in low-lying areas are taking damage from cold, debris, and panic. However, a delivery drone managed to drop emergency rations on the school_rooftop and a first_aid_kit was found in the church_plaza."
+    },
+    {
+      "step": 2,
+      "from_agent": "Tsunami System",
+      "from_id": "e1e2401f-31db-482f-830e-778f27007519",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The storm's fury is reaching a crescendo. The seawall at the coastal village has buckled under the pressure, sending a wall of churning water deeper into the streets. The fishing harbor is now a churning cauldron of debris. The mangrove trail is blocked by a sudden rush of mud and logs. However, amidst the chaos, a crate of emergency rations and a sturdy flotation device have washed up near the school rooftop, offering a glimmer of hope. The rising water threatens to cut off the lower zones entirely."
+    },
+    {
+      "step": 3,
+      "from_agent": "Tsunami System",
+      "from_id": "e1e2401f-31db-482f-830e-778f27007519",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "CRITICAL ALERT: The seawall at coastal_village has finally breached! The surge is overwhelming the village, forcing immediate evacuation to higher ground. The currents at fishing_harbor have become treacherous, sweeping debris and trapping those on the docks. However, the violent surge has pushed a cache of emergency rations and a section of a damaged boat onto the mangrove_trail, offering a glimmer of hope for the stranded. The water level is now at its absolute peak; the hilltop_evacuation and school_rooftop remain the only safe havens, but access is becoming increasingly difficult."
+    },
+    {
+      "step": 4,
+      "from_agent": "Tsunami System",
+      "from_id": "e1e2401f-31db-482f-830e-778f27007519",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "CRITICAL ALERT: The storm surge has reached its peak. The sea wall has failed, swallowing the coastal village and harbor. The water is rising rapidly on the school rooftop and has trapped survivors inside the collapsing barangay hall. The mangrove trail is now blocked by debris. Immediate evacuation to the hilltop is impossible via the trail; you must find alternative routes or wait for rescue from the air. Resources are critically low in the flooded zones."
+    },
+    {
+      "step": 5,
+      "from_agent": "Tsunami System",
+      "from_id": "e1e2401f-31db-482f-830e-778f27007519",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "CRITICAL ALERT: The floodwaters have reached their peak. The coastal village and fishing harbor are now entirely underwater. Debris from a collapsing wall at the barangay hall has blocked the primary route, creating a panic. Meanwhile, the mangrove trail is swept by dangerous currents. However, amidst the chaos, supplies have been spotted floating near the school rooftop and a makeshift raft has washed up near the church plaza."
+    },
+    {
+      "step": 6,
+      "from_agent": "Tsunami System",
+      "from_id": "e1e2401f-31db-482f-830e-778f27007519",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "CRITICAL ALERT: The floodwaters have reached a catastrophic peak. The fishing harbor pier has just collapsed under the strain, creating a deadly debris field. Simultaneously, a sudden surge is battering the coastal village, pushing water toward the church plaza. The mangrove trail is now completely submerged and impassable. However, amidst the chaos, a sealed supply crate has washed up near the school rooftop, and faint signals of distress are rising from the debris near the harbor. Agents in the harbor and village are taking damage from the impact and rising stress. Immediate evacuation or reinforcement is required."
+    },
+    {
+      "step": 7,
+      "from_agent": "Tsunami System",
+      "from_id": "e1e2401f-31db-482f-830e-778f27007519",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "CRITICAL ALERT: The coastal defenses have failed. A massive wave of debris and floodwater is surging through the coastal_village and fishing_harbor. The mangrove_trail is now heavily compromised with snapping timber. Simultaneously, a high-priority rescue opportunity has emerged at the church_plaza where a family is trapped on an upper floor. Immediate action is required to save lives before the water reaches the school_rooftop."
+    },
+    {
+      "step": 8,
+      "from_agent": "Tsunami System",
+      "from_id": "e1e2401f-31db-482f-830e-778f27007519",
+      "to": "broadcast",
+      "type": "broadcast",
+      "content": "The storm has reached its peak fury. The coastal_village and fishing_harbor are now lost beneath the churning waters, making them inaccessible until the tide recedes. A massive tree has fallen in the mangrove_trail, severing the link to the barangay_hall. Amidst the chaos, a cluster of emergency radios has washed up on the school_rooftop, a glimmer of hope for coordinating a rescue. The relentless rain and rising floodwaters are taking a physical and mental toll on everyone."
+    }
+  ]
+}

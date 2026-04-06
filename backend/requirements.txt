@@ -18,6 +18,8 @@ openai
 
 # Async utilities
 asyncio-throttle
+aiohttp
+aiosqlite
 
 # Testing
 pytest
@@ -34,4 +36,3 @@ python-dotenv
 click
 rich
 questionary
-

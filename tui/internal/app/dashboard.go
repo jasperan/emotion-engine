@@ -28,9 +28,13 @@ const (
 	PanelMap
 	PanelRelationships
 	PanelNegotiations
+	PanelSocialDynamics
+	PanelNetwork
+	PanelTelemetry
+	panelModeCount // sentinel for modulo arithmetic
 )
 
-var panelModeNames = [...]string{"Feed", "Map", "Relationships", "Negotiations"}
+var panelModeNames = [...]string{"Feed", "Map", "Relationships", "Negotiations", "Social", "Network", "Telemetry"}
 
 func (p PanelMode) String() string { return panelModeNames[p] }
 
@@ -83,6 +87,22 @@ type DashboardModel struct {
 	negotiations []components.NegotiationEntry
 	negScroll    int
 	feedFilter   components.FeedFilter
+
+	// Social dynamics state (Feature 1)
+	opinionStances   []components.OpinionStance
+	tippingPoints    []components.TippingPointInfo
+	influenceProfiles []components.InfluenceProfile
+	convergenceByTopic map[string]float64
+
+	// Network matrix state (Feature 2)
+	networkMode   components.NetworkMode
+	coalitions    []components.CoalitionInfo
+	influenceEdges []components.InfluenceEdgeInfo
+
+	// Step diff + telemetry state (Feature 4)
+	stepDiffs       [][]components.DiffEntry // rolling last 5
+	contagionEvents []components.ContagionEvent
+	agentTelemetry  []components.AgentTelemetryInfo
 
 	refreshNeeded bool
 
@@ -243,6 +263,94 @@ func (m *DashboardModel) handleWSEvent(evt api.WSMessage) {
 		for _, s := range m.streams {
 			s.step = int(step)
 		}
+		// Extract agent telemetry from step_completed payload
+		if telemetry, ok := evt.Data["agent_telemetry"].(map[string]interface{}); ok {
+			m.agentTelemetry = nil
+			for agentID, data := range telemetry {
+				if td, ok := data.(map[string]interface{}); ok {
+					m.agentTelemetry = append(m.agentTelemetry, components.AgentTelemetryInfo{
+						Name:             m.agentNameByID(agentID),
+						Status:           fmt.Sprintf("%v", td["status"]),
+						AvgTickMs:        safeFloat(td, "avg_tick_duration_ms"),
+						TokensUsed:       int(safeFloat(td, "llm_tokens_used")),
+						ActionCount:      int(safeFloat(td, "actions_taken")),
+						MessagesSent:     int(safeFloat(td, "messages_sent")),
+						MessagesReceived: int(safeFloat(td, "messages_received")),
+						StaleScore:       safeFloat(td, "staleness_score"),
+					})
+				}
+			}
+		}
+
+		// Extract world state diff
+		if diffData, ok := evt.Data["world_state_diff"].(map[string]interface{}); ok {
+			var diffs []components.DiffEntry
+			// Health changes
+			if hc, ok := diffData["agent_health_changes"].(map[string]interface{}); ok {
+				for agent, val := range hc {
+					diffs = append(diffs, components.DiffEntry{
+						Category: "health", Key: agent, ChangeType: components.DiffChanged,
+						NewValue: fmt.Sprintf("%v", val),
+					})
+				}
+			}
+			// Stress changes
+			if sc, ok := diffData["agent_stress_changes"].(map[string]interface{}); ok {
+				for agent, val := range sc {
+					diffs = append(diffs, components.DiffEntry{
+						Category: "stress", Key: agent, ChangeType: components.DiffChanged,
+						NewValue: fmt.Sprintf("%v", val),
+					})
+				}
+			}
+			// Hazard changes
+			if hd, ok := diffData["hazard_level_delta"].(float64); ok && hd != 0 {
+				diffs = append(diffs, components.DiffEntry{
+					Category: "hazard", Key: "level", ChangeType: components.DiffChanged,
+					NewValue: fmt.Sprintf("%+.1f", hd),
+				})
+			}
+			// Location changes
+			if lc, ok := diffData["location_changes"].([]interface{}); ok {
+				for _, l := range lc {
+					diffs = append(diffs, components.DiffEntry{
+						Category: "movement", Key: fmt.Sprintf("%v", l),
+						ChangeType: components.DiffChanged,
+					})
+				}
+			}
+			// New proposals
+			if np, ok := diffData["new_proposals_count"].(float64); ok && np > 0 {
+				diffs = append(diffs, components.DiffEntry{
+					Category: "proposal", Key: "new proposals",
+					ChangeType: components.DiffAdded,
+					NewValue:   fmt.Sprintf("%.0f", np),
+				})
+			}
+			// Trust signals
+			if ts, ok := diffData["trust_signals_count"].(float64); ok && ts > 0 {
+				diffs = append(diffs, components.DiffEntry{
+					Category: "trust", Key: "signals",
+					ChangeType: components.DiffAdded,
+					NewValue:   fmt.Sprintf("%.0f", ts),
+				})
+			}
+			// New events
+			if ne, ok := diffData["new_events"].([]interface{}); ok {
+				for _, e := range ne {
+					diffs = append(diffs, components.DiffEntry{
+						Category: "event", Key: fmt.Sprintf("%v", e),
+						ChangeType: components.DiffAdded,
+					})
+				}
+			}
+
+			m.stepDiffs = append(m.stepDiffs, diffs)
+			if len(m.stepDiffs) > 5 {
+				m.stepDiffs = m.stepDiffs[len(m.stepDiffs)-5:]
+			}
+		}
+
 		// Refresh agent data to get updated dynamic_state (locations, health, etc.)
 		m.refreshNeeded = true
 
@@ -419,7 +527,101 @@ func (m *DashboardModel) handleWSEvent(evt api.WSMessage) {
 		}
 
 	case "emotion_contagion":
-		// Placeholder: could update relationship edges based on emotional spread
+		source, _ := evt.Data["source_name"].(string)
+		target, _ := evt.Data["target_name"].(string)
+		delta, _ := evt.Data["delta"].(float64)
+		stressBefore, _ := evt.Data["target_stress_before"].(float64)
+		stressAfter, _ := evt.Data["target_stress_after"].(float64)
+		mechanism, _ := evt.Data["mechanism"].(string)
+		location, _ := evt.Data["location"].(string)
+		step := int(safeFloat(evt.Data, "step"))
+
+		m.contagionEvents = append(m.contagionEvents, components.ContagionEvent{
+			SourceName:   source,
+			TargetName:   target,
+			StressDelta:  delta,
+			StressBefore: stressBefore,
+			StressAfter:  stressAfter,
+			Mechanism:    mechanism,
+			Location:     location,
+			Step:         step,
+		})
+		if len(m.contagionEvents) > 100 {
+			m.contagionEvents = m.contagionEvents[len(m.contagionEvents)-100:]
+		}
+
+	case "social_dynamics":
+		// Parse opinion shifts into stances
+		if shifts, ok := evt.Data["opinion_shifts"].([]interface{}); ok {
+			for _, s := range shifts {
+				if sm, ok := s.(map[string]interface{}); ok {
+					agentName := m.agentNameByID(fmt.Sprintf("%v", sm["agent_id"]))
+					topic, _ := sm["topic"].(string)
+					newStance, _ := sm["new_stance"].(float64)
+					m.updateOpinionStance(agentName, topic, newStance)
+				}
+			}
+		}
+		// Parse tipping points
+		if tps, ok := evt.Data["tipping_points"].([]interface{}); ok {
+			for _, tp := range tps {
+				if tm, ok := tp.(map[string]interface{}); ok {
+					m.tippingPoints = append(m.tippingPoints, components.TippingPointInfo{
+						Step:       int(safeFloat(tm, "step")),
+						Topic:      fmt.Sprintf("%v", tm["topic"]),
+						Type:       fmt.Sprintf("%v", tm["type"]),
+						MeanBefore: safeFloat(tm, "mean_before"),
+						MeanAfter:  safeFloat(tm, "mean_after"),
+					})
+				}
+			}
+		}
+		// Parse super spreaders and anchors
+		if spreaders, ok := evt.Data["super_spreaders"].([]interface{}); ok {
+			m.updateInfluenceProfiles(spreaders, true, false)
+		}
+		if anchors, ok := evt.Data["opinion_anchors"].([]interface{}); ok {
+			m.updateInfluenceProfiles(anchors, false, true)
+		}
+		// Parse influence data
+		if infData, ok := evt.Data["influence_data"].(map[string]interface{}); ok {
+			if edges, ok := infData["edges"].([]interface{}); ok {
+				m.influenceEdges = nil
+				for _, e := range edges {
+					if em, ok := e.(map[string]interface{}); ok {
+						src := m.agentNameByID(fmt.Sprintf("%v", em["source"]))
+						tgt := m.agentNameByID(fmt.Sprintf("%v", em["target"]))
+						m.influenceEdges = append(m.influenceEdges, components.InfluenceEdgeInfo{
+							Source:          src,
+							Target:          tgt,
+							Topic:           fmt.Sprintf("%v", em["topic"]),
+							TotalDelta:      safeFloat(em, "weight"),
+							InteractionCount: int(safeFloat(em, "interaction_count")),
+						})
+					}
+				}
+			}
+			// Parse convergence scores
+			if summary, ok := infData["summary"].(map[string]interface{}); ok {
+				if m.convergenceByTopic == nil {
+					m.convergenceByTopic = make(map[string]float64)
+				}
+				for topic, data := range summary {
+					if td, ok := data.(map[string]interface{}); ok {
+						m.convergenceByTopic[topic] = safeFloat(td, "convergence_score")
+					}
+				}
+			}
+		}
+
+	case "opinion_tipping_point":
+		m.tippingPoints = append(m.tippingPoints, components.TippingPointInfo{
+			Step:       int(safeFloat(evt.Data, "step")),
+			Topic:      fmt.Sprintf("%v", evt.Data["topic"]),
+			Type:       fmt.Sprintf("%v", evt.Data["type"]),
+			MeanBefore: safeFloat(evt.Data, "mean_before"),
+			MeanAfter:  safeFloat(evt.Data, "mean_after"),
+		})
 	}
 }
 
@@ -566,15 +768,172 @@ func (m *DashboardModel) agentNameByID(id string) string {
 	return id
 }
 
+// updateOpinionStance upserts a stance for an agent on a topic.
+func (m *DashboardModel) updateOpinionStance(agentName, topic string, value float64) {
+	for i, s := range m.opinionStances {
+		if s.AgentName == agentName && s.Topic == topic {
+			m.opinionStances[i].Value = value
+			return
+		}
+	}
+	m.opinionStances = append(m.opinionStances, components.OpinionStance{
+		AgentName: agentName, Topic: topic, Value: value,
+	})
+}
+
+// updateInfluenceProfiles marks agents as super spreaders or anchors.
+func (m *DashboardModel) updateInfluenceProfiles(agentIDs []interface{}, spreader, anchor bool) {
+	for _, aid := range agentIDs {
+		name := m.agentNameByID(fmt.Sprintf("%v", aid))
+		found := false
+		for i, p := range m.influenceProfiles {
+			if p.AgentName == name {
+				if spreader {
+					m.influenceProfiles[i].IsSuperSpreader = true
+				}
+				if anchor {
+					m.influenceProfiles[i].IsAnchor = true
+				}
+				found = true
+				break
+			}
+		}
+		if !found {
+			m.influenceProfiles = append(m.influenceProfiles, components.InfluenceProfile{
+				AgentName:       name,
+				IsSuperSpreader: spreader,
+				IsAnchor:        anchor,
+			})
+		}
+	}
+}
+
+// renderRightPanel renders the right-side panel for the current panel mode.
+// This is shared between focus-with-expanded-agent and focus-normal views.
+func (m DashboardModel) renderRightPanel(rightWidth, rightHeight int) string {
+	switch m.panelMode {
+	case PanelFeed:
+		feedHeight := rightHeight * 2 / 3
+		worldHeight := rightHeight - feedHeight
+		feed := components.RenderMessageFeed(components.MessageFeedData{
+			Entries:   m.feedEntries,
+			Filter:    m.feedFilter,
+			ScrollPos: m.feedScroll,
+			Height:    feedHeight - 2,
+			Width:     rightWidth - 2,
+		})
+		feedPanel := theme.Panel.Width(rightWidth - 2).Height(feedHeight - 2).Render(feed)
+		world := components.RenderWorldState(components.WorldStateData{
+			HazardLevel: m.hazardLevel,
+			Locations:   m.locations,
+			Width:       rightWidth - 2,
+		})
+		worldPanel := theme.Panel.Width(rightWidth - 2).Height(worldHeight - 2).Render(world)
+		return lipgloss.JoinVertical(lipgloss.Left, feedPanel, worldPanel)
+
+	case PanelMap:
+		return lipgloss.NewStyle().Width(rightWidth - 2).Height(rightHeight - 2).Render(
+			components.RenderSpatialMap(components.SpatialMapData{
+				Locations: m.mapLocations,
+				Travels:   m.mapTravels,
+				Width:     rightWidth,
+				Height:    rightHeight,
+			}))
+
+	case PanelRelationships:
+		return lipgloss.NewStyle().Width(rightWidth - 2).Height(rightHeight - 2).Render(
+			components.RenderRelationshipWeb(components.RelationshipWebData{
+				Agents: m.relAgents,
+				Edges:  m.relEdges,
+				Width:  rightWidth,
+				Height: rightHeight,
+			}))
+
+	case PanelNegotiations:
+		return lipgloss.NewStyle().Width(rightWidth - 2).Height(rightHeight - 2).Render(
+			components.RenderNegotiationTheater(components.NegotiationTheaterData{
+				Entries:   m.negotiations,
+				ScrollPos: m.negScroll,
+				Width:     rightWidth,
+				Height:    rightHeight,
+			}))
+
+	case PanelSocialDynamics:
+		return lipgloss.NewStyle().Width(rightWidth - 2).Height(rightHeight - 2).Render(
+			components.RenderOpinionHeatmap(components.OpinionHeatmapData{
+				Stances:            m.opinionStances,
+				TippingPoints:      m.tippingPoints,
+				Profiles:           m.influenceProfiles,
+				ConvergenceByTopic: m.convergenceByTopic,
+				Width:              rightWidth,
+				Height:             rightHeight,
+			}))
+
+	case PanelNetwork:
+		return lipgloss.NewStyle().Width(rightWidth - 2).Height(rightHeight - 2).Render(
+			components.RenderNetworkMatrix(components.NetworkMatrixData{
+				Agents:     m.relAgents,
+				Edges:      m.relEdges,
+				Coalitions: m.coalitions,
+				Influence:  m.influenceEdges,
+				Mode:       m.networkMode,
+				Width:      rightWidth,
+				Height:     rightHeight,
+			}))
+
+	case PanelTelemetry:
+		// Split: telemetry grid top, step diff + contagion bottom
+		topH := rightHeight / 2
+		botH := rightHeight - topH
+		top := components.RenderTelemetryGrid(components.TelemetryGridData{
+			Agents: m.agentTelemetry,
+			Width:  rightWidth - 2,
+			Height: topH,
+		})
+		topPanel := theme.Panel.Width(rightWidth - 2).Height(topH - 2).Render(top)
+		bot := components.RenderStepDiff(components.StepDiffData{
+			CurrentStep: func() int {
+				if m.run != nil {
+					return m.run.CurrentStep
+				}
+				return 0
+			}(),
+			Diffs:     m.stepDiffs,
+			Contagion: m.contagionEvents,
+			Width:     rightWidth - 2,
+			Height:    botH,
+		})
+		botPanel := theme.Panel.Width(rightWidth - 2).Height(botH - 2).Render(bot)
+		return lipgloss.JoinVertical(lipgloss.Left, topPanel, botPanel)
+	}
+	return ""
+}
+
 // handleKey processes keyboard input for the dashboard.
 func (m DashboardModel) handleKey(msg tea.KeyMsg) (DashboardModel, tea.Cmd) {
 	switch msg.String() {
 	case "tab":
-		m.panelMode = (m.panelMode + 1) % 4
+		m.panelMode = (m.panelMode + 1) % panelModeCount
+	case "shift+tab":
+		m.panelMode = (m.panelMode - 1 + panelModeCount) % panelModeCount
 
 	case "f":
 		if m.panelMode == PanelFeed {
 			m.feedFilter = (m.feedFilter + 1) % 4
+		}
+
+	case "t":
+		// Switch to Theater view (keeps WS alive)
+		if m.run != nil {
+			return m, func() tea.Msg {
+				return SwitchScreenMsg{Screen: ScreenTheater, Data: m.runID}
+			}
+		}
+
+	case "n":
+		// Toggle network mode (trust vs influence) when on Network panel
+		if m.panelMode == PanelNetwork {
+			m.networkMode = (m.networkMode + 1) % 2
 		}
 
 	case "g":
@@ -709,10 +1068,14 @@ func (m DashboardModel) View(width, height int) string {
 	hints := []components.KeyHint{
 		{Key: "Tab", Desc: "panel"},
 		{Key: "g", Desc: "grid"},
+		{Key: "t", Desc: "theater"},
 		{Key: "F1", Desc: "help"},
 	}
 	if !m.readOnly {
 		hints = append(hints, components.KeyHint{Key: "Space", Desc: "pause"})
+	}
+	if m.panelMode == PanelNetwork {
+		hints = append(hints, components.KeyHint{Key: "n", Desc: "mode"})
 	}
 	hints = append(hints, components.KeyHint{Key: "q", Desc: "back"})
 
@@ -746,53 +1109,8 @@ func (m DashboardModel) renderFocusMode(width, height int) string {
 		leftContent := m.renderMindView(m.expandedAgent, leftWidth, height)
 		left := lipgloss.NewStyle().Width(leftWidth).Height(height).Render(leftContent)
 
-		// Right panel renders as normal (fall through to right-panel block below).
-		rightHeight := height
-		var right string
-		switch m.panelMode {
-		case PanelFeed:
-			feedHeight := rightHeight * 2 / 3
-			worldHeight := rightHeight - feedHeight
-			feed := components.RenderMessageFeed(components.MessageFeedData{
-				Entries:   m.feedEntries,
-				Filter:    m.feedFilter,
-				ScrollPos: m.feedScroll,
-				Height:    feedHeight - 2,
-				Width:     rightWidth - 2,
-			})
-			feedPanel := theme.Panel.Width(rightWidth - 2).Height(feedHeight - 2).Render(feed)
-			world := components.RenderWorldState(components.WorldStateData{
-				HazardLevel: m.hazardLevel,
-				Locations:   m.locations,
-				Width:       rightWidth - 2,
-			})
-			worldPanel := theme.Panel.Width(rightWidth - 2).Height(worldHeight - 2).Render(world)
-			right = lipgloss.JoinVertical(lipgloss.Left, feedPanel, worldPanel)
-		case PanelMap:
-			right = lipgloss.NewStyle().Width(rightWidth - 2).Height(rightHeight - 2).Render(
-				components.RenderSpatialMap(components.SpatialMapData{
-					Locations: m.mapLocations,
-					Travels:   m.mapTravels,
-					Width:     rightWidth,
-					Height:    rightHeight,
-				}))
-		case PanelRelationships:
-			right = lipgloss.NewStyle().Width(rightWidth - 2).Height(rightHeight - 2).Render(
-				components.RenderRelationshipWeb(components.RelationshipWebData{
-					Agents: m.relAgents,
-					Edges:  m.relEdges,
-					Width:  rightWidth,
-					Height: rightHeight,
-				}))
-		case PanelNegotiations:
-			right = lipgloss.NewStyle().Width(rightWidth - 2).Height(rightHeight - 2).Render(
-				components.RenderNegotiationTheater(components.NegotiationTheaterData{
-					Entries:   m.negotiations,
-					ScrollPos: m.negScroll,
-					Width:     rightWidth,
-					Height:    rightHeight,
-				}))
-		}
+		// Right panel renders via shared renderRightPanel.
+		right := m.renderRightPanel(rightWidth, height)
 		right = lipgloss.NewStyle().Width(rightWidth).Height(height).Render(right)
 		return lipgloss.JoinHorizontal(lipgloss.Top, left, right)
 	}
@@ -802,56 +1120,8 @@ func (m DashboardModel) renderFocusMode(width, height int) string {
 	left := lipgloss.JoinVertical(lipgloss.Left, agentPanes...)
 	left = lipgloss.NewStyle().Width(leftWidth).Height(height).Render(left)
 
-	// Right: panel mode dispatch
-	rightHeight := height
-	var right string
-	switch m.panelMode {
-	case PanelFeed:
-		feedHeight := rightHeight * 2 / 3
-		worldHeight := rightHeight - feedHeight
-
-		feed := components.RenderMessageFeed(components.MessageFeedData{
-			Entries:   m.feedEntries,
-			Filter:    m.feedFilter,
-			ScrollPos: m.feedScroll,
-			Height:    feedHeight - 2,
-			Width:     rightWidth - 2,
-		})
-		feedPanel := theme.Panel.Width(rightWidth - 2).Height(feedHeight - 2).Render(feed)
-
-		world := components.RenderWorldState(components.WorldStateData{
-			HazardLevel: m.hazardLevel,
-			Locations:   m.locations,
-			Width:       rightWidth - 2,
-		})
-		worldPanel := theme.Panel.Width(rightWidth - 2).Height(worldHeight - 2).Render(world)
-
-		right = lipgloss.JoinVertical(lipgloss.Left, feedPanel, worldPanel)
-	case PanelMap:
-		rightContent := components.RenderSpatialMap(components.SpatialMapData{
-			Locations: m.mapLocations,
-			Travels:   m.mapTravels,
-			Width:     rightWidth,
-			Height:    rightHeight,
-		})
-		right = lipgloss.NewStyle().Width(rightWidth - 2).Height(rightHeight - 2).Render(rightContent)
-	case PanelRelationships:
-		rightContent := components.RenderRelationshipWeb(components.RelationshipWebData{
-			Agents: m.relAgents,
-			Edges:  m.relEdges,
-			Width:  rightWidth,
-			Height: rightHeight,
-		})
-		right = lipgloss.NewStyle().Width(rightWidth - 2).Height(rightHeight - 2).Render(rightContent)
-	case PanelNegotiations:
-		rightContent := components.RenderNegotiationTheater(components.NegotiationTheaterData{
-			Entries:   m.negotiations,
-			ScrollPos: m.negScroll,
-			Width:     rightWidth,
-			Height:    rightHeight,
-		})
-		right = lipgloss.NewStyle().Width(rightWidth - 2).Height(rightHeight - 2).Render(rightContent)
-	}
+	// Right: panel mode dispatch (unified via renderRightPanel)
+	right := m.renderRightPanel(rightWidth, height)
 	right = lipgloss.NewStyle().Width(rightWidth).Height(height).Render(right)
 
 	return lipgloss.JoinHorizontal(lipgloss.Top, left, right)

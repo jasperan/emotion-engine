@@ -79,16 +79,27 @@ func (h HelpModel) bindingsForScreen(screen Screen) []keyBinding {
 		}
 	case ScreenDashboard:
 		return []keyBinding{
-			{"Tab", "Panel mode (Feed/Map/Rel/Neg)"},
+			{"Tab", "Next panel"},
+			{"Shift+Tab", "Prev panel"},
 			{"g", "Grid/Focus toggle"},
+			{"t", "Theater view"},
 			{"Enter", "Agent Mind View"},
-			{"f", "Filter messages (Feed mode)"},
+			{"f", "Filter messages (Feed)"},
+			{"n", "Network mode (Network)"},
 			{"Space", "Pause/Resume"},
 			{"s", "Stop run"},
 			{"1-9", "Select agent"},
 			{"h/l", "Cycle agents"},
-			{"j/k", "Scroll feed/negotiations"},
+			{"j/k", "Scroll"},
 			{"q", "Back"},
+		}
+	case ScreenTheater:
+		return []keyBinding{
+			{"Space", "Pause/Resume feed"},
+			{"1-9", "Focus on agent"},
+			{"0", "Show all agents"},
+			{"j/k", "Scroll"},
+			{"q/Esc", "Back to dashboard"},
 		}
 	case ScreenHistory:
 		return []keyBinding{

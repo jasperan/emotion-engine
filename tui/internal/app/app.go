@@ -23,6 +23,7 @@ const (
 	ScreenScenarios
 	ScreenLauncher
 	ScreenDashboard
+	ScreenTheater
 	ScreenHistory
 	ScreenReplay
 	ScreenAnalytics
@@ -58,6 +59,7 @@ type App struct {
 	scenarios ScenarioModel
 	launcher  LauncherModel
 	dashboard DashboardModel
+	theater   TheaterModel
 	history   HistoryModel
 	replay    ReplayModel
 	analytics AnalyticsModel
@@ -126,6 +128,11 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			a.dashboard, cmd = a.dashboard.Update(msg)
 			return a, cmd
 		}
+		if a.screen == ScreenTheater {
+			var cmd tea.Cmd
+			a.theater, cmd = a.theater.Update(msg)
+			return a, cmd
+		}
 		return a, nil
 
 	case WSErrorMsg:
@@ -152,6 +159,10 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case ScreenDashboard:
 		var cmd tea.Cmd
 		a.dashboard, cmd = a.dashboard.Update(msg)
+		return a, cmd
+	case ScreenTheater:
+		var cmd tea.Cmd
+		a.theater, cmd = a.theater.Update(msg)
 		return a, cmd
 	case ScreenHistory:
 		var cmd tea.Cmd
@@ -183,6 +194,8 @@ func (a App) View() string {
 		content = a.launcher.View(a.width, a.height)
 	case ScreenDashboard:
 		content = a.dashboard.View(a.width, a.height)
+	case ScreenTheater:
+		content = a.theater.View(a.width, a.height)
 	case ScreenHistory:
 		content = a.history.View(a.width, a.height)
 	case ScreenReplay:
@@ -202,8 +215,10 @@ func (a App) View() string {
 
 // switchScreen creates a fresh sub-model for the target screen and initialises it.
 func (a App) switchScreen(msg SwitchScreenMsg) (tea.Model, tea.Cmd) {
-	// Close WS connection when leaving the dashboard screen.
-	if a.screen == ScreenDashboard {
+	// Close WS connection when leaving live screens, unless going to another live screen.
+	isLiveSource := a.screen == ScreenDashboard || a.screen == ScreenTheater
+	isLiveDest := msg.Screen == ScreenDashboard || msg.Screen == ScreenTheater
+	if isLiveSource && !isLiveDest {
 		a.wsClient.Close()
 	}
 
@@ -246,6 +261,12 @@ func (a App) switchScreen(msg SwitchScreenMsg) (tea.Model, tea.Cmd) {
 		}
 
 		return a, cmd
+
+	case ScreenTheater:
+		// Theater reuses existing WS connection from Dashboard.
+		runID, _ := msg.Data.(string)
+		a.theater = NewTheaterModel(a.client, runID, a.dashboard.run)
+		return a, a.theater.Init()
 
 	case ScreenHistory:
 		a.history = NewHistoryModel(a.client)

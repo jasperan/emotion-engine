@@ -157,6 +157,12 @@ Go TUI (Bubble Tea)
 - Turn-taking, conversation state
 - Tracks participants, prevents loops
 
+**ACP (Agent Coordination Protocol)** (`backend/app/acp/`)
+- `registry.py` — tracks live agent identities, statuses, capabilities, roles
+- `wave_controller.py` — wave-based task batching: groups tasks into dependency waves, runs each wave via `asyncio.gather`
+- `coordination.py` — cross-agent coordination primitives
+- `message.py` — ACP message/identity dataclasses
+
 **CooperationCoordinator** (`backend/app/agents/coordinator.py`)
 - Tracks shared goals and task assignments
 - Detects and breaks behavioral loops
@@ -313,6 +319,7 @@ Agent.tick() →
 - `backend/app/simulation/scene_director.py` - Location-based scene grouping
 - `backend/app/models/` - Database models
 - `backend/app/cli/main.py` - CLI commands
+- `backend/app/acp/` - Agent Coordination Protocol (registry, wave controller, coordination primitives)
 - `frontend/src/routes/` - SvelteKit pages
 - `frontend/src/lib/components/TokenStream.svelte` - Real-time token visualizer
 - `backend/app/storage/` - Knowledge graph layer (mirofish branch)

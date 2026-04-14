@@ -42,11 +42,14 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
+      {/* ---- Skip Link ---- */}
+      <a href="#main-content" className="skip-link">Skip to main content</a>
+
       {/* ---- Nav ---- */}
-      <nav className="sticky top-0 z-50 backdrop-blur-xl bg-background/80 border-b border-border">
-        <div className="max-w-5xl mx-auto px-4 py-2 flex items-center gap-1 overflow-x-auto scrollbar-hide">
-          <a href="#top" className="nav-link font-bold text-foreground mr-2">
-            Emotion<span className="text-muted-foreground font-normal">.sim</span>
+      <nav className="sticky top-0 z-50 backdrop-blur-xl bg-background/80 border-b border-border" aria-label="Section navigation">
+        <div className="max-w-6xl mx-auto px-6 py-3 flex items-center gap-1.5 overflow-x-auto scrollbar-hide">
+          <a href="#top" className="nav-link font-semibold text-foreground mr-3 tracking-tight">
+            Emotion<span className="text-muted-foreground font-light">.sim</span>
           </a>
           {sections.map((s) => (
             <a key={s.id} href={`#${s.id}`} className="nav-link">
@@ -58,74 +61,72 @@ export default function Home() {
       </nav>
 
       {/* ---- Hero ---- */}
-      <header id="top" className="relative overflow-hidden py-24 md:py-32">
-        <div className="hero-glow bg-orange-500" style={{ top: "-200px", left: "10%" }} />
-        <div className="hero-glow bg-pink-500" style={{ top: "-100px", right: "15%" }} />
-        <div className="hero-glow bg-purple-500" style={{ bottom: "-200px", left: "40%" }} />
-        <div className="max-w-5xl mx-auto px-4 relative z-10">
-          <p className="font-mono text-xs text-muted-foreground tracking-widest uppercase mb-4">
+      <header id="top" className="relative overflow-hidden py-28 md:py-40">
+        <div className="hero-glow" style={{ top: "-200px", left: "10%", background: "#d4845a" }} />
+        <div className="hero-glow" style={{ top: "-100px", right: "15%", background: "#5ab8c9" }} />
+        <div className="max-w-6xl mx-auto px-6 relative z-10">
+          <p className="font-mono text-xs text-muted-foreground tracking-[0.2em] uppercase mb-6">
             Interactive Explorer
           </p>
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight leading-tight mb-6">
+          <h1 className="text-5xl md:text-7xl font-extrabold tracking-[-0.04em] leading-[1.05] mb-8" style={{ textWrap: "balance" as never }}>
             Inside the{" "}
             <span className="text-personality">Emotion Engine</span>
             <br className="hidden md:block" />{" "}
-            Multi-Agent{" "}
-            <span className="text-cognitive">Simulation</span>
+            multi-agent{" "}
+            <span className="text-cognitive">simulation</span>
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl leading-relaxed">
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl leading-relaxed" style={{ textWrap: "pretty" as never }}>
             Ten sections. Ten interactive widgets. Explore how{" "}
             <span className="text-personality">personality traits</span> drive{" "}
             <span className="text-cognitive">cognitive pipelines</span>, how{" "}
             <span className="text-emotion">emotions spread</span> through agent groups,
             how <span className="text-trust">trust networks</span> evolve, and how{" "}
-            <span className="text-opinion">opinions shift</span>{" "}under social pressure
-            &mdash; all inside a disaster simulation.
+            <span className="text-opinion">opinions shift</span> under social pressure.
           </p>
-          <p className="text-sm text-muted-foreground mt-4 font-mono">
+          <p className="text-sm text-muted-foreground/70 mt-6 font-mono tracking-wide">
             Every concept below is interactive. Drag sliders, click agents, trigger negotiations.
           </p>
         </div>
       </header>
 
       {/* ---- Table of Contents ---- */}
-      <div className="max-w-5xl mx-auto px-4 mb-16">
-        <div className="bg-card border border-border rounded-xl p-6">
-          <h2 className="text-sm font-mono text-muted-foreground uppercase tracking-wider mb-4">
+      <div className="max-w-6xl mx-auto px-6 mb-20">
+        <div className="bg-card/60 border border-border rounded-2xl p-8 backdrop-blur-sm">
+          <h2 className="text-sm font-mono text-muted-foreground/70 tracking-[0.15em] uppercase mb-6">
             Sections
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
             {[
-              { id: "personality", num: "01", title: "Big Five Personality", desc: "Trait sliders that mechanically drive agent behavior probabilities", color: "text-personality", border: "border-orange-500/20 hover:border-orange-500/40" },
-              { id: "cognitive", num: "02", title: "Cognitive Engine", desc: "Think \u2192 Plan \u2192 Act \u2192 Reflect pipeline for each agent each step", color: "text-cognitive", border: "border-cyan-500/20 hover:border-cyan-500/40" },
-              { id: "emotion", num: "03", title: "Emotion Contagion", desc: "Stress propagates between co-located agents at rate 0.3", color: "text-emotion", border: "border-pink-500/20 hover:border-pink-500/40" },
-              { id: "trust", num: "04", title: "Trust Network", desc: "Vouch and betray signals that reshape bilateral relationships", color: "text-trust", border: "border-green-500/20 hover:border-green-500/40" },
-              { id: "opinion", num: "05", title: "Opinion Dynamics", desc: "Beliefs shift through influence, trust, and bias resistance", color: "text-opinion", border: "border-purple-500/20 hover:border-purple-500/40" },
-              { id: "scenes", num: "06", title: "Scene Director", desc: "Location-based grouping for parallel scene processing", color: "text-scene", border: "border-sky-500/20 hover:border-sky-500/40" },
-              { id: "negotiation", num: "07", title: "Negotiation Theater", desc: "Proposal state machine: pending \u2192 accepted, rejected, or countered", color: "text-negotiation", border: "border-yellow-500/20 hover:border-yellow-500/40" },
-              { id: "messages", num: "08", title: "Message Bus", desc: "Direct, broadcast, and room-scoped message routing", color: "text-message", border: "border-orange-500/20 hover:border-orange-500/40" },
-              { id: "tick", num: "09", title: "Simulation Tick", desc: "Three-phase loop: Environment \u2192 Agents \u2192 Reactions \u2192 Persist", color: "text-tick", border: "border-emerald-500/20 hover:border-emerald-500/40" },
-              { id: "scaling", num: "10", title: "Agent Scaling", desc: "Full LLM agents vs lightweight rule-based agents at 100+ scale", color: "text-scaling", border: "border-fuchsia-500/20 hover:border-fuchsia-500/40" },
+              { id: "personality", num: "01", title: "Personality", desc: "Trait-driven behavior probabilities", color: "text-personality" },
+              { id: "cognitive", num: "02", title: "Cognitive", desc: "Think, plan, act, reflect pipeline", color: "text-cognitive" },
+              { id: "emotion", num: "03", title: "Contagion", desc: "Stress propagation at rate 0.3", color: "text-emotion" },
+              { id: "trust", num: "04", title: "Trust", desc: "Vouch and betray dynamics", color: "text-trust" },
+              { id: "opinion", num: "05", title: "Opinion", desc: "Influence, trust, and bias", color: "text-opinion" },
+              { id: "scenes", num: "06", title: "Scenes", desc: "Location-based parallelism", color: "text-scene" },
+              { id: "negotiation", num: "07", title: "Negotiation", desc: "Proposal state machine", color: "text-negotiation" },
+              { id: "messages", num: "08", title: "Messages", desc: "Multi-mode routing bus", color: "text-message" },
+              { id: "tick", num: "09", title: "Tick loop", desc: "Four-phase simulation step", color: "text-tick" },
+              { id: "scaling", num: "10", title: "Scaling", desc: "Full vs lightweight agents", color: "text-scaling" },
             ].map((ch) => (
               <a
                 key={ch.id}
                 href={`#${ch.id}`}
-                className={`block p-4 rounded-lg border ${ch.border} bg-card transition-all hover:bg-white/[0.02]`}
+                className="group block p-4 rounded-xl border border-border bg-card/30 transition-all duration-200 hover:bg-white/[0.03] hover:border-white/[0.12] hover:-translate-y-0.5"
               >
-                <span className={`font-mono text-xs ${ch.color}`}>{ch.num}</span>
-                <h3 className="font-semibold text-sm mt-1">{ch.title}</h3>
-                <p className="text-xs text-muted-foreground mt-1">{ch.desc}</p>
+                <span className={`font-mono text-xs font-medium ${ch.color}`}>{ch.num}</span>
+                <h3 className="font-semibold text-sm mt-1.5 group-hover:text-foreground transition-colors">{ch.title}</h3>
+                <p className="text-xs text-muted-foreground/70 mt-1 leading-relaxed">{ch.desc}</p>
               </a>
             ))}
           </div>
         </div>
       </div>
 
-      <main className="max-w-5xl mx-auto px-4 prose-dark">
+      <main id="main-content" className="max-w-6xl mx-auto px-6 prose-dark" tabIndex={-1}>
         {/* ================================================================
             01: BIG FIVE PERSONALITY TRAITS
             ================================================================ */}
-        <section id="personality" className="reveal mb-16 scroll-mt-16">
+        <section id="personality" className="reveal mb-20 scroll-mt-20">
           <div className="flex items-center gap-3 mb-6">
             <span className="font-mono text-3xl font-bold text-personality">01</span>
             <div>
@@ -166,7 +167,7 @@ export default function Home() {
         {/* ================================================================
             02: COGNITIVE ENGINE
             ================================================================ */}
-        <section id="cognitive" className="reveal mb-16 scroll-mt-16">
+        <section id="cognitive" className="reveal mb-20 scroll-mt-20">
           <div className="flex items-center gap-3 mb-6">
             <span className="font-mono text-3xl font-bold text-cognitive">02</span>
             <div>
@@ -208,7 +209,7 @@ export default function Home() {
         {/* ================================================================
             03: EMOTION CONTAGION
             ================================================================ */}
-        <section id="emotion" className="reveal mb-16 scroll-mt-16">
+        <section id="emotion" className="reveal mb-20 scroll-mt-20">
           <div className="flex items-center gap-3 mb-6">
             <span className="font-mono text-3xl font-bold text-emotion">03</span>
             <div>
@@ -247,7 +248,7 @@ export default function Home() {
         {/* ================================================================
             04: TRUST NETWORK
             ================================================================ */}
-        <section id="trust" className="reveal mb-16 scroll-mt-16">
+        <section id="trust" className="reveal mb-20 scroll-mt-20">
           <div className="flex items-center gap-3 mb-6">
             <span className="font-mono text-3xl font-bold text-trust">04</span>
             <div>
@@ -286,7 +287,7 @@ export default function Home() {
         {/* ================================================================
             05: OPINION DYNAMICS
             ================================================================ */}
-        <section id="opinion" className="reveal mb-16 scroll-mt-16">
+        <section id="opinion" className="reveal mb-20 scroll-mt-20">
           <div className="flex items-center gap-3 mb-6">
             <span className="font-mono text-3xl font-bold text-opinion">05</span>
             <div>
@@ -325,7 +326,7 @@ export default function Home() {
         {/* ================================================================
             06: SCENE DIRECTOR
             ================================================================ */}
-        <section id="scenes" className="reveal mb-16 scroll-mt-16">
+        <section id="scenes" className="reveal mb-20 scroll-mt-20">
           <div className="flex items-center gap-3 mb-6">
             <span className="font-mono text-3xl font-bold text-scene">06</span>
             <div>
@@ -364,7 +365,7 @@ export default function Home() {
         {/* ================================================================
             07: NEGOTIATION THEATER
             ================================================================ */}
-        <section id="negotiation" className="reveal mb-16 scroll-mt-16">
+        <section id="negotiation" className="reveal mb-20 scroll-mt-20">
           <div className="flex items-center gap-3 mb-6">
             <span className="font-mono text-3xl font-bold text-negotiation">07</span>
             <div>
@@ -401,7 +402,7 @@ export default function Home() {
         {/* ================================================================
             08: MESSAGE BUS
             ================================================================ */}
-        <section id="messages" className="reveal mb-16 scroll-mt-16">
+        <section id="messages" className="reveal mb-20 scroll-mt-20">
           <div className="flex items-center gap-3 mb-6">
             <span className="font-mono text-3xl font-bold text-message">08</span>
             <div>
@@ -440,7 +441,7 @@ export default function Home() {
         {/* ================================================================
             09: SIMULATION TICK LOOP
             ================================================================ */}
-        <section id="tick" className="reveal mb-16 scroll-mt-16">
+        <section id="tick" className="reveal mb-20 scroll-mt-20">
           <div className="flex items-center gap-3 mb-6">
             <span className="font-mono text-3xl font-bold text-tick">09</span>
             <div>
@@ -480,7 +481,7 @@ export default function Home() {
         {/* ================================================================
             10: SCALING
             ================================================================ */}
-        <section id="scaling" className="reveal mb-16 scroll-mt-16">
+        <section id="scaling" className="reveal mb-20 scroll-mt-20">
           <div className="flex items-center gap-3 mb-6">
             <span className="font-mono text-3xl font-bold text-scaling">10</span>
             <div>
@@ -518,8 +519,8 @@ export default function Home() {
         {/* ================================================================
             CONCLUSION
             ================================================================ */}
-        <section className="mb-16">
-          <h2 className="text-3xl font-bold leading-tight mt-14 mb-4">The emergent whole</h2>
+        <section className="mb-20">
+          <h2 className="text-3xl font-bold leading-tight tracking-[-0.02em] mt-14 mb-6">The emergent whole</h2>
           <p>
             What makes the Emotion Engine unique is how these systems <strong>compose</strong>.{" "}
             <span className="text-personality">Personality traits</span> drive the{" "}
@@ -551,23 +552,25 @@ export default function Home() {
       </main>
 
       {/* ---- Footer ---- */}
-      <footer className="border-t border-border py-12 px-6">
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="w-7 h-7 rounded-md flex items-center justify-center font-extrabold text-white text-sm bg-gradient-to-br from-orange-500 to-pink-500">
-              E
+      <footer className="border-t border-border py-16 px-6 mt-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white text-sm" style={{ background: "linear-gradient(135deg, #d4845a, #c47a9b)" }}>
+                E
+              </div>
+              <div>
+                <span className="font-semibold text-sm">Emotion Engine</span>
+                <p className="text-muted-foreground/60 text-xs mt-0.5">
+                  Multi-agent simulation for emergent cooperative behavior
+                </p>
+              </div>
             </div>
-            <span className="font-semibold">Emotion Engine</span>
+            <div className="flex items-center gap-6 text-xs text-muted-foreground/50">
+              <span>Built with Next.js + React + TypeScript</span>
+              <a href="https://github.com/jasperan/emotion-engine" className="hover:text-foreground transition-colors" target="_blank" rel="noopener noreferrer">GitHub</a>
+            </div>
           </div>
-          <p className="text-muted-foreground text-sm mb-3">
-            10 interactive explorations: Personality Traits, Cognitive Engine, Emotion Contagion,
-            Trust Networks, Opinion Dynamics, Scene Director, Negotiation Theater, Message Bus,
-            Tick Loop, and Agent Scaling.
-          </p>
-          <p className="text-muted-foreground text-xs">
-            Multi-agent simulation for studying emergent cooperative behavior in AI agent swarms.
-            Built with Next.js + React + TypeScript.
-          </p>
         </div>
       </footer>
     </div>

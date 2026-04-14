@@ -57,18 +57,18 @@
 
 <div class="space-y-8">
 	<!-- Hero Section -->
-	<div class="card bg-gradient-to-br from-storm-900/80 to-flood-950/50 border-flood-700/30">
-		<div class="flex items-center gap-6">
+	<div class="card bg-surface/50 border-outline/15">
+		<div class="flex items-center gap-5">
 			<div
-				class="w-20 h-20 bg-gradient-to-br from-flood-400 to-storm-600 rounded-2xl flex items-center justify-center shadow-xl"
+				class="w-14 h-14 rounded-xl flex items-center justify-center shadow-sm flex-shrink-0"
+				style="background: linear-gradient(135deg, #5cd4c4, #8fb4e0);"
 			>
-				<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/></svg>
+				<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/></svg>
 			</div>
 			<div>
-				<h1 class="text-3xl font-display font-bold mb-2">Emotion Engine</h1>
-				<p class="text-storm-300 max-w-2xl">
-					Run AI agent swarms in parallel disaster simulations. Create scenarios, watch agents
-					roleplay with unique personalities, and analyze their cooperation and decision-making.
+				<h1 class="text-2xl font-display font-bold tracking-tight mb-1">Emotion Engine</h1>
+				<p class="text-on-surface/60 text-sm max-w-xl leading-relaxed">
+					Run AI agent swarms in parallel disaster simulations. Create scenarios, watch agents cooperate and make decisions.
 				</p>
 			</div>
 		</div>
@@ -76,9 +76,9 @@
 
 	<!-- Scenarios Section -->
 	<section>
-		<div class="flex items-center justify-between mb-4">
-			<h2 class="text-xl font-display font-semibold">Scenarios</h2>
-			<a href="/scenarios/new" class="btn btn-primary text-sm">+ Create Scenario</a>
+		<div class="flex items-center justify-between mb-5">
+			<h2 class="text-lg font-display font-semibold tracking-tight">Scenarios</h2>
+			<a href="/scenarios/new" class="btn btn-primary text-[13px] px-3.5 py-2">Create scenario</a>
 		</div>
 
 		{#if loading}
@@ -127,25 +127,25 @@
 
 	<!-- Recent Runs Section -->
 	<section>
-		<h2 class="text-xl font-display font-semibold mb-4">Recent Runs</h2>
+		<h2 class="text-lg font-display font-semibold tracking-tight mb-5">Recent runs</h2>
 
 		{#if runList.length === 0}
 			<div class="card text-center py-8">
 				<p class="text-storm-400">No runs yet. Start a simulation from a scenario!</p>
 			</div>
 		{:else}
-			<div class="card overflow-hidden p-0">
+			<div class="card overflow-hidden p-0 border-outline/15">
 				<table class="w-full">
-					<thead class="bg-storm-800/50">
-						<tr class="text-left text-sm text-storm-400">
-							<th class="px-4 py-3 font-medium">Run ID</th>
-							<th class="px-4 py-3 font-medium">Status</th>
-							<th class="px-4 py-3 font-medium">Progress</th>
-							<th class="px-4 py-3 font-medium">Created</th>
-							<th class="px-4 py-3 font-medium"></th>
+					<thead class="bg-surface/50">
+						<tr class="text-left text-xs text-on-surface/50">
+							<th class="px-5 py-3 font-medium tracking-wide">Run ID</th>
+							<th class="px-5 py-3 font-medium tracking-wide">Status</th>
+							<th class="px-5 py-3 font-medium tracking-wide">Progress</th>
+							<th class="px-5 py-3 font-medium tracking-wide">Created</th>
+							<th class="px-5 py-3 font-medium"></th>
 						</tr>
 					</thead>
-					<tbody class="divide-y divide-storm-700/30">
+					<tbody class="divide-y divide-outline/10">
 						{#each runList.slice(0, 10) as run}
 							<tr class="hover:bg-storm-800/30 cursor-pointer transition-colors" on:click={() => window.location.href = `/runs/${run.id}`}>
 								<td class="px-4 py-3">
@@ -194,4 +194,3 @@
 		{/if}
 	</section>
 </div>
-

@@ -10,17 +10,17 @@ export default {
 			},
 			colors: {
 				storm: {
-					50: '#f0f5ff',
-					100: '#e0eaff',
-					200: '#c7d7fe',
-					300: '#a4bcfc',
-					400: '#7a95f8',
-					500: '#5a6df2',
-					600: '#4349e6',
-					700: '#3838d2',
-					800: '#2f30a9',
-					900: '#2c2e85',
-					950: '#1a1a4e'
+					50: '#f0f3f8',
+					100: '#dfe5ef',
+					200: '#c5cedf',
+					300: '#9ba8c4',
+					400: '#7080a8',
+					500: '#53608c',
+					600: '#3f4a75',
+					700: '#353d64',
+					800: '#2a3050',
+					900: '#262a42',
+					950: '#171a2e'
 				},
 				flood: {
 					50: '#effbfc',
@@ -35,28 +35,29 @@ export default {
 					900: '#214856',
 					950: '#102e3a'
 				},
-				// Google AI Studio inspired palette
-				background: '#131314', // Very dark grey/almost black
-				surface: '#1E1F20',    // Slightly lighter for cards/sidebars
-				surface_alt: '#28292A', // Hover states
-				primary: '#A8C7FA',    // Light blue accent
-				on_primary: '#042D5F', // Text on primary
-				on_background: '#E3E3E3', // High emphasis text
-				on_surface: '#C4C7C5',    // Medium emphasis text
-				outline: '#444746',       // Borders
+				background: '#0e0f14',
+				surface: '#181a22',
+				surface_alt: '#22252e',
+				primary: '#8fb4e0',
+				on_primary: '#0a2a4a',
+				on_background: '#e2e2e6',
+				on_surface: '#a8aab8',
+				outline: '#3a3d48',
 				accent: {
-					blue: '#A8C7FA',
-					purple: '#D0BCFF',
-					teal: '#73F7E9'
+					blue: '#8fb4e0',
+					purple: '#b8a6d9',
+					teal: '#5cd4c4'
 				}
 			},
 			backgroundImage: {
 				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-				'subtle-glow': 'conic-gradient(from 180deg at 50% 50%, #1e1f2000 0deg, #a8c7fa10 180deg, #1e1f2000 360deg)',
+				'subtle-glow': 'conic-gradient(from 180deg at 50% 50%, #181a2200 0deg, #8fb4e008 180deg, #181a2200 360deg)',
+			},
+			borderRadius: {
+				'2xl': '1rem',
+				'3xl': '1.25rem',
 			}
 		}
 	},
 	plugins: []
 };
-
-

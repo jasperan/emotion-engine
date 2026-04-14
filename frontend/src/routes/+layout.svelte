@@ -36,14 +36,14 @@
   {/if}
 
   <!-- Sidebar -->
-  <aside class="w-64 flex flex-col border-r border-outline/30 bg-surface fixed inset-y-0 left-0 z-40 transform transition-all duration-300 ease-out md:relative md:translate-x-0 {sidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}">
+  <aside class="w-60 flex flex-col border-r border-outline/20 bg-surface/80 backdrop-blur-sm fixed inset-y-0 left-0 z-40 transform transition-all duration-300 ease-out md:relative md:translate-x-0 {sidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}">
     <!-- Header -->
-    <div class="h-16 flex items-center px-4 border-b border-outline/30">
+    <div class="h-16 flex items-center px-5 border-b border-outline/20">
       <div class="flex items-center gap-2.5">
-        <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-accent-blue via-accent-purple to-accent-teal flex items-center justify-center shadow-lg shadow-accent-blue/20">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+        <div class="w-7 h-7 rounded-lg flex items-center justify-center shadow-sm" style="background: linear-gradient(135deg, #5cd4c4, #8fb4e0);">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
         </div>
-        <span class="font-bold text-lg tracking-tight">Emotion Engine</span>
+        <span class="font-semibold text-sm tracking-tight">Emotion Engine</span>
       </div>
 
       <!-- Close button (mobile) -->
@@ -57,25 +57,25 @@
     </div>
 
     <!-- Navigation -->
-    <nav class="flex-1 overflow-y-auto py-4 px-2 space-y-1" aria-label="Main navigation">
-      <a href="/" class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary {$page.url.pathname === '/' ? 'bg-primary/10 text-primary hover:bg-primary/20 border-l-2 border-l-primary' : 'text-on-surface hover:bg-surface-alt hover:text-on-background border-l-2 border-l-transparent'}">
-        <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    <nav class="flex-1 overflow-y-auto py-5 px-3 space-y-1" aria-label="Main navigation">
+      <a href="/" class="flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary {$page.url.pathname === '/' ? 'bg-primary/8 text-primary' : 'text-on-surface/70 hover:bg-surface-alt/60 hover:text-on-background'}">
+        <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         Chat
       </a>
-      <a href="/library" class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary {$page.url.pathname.startsWith('/library') || $page.url.pathname.startsWith('/scenarios') || $page.url.pathname.startsWith('/runs') ? 'bg-primary/10 text-primary hover:bg-primary/20 border-l-2 border-l-primary' : 'text-on-surface hover:bg-surface-alt hover:text-on-background border-l-2 border-l-transparent'}">
-        <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg>
+      <a href="/library" class="flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary {$page.url.pathname.startsWith('/library') || $page.url.pathname.startsWith('/scenarios') || $page.url.pathname.startsWith('/runs') ? 'bg-primary/8 text-primary' : 'text-on-surface/70 hover:bg-surface-alt/60 hover:text-on-background'}">
+        <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg>
         Library
       </a>
-      <a href="/settings" class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary {$page.url.pathname.startsWith('/settings') ? 'bg-primary/10 text-primary hover:bg-primary/20 border-l-2 border-l-primary' : 'text-on-surface hover:bg-surface-alt hover:text-on-background border-l-2 border-l-transparent'}">
-        <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+      <a href="/settings" class="flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary {$page.url.pathname.startsWith('/settings') ? 'bg-primary/8 text-primary' : 'text-on-surface/70 hover:bg-surface-alt/60 hover:text-on-background'}">
+        <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
         Settings
       </a>
     </nav>
 
     <!-- Footer -->
-    <div class="p-4 border-t border-outline/30">
-       <button class="flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm font-medium text-on-surface hover:bg-surface-alt transition-colors cursor-pointer">
-          <div class="w-6 h-6 rounded-full bg-accent-teal/20 text-accent-teal flex items-center justify-center text-xs font-bold">U</div>
+    <div class="p-4 border-t border-outline/15">
+       <button class="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-[13px] font-medium text-on-surface/60 hover:bg-surface-alt/50 hover:text-on-surface transition-all cursor-pointer">
+          <div class="w-6 h-6 rounded-lg bg-accent-teal/12 text-accent-teal flex items-center justify-center text-[10px] font-bold">U</div>
           <span>User Profile</span>
        </button>
     </div>
@@ -84,7 +84,7 @@
   <!-- Main Content -->
   <main id="main-content" class="flex-1 flex flex-col relative overflow-hidden bg-ambient-glow" tabindex="-1">
     <!-- Top Bar -->
-    <header class="h-14 md:h-16 border-b border-outline/30 flex items-center justify-between px-4 md:px-6 bg-background/80 backdrop-blur-sm z-20 transition-all duration-300">
+    <header class="h-14 md:h-14 border-b border-outline/15 flex items-center justify-between px-4 md:px-6 bg-background/70 backdrop-blur-md z-20 transition-all duration-300">
        <div class="flex items-center gap-3">
           <!-- Hamburger (mobile only) -->
           <button

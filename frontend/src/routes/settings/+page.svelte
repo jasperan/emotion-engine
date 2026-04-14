@@ -64,9 +64,9 @@
 </script>
 
 <div class="max-w-4xl mx-auto space-y-8">
-    <div class="border-b border-outline/20 pb-6">
-        <h1 class="text-3xl font-display font-bold text-on-background">Settings</h1>
-        <p class="text-on-surface mt-2">Manage your simulation environment and API configurations.</p>
+    <div class="border-b border-outline/15 pb-6">
+        <h1 class="text-2xl font-display font-bold tracking-tight text-on-background">Settings</h1>
+        <p class="text-on-surface/60 mt-1.5 text-sm">Manage your simulation environment and API configurations.</p>
     </div>
 
     <div class="grid gap-8">
@@ -237,7 +237,7 @@
                         <div class="absolute top-1 left-1 w-4 h-4 rounded-full transition-transform {autoScroll ? 'translate-x-6 bg-primary' : 'translate-x-0 bg-outline'}"></div>
                     </button>
                 </div>
-                
+
                 <div class="flex items-center justify-between p-3 bg-surface-alt/20 rounded-lg">
                     <div id="label-compact">
                         <span class="block font-medium">Compact View</span>

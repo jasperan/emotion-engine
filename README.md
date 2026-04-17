@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="docs/slides/slide-01.png" alt="Emotion Engine — Multi-Agent Simulation" width="600"/>
+  <img src="docs/slides/slide-01.png" alt="Emotion Engine: Multi-Agent Simulation" width="600"/>
 </p>
 
-<h1 align="center">Emotion Engine — Multi-Agent Simulation</h1>
+<h1 align="center">Emotion Engine: Multi-Agent Simulation</h1>
 
 <p align="center"><strong>A local-first multi-agent simulation engine for analyzing emergent cooperative behaviors in AI agent swarms under disaster scenarios.</strong></p>
 

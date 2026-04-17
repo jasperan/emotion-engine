@@ -7,7 +7,7 @@ HumanAgent.
 """
 
 import random
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 from app.schemas.persona import Persona

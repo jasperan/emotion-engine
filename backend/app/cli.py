@@ -12,14 +12,13 @@ from rich.console import Console
 from rich.live import Live
 from rich.prompt import Prompt, Confirm
 from rich.table import Table
-from rich.panel import Panel
 from rich import box
 import httpx
 import questionary
 
 from app.tui.theme import PI_THEME
 from app.tui.renderer import PiStyleRenderer, PiStyleLogger
-from app.tui.components import startup_banner, dynamic_border
+from app.tui.components import startup_banner
 from app.core.config import get_settings
 
 console = Console(theme=PI_THEME)
@@ -1189,7 +1188,6 @@ async def _show_best_runs(limit: int):
     from sqlalchemy.orm import selectinload
 
     from app.core.config import get_settings
-    from app.core.database import Base
     from app.models.run import Run, RunStatus
 
     settings = get_settings()
@@ -1554,7 +1552,7 @@ async def _execute_existing_run(run_id: str, simple: bool = True):
 
 
 # ============================================================================
-# Viewer Command — Real-time admin dashboard (ORBR-style)
+# Viewer Command: Real-time admin dashboard (ORBR-style)
 # ============================================================================
 
 @cli.command()
@@ -1601,12 +1599,10 @@ async def select_active_run() -> str | None:
     """Select an active run from the database"""
     from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
     from sqlalchemy import select, or_
-    import time
 
     from app.core.config import get_settings
     from app.core.database import Base
     from app.models.run import Run, RunStatus
-    from app.models.scenario import Scenario
 
     settings = get_settings()
     engine = create_async_engine(settings.database_url, echo=False)

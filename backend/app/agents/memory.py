@@ -2,7 +2,6 @@
 from typing import Any
 from datetime import datetime, timezone
 from dataclasses import dataclass, field
-from collections import defaultdict
 
 from app.agents.intent_memory import IntentMemory
 

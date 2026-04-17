@@ -1,7 +1,6 @@
 """Trust Network - bilateral trust signals and transitive trust"""
 from typing import Any
-from dataclasses import dataclass, field
-from datetime import datetime
+from dataclasses import dataclass
 from collections import defaultdict
 
 

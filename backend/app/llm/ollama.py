@@ -19,7 +19,7 @@ from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
-# Module-level semaphore — one per process, shared across all agents
+# Module-level semaphore: one per process, shared across all agents
 _llm_semaphore: asyncio.Semaphore | None = None
 
 
@@ -186,7 +186,7 @@ class OllamaClient(LLMClient):
         json_mode: bool = False,
         stream_callback: Callable[[str], Awaitable[None]] | None = None,
     ) -> LLMResponse:
-        """Generate response — semaphore-gated, with retry and watchdog."""
+        """Generate response (semaphore-gated, with retry and watchdog)."""
         settings = get_settings()
         sem = get_llm_semaphore()
 
@@ -321,7 +321,7 @@ class OllamaClient(LLMClient):
                 "num_predict": max_tokens,
             },
         }
-        # NOTE: Do NOT use Ollama's native format:"json" — it hangs with think:false.
+        # NOTE: Do NOT use Ollama's native format:"json"; it hangs with think:false.
         # Instead, JSON enforcement is done via the system/user prompt.
         if json_mode and ollama_messages:
             # Reinforce JSON output in the last user message

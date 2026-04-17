@@ -65,7 +65,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS middleware for frontend — origins loaded from settings
+# CORS middleware for frontend; origins loaded from settings
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[o.strip() for o in settings.cors_origins.split(",") if o.strip()],

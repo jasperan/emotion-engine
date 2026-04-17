@@ -1,6 +1,5 @@
 """Document upload API endpoint for NER-based scenario generation"""
 import logging
-from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field

@@ -1,7 +1,6 @@
 """Conversation Outcomes - extracts structured results when conversations end"""
 from typing import Any
-from dataclasses import dataclass, field
-from datetime import datetime
+from dataclasses import dataclass
 
 
 @dataclass

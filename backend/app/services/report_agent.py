@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 from app.llm.base import LLMClient, LLMMessage
 from app.services.graph_tools import GraphToolsService

@@ -1,5 +1,4 @@
 """Rising Flood example scenario with diverse personas - Enhanced for conversation system"""
-import random
 from app.schemas.persona import Persona
 from app.schemas.agent import AgentConfig
 from app.schemas.scenario import WorldConfig, ScenarioCreate
@@ -10,7 +9,7 @@ from app.schemas.scenario import WorldConfig, ScenarioCreate
 
 def create_rising_flood_scenario(num_agents: int = 10) -> ScenarioCreate:
     """Create the Rising Flood example scenario with a specified number of human agents + 1 environment agent"""
-    
+
     # Define diverse personas
     base_personas = [
         Persona(
@@ -167,13 +166,13 @@ def create_rising_flood_scenario(num_agents: int = 10) -> ScenarioCreate:
             location="bridge",
         ),
     ]
-    
+
     from app.scenarios.generator import PersonaGenerator
     personas = PersonaGenerator.generate_personas(base_personas, num_agents)
-    
+
     # Create agent templates
     agent_templates = []
-    
+
     # Add environment agent
     agent_templates.append(AgentConfig(
         name="Flood System",
@@ -186,7 +185,7 @@ def create_rising_flood_scenario(num_agents: int = 10) -> ScenarioCreate:
             "Generate events that force cooperation",
         ],
     ))
-    
+
     # Add human agents with enhanced goals for conversation system
     for persona in personas:
         agent_templates.append(AgentConfig(
@@ -203,7 +202,7 @@ def create_rising_flood_scenario(num_agents: int = 10) -> ScenarioCreate:
                 "Make it to a safe location",
             ],
         ))
-    
+
     # World configuration - enhanced with more locations for movement
     world_config = WorldConfig(
         name="Riverside District",
@@ -348,7 +347,7 @@ def create_rising_flood_scenario(num_agents: int = 10) -> ScenarioCreate:
         max_steps=100,
         tick_delay=1.0,
     )
-    
+
     return ScenarioCreate(
         name=f"Rising Flood ({num_agents} agents)",
         description=f"A catastrophic flood threatens a small urban district. {num_agents} survivors with diverse backgrounds must work together to save as many lives as possible. Features multiple locations requiring coordination, trapped survivors to rescue, and a deteriorating bridge. Based on The Great Flood's Emotion Engine concept.",

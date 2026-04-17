@@ -1,6 +1,6 @@
 """Intent memory system (Tier 4) - plans, commitments, blocked actions"""
 from typing import Any
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass

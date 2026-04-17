@@ -17,13 +17,10 @@ from rich.text import Text
 
 from app.tui.theme import PI_THEME
 from app.tui.components import (
-    dynamic_border,
     step_border,
-    startup_banner,
     event_panel,
     message_panel,
     world_state_panel,
-    stream_panel,
     scene_border,
     scene_turn as render_scene_turn,
     scene_end,

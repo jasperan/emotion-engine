@@ -98,7 +98,7 @@ class LLMRouter:
 
         For vLLM: primary and fallback use the same model (single vLLM
         server), so fallback means retrying the same model after the
-        internal retries are exhausted — effectively a last-chance attempt.
+        internal retries are exhausted (effectively a last-chance attempt).
 
         For Ollama: tries primary, then falls back to the configured
         fallback model (e.g., smaller model on OOM).

@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from app.storage.embedding_service import EmbeddingService
 from app.storage.graph_storage import Edge, Entity, GraphStorage

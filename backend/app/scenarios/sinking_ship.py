@@ -1,5 +1,4 @@
 """Sinking Cruise Ship scenario with diverse personas - Enhanced for conversation system"""
-import random
 from app.schemas.persona import Persona
 from app.schemas.agent import AgentConfig
 from app.schemas.scenario import WorldConfig, ScenarioCreate

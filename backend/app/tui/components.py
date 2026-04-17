@@ -16,7 +16,6 @@ from rich.panel import Panel
 from rich.text import Text
 
 from app.tui.theme import (
-    PI_COLORS,
     EVENT_ICONS,
     MESSAGE_ICONS,
 )

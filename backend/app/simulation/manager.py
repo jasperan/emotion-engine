@@ -2,12 +2,11 @@
 import asyncio
 import logging
 from typing import Any, Callable
-from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from app.simulation.engine import SimulationEngine, SimulationState
+from app.simulation.engine import SimulationEngine
 from app.models.scenario import Scenario
 from app.models.run import Run, RunStatus
 from app.core.config import get_settings

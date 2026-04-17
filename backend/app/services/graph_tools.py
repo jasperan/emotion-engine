@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass, field
-from typing import Optional
 
 from app.llm.base import LLMClient, LLMMessage
 from app.storage.embedding_service import EmbeddingService

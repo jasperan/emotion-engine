@@ -297,7 +297,7 @@ class OpenAIClient(LLMClient):
             "messages": oai_messages,
             "temperature": temperature,
             "max_tokens": max_tokens,
-            # Always stream — some endpoints (OCA/litellm) reject stream=false
+            # Always stream: some endpoints (OCA/litellm) reject stream=false
             "stream": True,
         }
 

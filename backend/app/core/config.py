@@ -10,10 +10,10 @@ class Settings(BaseSettings):
     app_name: str = "EmotionSim"
     debug: bool = False
 
-    # CORS — comma-separated origins allowed to call the API
+    # CORS: comma-separated origins allowed to call the API
     cors_origins: str = "http://localhost:3000,http://localhost:5173"
 
-    # Database (Oracle DB 26ai Free — primary)
+    # Database (Oracle DB 26ai Free, primary)
     # NOTE: These defaults are for local dev only. In production, override via
     # ORACLE_DB_USER / ORACLE_DB_PASSWORD environment variables or .env file.
     oracle_db_host: str = "localhost"
@@ -42,7 +42,7 @@ class Settings(BaseSettings):
     ollama_timeout: int = 60
     ollama_auto_fallback: bool = True
 
-    # vLLM (parallel inference backend — preferred for concurrent agent ticks)
+    # vLLM (parallel inference backend, preferred for concurrent agent ticks)
     llm_backend: str = "vllm"  # "ollama", "vllm", or "openai"
     vllm_base_url: str = "http://localhost:8010"
     vllm_default_model: str = "Qwen/Qwen3.5-4B"

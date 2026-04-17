@@ -6,7 +6,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
-from app.schemas.agent import AgentResponse, AgentAction, AgentMessage
+from app.schemas.agent import AgentResponse, AgentAction
 
 logger = logging.getLogger(__name__)
 
@@ -150,7 +150,7 @@ class AgentSupervisor:
                 timeout=self.tick_timeout,
             )
 
-            # Success — update telemetry
+            # Success: update telemetry
             elapsed_ms = (asyncio.get_event_loop().time() - start_time) * 1000
             telemetry.tick_count += 1
             telemetry.last_tick_duration_ms = elapsed_ms

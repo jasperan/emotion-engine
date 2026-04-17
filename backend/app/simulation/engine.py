@@ -9,11 +9,10 @@ from typing import Any, Callable, Awaitable
 from enum import Enum
 
 from sqlalchemy.future import select
-from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents import Agent, EnvironmentAgent, HumanAgent, DesignerAgent, EvaluationAgent
-from app.llm.router import LLMRouter, configure_model_routing
+from app.llm.router import LLMRouter, configure_model_routing  # noqa: F401 (LLMRouter is referenced by tests via patch)
 from app.simulation.message_bus import MessageBus
 from app.simulation.conversation import ConversationManager, ConversationState
 from app.simulation.agent_supervisor import AgentSupervisor

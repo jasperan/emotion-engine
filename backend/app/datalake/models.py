@@ -8,7 +8,6 @@ Uses oracledb dialect with Oracle-native types:
 """
 
 import uuid
-from datetime import datetime
 
 from sqlalchemy import (
     Column,
@@ -136,7 +135,7 @@ class SimulationStep(DatalakeBase):
 
 
 class AgentEvent(DatalakeBase):
-    """Every agent action, message, movement, error — the full event stream."""
+    """Every agent action, message, movement, error: the full event stream."""
 
     __tablename__ = "agent_events"
 

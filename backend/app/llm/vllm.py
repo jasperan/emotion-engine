@@ -12,7 +12,6 @@ Fail-safe mechanisms (ORBR-inspired):
 import asyncio
 import json
 import logging
-import time
 import httpx
 from typing import Any, Callable, Awaitable
 
@@ -77,7 +76,7 @@ class VLLMClient(LLMClient):
         json_mode: bool = False,
         stream_callback: Callable[[str], Awaitable[None]] | None = None,
     ) -> LLMResponse:
-        """Generate response with retry and watchdog — no semaphore needed.
+        """Generate response with retry and watchdog (no semaphore needed).
 
         vLLM handles concurrency internally via continuous batching,
         so we don't gate with a semaphore like Ollama.
@@ -145,7 +144,7 @@ class VLLMClient(LLMClient):
         stream_callback: Callable[[str], Awaitable[None]] | None = None,
     ) -> LLMResponse:
         """Generate via vLLM OpenAI-compatible /v1/chat/completions."""
-        # Always use the vLLM server's loaded model — ignore Ollama-style model names
+        # Always use the vLLM server's loaded model; ignore Ollama-style model names
         model = self.default_model
 
         # Build OpenAI-format messages

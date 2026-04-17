@@ -11,8 +11,8 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, Generator, List, Optional
 
-from sqlalchemy import create_engine, func, or_, text
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy import create_engine, func
+from sqlalchemy.orm import sessionmaker
 
 from app.datalake.config import DatabaseConfig, get_db_config
 from app.datalake.models import (

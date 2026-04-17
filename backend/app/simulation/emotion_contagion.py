@@ -1,4 +1,4 @@
-"""Emotion Contagion Network — models how stress spreads between co-located agents.
+"""Emotion Contagion Network: models how stress spreads between co-located agents.
 
 Agents emit emotional influence based on their stress and extraversion.
 Nearby agents absorb that influence, modulated by their neuroticism (susceptibility)
@@ -10,8 +10,7 @@ before the reaction round.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import datetime
+from dataclasses import dataclass
 from collections.abc import Callable
 from typing import Any
 

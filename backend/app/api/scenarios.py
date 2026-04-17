@@ -1,8 +1,7 @@
 """Scenario API endpoints"""
-from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -16,7 +15,6 @@ from app.scenarios.storage import (
     load_scenario,
     list_scenarios,
     delete_scenario as delete_scenario_file,
-    dict_to_scenario,
     SCENARIOS_DIR,
 )
 

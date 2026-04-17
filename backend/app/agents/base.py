@@ -56,7 +56,7 @@ class Agent(ABC):
         self._action_feedback: list[str] = []
 
 
-        # LLM client — auto-select backend from settings.llm_backend
+        # LLM client: auto-select backend from settings.llm_backend
         self._llm_client = LLMRouter.get_client()  # type: ignore
 
     @abstractmethod
@@ -188,7 +188,7 @@ class Agent(ABC):
 
     def _normalize_response(self, raw: dict) -> dict:
         """Convert new cinematic schema to AgentResponse-compatible format."""
-        # Already old format — pass through
+        # Already old format; pass through
         if "actions" in raw:
             return raw
         # New cinematic schema

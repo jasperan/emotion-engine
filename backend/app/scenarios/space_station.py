@@ -1,5 +1,4 @@
 """ISS Cascade Failure scenario with international crew - Enhanced for conversation system"""
-import random
 from app.schemas.persona import Persona
 from app.schemas.agent import AgentConfig
 from app.schemas.scenario import WorldConfig, ScenarioCreate

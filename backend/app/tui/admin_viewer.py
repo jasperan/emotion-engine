@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-EmotionSim Admin Viewer — Rich Live real-time dashboard for agent monitoring.
+EmotionSim Admin Viewer: Rich Live real-time dashboard for agent monitoring.
 
 Single-screen layout:
   Left 2/3:  Agent token stream panes (2x2 grid, up to 10 agents)
@@ -18,7 +18,6 @@ from __future__ import annotations
 import argparse
 import json
 import math
-import os
 import re
 import subprocess
 import sys
@@ -27,9 +26,8 @@ import time
 import tty
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
-from rich.console import Console, Group
+from rich.console import Console
 from rich.layout import Layout
 from rich.live import Live
 from rich.panel import Panel

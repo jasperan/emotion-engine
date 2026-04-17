@@ -6,7 +6,7 @@ differentials, trust levels, opinion resistance (bias), and stance distance.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass

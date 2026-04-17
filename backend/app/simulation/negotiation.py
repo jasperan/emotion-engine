@@ -1,9 +1,8 @@
 """Negotiation Manager - state machine for inter-agent proposals and agreements"""
 import uuid
 from typing import Any
-from datetime import datetime
 from enum import Enum
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 class ProposalState(str, Enum):

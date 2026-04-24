@@ -90,7 +90,7 @@ def run_sim_via_cli(
     })
 
     cmd = [
-        sys.executable, "-m", "app.cli", "run",
+        sys.executable, "-m", "emotionsim.cli", "run",
         "--scenario", scenario_name,
         "--max-steps", str(max_steps),
         "--seed", str(seed),

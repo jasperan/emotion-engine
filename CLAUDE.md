@@ -13,8 +13,7 @@ EmotionSim: Multi-agent simulation engine analyzing emergent cooperative behavio
 ## Development Commands
 
 ```bash
-# Installation
-cd backend
+# Installation (repo root)
 pip install -e .
 
 # CLI Mode (Recommended for Testing)
@@ -40,17 +39,16 @@ npm run dev:frontend         # Frontend only
 npm run build                # Production build
 npm run check                # TypeScript/Svelte validation
 
-# Backend Only
-cd backend
-python3 -m app.main          # Direct server start (:8000)
+# Backend Only (from repo root)
+python3 -m emotionsim.main   # Direct server start (:8000)
 
 # Docker (full stack)
 docker-compose up -d          # Oracle DB (:1522) + Backend (:8000) + Frontend (:3000)
 
-# Testing
-cd backend && pytest tests/               # Python tests
-cd backend && pytest tests/test_agents.py  # Single test file
-cd backend && pytest --cov                 # With coverage
+# Testing (from repo root)
+pytest tests/               # Python tests
+pytest tests/test_agents.py  # Single test file
+pytest --cov                 # With coverage
 cd tui && go test ./...                    # Go TUI tests
 
 # Pre-commit
@@ -363,7 +361,7 @@ The TUI (`tui/`) is a standalone Go binary that connects to the backend via WebS
 - **World state `_` keys**: Engine injects `_scene_location`, `_scene_participants`, `_conclusion_directive` into world_state — these are transient and cleaned up after use
 - **Token budget**: `agent_max_tokens_per_run=50000` counts streamed characters (not LLM tokens). Set to 0 to disable
 - **Parallel scenes**: Only with `llm_backend=vllm`. Ollama falls back to sequential due to GPU serialization
-- **TUI auto-start**: The Go TUI spawns `python3 -m app.main` and `vllm serve` as child processes. Use `--no-backend`/`--no-vllm` flags to suppress
+- **TUI auto-start**: The Go TUI spawns `python3 -m emotionsim.main` and `vllm serve` as child processes. Use `--no-backend`/`--no-vllm` flags to suppress
 - **Engine V2**: `engine_v2.py` and `cognitive_engine_v2.py` exist alongside V1 — V2 adds governance, emotion contagion, and goal trees
 - **env.example**: Lives in `backend/env.example`. Missing `VLLM_BASE_URL` and `VLLM_DEFAULT_MODEL` (those default in code to `:8010` and `Qwen/Qwen3.5-4B`)
 - **Datalake**: Enabled via `DATALAKE_ENABLED=true`. Schema in `datalake/schema.sql`. Powers the TUI Analytics screen

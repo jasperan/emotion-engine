@@ -19,11 +19,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy import select
 
-from app.core.config import get_settings
-from app.models.run import Run
-from app.models.agent import AgentModel
-from app.models.step import Step
-from app.models.message import Message
+from emotionsim.core.config import get_settings
+from emotionsim.models.run import Run
+from emotionsim.models.agent import AgentModel
+from emotionsim.models.step import Step
+from emotionsim.models.message import Message
 
 
 RESULTS_DIR = Path(__file__).parent / "results"
@@ -268,7 +268,7 @@ async def extract_run(run_id: str, session_factory) -> dict:
             return {"error": f"Run {run_id} not found"}
 
         # Load scenario name
-        from app.models.scenario import Scenario
+        from emotionsim.models.scenario import Scenario
         scenario_result = await db.execute(
             select(Scenario).where(Scenario.id == run.scenario_id)
         )

@@ -1,0 +1,85 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "emotionsim"
+version = "0.1.0"
+description = "Multi-agent simulation engine for studying emergent cooperative behaviors in AI agent swarms."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Nacho Martinez", email = "23caj23@gmail.com" },
+]
+keywords = [
+    "multi-agent",
+    "simulation",
+    "llm",
+    "ai-agents",
+    "agent-based-modeling",
+    "oracle-database",
+    "fastapi",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "websockets",
+    "python-multipart",
+    "sqlalchemy",
+    "oracledb",
+    "pydantic",
+    "pydantic-settings",
+    "httpx",
+    "openai",
+    "asyncio-throttle",
+    "python-dotenv",
+    "click",
+    "rich",
+    "questionary",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "mypy",
+    "build",
+    "twine",
+]
+
+[project.urls]
+Homepage = "https://github.com/jasperan/emotion-engine"
+Repository = "https://github.com/jasperan/emotion-engine"
+Issues = "https://github.com/jasperan/emotion-engine/issues"
+
+[project.scripts]
+emotionsim = "emotionsim.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["emotionsim*"]
+exclude = ["tests*", "backend*", "frontend*", "tui*", "datalake*", "docs*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true

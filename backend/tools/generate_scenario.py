@@ -20,8 +20,8 @@ from rich import box
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from app.scenarios.generator import ScenarioGenerator
-from app.scenarios.storage import save_scenario, SCENARIOS_DIR
+from emotionsim.scenarios.generator import ScenarioGenerator
+from emotionsim.scenarios.storage import save_scenario, SCENARIOS_DIR
 
 console = Console()
 
@@ -130,27 +130,27 @@ PRESET_PROMPTS = [
 )
 def main(interactive, prompt, batch, count, persona_count, list_presets, preset):
     """Generate scenarios using AI-powered scenario generation.
-    
+
     Examples:
         # Interactive mode
         python generate_scenario.py --interactive
-        
+
         # Direct generation
         python generate_scenario.py --prompt "Tornado hits a small town"
-        
+
         # Batch generation
         python generate_scenario.py --batch --count 3
-        
+
         # List presets
         python generate_scenario.py --list-presets
-        
+
         # Generate from preset
         python generate_scenario.py --preset 1
     """
     if list_presets:
         show_presets()
         return
-    
+
     if preset is not None:
         if 1 <= preset <= len(PRESET_PROMPTS):
             preset_data = PRESET_PROMPTS[preset - 1]
@@ -163,7 +163,7 @@ def main(interactive, prompt, batch, count, persona_count, list_presets, preset)
             console.print(f"[red]Invalid preset number. Use --list-presets to see available options.[/red]")
             sys.exit(1)
         return
-    
+
     if interactive:
         asyncio.run(interactive_mode())
     elif prompt:
@@ -181,13 +181,13 @@ def main(interactive, prompt, batch, count, persona_count, list_presets, preset)
 def show_presets():
     """Display available preset prompts"""
     console.print("\n[bold cyan]Available Preset Scenarios[/bold cyan]\n")
-    
+
     table = Table(box=box.ROUNDED)
     table.add_column("#", style="cyan", width=3)
     table.add_column("Name", style="bold")
     table.add_column("Personas", style="yellow", width=8)
     table.add_column("Description", style="white")
-    
+
     for i, preset in enumerate(PRESET_PROMPTS, 1):
         table.add_row(
             str(i),
@@ -195,7 +195,7 @@ def show_presets():
             str(preset["persona_count"]),
             preset["prompt"][:80] + "..." if len(preset["prompt"]) > 80 else preset["prompt"]
         )
-    
+
     console.print(table)
     console.print("\n[dim]Use --preset <number> to generate a specific preset[/dim]")
 
@@ -205,30 +205,30 @@ async def interactive_mode():
     console.print("\n[bold cyan]╔══════════════════════════════════════╗[/bold cyan]")
     console.print("[bold cyan]║   Scenario Generator - Interactive   ║[/bold cyan]")
     console.print("[bold cyan]╚══════════════════════════════════════╝[/bold cyan]\n")
-    
+
     # Show some examples
     console.print("[dim]Examples:[/dim]")
     console.print("  • A tornado hits a small farming community")
     console.print("  • Alien first contact at the United Nations")
     console.print("  • A heist at a high-security museum")
     console.print()
-    
+
     prompt = Prompt.ask("[bold]Describe your scenario[/bold]")
-    
+
     if not prompt or len(prompt) < 10:
         console.print("[red]Prompt too short. Please provide more detail.[/red]")
         return
-    
+
     persona_count_str = Prompt.ask(
         "Number of personas",
         default="10"
     )
     persona_count = int(persona_count_str)
-    
+
     if persona_count < 2 or persona_count > 100:
         console.print("[red]Persona count must be between 2 and 100.[/red]")
         return
-    
+
     console.print()
     await generate_single(prompt, persona_count)
 
@@ -238,29 +238,29 @@ async def generate_single(prompt: str, persona_count: int, suggested_name: str =
     console.print(f"[cyan]Generating scenario...[/cyan]")
     console.print(f"  Prompt: [dim]{prompt}[/dim]")
     console.print(f"  Personas: [dim]{persona_count}[/dim]\n")
-    
+
     try:
         generator = ScenarioGenerator()
-        
+
         with console.status("[cyan]Calling AI to generate scenario...[/cyan]"):
             scenario = await generator.generate(
                 prompt=prompt,
                 persona_count=persona_count,
             )
-        
+
         # Save to file
         filepath = save_scenario(scenario)
-        
+
         console.print(f"[green]✓[/green] Generated: [bold]{scenario.name}[/bold]")
         console.print(f"[green]✓[/green] Saved to: [dim]{filepath}[/dim]")
         console.print(f"[green]✓[/green] Agents: {len(scenario.agent_templates)}")
         console.print(f"[green]✓[/green] Max steps: {scenario.config.max_steps}")
         console.print()
-        
+
         # Show brief summary
         console.print("[bold]Description:[/bold]")
         console.print(f"  {scenario.description}\n")
-        
+
     except Exception as e:
         console.print(f"[red]✗ Generation failed: {e}[/red]")
         import traceback
@@ -271,11 +271,11 @@ async def batch_mode(count: int):
     """Generate multiple scenarios from presets"""
     console.print(f"\n[bold cyan]Batch Generation Mode[/bold cyan]")
     console.print(f"Generating {count} scenarios from presets...\n")
-    
+
     # Select random presets
     import random
     selected_presets = random.sample(PRESET_PROMPTS, min(count, len(PRESET_PROMPTS)))
-    
+
     for i, preset in enumerate(selected_presets, 1):
         console.print(f"[bold]Scenario {i}/{len(selected_presets)}[/bold]")
         await generate_single(
@@ -283,10 +283,10 @@ async def batch_mode(count: int):
             preset["persona_count"],
             preset["name"]
         )
-        
+
         if i < len(selected_presets):
             console.print("[dim]" + "─" * 60 + "[/dim]\n")
-    
+
     console.print(f"[green]✓ Batch generation complete![/green]")
     console.print(f"[green]✓ Generated {len(selected_presets)} scenarios in {SCENARIOS_DIR}[/green]")
 

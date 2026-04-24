@@ -1,2 +1,0 @@
-"""FastAPI routes and endpoints"""
-

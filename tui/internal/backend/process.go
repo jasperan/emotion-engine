@@ -25,10 +25,10 @@ func FindBackendDir() string {
 	if err != nil {
 		return ""
 	}
-	// Binary is at tui/emotionsim-tui, backend is at ../backend/
-	dir := filepath.Join(filepath.Dir(exe), "..", "backend")
+	// Binary is at tui/emotionsim-tui; the emotionsim package lives at ../emotionsim/
+	dir := filepath.Join(filepath.Dir(exe), "..")
 	dir, _ = filepath.Abs(dir)
-	if _, err := os.Stat(filepath.Join(dir, "app", "main.py")); err == nil {
+	if _, err := os.Stat(filepath.Join(dir, "emotionsim", "main.py")); err == nil {
 		return dir
 	}
 	return ""
@@ -63,7 +63,7 @@ func Start(backendDir, pythonPath string) (*Process, error) {
 		return nil, fmt.Errorf("creating log file: %w", err)
 	}
 
-	cmd := exec.Command(pythonPath, "-m", "app.main")
+	cmd := exec.Command(pythonPath, "-m", "emotionsim.main")
 	cmd.Dir = backendDir
 	cmd.Stdout = logFile
 	cmd.Stderr = logFile

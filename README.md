@@ -303,6 +303,9 @@ Environment variables are loaded from `.env` in the repository root:
 | `ORACLE_DB_HOST` | `localhost` | Oracle DB host |
 | `ORACLE_DB_PORT` | `1522` | Oracle DB port |
 | `ORACLE_DB_USER` | `emotionsim` | DB username (dev default) |
+| `ORACLE_DB_PASSWORD` | `emotionsim` | DB password (dev default; override outside local-only installs) |
+| `ORACLE_PASSWORD` | `oracle` | Docker Oracle admin password (dev default; override outside local-only installs) |
+| `COMPOSE_BIND_ADDR` | `127.0.0.1` | Docker Compose bind IP for the installer (`0.0.0.0` exposes services on all interfaces) |
 | `DEFAULT_MAX_STEPS` | `10` | Default simulation length |
 | `SCENE_MODE` | `true` | Parallel scenes by location (vLLM only) |
 | `DATALAKE_ENABLED` | `true` | Enable cross-run analytics |

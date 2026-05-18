@@ -213,20 +213,20 @@ func (m SplashModel) connectionGuidance(width int) string {
 		return ""
 	}
 
-	baseURL := "http://localhost:8000"
-	if m.client != nil && m.client.BaseURL() != "" {
-		baseURL = m.client.BaseURL()
+	healthURL := "http://localhost:8000/health"
+	if m.client != nil && m.client.HealthURL() != "" {
+		healthURL = m.client.HealthURL()
 	}
 
 	lines := []string{
-		fmt.Sprintf("Backend health: curl %s/health", baseURL),
+		fmt.Sprintf("Backend health: curl %s", healthURL),
 		"Start Docker backend: docker compose up -d oracle-db backend",
 		"Remote backend: emotionsim-tui --server http://host:8000",
 		"Models: ollama serve; ollama pull qwen3.5:4b; or vLLM :8010",
 	}
 	if width > 0 && width < 72 {
 		lines = []string{
-			fmt.Sprintf("Check: curl %s/health", baseURL),
+			fmt.Sprintf("Check: curl %s", healthURL),
 			"Start: docker compose up -d backend",
 			"Models: Ollama :11434 or vLLM :8010",
 		}

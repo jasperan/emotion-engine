@@ -27,6 +27,9 @@ func TestRenderStatusBarFits80Columns(t *testing.T) {
 	if out == "" {
 		t.Fatal("expected non-empty status bar")
 	}
+	if !strings.Contains(out, "back") {
+		t.Fatalf("expected back hint to fit before throughput at 80 columns, got %q", out)
+	}
 	for _, line := range strings.Split(out, "\n") {
 		if got := lipgloss.Width(line); got > 80 {
 			t.Fatalf("line width %d exceeds 80 columns: %q", got, line)
@@ -63,5 +66,23 @@ func TestRenderStatusBarKeepsFittingHints(t *testing.T) {
 				t.Fatalf("line width %d exceeds %d columns: %q", got, width, line)
 			}
 		}
+	}
+}
+
+func TestRenderStatusRightPrefersBackHintOverThroughput(t *testing.T) {
+	data := StatusBarData{
+		TokPerSec: 42.5,
+		Hints: []KeyHint{
+			{Key: "q/Esc", Desc: "back"},
+		},
+	}
+	throughputOnlyWidth := lipgloss.Width(renderStatusRightWithHints("42.5 tok/s", nil))
+
+	out := renderStatusRight(data, throughputOnlyWidth)
+	if !strings.Contains(out, "back") {
+		t.Fatalf("expected back hint to be kept before throughput-only fallback, got %q", out)
+	}
+	if strings.Contains(out, "tok/s") {
+		t.Fatalf("expected throughput to be dropped when only the back hint fits, got %q", out)
 	}
 }

@@ -98,11 +98,21 @@ func renderStatusRight(d StatusBarData, width int) string {
 	}
 
 	tokStr := theme.Throughput.Render(fmt.Sprintf("%.1f tok/s", d.TokPerSec))
-	for hintCount := len(d.Hints); hintCount >= 0; hintCount-- {
+	for hintCount := len(d.Hints); hintCount > 0; hintCount-- {
 		right := renderStatusRightWithHints(tokStr, selectStatusHints(d.Hints, hintCount))
 		if lipgloss.Width(right) <= width {
 			return right
 		}
+	}
+	for hintCount := len(d.Hints); hintCount > 0; hintCount-- {
+		right := renderStatusRightWithHints("", selectStatusHints(d.Hints, hintCount))
+		if lipgloss.Width(right) <= width {
+			return right
+		}
+	}
+	right := renderStatusRightWithHints(tokStr, nil)
+	if lipgloss.Width(right) <= width {
+		return right
 	}
 
 	return ""
@@ -116,11 +126,17 @@ func renderStatusRightWithHints(tokStr string, selected []KeyHint) string {
 			theme.KeyHint.Render(h.Desc),
 		))
 	}
-	right := tokStr
-	if len(hints) > 0 {
-		right += "  " + strings.Join(hints, "  ")
+	var parts []string
+	if tokStr != "" {
+		parts = append(parts, tokStr)
 	}
-	right += " "
+	if len(hints) > 0 {
+		parts = append(parts, strings.Join(hints, "  "))
+	}
+	right := strings.Join(parts, "  ")
+	if right != "" {
+		right += " "
+	}
 	return right
 }
 

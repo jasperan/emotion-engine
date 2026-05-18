@@ -113,6 +113,75 @@ compose_service_owns_port() {
     [ -n "$mapped" ] && grep -Eq "[:.]${host_port}$" <<<"$mapped"
 }
 
+compose_env_value() {
+    local key="$1"
+    local env_file="$INSTALL_DIR/.env"
+    local value
+
+    [ -f "$env_file" ] || return 1
+    value=$(grep -E "^[[:space:]]*${key}[[:space:]]*=" "$env_file" | tail -n 1 | cut -d= -f2- || true)
+    [ -n "$value" ] || return 1
+    value="${value%%#*}"
+    value="${value#"${value%%[![:space:]]*}"}"
+    value="${value%"${value##*[![:space:]]}"}"
+    value="${value%\"}"
+    value="${value#\"}"
+    value="${value%\'}"
+    value="${value#\'}"
+    echo "$value"
+}
+
+compose_bind_addr() {
+    local env_bind_addr
+    if [ -n "${COMPOSE_BIND_ADDR:-}" ]; then
+        echo "$COMPOSE_BIND_ADDR"
+        return
+    fi
+    env_bind_addr="$(compose_env_value COMPOSE_BIND_ADDR || true)"
+    echo "${env_bind_addr:-127.0.0.1}"
+}
+
+compose_probe_host() {
+    local bind_addr
+    bind_addr="$(compose_bind_addr)"
+    case "$bind_addr" in
+        ""|127.0.0.1|0.0.0.0)
+            echo "localhost"
+            ;;
+        *)
+            echo "$bind_addr"
+            ;;
+    esac
+}
+
+compose_url() {
+    local port="$1"
+    local path="${2:-}"
+    echo "http://$(compose_probe_host):${port}${path}"
+}
+
+compose_db_user() {
+    local env_db_user
+    if [ -n "${ORACLE_DB_USER:-}" ]; then
+        echo "$ORACLE_DB_USER"
+        return
+    fi
+    env_db_user="$(compose_env_value ORACLE_DB_USER || true)"
+    echo "${env_db_user:-emotionsim}"
+}
+
+validate_compose_bind_addr() {
+    local bind_addr
+    bind_addr="$(compose_bind_addr)"
+    case "$bind_addr" in
+        127.0.0.1|0.0.0.0)
+            ;;
+        *)
+            fail "COMPOSE_BIND_ADDR must be 127.0.0.1 for local-only installs or 0.0.0.0 to expose services on all interfaces."
+            ;;
+    esac
+}
+
 print_banner() {
     echo ""
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -224,6 +293,7 @@ check_llm_setup() {
 }
 
 run_preflight() {
+    validate_compose_bind_addr
     check_prereqs
     check_ports
     check_llm_setup
@@ -297,10 +367,12 @@ start_services() {
 
     # Wait for backend health
     info "Waiting for backend to start..."
+    local backend_health_url
+    backend_health_url="$(compose_url 8000 /health)"
     local be_wait=0
     local be_max=120
     while [ $be_wait -lt $be_max ]; do
-        if curl -sf http://localhost:8000/health &>/dev/null; then
+        if curl -sf "$backend_health_url" &>/dev/null; then
             success "Backend is healthy"
             echo ""
             break
@@ -323,8 +395,13 @@ start_services() {
 verify_install() {
     info "Verifying installation..."
 
-    if ! curl -sf http://localhost:8000/health &>/dev/null; then
-        warn "Backend health check failed: http://localhost:8000/health"
+    local backend_health_url
+    local scenarios_url
+    backend_health_url="$(compose_url 8000 /health)"
+    scenarios_url="$(compose_url 8000 /api/scenarios)"
+
+    if ! curl -sf "$backend_health_url" &>/dev/null; then
+        warn "Backend health check failed: $backend_health_url"
         warn "Run: cd $INSTALL_DIR && docker compose logs -f backend"
         echo ""
         fail "Backend did not pass health verification."
@@ -333,12 +410,12 @@ verify_install() {
     # Check scenarios were seeded
     local scenario_count
     if command_exists python3; then
-        scenario_count=$(curl -sf http://localhost:8000/api/scenarios 2>/dev/null \
+        scenario_count=$(curl -sf "$scenarios_url" 2>/dev/null \
             | python3 -c "import sys,json; print(len(json.load(sys.stdin)))" 2>/dev/null \
             || echo "0")
     else
         warn "python3 not found; skipping scenario count verification."
-        warn "Manual check: curl http://localhost:8000/api/scenarios"
+        warn "Manual check: curl $scenarios_url"
         echo ""
         return
     fi
@@ -347,7 +424,7 @@ verify_install() {
         success "$scenario_count scenarios loaded and ready"
     else
         warn "Could not verify scenarios. The backend may still be initializing."
-        warn "Run: curl http://localhost:8000/api/scenarios | python3 -m json.tool"
+        warn "Run: curl $scenarios_url | python3 -m json.tool"
     fi
     echo ""
 }
@@ -359,9 +436,9 @@ print_done() {
     echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo ""
     echo -e "  ${BOLD}Location:${NC}   $INSTALL_DIR"
-    echo -e "  ${BOLD}Dashboard:${NC}  ${CYAN}http://localhost:3000${NC}"
-    echo -e "  ${BOLD}API:${NC}        ${CYAN}http://localhost:8000${NC}"
-    echo -e "  ${BOLD}Oracle DB:${NC}  localhost:1522 (emotionsim/emotionsim)"
+    echo -e "  ${BOLD}Dashboard:${NC}  ${CYAN}$(compose_url 3000)${NC}"
+    echo -e "  ${BOLD}API:${NC}        ${CYAN}$(compose_url 8000)${NC}"
+    echo -e "  ${BOLD}Oracle DB:${NC}  $(compose_probe_host):1522 ($(compose_db_user)/configured password)"
     echo ""
     echo -e "  ${BOLD}Services:${NC}   docker compose ps"
     echo -e "  ${BOLD}Logs:${NC}       docker compose logs -f"
@@ -371,7 +448,7 @@ print_done() {
     echo -e "              ./emotionsim-tui --no-backend --no-vllm"
     echo ""
     echo -e "  ${DIM}LLM note: Install Ollama (https://ollama.com) on the host${NC}"
-    echo -e "  ${DIM}and pull a model: ollama pull \${OLLAMA_DEFAULT_MODEL:-qwen3.5:4b}${NC}"
+    echo -e "  ${DIM}and pull a model: ollama pull \${DOCKER_OLLAMA_DEFAULT_MODEL:-qwen3.5:4b}${NC}"
     echo ""
 }
 

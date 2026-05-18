@@ -37,6 +37,8 @@ def test_install_script_contains_actionable_preflight_checks() -> None:
         "Required ports are occupied",
         "OLLAMA_BASE_URL",
         "OLLAMA_DEFAULT_MODEL",
+        "DOCKER_OLLAMA_DEFAULT_MODEL",
+        "COMPOSE_BIND_ADDR must be 127.0.0.1",
         "ollama pull $ollama_model",
         "Backend health check failed",
         "cd $INSTALL_DIR/tui && make build",
@@ -63,6 +65,28 @@ def test_compose_allows_llm_runtime_overrides() -> None:
     assert "LLM_BACKEND=${DOCKER_LLM_BACKEND:-ollama}" in text
 
 
+def test_compose_uses_local_bind_and_database_overrides() -> None:
+    text = COMPOSE.read_text()
+
+    assert "${COMPOSE_BIND_ADDR:-127.0.0.1}:1522:1521" in text
+    assert "${COMPOSE_BIND_ADDR:-127.0.0.1}:8000:8000" in text
+    assert "${COMPOSE_BIND_ADDR:-127.0.0.1}:3000:3000" in text
+    assert "APP_USER=${ORACLE_DB_USER:-emotionsim}" in text
+    assert "APP_USER_PASSWORD=${ORACLE_DB_PASSWORD:-emotionsim}" in text
+    assert "ORACLE_DB_PASSWORD=${ORACLE_DB_PASSWORD:-emotionsim}" in text
+
+
+def test_install_health_checks_follow_compose_bind_address() -> None:
+    text = INSTALL.read_text()
+
+    assert "compose_env_value COMPOSE_BIND_ADDR" in text
+    assert "compose_probe_host" in text
+    assert 'backend_health_url="$(compose_url 8000 /health)"' in text
+    assert 'scenarios_url="$(compose_url 8000 /api/scenarios)"' in text
+    assert 'curl -sf "$backend_health_url"' in text
+    assert "http://localhost:8000/health" not in text
+
+
 def test_install_script_allows_ports_owned_by_existing_stack() -> None:
     text = INSTALL.read_text()
 
@@ -79,3 +103,19 @@ def test_install_preflight_uses_docker_llm_override_names() -> None:
     assert 'local vllm_url="${DOCKER_VLLM_BASE_URL:-http://host.docker.internal:8010}"' in text
     assert "set DOCKER_OLLAMA_BASE_URL" in text
     assert "set DOCKER_VLLM_BASE_URL" in text
+    assert "ollama pull \\${DOCKER_OLLAMA_DEFAULT_MODEL:-qwen3.5:4b}" in text
+
+
+def test_install_done_output_does_not_print_database_password() -> None:
+    text = INSTALL.read_text()
+
+    assert "emotionsim/emotionsim" not in text
+    assert "configured password" in text
+
+
+def test_install_done_output_reads_database_user_from_env_file() -> None:
+    text = INSTALL.read_text()
+
+    assert "compose_db_user()" in text
+    assert "compose_env_value ORACLE_DB_USER" in text
+    assert "$(compose_db_user)/configured password" in text

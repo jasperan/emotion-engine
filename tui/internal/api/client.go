@@ -27,12 +27,12 @@ func NewClient(baseURL string) *Client {
 	}
 }
 
-// BaseURL returns the configured backend URL for diagnostics and UI hints.
-func (c *Client) BaseURL() string {
-	if c == nil {
+// HealthURL returns the backend health endpoint for diagnostics and UI hints.
+func (c *Client) HealthURL() string {
+	if c == nil || c.baseURL == "" {
 		return ""
 	}
-	return c.baseURL
+	return c.baseURL + "/health"
 }
 
 // --- Scenarios ---

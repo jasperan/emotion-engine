@@ -2,11 +2,11 @@ services:
   oracle-db:
     image: gvenzl/oracle-free:latest-faststart
     ports:
-      - "1522:1521"
+      - "${COMPOSE_BIND_ADDR:-127.0.0.1}:1522:1521"
     environment:
-      - ORACLE_PASSWORD=oracle
-      - APP_USER=emotionsim
-      - APP_USER_PASSWORD=emotionsim
+      - ORACLE_PASSWORD=${ORACLE_PASSWORD:-oracle}
+      - APP_USER=${ORACLE_DB_USER:-emotionsim}
+      - APP_USER_PASSWORD=${ORACLE_DB_PASSWORD:-emotionsim}
     volumes:
       - oracle_data:/opt/oracle/oradata
     healthcheck:
@@ -22,15 +22,15 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     ports:
-      - "8000:8000"
+      - "${COMPOSE_BIND_ADDR:-127.0.0.1}:8000:8000"
     volumes:
       - backend_data:/app/data
     environment:
       - ORACLE_DB_HOST=oracle-db
       - ORACLE_DB_PORT=1521
       - ORACLE_DB_SERVICE=FREEPDB1
-      - ORACLE_DB_USER=emotionsim
-      - ORACLE_DB_PASSWORD=emotionsim
+      - ORACLE_DB_USER=${ORACLE_DB_USER:-emotionsim}
+      - ORACLE_DB_PASSWORD=${ORACLE_DB_PASSWORD:-emotionsim}
       - VLLM_BASE_URL=${DOCKER_VLLM_BASE_URL:-http://host.docker.internal:8010}
       - VLLM_DEFAULT_MODEL=${DOCKER_VLLM_DEFAULT_MODEL:-Qwen/Qwen3.5-4B}
       - OLLAMA_BASE_URL=${DOCKER_OLLAMA_BASE_URL:-http://host.docker.internal:11434/v1}
@@ -63,7 +63,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "${COMPOSE_BIND_ADDR:-127.0.0.1}:3000:3000"
     environment:
       - NODE_ENV=production
       - PUBLIC_API_URL=http://localhost:8000

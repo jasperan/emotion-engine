@@ -9,13 +9,14 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 
 # Install dependencies
-RUN npm install
+RUN npm ci
 
 # Copy source code
 COPY . .
 
 # Build the application
 RUN npm run build
+RUN npm prune --omit=dev
 
 # Production stage
 FROM node:20-alpine
@@ -36,4 +37,3 @@ EXPOSE 3000
 
 # Run the application
 CMD ["node", "build"]
-

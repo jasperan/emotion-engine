@@ -67,7 +67,7 @@ func (h HelpModel) bindingsForScreen(screen Screen) []keyBinding {
 			{"/", "Filter"},
 			{"h", "History"},
 			{"a", "Analytics"},
-			{"q", "Back"},
+			{"q/Esc", "Back"},
 		}
 	case ScreenLauncher:
 		return []keyBinding{
@@ -75,7 +75,7 @@ func (h HelpModel) bindingsForScreen(screen Screen) []keyBinding {
 			{"Tab", "Next field"},
 			{"Shift+Tab", "Prev field"},
 			{"←/→", "Change provider"},
-			{"q", "Back"},
+			{"q/Esc", "Back"},
 		}
 	case ScreenDashboard:
 		return []keyBinding{
@@ -91,7 +91,7 @@ func (h HelpModel) bindingsForScreen(screen Screen) []keyBinding {
 			{"1-9", "Select agent"},
 			{"h/l", "Cycle agents"},
 			{"j/k", "Scroll"},
-			{"q", "Back"},
+			{"q/Esc", "Back"},
 		}
 	case ScreenTheater:
 		return []keyBinding{
@@ -106,14 +106,14 @@ func (h HelpModel) bindingsForScreen(screen Screen) []keyBinding {
 			{"Enter", "Open run (Replay/Dashboard)"},
 			{"↑/↓", "Navigate"},
 			{"a", "Analytics"},
-			{"q", "Back"},
+			{"q/Esc", "Back"},
 		}
 	case ScreenAnalytics:
 		return []keyBinding{
 			{"s", "Cycle scenario filter"},
 			{"j/k", "Select run"},
 			{"Enter", "Open in Replay"},
-			{"q", "Back"},
+			{"q/Esc", "Back"},
 		}
 	case ScreenReplay:
 		return []keyBinding{
@@ -125,7 +125,7 @@ func (h HelpModel) bindingsForScreen(screen Screen) []keyBinding {
 			{"+/-", "Speed up/slow down"},
 			{"d", "Toggle diff view"},
 			{"e", "Jump to evaluation"},
-			{"q", "Back to history"},
+			{"q/Esc", "Back to history"},
 		}
 	default:
 		return nil

@@ -30,8 +30,8 @@ func (i runItem) FilterValue() string { return i.run.ID }
 
 type runDelegate struct{}
 
-func (d runDelegate) Height() int                               { return 2 }
-func (d runDelegate) Spacing() int                              { return 1 }
+func (d runDelegate) Height() int                             { return 2 }
+func (d runDelegate) Spacing() int                            { return 1 }
 func (d runDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
 
 func (d runDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
@@ -177,7 +177,7 @@ func (m HistoryModel) Update(msg tea.Msg) (HistoryModel, tea.Cmd) {
 func (m HistoryModel) View(width, height int) string {
 	if m.errMsg != "" {
 		errView := theme.ErrorText.Render("Failed to load runs: "+m.errMsg) +
-			"\n\n" + theme.KeyName.Render("q") + theme.KeyHint.Render(" back")
+			"\n\n" + theme.KeyName.Render("q/Esc") + theme.KeyHint.Render(" back")
 		return lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, errView)
 	}
 
@@ -191,7 +191,7 @@ func (m HistoryModel) View(width, height int) string {
 	hints := theme.KeyName.Render("Enter") + theme.KeyHint.Render(" view") +
 		"  " + theme.KeyName.Render("r") + theme.KeyHint.Render(" replay") +
 		"  " + theme.KeyName.Render("↑/↓") + theme.KeyHint.Render(" navigate") +
-		"  " + theme.KeyName.Render("q") + theme.KeyHint.Render(" back")
+		"  " + theme.KeyName.Render("q/Esc") + theme.KeyHint.Render(" back")
 
 	return m.list.View() + "\n" + hints
 }

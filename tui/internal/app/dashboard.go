@@ -89,14 +89,14 @@ type DashboardModel struct {
 	feedFilter   components.FeedFilter
 
 	// Social dynamics state (Feature 1)
-	opinionStances   []components.OpinionStance
-	tippingPoints    []components.TippingPointInfo
-	influenceProfiles []components.InfluenceProfile
+	opinionStances     []components.OpinionStance
+	tippingPoints      []components.TippingPointInfo
+	influenceProfiles  []components.InfluenceProfile
 	convergenceByTopic map[string]float64
 
 	// Network matrix state (Feature 2)
-	networkMode   components.NetworkMode
-	coalitions    []components.CoalitionInfo
+	networkMode    components.NetworkMode
+	coalitions     []components.CoalitionInfo
 	influenceEdges []components.InfluenceEdgeInfo
 
 	// Step diff + telemetry state (Feature 4)
@@ -592,10 +592,10 @@ func (m *DashboardModel) handleWSEvent(evt api.WSMessage) {
 						src := m.agentNameByID(fmt.Sprintf("%v", em["source"]))
 						tgt := m.agentNameByID(fmt.Sprintf("%v", em["target"]))
 						m.influenceEdges = append(m.influenceEdges, components.InfluenceEdgeInfo{
-							Source:          src,
-							Target:          tgt,
-							Topic:           fmt.Sprintf("%v", em["topic"]),
-							TotalDelta:      safeFloat(em, "weight"),
+							Source:           src,
+							Target:           tgt,
+							Topic:            fmt.Sprintf("%v", em["topic"]),
+							TotalDelta:       safeFloat(em, "weight"),
 							InteractionCount: int(safeFloat(em, "interaction_count")),
 						})
 					}
@@ -1077,7 +1077,7 @@ func (m DashboardModel) View(width, height int) string {
 	if m.panelMode == PanelNetwork {
 		hints = append(hints, components.KeyHint{Key: "n", Desc: "mode"})
 	}
-	hints = append(hints, components.KeyHint{Key: "q", Desc: "back"})
+	hints = append(hints, components.KeyHint{Key: "q/Esc", Desc: "back"})
 
 	if m.errMsg != "" {
 		hints = append([]components.KeyHint{{Key: "!", Desc: m.errMsg}}, hints...)

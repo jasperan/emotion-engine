@@ -126,12 +126,6 @@ export default function CognitiveEngineWidget() {
       return;
     }
 
-    // If we haven't started yet, begin at stage 0
-    if (currentStage < 0) {
-      setCurrentStage(0);
-      return;
-    }
-
     // If we're at the last stage, stop playing after the interval
     if (currentStage >= STAGES.length - 1) {
       timerRef.current = setTimeout(() => {
@@ -164,8 +158,8 @@ export default function CognitiveEngineWidget() {
       setIsPlaying(false);
       return;
     }
-    if (currentStage >= STAGES.length - 1) {
-      setCurrentStage(-1);
+    if (currentStage < 0 || currentStage >= STAGES.length - 1) {
+      setCurrentStage(0);
     }
     setIsPlaying(true);
   };

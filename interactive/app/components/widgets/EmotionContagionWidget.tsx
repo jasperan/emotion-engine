@@ -26,13 +26,6 @@ function stressColor(stress: number): string {
   return "#f43f5e";
 }
 
-function stressLabel(stress: number): string {
-  if (stress <= 2) return "Calm";
-  if (stress <= 5) return "Tense";
-  if (stress <= 8) return "Stressed";
-  return "Panic";
-}
-
 function createInitialAgents(): Agent[] {
   return AGENT_NAMES.map((name) => ({ name, stress: INITIAL_STRESS }));
 }

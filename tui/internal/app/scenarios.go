@@ -32,8 +32,8 @@ func (i scenarioItem) Description() string { return i.scenario.Description }
 
 type scenarioDelegate struct{}
 
-func (d scenarioDelegate) Height() int                               { return 3 }
-func (d scenarioDelegate) Spacing() int                              { return 1 }
+func (d scenarioDelegate) Height() int                             { return 3 }
+func (d scenarioDelegate) Spacing() int                            { return 1 }
 func (d scenarioDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
 
 func (d scenarioDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
@@ -162,8 +162,8 @@ func (m ScenarioModel) Update(msg tea.Msg) (ScenarioModel, tea.Cmd) {
 // View renders the scenario list.
 func (m ScenarioModel) View(width, height int) string {
 	if m.err != nil {
-		errView := theme.ErrorText.Render("Failed to load scenarios: " + m.err.Error()) +
-			"\n\n" + theme.KeyName.Render("q") + theme.KeyHint.Render(" back")
+		errView := theme.ErrorText.Render("Failed to load scenarios: "+m.err.Error()) +
+			"\n\n" + theme.KeyName.Render("q/Esc") + theme.KeyHint.Render(" back")
 		return lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, errView)
 	}
 
@@ -171,7 +171,7 @@ func (m ScenarioModel) View(width, height int) string {
 
 	hints := theme.KeyName.Render("Enter") + theme.KeyHint.Render(" launch") +
 		"  " + theme.KeyName.Render("/") + theme.KeyHint.Render(" filter") +
-		"  " + theme.KeyName.Render("q") + theme.KeyHint.Render(" back")
+		"  " + theme.KeyName.Render("q/Esc") + theme.KeyHint.Render(" back")
 
 	return m.list.View() + "\n" + hints
 }

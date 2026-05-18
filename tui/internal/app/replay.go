@@ -281,7 +281,7 @@ func (m ReplayModel) handleKey(msg tea.KeyMsg) (ReplayModel, tea.Cmd) {
 func (m ReplayModel) View(width, height int) string {
 	if m.err != nil {
 		errMsg := theme.ErrorText.Render("Error loading replay: "+m.err.Error()) +
-			"\n\n" + theme.KeyName.Render("q") + theme.KeyHint.Render(" back")
+			"\n\n" + theme.KeyName.Render("q/Esc") + theme.KeyHint.Render(" back")
 		return lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, errMsg)
 	}
 
@@ -371,7 +371,7 @@ func (m ReplayModel) renderHintBar(width int) string {
 		theme.KeyName.Render("+/-") + theme.KeyHint.Render(" speed"),
 		theme.KeyName.Render("d") + theme.KeyHint.Render(" diff"),
 		theme.KeyName.Render("e") + theme.KeyHint.Render(" eval"),
-		theme.KeyName.Render("q") + theme.KeyHint.Render(" back"),
+		theme.KeyName.Render("q/Esc") + theme.KeyHint.Render(" back"),
 	}
 	bar := strings.Join(hints, "  ")
 	return theme.StatusBar.Width(width).Render(" " + bar)

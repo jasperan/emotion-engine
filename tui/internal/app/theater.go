@@ -31,17 +31,17 @@ type DirectorNote struct {
 
 // TheaterModel is the cinematic theater view screen.
 type TheaterModel struct {
-	client  *api.Client
-	runID   string
-	run     *api.RunResponse
+	client *api.Client
+	runID  string
+	run    *api.RunResponse
 
-	entries      []TheaterEntry
+	entries       []TheaterEntry
 	directorNotes []DirectorNote
-	focusAgent   int    // -1 = all agents, 0+ = index into agent names
-	agentNames   []string
-	paused       bool
-	scrollPos    int
-	maxEntries   int
+	focusAgent    int // -1 = all agents, 0+ = index into agent names
+	agentNames    []string
+	paused        bool
+	scrollPos     int
+	maxEntries    int
 }
 
 // NewTheaterModel creates a theater view for the given run.
@@ -294,7 +294,7 @@ func (m TheaterModel) View(width, height int) string {
 			theme.KeyName.Render("Space")+theme.KeyHint.Render(" pause"),
 			theme.KeyName.Render("1-9")+theme.KeyHint.Render(" focus"),
 			theme.KeyName.Render("0")+theme.KeyHint.Render(" all"),
-			theme.KeyName.Render("q")+theme.KeyHint.Render(" back"),
+			theme.KeyName.Render("q/Esc")+theme.KeyHint.Render(" back"),
 		))
 
 	return lipgloss.JoinVertical(lipgloss.Left, header, main, director, status)

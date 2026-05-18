@@ -27,6 +27,14 @@ func NewClient(baseURL string) *Client {
 	}
 }
 
+// BaseURL returns the configured backend URL for diagnostics and UI hints.
+func (c *Client) BaseURL() string {
+	if c == nil {
+		return ""
+	}
+	return c.baseURL
+}
+
 // --- Scenarios ---
 
 // ListScenarios returns all available scenarios.

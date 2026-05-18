@@ -57,18 +57,41 @@ Simulates disaster scenarios with diverse LLM-driven personas that interact, mak
 
 ## Quick Start
 
+### Docker Full Stack
+
+The Docker path starts Oracle DB 26ai Free, the FastAPI backend, and the SvelteKit dashboard.
+
+> **Preflight check:**
+> ```bash
+> curl -fsSL https://raw.githubusercontent.com/jasperan/emotion-engine/main/install.sh | bash -s -- --check
+> ```
+
 > **One-command install:**
 > ```bash
 > curl -fsSL https://raw.githubusercontent.com/jasperan/emotion-engine/main/install.sh | bash
 > ```
 
-### Backend
+Override the install location with:
 
 ```bash
-cd backend
+curl -fsSL https://raw.githubusercontent.com/jasperan/emotion-engine/main/install.sh | env PROJECT_DIR=/opt/emotion-engine bash
+```
+
+After install, open `http://localhost:3000` for the web dashboard or `http://localhost:8000/health` for the API health check.
+
+### Local Python CLI
+
+Run these commands from the repository root. The editable Python package is not inside `backend/`.
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -e .
+cp env.example .env
 emotionsim run --scenario "Rising Flood" --max-steps 50 --seed 42
 ```
+
+Local runs need Oracle DB plus either vLLM or Ollama. The Docker stack can provide Oracle, and Ollama can be started separately with `ollama serve` and `ollama pull qwen3.5:4b`.
 
 ### TUI Dashboard
 
@@ -85,10 +108,12 @@ The TUI has 7 screens and multiple panel modes. See the [TUI Guide](#tui-guide) 
 
 ### Web Dashboard
 
+Use Docker for the lowest-friction full-stack web path. For frontend-only development, start the backend separately and run:
+
 ```bash
 cd frontend
 npm install                   # first time only
-npm run dev                   # starts both backend + SvelteKit frontend
+npm run dev:frontend          # SvelteKit dev server only
 ```
 
 ## Architecture
@@ -255,12 +280,12 @@ Press `a` from Scenarios or History to open cross-run analytics. Requires `DATAL
 | `j`/`k` | Scroll feed | -- | Select run |
 | `h`/`l` | Cycle agents | Step back/fwd | -- |
 | `1-9` | Select agent | -- | -- |
-| `q` | Back | Back | Back |
+| `q`/`Esc` | Back | Back | Back |
 | `F1` | Help overlay | Help overlay | Help overlay |
 
 ## Configuration
 
-Environment variables via `.env` in `backend/`:
+Environment variables are loaded from `.env` in the repository root:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -269,6 +294,12 @@ Environment variables via `.env` in `backend/`:
 | `VLLM_DEFAULT_MODEL` | `Qwen/Qwen3.5-4B` | Model loaded in vLLM |
 | `OLLAMA_BASE_URL` | `http://localhost:11434/v1` | Ollama server address |
 | `OLLAMA_DEFAULT_MODEL` | `qwen3.5:4b` | Model for Ollama inference |
+| `OLLAMA_FALLBACK_MODEL` | `qwen3.5:4b` | Fallback Ollama model after primary failure |
+| `DOCKER_LLM_BACKEND` | `ollama` | Docker-only LLM backend override |
+| `DOCKER_VLLM_BASE_URL` | `http://host.docker.internal:8010` | Docker-only vLLM server address |
+| `DOCKER_VLLM_DEFAULT_MODEL` | `Qwen/Qwen3.5-4B` | Docker-only vLLM model |
+| `DOCKER_OLLAMA_BASE_URL` | `http://host.docker.internal:11434/v1` | Docker-only Ollama address |
+| `DOCKER_OLLAMA_DEFAULT_MODEL` | `qwen3.5:4b` | Docker-only Ollama primary model |
 | `ORACLE_DB_HOST` | `localhost` | Oracle DB host |
 | `ORACLE_DB_PORT` | `1522` | Oracle DB port |
 | `ORACLE_DB_USER` | `emotionsim` | DB username (dev default) |
@@ -277,19 +308,23 @@ Environment variables via `.env` in `backend/`:
 | `DATALAKE_ENABLED` | `true` | Enable cross-run analytics |
 | `CORS_ORIGINS` | `localhost:3000,5173` | Allowed CORS origins |
 
+For Docker with Ollama on a non-default host port, pass Docker-specific overrides when starting the stack, for example `DOCKER_OLLAMA_BASE_URL=http://host.docker.internal:11436/v1 DOCKER_OLLAMA_DEFAULT_MODEL=gemma3:270m docker compose up -d`.
+
+For Docker with a host vLLM server, use `DOCKER_LLM_BACKEND=vllm DOCKER_VLLM_BASE_URL=http://host.docker.internal:8010 docker compose up -d`.
+
 ## Project Structure
 
 ```
 emotion-engine/
-  backend/
-    app/
-      agents/        # Human, Environment, Designer, Evaluator
-      api/           # FastAPI routes + WebSocket
-      llm/           # vLLM/Ollama router, token logger
-      models/        # SQLAlchemy ORM (Oracle DB)
-      schemas/       # Pydantic validation
-      scenarios/     # Built-in scenario templates
-      simulation/    # Engine, message bus, conversations, scenes
+  emotionsim/
+    agents/          # Human, Environment, Designer, Evaluator
+    api/             # FastAPI routes + WebSocket
+    llm/             # vLLM/Ollama router, token logger
+    models/          # SQLAlchemy ORM (Oracle DB)
+    schemas/         # Pydantic validation
+    scenarios/       # Built-in scenario templates
+    simulation/      # Engine, message bus, conversations, scenes
+  backend/           # Dockerfile and backend helper tools
   tui/               # Go Bubble Tea terminal dashboard
     cmd/             # CLI entry point
     internal/        # App screens, API client, components, theme

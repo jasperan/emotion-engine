@@ -134,8 +134,6 @@ export default function MessageBusWidget() {
 
   /* ---- animation tick via requestAnimationFrame ---- */
   const animRef = useRef<number | null>(null);
-  const edgesRef = useRef<AnimatingEdge[]>([]);
-  edgesRef.current = animatingEdges;
 
   const startAnimation = useCallback((edges: AnimatingEdge[]) => {
     setAnimatingEdges(edges);

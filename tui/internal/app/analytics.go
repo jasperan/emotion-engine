@@ -149,7 +149,7 @@ func (m AnalyticsModel) View(width, height int) string {
 	hints := theme.KeyName.Render("s") + theme.KeyHint.Render(" cycle filter") +
 		"  " + theme.KeyName.Render("j/k") + theme.KeyHint.Render(" select") +
 		"  " + theme.KeyName.Render("Enter") + theme.KeyHint.Render(" replay") +
-		"  " + theme.KeyName.Render("q") + theme.KeyHint.Render(" back")
+		"  " + theme.KeyName.Render("q/Esc") + theme.KeyHint.Render(" back")
 
 	bodyHeight := height - 2 // status + hints
 	leftWidth := width / 2

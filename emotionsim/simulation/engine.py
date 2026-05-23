@@ -21,6 +21,7 @@ from emotionsim.simulation.trust_network import TrustNetwork
 from emotionsim.simulation.world_state_diff import WorldStateDiffTracker
 from emotionsim.simulation.conversation_outcomes import ConversationOutcomeExtractor
 from emotionsim.simulation.emotion_contagion import EmotionContagion
+from emotionsim.simulation.action_dispatcher import AgentActionDispatcher
 from emotionsim.models.run import Run, RunStatus
 from emotionsim.models.agent import AgentModel
 from emotionsim.models.step import Step
@@ -132,6 +133,7 @@ class SimulationEngine:
 
         # L8: World State Diff Tracker (Pi hash-anchor inspired)
         self.diff_tracker = WorldStateDiffTracker()
+        self.action_dispatcher = AgentActionDispatcher(self)
 
         # L9: Configure per-agent-type model routing
         configure_model_routing({
@@ -1501,63 +1503,19 @@ class SimulationEngine:
         conversation: Any,
     ) -> None:
         """Process a single agent action, dispatching to appropriate handler"""
-        if action.action_type == "move":
-            success = await self._handle_movement(agent_id, action.target, action.parameters)
-            if success and action.target:
-                old_loc = self._agent_locations.get(agent_id, "unknown")
-                self.diff_tracker.record_movement(agent_id, old_loc, action.target)
-            if not success:
-                return  # Skip failed movement
-        elif action.action_type == "propose_task":
-            self._handle_propose_task(agent_id, action.parameters)
-        elif action.action_type == "accept_task":
-            self._handle_accept_task(agent_id, action.target, action.parameters)
-        elif action.action_type == "report_progress":
-            self._handle_report_progress(agent_id, action.parameters)
-        elif action.action_type == "call_for_vote":
-            self._handle_call_for_vote(agent_id, action.parameters)
-        elif action.action_type == "take":
-            await self._handle_take(agent_id, action.target)
-        elif action.action_type == "drop":
-            await self._handle_drop(agent_id, action.target)
-        elif action.action_type == "use":
-            await self._handle_use(agent_id, action.target)
-        elif action.action_type == "interact":
-            await self._handle_interact(agent_id, action.target, action.parameters)
-        elif action.action_type == "search":
-            await self._handle_search(agent_id)
-        # L2: Negotiation actions
-        elif action.action_type == "propose":
-            self._handle_propose(agent_id, action.target, action.parameters)
-        elif action.action_type == "accept_proposal":
-            self._handle_accept_proposal(agent_id, action.target, action.parameters)
-        elif action.action_type == "reject_proposal":
-            self._handle_reject_proposal(agent_id, action.target, action.parameters)
-        elif action.action_type == "counter_propose":
-            self._handle_counter_propose(agent_id, action.target, action.parameters)
-        elif action.action_type == "withdraw_proposal":
-            self._handle_withdraw_proposal(agent_id, action.target)
-        # L5: Trust actions
-        elif action.action_type == "vouch_for":
-            self._handle_vouch_for(agent_id, action.target, action.parameters)
-        elif action.action_type == "share_plan":
-            self._handle_share_plan(agent_id, action.target)
-        # L7: Emergent leadership
-        elif action.action_type == "coordinate":
-            self._handle_coordinate(agent_id, action.parameters)
-        elif action.action_type == "delegate_task":
-            self._handle_delegate_task(agent_id, action.target, action.parameters)
-        elif action.action_type == "explore":
-            self._handle_explore(agent_id, action.parameters)
-
-        # Log action
-        action_dict = {
-            "agent_id": agent_id,
-            "agent_name": agent.name,
-            **action.model_dump(),
-        }
-        step_actions.append(action_dict)
-        self.coordinator.track_action(agent_id, action.action_type, action.target)
+        dispatcher = getattr(self, "action_dispatcher", None)
+        if dispatcher is None:
+            dispatcher = AgentActionDispatcher(self)
+            self.action_dispatcher = dispatcher
+        await dispatcher.process(
+            agent_id,
+            agent,
+            action,
+            step_actions,
+            step_messages,
+            in_conversation,
+            conversation,
+        )
 
     def _route_message(
         self,
@@ -2259,8 +2217,10 @@ class SimulationEngine:
         current_stress = agent.dynamic_state.get("stress", 0.0)   # Default to 0 if missing
 
         # Ensure they are floats
-        if current_health is None: current_health = 10.0
-        if current_stress is None: current_stress = 0.0
+        if current_health is None:
+            current_health = 10.0
+        if current_stress is None:
+            current_stress = 0.0
 
         if "health_delta" in params:
             delta = params["health_delta"]

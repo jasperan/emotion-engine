@@ -162,12 +162,13 @@ async def test_sync_handler_invoked_before_logging() -> None:
 
 
 @pytest.mark.asyncio
-async def test_engine_process_action_lazily_creates_dispatcher() -> None:
+async def test_engine_process_action_delegates_to_dispatcher() -> None:
     engine = SimulationEngine.__new__(SimulationEngine)
     engine.coordinator = StubCoordinator()
     engine.diff_tracker = StubDiffTracker()
     engine._agent_locations = {"agent-1": "bridge"}
     engine._handle_movement = StubRuntime()._handle_movement
+    engine.action_dispatcher = AgentActionDispatcher(engine)
 
     action = StubAction("move", target="shelter")
     step_actions: list[dict] = []

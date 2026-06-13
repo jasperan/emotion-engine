@@ -49,6 +49,7 @@ dependencies = [
     "click",
     "rich",
     "questionary",
+    "aiohttp",
 ]
 
 [project.optional-dependencies]
@@ -59,6 +60,7 @@ dev = [
     "mypy",
     "build",
     "twine",
+    "aiosqlite",
 ]
 
 [project.urls]

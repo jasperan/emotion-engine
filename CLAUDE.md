@@ -126,7 +126,7 @@ Go TUI (Bubble Tea)
 
 ### Key Components
 
-**SimulationEngine** (`backend/app/simulation/engine.py`)
+**SimulationEngine** (`emotionsim/simulation/engine.py`)
 - Orchestrates agent lifecycle and tick loop
 - Three processing phases:
   - Phase 1: Environment agents (generate events)
@@ -138,41 +138,41 @@ Go TUI (Bubble Tea)
 - Evaluates runs on completion
 - Max safety cap: 1000 steps
 
-**Agent Hierarchy** (`backend/app/agents/`)
+**Agent Hierarchy** (`emotionsim/agents/`)
 - **BaseAgent**: Abstract base with LLM, memory, tick logic
 - **HumanAgent**: Role-plays with Big Five traits, stress/health, inventory
 - **EnvironmentAgent**: Manages hazards, locations, items, world events
 - **DesignerAgent**: Guides scenario narrative
 - **EvaluationAgent**: Analyzes behavior post-run
 
-**MessageBus** (`backend/app/simulation/message_bus.py`)
+**MessageBus** (`emotionsim/simulation/message_bus.py`)
 - Routes messages: direct, room-scoped, broadcast, conversation
 - Tracks history for persistence/replay
 - Manages room subscriptions by location
 
-**ConversationManager** (`backend/app/simulation/conversation.py`)
+**ConversationManager** (`emotionsim/simulation/conversation.py`)
 - Multi-turn dialogues between agents
 - Turn-taking, conversation state
 - Tracks participants, prevents loops
 
-**ACP (Agent Coordination Protocol)** (`backend/app/acp/`)
+**ACP (Agent Coordination Protocol)** (`emotionsim/acp/`)
 - `registry.py` — tracks live agent identities, statuses, capabilities, roles
 - `wave_controller.py` — wave-based task batching: groups tasks into dependency waves, runs each wave via `asyncio.gather`
 - `coordination.py` — cross-agent coordination primitives
 - `message.py` — ACP message/identity dataclasses
 
-**CooperationCoordinator** (`backend/app/agents/coordinator.py`)
+**CooperationCoordinator** (`emotionsim/agents/coordinator.py`)
 - Tracks shared goals and task assignments
 - Detects and breaks behavioral loops
 - Provides suggestions when agents stuck
 
-**LLM Router** (`backend/app/llm/router.py`)
+**LLM Router** (`emotionsim/llm/router.py`)
 - Abstraction for providers (vLLM primary, Ollama fallback)
 - Singleton pattern for client reuse
 - Per-agent-type model routing (human/environment/reactive can use different models)
 - Automatic fallback chain: vLLM → Ollama → fallback model
 
-**Database Models** (`backend/app/models/`)
+**Database Models** (`emotionsim/models/`)
 - **Run**: Simulation state, status, metrics
 - **Scenario**: Templates with agent configs
 - **Agent**: Instances with persona + dynamic state
@@ -304,39 +304,39 @@ Agent.tick() →
 
 ## Key Files
 
-- `backend/app/simulation/engine.py` - Main orchestrator
-- `backend/app/agents/base.py` - Agent base class
-- `backend/app/agents/human.py` - Persona-driven agents (CognitiveEngine + IntentMemory)
-- `backend/app/simulation/message_bus.py` - Message routing
-- `backend/app/simulation/conversation.py` - Multi-turn dialogues
-- `backend/app/agents/coordinator.py` - Cooperation tracking
-- `backend/app/llm/router.py` - LLM abstraction
-- `backend/app/llm/vllm.py` - vLLM client (parallel inference)
-- `backend/app/llm/token_logger.py` - Per-agent JSONL token logging
-- `backend/app/simulation/agent_supervisor.py` - Fault isolation & backoff
-- `backend/app/simulation/scene_director.py` - Location-based scene grouping
-- `backend/app/models/` - Database models
-- `backend/app/cli/main.py` - CLI commands
-- `backend/app/acp/` - Agent Coordination Protocol (registry, wave controller, coordination primitives)
+- `emotionsim/simulation/engine.py` - Main orchestrator
+- `emotionsim/agents/base.py` - Agent base class
+- `emotionsim/agents/human.py` - Persona-driven agents (CognitiveEngine + IntentMemory)
+- `emotionsim/simulation/message_bus.py` - Message routing
+- `emotionsim/simulation/conversation.py` - Multi-turn dialogues
+- `emotionsim/agents/coordinator.py` - Cooperation tracking
+- `emotionsim/llm/router.py` - LLM abstraction
+- `emotionsim/llm/vllm.py` - vLLM client (parallel inference)
+- `emotionsim/llm/token_logger.py` - Per-agent JSONL token logging
+- `emotionsim/simulation/agent_supervisor.py` - Fault isolation & backoff
+- `emotionsim/simulation/scene_director.py` - Location-based scene grouping
+- `emotionsim/models/` - Database models
+- `emotionsim/cli.py` - CLI commands
+- `emotionsim/acp/` - Agent Coordination Protocol (registry, wave controller, coordination primitives)
 - `frontend/src/routes/` - SvelteKit pages
 - `frontend/src/lib/components/TokenStream.svelte` - Real-time token visualizer
-- `backend/app/storage/` - Knowledge graph layer (mirofish branch)
+- `emotionsim/storage/` - Knowledge graph layer (mirofish branch)
   - `graph_storage.py` - GraphStorage ABC + Entity/Edge/SearchResult dataclasses
   - `oracle_graph_storage.py` - Oracle 26ai implementation with hybrid search
   - `embedding_service.py` - Ollama nomic-embed-text (768d) wrapper
   - `ner_extractor.py` - LLM-based NER/RE extraction
-- `backend/app/services/` - High-level services (mirofish branch)
+- `emotionsim/services/` - High-level services (mirofish branch)
   - `document_ingestor.py` - Text → NER → graph pipeline
   - `persona_generator.py` - Graph entity → Big Five + MBTI persona
   - `scenario_assembler.py` - Graph entities → ScenarioCreate
   - `report_agent.py` - Post-sim analysis with graph tools
   - `graph_tools.py` - InsightForge, PanoramaSearch
-- `backend/app/agents/graph_memory.py` - Relevance-based recall via hybrid search (mirofish branch)
-- `backend/app/agents/lightweight_agent.py` - Rule-based agent for 100+ scaling (mirofish branch)
-- `backend/app/simulation/opinion_dynamics.py` - Opinion shift engine (mirofish branch)
-- `backend/app/simulation/sentiment_tracker.py` - Topic sentiment tracking + tipping points (mirofish branch)
-- `backend/app/simulation/influence_network.py` - Directed influence graph (mirofish branch)
-- `backend/app/simulation/social_dynamics.py` - Orchestrator for all social systems (mirofish branch)
+- `emotionsim/agents/graph_memory.py` - Relevance-based recall via hybrid search (mirofish branch)
+- `emotionsim/agents/lightweight_agent.py` - Rule-based agent for 100+ scaling (mirofish branch)
+- `emotionsim/simulation/opinion_dynamics.py` - Opinion shift engine (mirofish branch)
+- `emotionsim/simulation/sentiment_tracker.py` - Topic sentiment tracking + tipping points (mirofish branch)
+- `emotionsim/simulation/influence_network.py` - Directed influence graph (mirofish branch)
+- `emotionsim/simulation/social_dynamics.py` - Orchestrator for all social systems (mirofish branch)
 
 ## Go TUI Architecture
 
@@ -362,8 +362,8 @@ The TUI (`tui/`) is a standalone Go binary that connects to the backend via WebS
 - **Token budget**: `agent_max_tokens_per_run=50000` counts streamed characters (not LLM tokens). Set to 0 to disable
 - **Parallel scenes**: Only with `llm_backend=vllm`. Ollama falls back to sequential due to GPU serialization
 - **TUI auto-start**: The Go TUI spawns `python3 -m emotionsim.main` and `vllm serve` as child processes. Use `--no-backend`/`--no-vllm` flags to suppress
-- **Engine V2**: `engine_v2.py` and `cognitive_engine_v2.py` exist alongside V1 — V2 adds governance, emotion contagion, and goal trees
-- **env.example**: Lives in `backend/env.example`. Missing `VLLM_BASE_URL` and `VLLM_DEFAULT_MODEL` (those default in code to `:8010` and `Qwen/Qwen3.5-4B`)
+- **Engine V2**: `engine_v2.py` (`SimulationEngineV2`) exists alongside V1 as a standalone, opt-in object — it adds heartbeat scheduling, goal trees, and governance gates, but is not wired into the V1 tick loop
+- **env.example**: Lives at the repo root (`env.example`). Missing `VLLM_BASE_URL` and `VLLM_DEFAULT_MODEL` (those default in code to `:8010` and `Qwen/Qwen3.5-4B`)
 - **Datalake**: Enabled via `DATALAKE_ENABLED=true`. Schema in `datalake/schema.sql`. Powers the TUI Analytics screen
 - **Hybrid search weights** (mirofish branch): `VECTOR_WEIGHT=0.7`, `KEYWORD_WEIGHT=0.3` in `OracleGraphStorage`. Keyword scoring is simple term-matching (not true BM25) for SQLite test compat
 - **Embeddings stored as JSON** (mirofish branch): `embedding_json` columns use `OracleJSON` (CLOB) for SQLite test compatibility. In production Oracle, migrate to `VECTOR(768)` columns for native vector search

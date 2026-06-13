@@ -322,11 +322,15 @@ emotion-engine/
   emotionsim/
     agents/          # Human, Environment, Designer, Evaluator
     api/             # FastAPI routes + WebSocket
+    core/            # Settings and shared configuration
     llm/             # vLLM/Ollama router, token logger
     models/          # SQLAlchemy ORM (Oracle DB)
     schemas/         # Pydantic validation
     scenarios/       # Built-in scenario templates
+    services/        # Document ingestion, persona/scenario assembly, reporting
     simulation/      # Engine, message bus, conversations, scenes
+    storage/         # Knowledge graph layer (embeddings, NER, graph storage)
+    datalake/        # Cross-run analytics schema and queries
   backend/           # Dockerfile and backend helper tools
   tui/               # Go Bubble Tea terminal dashboard
     cmd/             # CLI entry point

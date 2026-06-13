@@ -11,6 +11,7 @@ from enum import Enum
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from emotionsim.core.config import get_settings
 from emotionsim.agents import Agent, EnvironmentAgent, HumanAgent, DesignerAgent, EvaluationAgent
 from emotionsim.llm.router import LLMRouter, configure_model_routing  # noqa: F401 (LLMRouter is referenced by tests via patch)
 from emotionsim.simulation.message_bus import MessageBus
@@ -34,6 +35,19 @@ from emotionsim.agents.voting_mixin import GroupDecisionMixin
 logger = logging.getLogger(__name__)
 
 
+def normalize_item_name(item: Any) -> str:
+    """Return the canonical name for an inventory/location item.
+
+    Items appear in three shapes across the codebase: a plain string, a
+    ``dict`` with a ``"name"`` key, or an object exposing a ``.name`` attribute.
+    This collapses all three to the underlying name string.
+    """
+    if isinstance(item, dict):
+        return item.get("name", "")
+    name = getattr(item, "name", None)
+    return name if name is not None else item
+
+
 class SimulationState(str, Enum):
     """Current state of the simulation engine"""
     IDLE = "idle"
@@ -49,6 +63,9 @@ class SimulationEngine:
     Main simulation engine that orchestrates runs.
     Manages agent lifecycle, tick loop, conversations, and state persistence.
     """
+
+    #: Hard cap on simulation steps to guarantee termination of the tick loop.
+    MAX_SAFETY_STEPS = 1000
 
     def __init__(
         self,
@@ -110,8 +127,8 @@ class SimulationEngine:
         self.group_voting = GroupDecisionMixin()
 
         # === NEW: Symphony/Pi-inspired systems ===
-        from emotionsim.core.config import get_settings
         settings = get_settings()
+        self._settings = settings
 
         # L1: Agent Supervisor (Symphony-inspired fault isolation)
         self.supervisor = AgentSupervisor(
@@ -245,12 +262,7 @@ class SimulationEngine:
                 "metadata": msg.msg_metadata or {},
                 "timestamp": msg.timestamp.isoformat(),
             }
-            self.message_bus._message_history.append(bus_msg)
-
-            # If it was a conversation message, add to conversation history
-            if "conversation_id" in bus_msg["metadata"]:
-                conv_id = bus_msg["metadata"]["conversation_id"]
-                self.message_bus._conversation_messages[conv_id].append(bus_msg)
+            self.message_bus.restore_message(bus_msg)
 
         # Initialize coordinator with shared goals
         all_goals = set()
@@ -348,8 +360,7 @@ class SimulationEngine:
         # Resolve model_id and provider based on active LLM backend.
         # Scenario configs typically store Ollama-style model names; when the
         # user selects a different backend (vLLM, OpenAI) we override.
-        from emotionsim.core.config import get_settings as _get_settings
-        _settings = _get_settings()
+        _settings = self._settings
 
         if _settings.llm_backend == "openai":
             from emotionsim.llm.openai_client import get_codex_defaults
@@ -389,7 +400,7 @@ class SimulationEngine:
             if persona_data and "inventory" not in persona_data and config.get("inventory"):
                 # Update persona with initial inventory if provided in agent config
                 persona_data["inventory"] = [
-                    item.get("name") if isinstance(item, dict) else item.name
+                    normalize_item_name(item)
                     for item in config.get("inventory", [])
                 ]
 
@@ -438,12 +449,9 @@ class SimulationEngine:
         stream_callback: Callable[[str, str], Awaitable[None]] | None = None,
     ) -> None:
         """Main simulation loop"""
-        # Safety limit to prevent infinite runs
-        MAX_SAFETY_STEPS = 1000
-
         while (
             (self.max_steps is None or self.current_step < self.max_steps)
-            and self.current_step < MAX_SAFETY_STEPS
+            and self.current_step < self.MAX_SAFETY_STEPS
             and not self._stop_requested
             and self.state == SimulationState.RUNNING
             and not self._check_consensus()
@@ -598,6 +606,19 @@ class SimulationEngine:
             }
         self.world_state["agents"] = agents_state
 
+    def _trust_between(self, observer_id: str, subject_id: str, default: int = 5) -> int:
+        """Trust the ``observer`` agent holds toward the ``subject`` agent.
+
+        Reads the observer's episodic relationship memory; returns ``default``
+        when the observer has no memory subsystem or no recorded relationship.
+        """
+        observer = self.agents.get(observer_id)
+        if observer is not None and hasattr(observer, "agent_memory"):
+            rel = observer.agent_memory.get_relationship(subject_id)
+            if rel:
+                return rel.trust_level
+        return default
+
     async def _execute_emotion_contagion(self, step_events: list[str]) -> None:
         """Phase 2.5: Propagate emotional stress between co-located agents.
 
@@ -613,14 +634,9 @@ class SimulationEngine:
         }
         groups = self.scene_director.group_agents_by_location(self.agents, agent_locations)
 
-        # Trust lookup function using agent memory
+        # Trust lookup function using agent memory: how much target trusts source
         def trust_fn(source_id: str, target_id: str) -> int:
-            target_agent = self.agents.get(target_id)
-            if target_agent and hasattr(target_agent, "agent_memory"):
-                rel = target_agent.agent_memory.get_relationship(source_id)
-                if rel:
-                    return rel.trust_level
-            return 5
+            return self._trust_between(target_id, source_id)
 
         total_events = []
         for location, agent_ids in groups.items():
@@ -650,10 +666,6 @@ class SimulationEngine:
 
                 if actual_delta == 0:
                     continue
-
-                # Update V2 heartbeat scheduler if available
-                if hasattr(self, "engine_v2") and self.engine_v2 is not None:
-                    self.engine_v2.update_agent_stress(event.target_id, stress_after)
 
                 # Record in diff tracker
                 self.diff_tracker.record_event(
@@ -720,22 +732,14 @@ class SimulationEngine:
                 # Broadcast reaches all human agents
                 for aid, agent in self.agents.items():
                     if aid != sender_id and agent.role == "human":
-                        trust = 5
-                        if hasattr(agent, "agent_memory"):
-                            rel = agent.agent_memory.get_relationship(sender_id)
-                            if rel:
-                                trust = rel.trust_level
+                        trust = self._trust_between(aid, sender_id)
                         interactions.append((sender_id, aid, trust))
             elif msg_type in ("room", "conversation"):
                 # Room/conversation messages reach co-located agents
                 for aid, agent in self.agents.items():
                     if aid != sender_id and agent.role == "human":
                         if self._agent_locations.get(aid) == sender_loc:
-                            trust = 5
-                            if hasattr(agent, "agent_memory"):
-                                rel = agent.agent_memory.get_relationship(sender_id)
-                                if rel:
-                                    trust = rel.trust_level
+                            trust = self._trust_between(aid, sender_id)
                             interactions.append((sender_id, aid, trust))
 
         if not interactions:
@@ -941,8 +945,7 @@ class SimulationEngine:
         self.world_state["agent_trust"] = agent_trust
 
         # Phase 2: Process human agents — scene-based, parallel, or sequential
-        from emotionsim.core.config import get_settings as _get_settings
-        _settings = _get_settings()
+        _settings = self._settings
         if self.scene_mode:
             await self._process_agents_as_scenes(step_actions, step_messages, step_events, stream_callback)
         elif _settings.max_concurrent_llm_calls > 1:
@@ -1103,8 +1106,7 @@ class SimulationEngine:
         agent_callback = _cb
 
         # --- Conclusion enforcement: inject directives if near budget or stagnant ---
-        from emotionsim.core.config import get_settings as _get_conclusion_settings
-        _settings = _get_conclusion_settings()
+        _settings = self._settings
         budget = _settings.agent_max_tokens_per_run
         conclude_pct = _settings.agent_conclude_at_pct
         max_stagnant = _settings.agent_max_stagnant_steps
@@ -1286,8 +1288,7 @@ class SimulationEngine:
         Thread-safe collection: each coroutine gets its own local lists,
         which are merged into the shared lists after all tasks complete.
         """
-        from emotionsim.core.config import get_settings
-        settings = get_settings()
+        settings = self._settings
         max_parallel = settings.max_concurrent_llm_calls
 
         human_agents = [
@@ -1426,8 +1427,7 @@ class SimulationEngine:
         throughput. Within each scene, turns remain sequential so agents
         can react to prior speech.
         """
-        from emotionsim.core.config import get_settings
-        settings = get_settings()
+        settings = self._settings
 
         # Build agent_locations dict from current tracking
         agent_locations = {
@@ -1503,11 +1503,7 @@ class SimulationEngine:
         conversation: Any,
     ) -> None:
         """Process a single agent action, dispatching to appropriate handler"""
-        dispatcher = getattr(self, "action_dispatcher", None)
-        if dispatcher is None:
-            dispatcher = AgentActionDispatcher(self)
-            self.action_dispatcher = dispatcher
-        await dispatcher.process(
+        await self.action_dispatcher.process(
             agent_id,
             agent,
             action,
@@ -1801,8 +1797,7 @@ class SimulationEngine:
             target_id = self._resolve_name(target)
 
             # Get current trust level
-            rel = agent.agent_memory.get_relationship(target_id)
-            old_trust = rel.trust_level if rel else 5
+            old_trust = self._trust_between(agent_id, target_id)
 
             if isinstance(agent, HumanAgent):
                 agent.update_relationship(target_id, trust_delta=1, note="Shared their plan with me")
@@ -2214,22 +2209,24 @@ class SimulationEngine:
             return
 
         current_health = agent.dynamic_state.get("health", 10.0) # Default to 10 if missing
-        current_stress = agent.dynamic_state.get("stress", 0.0)   # Default to 0 if missing
 
-        # Ensure they are floats
+        # Ensure health is a float
         if current_health is None:
             current_health = 10.0
-        if current_stress is None:
-            current_stress = 0.0
 
         if "health_delta" in params:
             delta = params["health_delta"]
             if delta is not None:
                 agent.dynamic_state["health"] = max(0.0, min(10.0, current_health + float(delta)))
 
-        if "stress_delta" in params:
-            new_stress = max(1, min(10, current_stress + params["stress_delta"]))
-            agent.dynamic_state["stress_level"] = new_stress
+        if "stress_delta" in params and params["stress_delta"] is not None:
+            # Route through the canonical clamp so we read/write "stress_level"
+            delta = int(params["stress_delta"])
+            if hasattr(agent, "update_stress"):
+                agent.update_stress(delta)
+            else:
+                current_stress = agent.dynamic_state.get("stress_level", 5)
+                agent.dynamic_state["stress_level"] = max(1, min(10, current_stress + delta))
 
         if "stress_level" in params:
             agent.dynamic_state["stress_level"] = max(1, min(10, params["stress_level"]))
@@ -2397,8 +2394,7 @@ class SimulationEngine:
         item_obj = None
 
         for idx, item in enumerate(loc_data["items"]):
-            # Normalize item (string or dict)
-            iname = item.get("name") if isinstance(item, dict) else item
+            iname = normalize_item_name(item)
             if iname.lower() == item_name.lower():
                 found_idx = idx
                 item_obj = item
@@ -2444,7 +2440,7 @@ class SimulationEngine:
         item_obj = None
 
         for idx, item in enumerate(agent.dynamic_state["inventory"]):
-            iname = item.get("name") if isinstance(item, dict) else item
+            iname = normalize_item_name(item)
             if iname.lower() == item_name.lower():
                 found_idx = idx
                 item_obj = item
@@ -2491,7 +2487,7 @@ class SimulationEngine:
         used_item = None
 
         for idx, item in enumerate(inventory):
-             iname = item.get("name") if isinstance(item, dict) else item
+             iname = normalize_item_name(item)
              if iname.lower() == item_name.lower():
                  has_item = True
                  used_item = item
@@ -2559,8 +2555,7 @@ class SimulationEngine:
         found = []
         items = loc_data.get("items", [])
         for item in items:
-             name = item.get("name") if isinstance(item, dict) else item
-             found.append(name)
+             found.append(normalize_item_name(item))
 
         if found:
              self.message_bus.broadcast(agent_id, f"Searched and found: {', '.join(found)}", self.current_step)

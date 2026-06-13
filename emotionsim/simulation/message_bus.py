@@ -54,6 +54,18 @@ class MessageBus:
             self._agent_names[agent_id] = agent_name
             self.alias_registry.register(agent_id, agent_name)
 
+    def restore_message(self, message: dict[str, Any]) -> None:
+        """Re-insert a persisted message into history (used when resuming a run).
+
+        Appends to the global history and, for conversation messages, to the
+        matching conversation history index.
+        """
+        self._message_history.append(message)
+
+        conv_id = (message.get("metadata") or {}).get("conversation_id")
+        if conv_id:
+            self._conversation_messages[conv_id].append(message)
+
     def unregister_agent(self, agent_id: str) -> None:
         """Unregister an agent from the message bus"""
         self._all_agents.discard(agent_id)

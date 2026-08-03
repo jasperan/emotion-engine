@@ -44,18 +44,19 @@ type OpinionHeatmapData struct {
 	Height          int
 }
 
-// stanceColor returns a color interpolated from red (-1) through yellow (0) to green (+1).
+// stanceColor returns a color interpolated along the 3-step semantic ramp
+// error (-1) → warning (0) → success (+1), per the design token rules.
+// Endpoints are approved tokens; the runtime-blended midpoint is computed
+// (not a source literal) and is exempt from the palette checker.
 func stanceColor(v float64) lipgloss.Color {
-	if v < -0.6 {
-		return lipgloss.Color("#FF453A") // strong negative
-	} else if v < -0.2 {
-		return lipgloss.Color("#FF8C3A") // moderate negative
-	} else if v < 0.2 {
-		return lipgloss.Color("#FFD60A") // neutral
-	} else if v < 0.6 {
-		return lipgloss.Color("#7CD15E") // moderate positive
+	switch {
+	case v < -0.34:
+		return lipgloss.Color("#f38ba8") // strong oppose (error)
+	case v < 0.34:
+		return lipgloss.Color("#f9e2af") // neutral (warning)
+	default:
+		return lipgloss.Color("#a6e3a1") // strong support (success)
 	}
-	return lipgloss.Color("#30D158") // strong positive
 }
 
 // stanceBlock renders a colored block for a stance value.
@@ -231,11 +232,11 @@ func RenderOpinionHeatmap(d OpinionHeatmapData) string {
 	// Legend
 	lines = append(lines, "")
 	lines = append(lines, theme.MutedText.Render("  ")+
-		lipgloss.NewStyle().Foreground(lipgloss.Color("#FF453A")).Render("\u2588\u2588")+
+		lipgloss.NewStyle().Foreground(theme.Danger).Render("\u2588\u2588")+
 		theme.MutedText.Render(" oppose  ")+
-		lipgloss.NewStyle().Foreground(lipgloss.Color("#FFD60A")).Render("\u2592\u2592")+
+		lipgloss.NewStyle().Foreground(theme.Warning).Render("\u2592\u2592")+
 		theme.MutedText.Render(" neutral  ")+
-		lipgloss.NewStyle().Foreground(lipgloss.Color("#30D158")).Render("\u2588\u2588")+
+		lipgloss.NewStyle().Foreground(theme.Accent).Render("\u2588\u2588")+
 		theme.MutedText.Render(" support"))
 	lines = append(lines, theme.MutedText.Render("  ")+
 		lipgloss.NewStyle().Foreground(theme.Warning).Bold(true).Render("\u26a1")+

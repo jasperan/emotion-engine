@@ -58,7 +58,7 @@ func cellColor(edgeType RelEdgeType, strength float64) string {
 	case RelConflict:
 		fg = theme.Danger
 	case RelAlliance:
-		fg = lipgloss.Color("#5EFF5E") // bright green for double
+		fg = theme.Secondary // mauve for double/alliance
 	default:
 		fg = theme.Warning
 	}
@@ -235,7 +235,7 @@ func RenderNetworkMatrix(d NetworkMatrixData) string {
 			theme.MutedText.Render(" trust  ")+
 			lipgloss.NewStyle().Foreground(theme.Danger).Render("\u2588")+
 			theme.MutedText.Render(" conflict  ")+
-			lipgloss.NewStyle().Foreground(lipgloss.Color("#5EFF5E")).Render("\u2588")+
+			lipgloss.NewStyle().Foreground(theme.Secondary).Render("\u2588")+
 			theme.MutedText.Render(" alliance  ")+
 			theme.MutedText.Render("\u00b7")+
 			theme.MutedText.Render(" none"))

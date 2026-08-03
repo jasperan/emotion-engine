@@ -257,7 +257,7 @@ func (m LauncherModel) renderProviderSelector(width int) string {
 			// Selected pill
 			style := lipgloss.NewStyle().
 				Bold(true).
-				Foreground(lipgloss.Color("#000000")).
+				Foreground(theme.Bg).
 				Background(theme.Primary).
 				Padding(0, 1)
 			if focused {

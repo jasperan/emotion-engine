@@ -2,24 +2,30 @@ package theme
 
 import "github.com/charmbracelet/lipgloss"
 
-// Pi-inspired color palette.
+// Catppuccin Mocha palette (see docs/tui-design-tokens.md).
+// 14 approved tokens — single source of truth for the whole TUI.
 var (
-	Primary = lipgloss.Color("#5E5CE6")
-	Accent  = lipgloss.Color("#30D158")
-	Danger  = lipgloss.Color("#FF453A")
-	Warning = lipgloss.Color("#FFD60A")
-	Muted   = lipgloss.Color("#636366")
-	Surface = lipgloss.Color("#1C1C1E")
-	Text    = lipgloss.Color("#E5E5EA")
-	Dim       = lipgloss.Color("#48484A")
-	Secondary = lipgloss.Color("#3A3A9E") // dimmer Primary for unfocused selections
+	Bg       = lipgloss.Color("#1e1e2e")
+	Surface  = lipgloss.Color("#181825")
+	Elevated = lipgloss.Color("#313244")
+	Highest  = lipgloss.Color("#45475a")
+	Text     = lipgloss.Color("#cdd6f4")
+	Subtext  = lipgloss.Color("#a6adc8")
+	Muted    = lipgloss.Color("#6c7086")
+	Dim      = lipgloss.Color("#585b70")
+	Primary  = lipgloss.Color("#89b4fa")
+	Secondary = lipgloss.Color("#cba6f7")
+	Info     = lipgloss.Color("#89dceb")
+	Accent   = lipgloss.Color("#a6e3a1") // success
+	Warning  = lipgloss.Color("#f9e2af")
+	Danger   = lipgloss.Color("#f38ba8")
 )
 
 // Panel styles.
 var (
 	Panel = lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
-		BorderForeground(Muted).
+		BorderForeground(Dim).
 		Padding(1, 2)
 
 	ActivePanel = lipgloss.NewStyle().
@@ -55,7 +61,7 @@ var (
 			Foreground(Text)
 
 	TokenText = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#AEAEB2"))
+			Foreground(Subtext)
 
 	Throughput = lipgloss.NewStyle().
 			Bold(true).

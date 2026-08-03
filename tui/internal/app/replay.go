@@ -557,9 +557,9 @@ func (m ReplayModel) renderReplayRight(width, height int) string {
 // computeDiff computes a styled diff between two world state snapshots.
 // Returns a slice of styled lines (added, changed, removed).
 func computeDiff(prev, curr map[string]interface{}, lineWidth int) []string {
-	added := lipgloss.NewStyle().Foreground(lipgloss.Color("#30D158"))
-	changed := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFD60A"))
-	removed := lipgloss.NewStyle().Foreground(lipgloss.Color("#FF453A"))
+	added := lipgloss.NewStyle().Foreground(theme.Accent)
+	changed := lipgloss.NewStyle().Foreground(theme.Warning)
+	removed := lipgloss.NewStyle().Foreground(theme.Danger)
 
 	var lines []string
 
@@ -592,7 +592,7 @@ func computeDiff(prev, curr map[string]interface{}, lineWidth int) []string {
 	}
 
 	if len(lines) == 0 {
-		lines = append(lines, lipgloss.NewStyle().Foreground(lipgloss.Color("#636366")).Render("(no changes)"))
+		lines = append(lines, lipgloss.NewStyle().Foreground(theme.Muted).Render("(no changes)"))
 	}
 
 	return lines

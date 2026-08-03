@@ -35,7 +35,7 @@ func telemetryStatusDot(status string) string {
 	case "recovering":
 		return lipgloss.NewStyle().Foreground(theme.Warning).Render(theme.StatusDot)
 	case "degraded":
-		return lipgloss.NewStyle().Foreground(lipgloss.Color("#FF8C3A")).Render(theme.StatusDot)
+		return lipgloss.NewStyle().Foreground(theme.Warning).Render(theme.StatusDot)
 	case "failed":
 		return lipgloss.NewStyle().Foreground(theme.Danger).Render(theme.StatusDot)
 	default:

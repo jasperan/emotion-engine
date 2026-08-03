@@ -43,7 +43,7 @@ func (h HelpModel) Overlay(bg string, w, h2 int, screen Screen) string {
 		lipgloss.Center, lipgloss.Center,
 		helpContent,
 		lipgloss.WithWhitespaceChars(" "),
-		lipgloss.WithWhitespaceForeground(lipgloss.Color("#000000")),
+		lipgloss.WithWhitespaceForeground(theme.Bg),
 	)
 }
 

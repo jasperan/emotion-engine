@@ -200,7 +200,7 @@ func renderSplashBanner(opacity float64, width, height int) string {
 	} else if opacity > 1 {
 		opacity = 1
 	}
-	bannerColor := lerpColor("#1C1C1E", "#5E5CE6", opacity)
+	bannerColor := lerpColor("#181825", "#89b4fa", opacity)
 	bannerStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(bannerColor))
 	if width < 88 || height < 24 {
 		return bannerStyle.Bold(true).Render(compactBanner)

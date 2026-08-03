@@ -384,7 +384,7 @@ func (m TheaterModel) renderBackstage(entries []TheaterEntry, width, height int)
 				nameStyle.Render(e.AgentName+":"),
 				theme.MutedText.Render("(thinking)")))
 		lines = append(lines,
-			"    "+lipgloss.NewStyle().Foreground(lipgloss.Color("#AEAEB2")).Italic(true).
+			"    "+lipgloss.NewStyle().Foreground(theme.Subtext).Italic(true).
 				Render(thought))
 		lines = append(lines, "")
 	}
@@ -405,7 +405,7 @@ func (m TheaterModel) renderDirectorNotes(width, height int) string {
 	style := lipgloss.NewStyle().
 		Width(width).
 		Height(height).
-		Background(lipgloss.Color("#1A1A2E")).
+		Background(theme.Surface).
 		Foreground(theme.Muted).
 		Padding(0, 1)
 

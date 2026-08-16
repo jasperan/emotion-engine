@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-26
 **Branch:** `mirofish-integration`
-**Status:** Design approved, not yet implemented
+**Status:** Design approved; **core layers implemented and wired into the live engine** (graph-backed memory via `GRAPH_MEMORY_ENABLED`, hybrid populations, governance gates, goal trees, topic-aware opinion dynamics). See `CLAUDE.md` → Gotchas for the runtime switches.
 
 ## Motivation
 

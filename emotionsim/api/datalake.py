@@ -123,6 +123,37 @@ async def get_run_metrics(run_id: str):
         store.close()
 
 
+@router.get("/compare")
+async def compare_runs(
+    run_ids: str = Query(..., description="Comma-separated run ids to compare"),
+):
+    """Compare metrics across logged runs: metric -> {run_id: value}."""
+    store = _get_store()
+    try:
+        ids = [rid.strip() for rid in run_ids.split(",") if rid.strip()]
+        if not ids:
+            raise HTTPException(status_code=400, detail="Provide at least one run_id")
+        results: dict[str, dict[str, float]] = {}
+        for rid in ids:
+            rows = await _run_sync(store.get_run_metrics, rid)
+            results[rid] = {
+                r["metric_name"]: r["metric_value"]
+                for r in rows
+                if r.get("metric_name") is not None
+            }
+        metric_names = sorted({n for r in results.values() for n in r})
+        return {
+            "run_ids": ids,
+            "metrics": {
+                name: {rid: results[rid].get(name) for rid in ids}
+                for name in metric_names
+            },
+            "total_metrics": len(metric_names),
+        }
+    finally:
+        store.close()
+
+
 @router.delete("/runs/{run_id}")
 async def delete_run(run_id: str):
     """Delete a logged run and all its data."""

@@ -9,6 +9,7 @@ from emotionsim.agents.intent_memory import IntentMemory, Plan
 from emotionsim.agents.personality_mechanics import PersonalityMechanics
 from emotionsim.schemas.persona import Persona
 from emotionsim.llm.base import LLMMessage, LLMResponse
+from emotionsim.llm.schemas import PlanResponse, ThinkResponse, validate_content
 
 
 class CognitivePhase(Enum):
@@ -94,6 +95,28 @@ class CognitiveEngine:
             temperature=0.7,
             max_tokens=512,
         )
+
+        # Structured-output enforcement: validate against the schema and
+        # retry once with the validation error injected into the prompt.
+        ok, _, err = validate_content(response.content, ThinkResponse)
+        if not ok:
+            response = await llm_generate(
+                messages=messages
+                + [
+                    LLMMessage(
+                        role="user",
+                        content=(
+                            f"Your previous response failed validation: {err}\n"
+                            "Return ONLY valid JSON with fields: "
+                            "urgency (high/medium/low), assessment (string), "
+                            "top_need (string)."
+                        ),
+                    )
+                ],
+                json_mode=True,
+                temperature=0.7,
+                max_tokens=512,
+            )
 
         result = self._parse_think_response(response.content)
 
@@ -187,6 +210,28 @@ class CognitiveEngine:
             temperature=0.7,
             max_tokens=1024,
         )
+
+        # Structured-output enforcement: validate against the schema and
+        # retry once with the validation error injected into the prompt.
+        ok, _, err = validate_content(response.content, PlanResponse)
+        if not ok:
+            response = await llm_generate(
+                messages=messages
+                + [
+                    LLMMessage(
+                        role="user",
+                        content=(
+                            f"Your previous response failed validation: {err}\n"
+                            "Return ONLY valid JSON with fields: "
+                            "goal (string), steps (list of action strings), "
+                            "success_criteria (string), fallback (string or null)."
+                        ),
+                    )
+                ],
+                json_mode=True,
+                temperature=0.7,
+                max_tokens=1024,
+            )
 
         return self._parse_plan_response(response.content, current_step)
 

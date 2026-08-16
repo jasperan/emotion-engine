@@ -8,7 +8,7 @@ EmotionSim: Multi-agent simulation engine analyzing emergent cooperative behavio
 
 **Tech Stack:** Python 3.11+ (FastAPI, SQLAlchemy, Oracle DB 26ai Free, vLLM/Ollama), Go 1.24+ (Bubble Tea TUI), SvelteKit 2.0 + Vite (frontend)
 
-**Branch: `mirofish-integration`** adds knowledge graph infrastructure (Oracle SQL/PGQ), document ingestion via NER/RE, graph-backed agent memory with hybrid search, post-sim analysis tools, opinion dynamics, and lightweight agents for 100+ scaling.
+**Branch: `mirofish-integration`** adds knowledge graph infrastructure (Oracle SQL/PGQ), document ingestion via NER/RE, graph-backed agent memory with hybrid search, post-sim analysis tools, opinion dynamics, and lightweight agents for 100+ scaling. The core MiroFish features are now wired into the live engine (see Gotchas for the runtime switches: `GRAPH_MEMORY_ENABLED`, hybrid populations, governance gates, goal trees).
 
 ## Development Commands
 
@@ -23,6 +23,7 @@ emotionsim auto --count 5                                 # Batch testing
 emotionsim scenarios --create-builtin                     # Create scenarios
 emotionsim interactive                                    # Wizard mode
 emotionsim status                                         # Backend health
+emotionsim eval --scenarios "Rising Flood,Space Station" --seeds 3   # Offline eval matrix (stub LLM)
 
 # Go TUI Dashboard
 cd tui
@@ -46,7 +47,7 @@ python3 -m emotionsim.main   # Direct server start (:8000)
 docker-compose up -d          # Oracle DB (:1522) + Backend (:8000) + Frontend (:3000)
 
 # Testing (from repo root)
-pytest tests/               # Python tests
+pytest tests/               # Python tests (~980 tests)
 pytest tests/test_agents.py  # Single test file
 pytest --cov                 # With coverage
 cd tui && go test ./...                    # Go TUI tests
@@ -295,6 +296,9 @@ Agent.tick() →
 - `POST /api/documents` - Upload document, extract entities via NER, generate scenario (mirofish branch)
 - `POST /api/runs/{id}/agents/{id}/chat` - Chat with agent post-simulation (mirofish branch)
 - `POST /api/runs/{id}/report` - Generate analysis report with InsightForge (mirofish branch)
+- `GET /api/runs/{id}/steps` - Per-step snapshots (replay timeline)
+- `GET /api/runs/{id}/metrics` - Run observability: tokens, latency, cost (Step 9)
+- `GET /datalake/compare?run_ids=a,b` - Cross-run metric comparison (Step 9)
 
 ## Testing
 
@@ -331,12 +335,19 @@ Agent.tick() →
   - `scenario_assembler.py` - Graph entities → ScenarioCreate
   - `report_agent.py` - Post-sim analysis with graph tools
   - `graph_tools.py` - InsightForge, PanoramaSearch
-- `emotionsim/agents/graph_memory.py` - Relevance-based recall via hybrid search (mirofish branch)
-- `emotionsim/agents/lightweight_agent.py` - Rule-based agent for 100+ scaling (mirofish branch)
-- `emotionsim/simulation/opinion_dynamics.py` - Opinion shift engine (mirofish branch)
-- `emotionsim/simulation/sentiment_tracker.py` - Topic sentiment tracking + tipping points (mirofish branch)
-- `emotionsim/simulation/influence_network.py` - Directed influence graph (mirofish branch)
-- `emotionsim/simulation/social_dynamics.py` - Orchestrator for all social systems (mirofish branch)
+- `emotionsim/agents/graph_memory.py` - Relevance-based recall via hybrid search (runtime-wired via `GRAPH_MEMORY_ENABLED`)
+- `emotionsim/agents/lightweight_agent.py` - Rule-based agent for 100+ scaling; hybrid populations wired into the engine (background agents + promotion/demotion)
+- `emotionsim/simulation/opinion_dynamics.py` - Opinion shift engine (topic-aware: topics extracted from real message content)
+- `emotionsim/simulation/sentiment_tracker.py` - Topic sentiment tracking + tipping points
+- `emotionsim/simulation/influence_network.py` - Directed influence graph
+- `emotionsim/simulation/social_dynamics.py` - Orchestrator for all social systems
+- `emotionsim/simulation/governance.py` - Ethics gates on agent actions (wired into the V1 tick loop)
+- `emotionsim/simulation/goal_tree.py` - Mission → group → individual goals (surfaced in agent prompts)
+- `emotionsim/simulation/persistence.py` - RunPersistence service (Step/Run/Message writes extracted from the engine)
+- `emotionsim/simulation/scene_processor.py` / `reaction_round.py` / `token_streamer.py` - Scene, reaction-round, and token-streaming services (extracted from the engine monolith)
+- `emotionsim/llm/schemas.py` - Pydantic schemas + validation for act/think/plan/reflection/governance outputs
+- `emotionsim/llm/stub.py` - Deterministic offline LLM client (eval harness)
+- `emotionsim/eval/` - Offline eval harness: `emotionsim eval` CLI, metrics, determinism fingerprints
 
 ## Go TUI Architecture
 
@@ -358,15 +369,18 @@ The TUI (`tui/`) is a standalone Go binary that connects to the backend via WebS
 
 - **vLLM model override**: `VLLMClient` ignores model param and always uses the server's loaded model (`vllm_default_model`)
 - **Qwen thinking tokens**: vLLM payload sets `chat_template_kwargs.enable_thinking: false` for qwen3 models to avoid empty responses
-- **World state `_` keys**: Engine injects `_scene_location`, `_scene_participants`, `_conclusion_directive` into world_state — these are transient and cleaned up after use
-- **Token budget**: `agent_max_tokens_per_run=50000` counts streamed characters (not LLM tokens). Set to 0 to disable
+- **World state `_` keys**: Engine injects `_scene_location`, `_scene_participants`, `_conclusion_directive`, `_graph_entity_ids` into world_state — these are transient and cleaned up after use
+- **Token budget**: `agent_max_tokens_per_run=50000` counts streamed characters (not LLM tokens). Set to 0 to disable. Completion telemetry: `run.metrics` gets `tokens`, `tokens_per_agent`, `latency_ms`, `cost_estimate_usd` (rate = `LLM_COST_PER_1K_TOKENS`)
 - **Parallel scenes**: Only with `llm_backend=vllm`. Ollama falls back to sequential due to GPU serialization
 - **TUI auto-start**: The Go TUI spawns `python3 -m emotionsim.main` and `vllm serve` as child processes. Use `--no-backend`/`--no-vllm` flags to suppress
-- **Engine V2**: `engine_v2.py` (`SimulationEngineV2`) exists alongside V1 as a standalone, opt-in object — it adds heartbeat scheduling, goal trees, and governance gates, but is not wired into the V1 tick loop
+- **Single engine path**: `SimulationEngine` (V1) is the only engine. The experimental V2 engine (heartbeat scheduling) was removed; goal trees + governance gates are native to V1, and heartbeat scheduling was never adopted
 - **env.example**: Lives at the repo root (`env.example`). Missing `VLLM_BASE_URL` and `VLLM_DEFAULT_MODEL` (those default in code to `:8010` and `Qwen/Qwen3.5-4B`)
-- **Datalake**: Enabled via `DATALAKE_ENABLED=true`. Schema in `datalake/schema.sql`. Powers the TUI Analytics screen
+- **Datalake**: Enabled via `DATALAKE_ENABLED=true`. Schema in `datalake/schema.sql`. Powers the TUI Analytics screen + `/datalake/compare` endpoint
 - **Hybrid search weights** (mirofish branch): `VECTOR_WEIGHT=0.7`, `KEYWORD_WEIGHT=0.3` in `OracleGraphStorage`. Keyword scoring is simple term-matching (not true BM25) for SQLite test compat
-- **Embeddings stored as JSON** (mirofish branch): `embedding_json` columns use `OracleJSON` (CLOB) for SQLite test compatibility. In production Oracle, migrate to `VECTOR(768)` columns for native vector search
+- **Embeddings stored as JSON** (mirofish branch): `embedding_json` columns use `OracleJSON` (CLOB) for SQLite test compatibility. In production Oracle, migrate to `VECTOR(768)` columns for native vector search. Embedding failures degrade gracefully to keyword-only scoring
 - **Opinion shift clamping** (mirofish branch): Max shift per interaction is +-0.3, stances clamped to [-1.0, 1.0]. Shifts below 0.001 are ignored as noise
-- **Lightweight agent promotion** (mirofish branch): `should_promote()` returns True when addressed directly, when extraversion >= 7 in active scene, or when leadership >= 8 with stress <= 4
-- **Graph memory vs AgentMemory** (mirofish branch): Both exist. `AgentMemory` (flat sliding window) is used on main. `GraphMemory` (hybrid search) is on mirofish-integration. They're not yet wired to swap at runtime
+- **Lightweight agent promotion** (mirofish branch): `should_promote()` returns True when addressed directly, when extraversion >= 7 in active scene, or when leadership >= 8 with stress <= 4. Promoted agents consume the per-step LLM budget (`MAX_LLM_AGENTS_PER_STEP`); demotion returns them to background after `BACKGROUND_DEMOTE_AFTER_STEPS` of inactivity
+- **Graph memory vs AgentMemory** (mirofish branch): runtime-switchable via `GRAPH_MEMORY_ENABLED`. On: HumanAgents recall via hybrid graph search (relevance, not recency) and store observations/decisions as memory nodes linked to location entities. Off: flat `AgentMemory` sliding window (default — preserves byte-identical determinism)
+- **Structured output**: act/think/plan responses validate against Pydantic schemas in `emotionsim/llm/schemas.py`; on validation failure the LLM is retried once with the error injected, then defensive parsing
+- **Reflection**: every `REFLECTION_INTERVAL_STEPS` ticks, foreground agents run a batched LLM reflection that stores lessons in episodic memory; `get_salient_memories` does importance-weighted recall with recency decay
+- **Eval harness**: `emotionsim eval` runs scenario × seed × prompt-variant matrices against the offline stub LLM (`LLM_BACKEND=stub`), aggregating cooperation/emergence metrics and determinism fingerprints; wired into CI as a regression gate

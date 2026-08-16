@@ -170,10 +170,9 @@ def cli(ctx):
 @click.option("--tick-delay", "-d", type=float, default=None, help="Delay between steps (seconds)")
 @click.option("--simple", is_flag=True, help="Use simple log output instead of rich UI")
 @click.option("--verbose", "-v", is_flag=True, default=False, help="Verbose: timestamp every LLM call, token counts, context sizes")
-@click.option("--engine-v2", is_flag=True, default=False, help="Use V2 engine (heartbeat + goals + governance)")
 @click.option("--force-vllm", type=str, default=None, metavar="[URL]", is_eager=True,
               help="Force vLLM backend. Optionally specify URL (default: http://localhost:8010)")
-def run(scenario: str | None, max_steps: int | None, seed: int | None, tick_delay: float | None, simple: bool, verbose: bool, engine_v2: bool, force_vllm: str | None):
+def run(scenario: str | None, max_steps: int | None, seed: int | None, tick_delay: float | None, simple: bool, verbose: bool, force_vllm: str | None):
     """Run a simulation in standalone mode (no server required).
 
     Example:
@@ -181,7 +180,7 @@ def run(scenario: str | None, max_steps: int | None, seed: int | None, tick_dela
         emotionsim run --force-vllm                           # force vLLM on default port
         emotionsim run --force-vllm http://localhost:8020      # force vLLM on custom port
     """
-    asyncio.run(_run_standalone(scenario, max_steps, seed, tick_delay, simple, engine_v2=engine_v2, verbose=verbose, force_vllm=force_vllm))
+    asyncio.run(_run_standalone(scenario, max_steps, seed, tick_delay, simple, verbose=verbose, force_vllm=force_vllm))
 
 
 async def _run_standalone(
@@ -190,7 +189,6 @@ async def _run_standalone(
     seed: int | None,
     tick_delay: float | None,
     simple: bool,
-    engine_v2: bool = False,
     verbose: bool = False,
     force_vllm: str | None = None,
 ):
@@ -499,21 +497,6 @@ async def _run_standalone(
         await engine_sim.initialize(config)
         console.print(f"[green]✓[/green] Initialized {len(engine_sim.agents)} agents")
 
-        # V2 engine opt-in
-        if engine_v2:
-            from emotionsim.simulation.engine_v2 import SimulationEngineV2
-            v2 = SimulationEngineV2()
-            # Set mission from scenario config if available
-            scenario_data = scenario.config if isinstance(scenario.config, dict) else {}
-            config_data = scenario_data.get("config", {})
-            mission = config_data.get("mission_goal")
-            if mission:
-                v2.setup_mission(mission)
-            # Register agents
-            v2.register_agents_v2(engine_sim.agents)
-            engine_sim._v2 = v2  # Attach for progressive integration
-            console.print(f"[green]✓[/green] Engine V2 activated (heartbeat + goals + governance)")
-
         console.print()
 
         # Handle Ctrl+C gracefully
@@ -670,9 +653,68 @@ async def _run_standalone(
 # ============================================================================
 
 @cli.command()
+@click.option("--scenarios", "-s", default=None,
+              help="Comma-separated scenario names (default: first two built-ins)")
+@click.option("--seeds", type=int, default=3, help="Number of seeds per scenario")
+@click.option("--max-steps", "-m", type=int, default=10, help="Steps per run")
+@click.option("--repeat", type=int, default=2,
+              help="Runs per (scenario, seed) for the determinism check")
+@click.option("--prompt-variants", default=None,
+              help="Comma-separated prompt variants (default: just 'default')")
+@click.option("--output", "-o", type=str, default=None,
+              help="Write full results as JSON to this path")
+@click.option("--json", "as_json", is_flag=True, default=False,
+              help="Print results as JSON instead of a table")
+def eval(scenarios: str | None, seeds: int, max_steps: int, repeat: int,
+         prompt_variants: str | None, output: str | None, as_json: bool):
+    """Run the offline eval matrix (stub LLM, no network).
+
+    Runs scenario × seed simulations headlessly, aggregates cooperation +
+    emergence metrics, verifies determinism fingerprints, and (with --output)
+    writes full results. Exits non-zero when determinism is violated.
+    """
+    import emotionsim.eval.harness as harness
+
+    scenario_names = [s.strip() for s in scenarios.split(",")] if scenarios else None
+    variants = [v.strip() for v in prompt_variants.split(",")] if prompt_variants else None
+    summary = asyncio.run(harness.run_eval(
+        scenario_names=scenario_names,
+        seeds=seeds,
+        max_steps=max_steps,
+        repeat=repeat,
+        prompt_variants=variants,
+    ))
+
+    if output:
+        with open(output, "w", encoding="utf-8") as f:
+            json.dump(summary, f, indent=2, default=str)
+        console.print(f"[green]✓[/green] Results written to {output}")
+
+    if as_json:
+        console.print(json.dumps(summary, indent=2, default=str))
+    else:
+        table = Table(title="EmotionSim Eval Matrix", box=box.ROUNDED)
+        table.add_column("Scenario")
+        table.add_column("Cooperation (avg)")
+        table.add_column("Runs")
+        for name, s in summary["per_scenario"].items():
+            table.add_row(name, str(s["cooperation_avg"]), str(s["runs"]))
+        console.print(table)
+        console.print(
+            f"[bold]Determinism:[/bold] "
+            + ("[green]OK[/green]" if summary["deterministic"] else "[red]VIOLATED[/red]")
+            + f" ({summary['run_count']} runs, {len(summary['determinism_violations'])} violations)"
+        )
+
+    if not summary["deterministic"]:
+        console.print("[red]✗ Determinism violations detected — eval gate failed.[/red]")
+        raise SystemExit(1)
+
+@cli.command()
 @click.option("--url", "-u", default="ws://localhost:8000/api/ws", help="WebSocket base URL")
 @click.option("--run-id", "-r", required=True, help="Run ID to monitor")
 @click.option("--simple", is_flag=True, help="Use simple log output instead of rich UI")
+
 def monitor(url: str, run_id: str, simple: bool):
     """Monitor a running simulation via WebSocket.
 

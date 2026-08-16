@@ -108,6 +108,27 @@ async def get_run_status(run_id: str):
     return manager.get_run_status(run_id)
 
 
+@router.get("/{run_id}/metrics")
+async def get_run_metrics(
+    run_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Per-run observability metrics: tokens, latency, cost, aggregates.
+
+    Reads the run's persisted metrics (augmented at completion with token /
+    latency / cost telemetry — Step 9).
+    """
+    run = await db.get(Run, run_id)
+    if run is None:
+        raise HTTPException(status_code=404, detail="Run not found")
+    return {
+        "run_id": run_id,
+        "status": run.status.value if hasattr(run.status, "value") else str(run.status),
+        "current_step": run.current_step,
+        "metrics": run.metrics or {},
+    }
+
+
 @router.get("/{run_id}/agents")
 async def get_run_agents(
     run_id: str,

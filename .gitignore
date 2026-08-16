@@ -263,3 +263,7 @@ interactive/node_modules/
 interactive/.next/
 interactive/out/
 .omc/
+
+# Tool state (never track)
+.ckg/
+.pi/

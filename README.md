@@ -51,8 +51,12 @@ Simulates disaster scenarios with diverse LLM-driven personas that interact, mak
 | **Real-time TUI Dashboard** | Go-based terminal UI with live token streaming, spatial maps, relationship webs, negotiation theater, agent mind views, replay, and cross-run analytics |
 | **Discrete Event Simulation** | Deterministic, seedable, step-by-step execution for reproducible research |
 | **Scene-based Parallelism** | Agents grouped by location; independent scenes run concurrently via vLLM |
-| **Cognitive Engine** | Think, Plan, Act, Reflect pipeline with intent memory |
+| **Cognitive Engine** | Think, Plan, Act, Reflect pipeline with intent memory; structured-output validation with retry |
+| **Graph-Backed Memory** | Optional hybrid search memory (vector + keyword) wired into live ticks — recall by relevance, not recency |
+| **Hybrid Populations** | 100+ agent scaling: rule-based background agents promoted to full LLM agents on demand, per-step LLM budget |
+| **Governance + Goals** | Ethics gates on agent actions and mission → group → individual goal trees surfaced in prompts |
 | **Auto-Evaluation** | Built-in evaluator agents that analyze run performance and narrative arcs |
+| **Offline Eval Harness** | `emotionsim eval` runs scenario × seed × prompt-variant matrices against a stub LLM with determinism fingerprints |
 | **Modern Stack** | FastAPI + SvelteKit + Oracle DB 26ai Free + vLLM/Ollama |
 
 ## Quick Start
@@ -166,6 +170,7 @@ Oracle DB 26ai Free (runs, agents, steps, messages, scenarios)
 | `emotionsim monitor` | Attach to running simulation |
 | `emotionsim best` | Show best runs ranked by cooperation |
 | `emotionsim viewer` | Rich TUI viewer for past runs |
+| `emotionsim eval` | Offline eval matrix: scenarios × seeds × prompt variants, cooperation/emergence metrics + determinism gate |
 
 ## TUI Guide
 

@@ -1,4 +1,5 @@
 # MiroFish Integration Implementation Plan
+**Status:** Implementation complete and wired into the live engine (graph memory via `GRAPH_MEMORY_ENABLED`, hybrid populations, governance gates, goal trees, topic-aware opinion dynamics, eval harness). Some Tier B post-sim tooling ships as designed.
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 

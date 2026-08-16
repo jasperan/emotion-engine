@@ -1,4 +1,10 @@
-"""Simulation Engine - main orchestrator for runs"""
+"""Simulation Engine - main orchestrator for runs
+
+SimulationEngine is the single engine path. The experimental V2 engine
+(heartbeat scheduling) was removed (Step 7): its goal tree and governance
+gates are now native to V1 (see GoalTree + GovernanceGate wiring), and
+heartbeat scheduling was never adopted by the runtime.
+"""
 import asyncio
 import collections
 import logging
@@ -23,14 +29,19 @@ from emotionsim.simulation.world_state_diff import WorldStateDiffTracker
 from emotionsim.simulation.conversation_outcomes import ConversationOutcomeExtractor
 from emotionsim.simulation.emotion_contagion import EmotionContagion
 from emotionsim.simulation.action_dispatcher import AgentActionDispatcher
+from emotionsim.simulation.reaction_round import ReactionRound
+from emotionsim.simulation.token_streamer import TokenStreamer
 from emotionsim.models.run import Run, RunStatus
 from emotionsim.models.agent import AgentModel
-from emotionsim.models.step import Step
-from emotionsim.models.message import Message, MessageType
+from emotionsim.models.message import Message
 from emotionsim.schemas.persona import Persona
 from emotionsim.acp.registry import AgentRegistry
 from emotionsim.acp.coordination import CoordinationController
 from emotionsim.agents.voting_mixin import GroupDecisionMixin
+from emotionsim.simulation.governance import GovernanceGate, GovernanceConfig, GateStatus
+from emotionsim.simulation.goal_tree import GoalTree
+from emotionsim.simulation.persistence import RunPersistence
+from emotionsim.simulation.step_events import build_step_completed_payload
 
 logger = logging.getLogger(__name__)
 
@@ -130,6 +141,29 @@ class SimulationEngine:
         settings = get_settings()
         self._settings = settings
 
+        # Knowledge graph id for graph-backed agent memory (set when enabled)
+        self._graph_id: str | None = None
+
+        # Per-step LLM-agent budget for hybrid populations (-1 = unlimited)
+        self._step_llm_budget_left: int = -1
+
+        # Governance gates (wired into the V1 tick loop — Step 6)
+        self.governance = GovernanceGate(GovernanceConfig(
+            threshold=settings.governance_threshold,
+            timeout_seconds=settings.governance_timeout_seconds,
+            timeout_action=settings.governance_timeout_action,
+            use_llm_scorer=settings.governance_use_llm_scorer,
+        ))
+        # agent_id -> last flagged (pending/denied) decision, injected as a
+        # governance warning into the agent's next prompt.
+        self._governance_flags: dict[str, dict[str, Any]] = {}
+
+        # Goal tree (mission -> group -> individual — Step 6)
+        self.goal_tree = GoalTree()
+
+        # Persistence service (extracted from the engine monolith — Step 7)
+        self.persistence = RunPersistence(db_session)
+
         # L1: Agent Supervisor (Symphony-inspired fault isolation)
         self.supervisor = AgentSupervisor(
             tick_timeout=settings.agent_tick_timeout,
@@ -151,6 +185,7 @@ class SimulationEngine:
         # L8: World State Diff Tracker (Pi hash-anchor inspired)
         self.diff_tracker = WorldStateDiffTracker()
         self.action_dispatcher = AgentActionDispatcher(self)
+        self.reaction_round = ReactionRound(self)
 
         # L9: Configure per-agent-type model routing
         configure_model_routing({
@@ -158,9 +193,12 @@ class SimulationEngine:
             "reactive": settings.model_route_reactive or settings.ollama_fallback_model,
         })
 
-        # SceneDirector: groups co-located human agents into dramatic scenes
+        # SceneDirector + SceneProcessor: groups co-located human agents into
+        # dramatic scenes (processing extracted from the monolith — Step 7)
         from emotionsim.simulation.scene_director import SceneDirector
+        from emotionsim.simulation.scene_processor import SceneProcessor
         self.scene_director = SceneDirector(max_turns=settings.scene_max_turns)
+        self.scene_processor = SceneProcessor(self)
         self.scene_mode = settings.scene_mode
 
         # L10: Emotion Contagion Network (Phase 2.5 — stress propagation between co-located agents)
@@ -185,6 +223,93 @@ class SimulationEngine:
     def _resolve_name(self, name: str) -> str:
         """Resolve an agent name to its ID via O(1) cache lookup. Returns name unchanged if not found."""
         return self._name_to_id.get(name, name)
+
+    async def _ensure_graph_memory(self) -> None:
+        """Create/attach graph-backed agent memory when enabled (MiroFish).
+
+        When ``settings.graph_memory_enabled`` is on, ensures a knowledge
+        graph exists for this run (reusing the run's ``graph_id`` on resume),
+        seeds location entities so memories can link to the world, and
+        attaches a ``GraphMemory`` to every human agent.
+
+        Any failure degrades gracefully: agents keep flat memory and the
+        simulation continues normally.
+        """
+        if not self._settings.graph_memory_enabled:
+            return
+        try:
+            from emotionsim.storage.oracle_graph_storage import OracleGraphStorage
+            from emotionsim.storage.embedding_service import EmbeddingService
+            from emotionsim.agents.graph_memory import GraphMemory
+            from emotionsim.storage.graph_storage import Entity
+            from emotionsim.llm.pipeline_logger import log_pipeline_event
+
+            run = await self.db.get(Run, self.run_id)
+            graph_id: str | None = run.graph_id if run else None
+
+            storage = OracleGraphStorage(
+                session=self.db,
+                embedding_service=EmbeddingService(),
+            )
+
+            entity_ids: dict[str, str] = {}
+            if not graph_id:
+                graph_id = await storage.create_graph(
+                    name=f"emotionsim-run-{self.run_id[:8]}",
+                    ontology={
+                        "entity_types": ["location", "person", "object", "hazard"],
+                        "relation_types": ["near", "located_at", "caused_by", "linked_entity"],
+                    },
+                )
+                # Seed one entity per world location so decisions/observations
+                # can link to the locations where they happened.
+                for loc_name in self.world_state.get("locations", {}):
+                    eid = await storage.add_entity(
+                        graph_id,
+                        Entity(
+                            name=loc_name,
+                            type="location",
+                            summary="A location in this scenario",
+                        ),
+                    )
+                    entity_ids[loc_name] = eid
+                # Persist the mapping so resumed runs can re-link memories.
+                self.world_state["_graph_entity_ids"] = entity_ids
+                if run:
+                    run.graph_id = graph_id
+                    # Persist the full world state (locations + entity mapping)
+                    # so resumed runs can re-attach graph memory correctly.
+                    run.world_state = self.world_state.copy()
+            else:
+                # Resumed run: reuse the persisted location-entity mapping.
+                entity_ids = self.world_state.get("_graph_entity_ids", {}) or {}
+
+            self._graph_id = graph_id
+
+            attached = 0
+            for aid, agent in self.agents.items():
+                if not isinstance(agent, HumanAgent):
+                    continue
+                gm = GraphMemory(
+                    agent_id=aid,
+                    agent_name=agent.name,
+                    run_id=self.run_id,
+                    graph_id=graph_id,
+                    storage=storage,
+                    embedding_service=storage.embedding_service,
+                )
+                for loc_name, eid in entity_ids.items():
+                    gm.register_entity(loc_name, eid)
+                agent.graph_memory = gm
+                attached += 1
+
+            await log_pipeline_event(
+                f"🧠 Graph memory attached: {attached} agents, graph={graph_id[:8]}"
+            )
+        except Exception as e:
+            logger.warning(
+                "Graph memory unavailable; continuing with flat memory: %s", e
+            )
 
     async def load_from_db(self) -> None:
         """Load simulation state from database for resumption"""
@@ -225,6 +350,11 @@ class SimulationEngine:
             agent = self._create_agent(config)
             agent.id = model.id
             agent.dynamic_state = model.dynamic_state or {}
+
+            # Restore hybrid population mode if it was persisted
+            agent.background = bool((model.dynamic_state or {}).get("_background", False))
+            agent.started_background = agent.background
+            agent.dynamic_state["_background"] = agent.background
 
             # Restore memory if available
             if hasattr(model, 'memory_snapshot') and model.memory_snapshot:
@@ -276,6 +406,11 @@ class SimulationEngine:
         # Restore coordinator context
         self.world_state["shared_goals"] = self.coordinator.shared_goals
         self.world_state["cooperation"] = self.coordinator.get_cooperation_context()
+
+        # Graph-backed memory (MiroFish): re-attach on resume
+        await self._ensure_graph_memory()
+        if self._settings.graph_memory_enabled:
+            await self.db.commit()
 
         self.state = SimulationState.IDLE
         self.on_event("resumed", {"step": self.current_step, "agent_count": len(self.agents)})
@@ -343,8 +478,35 @@ class SimulationEngine:
         self.world_state["shared_goals"] = self.coordinator.shared_goals
         self.world_state["cooperation"] = self.coordinator.get_cooperation_context()
 
+        # Goal tree: mission -> group -> individual goals (Step 6)
+        if self._settings.goal_tree_enabled:
+            mission_desc = (
+                world_config.get("mission")
+                or world_config.get("mission_goal")
+                or scenario_config.get("description")
+                or "Survive the disaster and help others"
+            )
+            self.goal_tree.set_mission(mission_desc, step=0)
+            human_ids = [aid for aid, a in self.agents.items() if a.role == "human"]
+            group_id = self.goal_tree.add_group_goal(
+                "Survive and support each other",
+                owner_ids=human_ids,
+                step=0,
+            )
+            for aid in human_ids:
+                agent = self.agents[aid]
+                for goal in (agent.goals or ["Survive", "Help others if possible"]):
+                    self.goal_tree.add_agent_goal(
+                        goal, owner_id=aid, parent_id=group_id, step=0
+                    )
+
         # Update agents in world state for initial display
         self._update_agents_in_world_state()
+
+        # Graph-backed memory (MiroFish): create/attach when enabled
+        await self._ensure_graph_memory()
+        if self._settings.graph_memory_enabled:
+            await self.db.commit()
 
         self.state = SimulationState.IDLE
         self.on_event("initialized", {
@@ -412,6 +574,7 @@ class SimulationEngine:
                 provider=default_provider,
                 persona=persona,
                 goals=config.get("goals"),
+                background=config.get("background", False),
             )
 
     async def start(
@@ -495,6 +658,10 @@ class SimulationEngine:
         # Reset conversation counters for this step
         self.conversation_manager.reset_step_counters()
 
+        # Reset per-step LLM-agent budget for hybrid populations
+        budget = self._settings.max_llm_agents_per_step
+        self._step_llm_budget_left = -1 if budget <= 0 else budget
+
         # L8: Start diff tracking for this step
         self.diff_tracker.start_step(self.current_step, self.world_state)
 
@@ -557,22 +724,20 @@ class SimulationEngine:
         self.diff_tracker.end_step(self.world_state)
 
         # Persist step
-        step = Step(
-            run_id=self.run_id,
-            step_index=self.current_step,
-            state_snapshot=self.world_state.copy(),
-            actions=step_actions,
-            step_metrics=self._compute_step_metrics(),
+        await self.persistence.save_step(
+            self.run_id,
+            self.current_step,
+            self.world_state,
+            step_actions,
+            self._compute_step_metrics(),
         )
-        self.db.add(step)
 
         # Update run
-        run = await self.db.get(Run, self.run_id)
-        if run:
-            run.current_step = self.current_step
-            run.world_state = self.world_state.copy()
+        await self.persistence.update_run_progress(
+            self.run_id, self.current_step, self.world_state
+        )
 
-        await self.db.commit()
+        await self.persistence.commit()
 
         await log_pipeline_event(
             f"✅ Step {self.current_step} done  "
@@ -580,18 +745,23 @@ class SimulationEngine:
         )
 
         # Emit step event with telemetry (L3)
-        self.on_event("step_completed", {
-            "step": self.current_step,
-            "actions": step_actions,
-            "messages": step_messages,
-            "world_state": self.world_state,
-            "conversations": [c.to_dict() for c in self.conversation_manager.get_all_active_conversations()],
-            "agent_telemetry": self.supervisor.get_all_telemetry(),
-            "world_state_diff": self.diff_tracker.get_current_diff().to_dict(),
-            "negotiations": self.negotiation.to_dict(),
-            "emotion_contagion": self.emotion_contagion.to_dict(),
-            "social_dynamics": social_dynamics_result,
-        })
+        self.on_event("step_completed", build_step_completed_payload(
+            self.current_step,
+            step_actions,
+            step_messages,
+            self.world_state,
+            [c.to_dict() for c in self.conversation_manager.get_all_active_conversations()],
+            self.supervisor.get_all_telemetry(),
+            self.diff_tracker.get_current_diff().to_dict(),
+            self.negotiation.to_dict(),
+            self.emotion_contagion.to_dict(),
+            social_dynamics_result,
+            governance_pending=(
+                [d.to_dict() for d in self.governance.get_pending()]
+                if self._settings.governance_enabled else None
+            ),
+            goal_tree=(self.goal_tree.to_dict() if self._settings.goal_tree_enabled else None),
+        ))
 
     def _update_agents_in_world_state(self) -> None:
         """Update world state with current agent information"""
@@ -717,30 +887,38 @@ class SimulationEngine:
         """
         from emotionsim.llm.pipeline_logger import log_pipeline_event
 
-        # Build interactions: (speaker_id, listener_id, trust_level)
+        # Build interactions: (speaker_id, listener_id, trust_level, content)
         interactions = []
 
         # Extract from step messages (broadcasts reach all co-located agents)
         for msg in step_messages:
-            sender_id = msg.get("from_agent_id") or msg.get("from")
+            # Stored messages use "from_agent"; accept legacy "from_agent_id" too.
+            sender_id = msg.get("from_agent") or msg.get("from_agent_id") or msg.get("from")
             if not sender_id or sender_id not in self.agents:
                 continue
             sender_loc = self._agent_locations.get(sender_id)
             msg_type = msg.get("message_type", msg.get("type", ""))
+            content = msg.get("content", "") or ""
 
             if msg_type == "broadcast":
                 # Broadcast reaches all human agents
                 for aid, agent in self.agents.items():
                     if aid != sender_id and agent.role == "human":
                         trust = self._trust_between(aid, sender_id)
-                        interactions.append((sender_id, aid, trust))
+                        interactions.append((sender_id, aid, trust, content))
             elif msg_type in ("room", "conversation"):
                 # Room/conversation messages reach co-located agents
                 for aid, agent in self.agents.items():
                     if aid != sender_id and agent.role == "human":
                         if self._agent_locations.get(aid) == sender_loc:
                             trust = self._trust_between(aid, sender_id)
-                            interactions.append((sender_id, aid, trust))
+                            interactions.append((sender_id, aid, trust, content))
+            elif msg_type == "direct":
+                # Direct messages reach their target
+                target = msg.get("to_target")
+                if target and target in self.agents and target != sender_id:
+                    trust = self._trust_between(target, sender_id)
+                    interactions.append((sender_id, target, trust, content))
 
         if not interactions:
             return {}
@@ -770,7 +948,7 @@ class SimulationEngine:
         # Apply opinion shifts back to agent personas
         opinion_shifts = result.get("opinion_shifts", [])
         for shift in opinion_shifts:
-            agent = self.agents.get(shift.listener_id)
+            agent = self.agents.get(shift.agent_id)
             if agent and hasattr(agent, 'persona') and hasattr(agent.persona, 'opinion_vectors'):
                 agent.persona.opinion_vectors[shift.topic] = shift.new_stance
 
@@ -981,8 +1159,50 @@ class SimulationEngine:
                 conversation = conv
                 break
 
+        # Hybrid populations: per-step LLM budget + promotion/demotion
+        budget = self._settings.max_llm_agents_per_step
+        budget_ok = budget <= 0 or self._step_llm_budget_left > 0
+        if isinstance(agent, HumanAgent):
+            addressed_directly = False
+            for msg in step_messages:
+                mtype = msg.get("message_type", "")
+                target = msg.get("to_target")
+                if mtype in ("direct", "conversation") and target in (agent_id, agent.name):
+                    addressed_directly = True
+                    break
+
+            scene_participants = self.world_state.get("_scene_participants", [])
+            in_active_scene = agent.name in scene_participants and len(scene_participants) > 1
+
+            agent._steps_since_promotion += 1
+
+            if agent.background:
+                # Promotion: addressed directly / active scene / natural leader
+                if budget_ok and agent.should_promote(addressed_directly, in_active_scene):
+                    reason = (
+                        "addressed directly" if addressed_directly
+                        else "active scene" if in_active_scene
+                        else "leader under low stress"
+                    )
+                    agent.promote(reason)
+                    self.on_event("agent_promoted", {
+                        "agent_id": agent_id,
+                        "agent_name": agent.name,
+                        "reason": reason,
+                        "step": self.current_step,
+                    })
+            elif agent.started_background and not addressed_directly and not in_active_scene:
+                # Demotion: back to background after sustained inactivity
+                if agent._steps_since_promotion >= self._settings.background_demote_after_steps:
+                    agent.demote()
+                    self.on_event("agent_demoted", {
+                        "agent_id": agent_id,
+                        "agent_name": agent.name,
+                        "step": self.current_step,
+                    })
+
         # For human agents not in conversations, check if they should respond
-        if isinstance(agent, HumanAgent) and not in_conversation:
+        if isinstance(agent, HumanAgent) and not in_conversation and not agent.background:
             agent_location = self._agent_locations.get(agent_id, agent.dynamic_state.get("location", "unknown"))
             location_activity = len([
                 aid for aid, loc in self._agent_locations.items()
@@ -1000,8 +1220,26 @@ class SimulationEngine:
         # Get messages for this agent
         messages = self.message_bus.get_messages(agent_id)
 
+        # Background agents (or foreground agents beyond the per-step LLM
+        # budget) tick via rule-based decisions — no LLM call.
+        if isinstance(agent, HumanAgent) and (agent.background or not budget_ok):
+            await self._tick_background(
+                agent_id, agent, self.world_state, messages,
+                step_actions, step_messages, step_events,
+                in_conversation, conversation,
+            )
+            return
+
         # Build world state with all context
         agent_world_state = self.world_state.copy()
+
+        # Goal tree context (mission -> group -> individual) surfaced in prompt
+        if self._settings.goal_tree_enabled:
+            agent_world_state["goal_tree"] = self.goal_tree.get_context_string(agent_id)
+
+        # Governance warning from the agent's last flagged action
+        if self._settings.governance_enabled and agent_id in self._governance_flags:
+            agent_world_state["governance"] = self._governance_flags[agent_id]
 
         # Add cooperation context
         agent_world_state["cooperation"] = self.coordinator.get_cooperation_context()
@@ -1075,35 +1313,14 @@ class SimulationEngine:
         await log_pipeline_event(f"🤖 {agent.name} thinking...")
 
         # Always stream tokens: log to file + broadcast via on_event for WebSocket
-        _token_buffer: list[str] = []
         _tick_token_count = [0]  # mutable counter for this tick
-        _last_flush = [time.time()]
-        FLUSH_INTERVAL = 0.05  # 50ms batching to avoid flooding WebSocket
-
-        async def _flush_tokens(_aid=agent_id, _aname=agent.name):
-            if _token_buffer:
-                chunk = "".join(_token_buffer)
-                _token_buffer.clear()
-                self.on_event("token_stream", {
-                    "agent_id": _aid,
-                    "agent_name": _aname,
-                    "tokens": chunk,
-                    "step": self.current_step,
-                })
-
-        async def _cb(token: str, _aid=agent_id, _aname=agent.name):
-            if stream_callback:
-                await stream_callback(_aid, token)
-            await token_logger.log_token(_aid, _aname, token)
-            _tick_token_count[0] += len(token)
-            # Buffer tokens for batched WebSocket broadcast
-            _token_buffer.append(token)
-            now = time.time()
-            if now - _last_flush[0] >= FLUSH_INTERVAL:
-                _last_flush[0] = now
-                await _flush_tokens()
-
-        agent_callback = _cb
+        _streamer = TokenStreamer(self.on_event)
+        agent_callback = _streamer.make_callback(
+            agent_id, agent.name, self.current_step,
+            stream_callback=stream_callback,
+            token_logger=token_logger,
+            counter=_tick_token_count,
+        )
 
         # --- Conclusion enforcement: inject directives if near budget or stagnant ---
         _settings = self._settings
@@ -1143,6 +1360,9 @@ class SimulationEngine:
             return
 
         _tick_start = time.time()
+        # Consume this agent's share of the per-step LLM budget
+        if isinstance(agent, HumanAgent):
+            self._step_llm_budget_left -= 1
         response = await self.supervisor.supervised_tick(
             agent, agent_world_state, messages,
             step_actions, step_messages, step_events,
@@ -1154,7 +1374,7 @@ class SimulationEngine:
         self._agent_token_counts[agent_id] = cumulative + _tick_token_count[0]
 
         # Flush any remaining buffered tokens
-        await _flush_tokens()
+        await _streamer.flush(agent_id, agent.name, self.current_step)
         # Emit generation-complete event for this agent
         self.on_event("token_done", {
             "agent_id": agent_id,
@@ -1227,6 +1447,10 @@ class SimulationEngine:
                 },
             })
 
+        # Governance gate: evaluate the agent's intended action (Step 6)
+        if self._settings.governance_enabled and isinstance(agent, HumanAgent):
+            await self._evaluate_governance(agent_id, agent, response)
+
         # Track for loop detection
         if response.message and response.message.content.strip():
             topic = self._extract_topic(response.message.content)
@@ -1252,6 +1476,173 @@ class SimulationEngine:
             agent._pending_trust_changes.clear()
 
         self._update_agents_in_world_state()
+
+    async def _tick_background(
+        self,
+        agent_id: str,
+        agent: Agent,
+        world_state: dict[str, Any],
+        messages: list[dict[str, Any]],
+        step_actions: list[dict[str, Any]],
+        step_messages: list[dict[str, Any]],
+        step_events: list[str],
+        in_conversation: bool,
+        conversation: Any,
+    ) -> None:
+        """Run a rule-based background tick (zero LLM calls).
+
+        Used for LightweightAgent-mode human agents and for foreground agents
+        pushed beyond the per-step LLM budget. Produces the same action /
+        message / cinematic plumbing as a full tick so analytics and
+        persistence stay uniform.
+        """
+        if not isinstance(agent, HumanAgent):
+            return
+
+        response = await agent._background_tick(world_state, messages, self.current_step)
+
+        # Process actions
+        for action in response.actions:
+            await self._process_agent_action(
+                agent_id, agent, action, step_actions, step_messages,
+                in_conversation, conversation,
+            )
+
+        # Process message
+        if response.message and response.message.content.strip():
+            msg = response.message
+            stored_msg = self._route_message(
+                agent_id, agent, msg, in_conversation, conversation,
+            )
+            step_messages.append(stored_msg)
+            self.diff_tracker.record_message()
+            await self._persist_message(
+                agent_id, msg, conversation.id if in_conversation else None
+            )
+
+            self.on_event("message", {
+                "type": "message",
+                "data": stored_msg,
+                "timestamp": datetime.now(timezone.utc).strftime("%H:%M:%S")
+            })
+            await asyncio.sleep(0)
+        elif in_conversation and conversation:
+            conversation.advance_turn(spoke=False)
+
+        # Cinematic record for analytics
+        cinematic = getattr(agent, "_last_cinematic", {}) or {}
+        step_actions.append({
+            "agent_id": agent_id,
+            "agent_name": agent.name,
+            "action_type": "cinematic",
+            "target": None,
+            "parameters": {
+                "action": cinematic.get("action", ""),
+                "thought": cinematic.get("thought", ""),
+                "emotion": cinematic.get("emotion", ""),
+                "speech": response.message.content if response.message else None,
+                "stress_level": agent.dynamic_state.get("stress_level"),
+                "health": agent.dynamic_state.get("health"),
+                "location": agent.dynamic_state.get("location"),
+                "background": True,
+            },
+        })
+
+        agent.last_reasoning = response.reasoning
+        self._update_agents_in_world_state()
+
+    # ── Governance gates (Step 6) ─────────────────────────────────────────
+
+    async def _evaluate_governance(
+        self,
+        agent_id: str,
+        agent: Agent,
+        response: Any,
+    ) -> None:
+        """Run the governance gate on the agent's intended action.
+
+        Uses the keyword classifier first; when ``governance_use_llm_scorer``
+        is enabled, flagged actions are additionally scored by the LLM
+        (config-gated LLM scoring). Flagged decisions are surfaced to the
+        agent as a prompt warning and emitted as events.
+        """
+        cinematic = getattr(agent, "_last_cinematic", {}) or {}
+        action_text = (
+            cinematic.get("action")
+            or (response.actions[0].action_type if response.actions else "")
+            or (response.message.content if response.message else "")
+            or "continue"
+        )
+        reasoning = response.reasoning or cinematic.get("thought") or ""
+
+        decision = self.governance.evaluate(
+            agent_id, action_text, reasoning, self.current_step
+        )
+        if decision.status != GateStatus.PENDING:
+            return
+
+        if self.governance.config.use_llm_scorer:
+            await self._score_governance_with_llm(agent_id, decision, action_text, reasoning)
+        else:
+            # Keyword classifier hit: flag for review + warn the agent
+            self._governance_flags[agent_id] = decision.to_dict()
+            self.on_event("governance_pending", {
+                "decision": decision.to_dict(),
+                "step": self.current_step,
+            })
+
+    async def _score_governance_with_llm(
+        self,
+        agent_id: str,
+        decision: Any,
+        action_text: str,
+        reasoning: str,
+    ) -> None:
+        """LLM ethics-reviewer scoring for a flagged action (config-gated)."""
+        try:
+            from emotionsim.llm.schemas import GovernanceScoreResponse, validate_content
+            from emotionsim.llm.router import LLMRouter
+            from emotionsim.llm.base import LLMMessage
+
+            system = (
+                "You are an ethics reviewer for a disaster simulation. "
+                "Evaluate the flagged action. Respond with JSON: "
+                "significance (float 0-1), approved (bool), note (string)."
+            )
+            user = (
+                f"Action: {action_text}\n"
+                f"Reasoning: {reasoning}\n"
+                f"Ethical categories: {[c.value for c in decision.categories]}"
+            )
+            response = await LLMRouter.generate_with_fallback(
+                messages=[LLMMessage(role="user", content=user)],
+                system=system,
+                temperature=0.2,
+                max_tokens=256,
+                json_mode=True,
+            )
+            ok, parsed, _ = validate_content(response.content, GovernanceScoreResponse)
+            if not ok:
+                self._governance_flags[agent_id] = decision.to_dict()
+                return
+
+            decision.significance = parsed.significance
+            decision.researcher_note = parsed.note
+            decision.approved = parsed.approved
+            decision.status = (
+                GateStatus.APPROVED if parsed.approved else GateStatus.DENIED
+            )
+            if not parsed.approved:
+                self._governance_flags[agent_id] = decision.to_dict()
+            self.governance._resolved.append(decision)
+            self.governance._audit_log.append(decision)
+            self.on_event("governance_resolved", {
+                "decision": decision.to_dict(),
+                "step": self.current_step,
+            })
+        except Exception:
+            # Fall back to flagging pending (keyword path)
+            self._governance_flags[agent_id] = decision.to_dict()
 
     async def _process_human_agents_sequential(
         self,
@@ -1349,69 +1740,10 @@ class SimulationEngine:
         local_events: list[str],
         stream_callback: Callable[[str, str], Awaitable[None]] | None = None,
     ) -> None:
-        """Run a single scene at a location. Turns within are sequential."""
-        if len(available) == 1:
-            aid = available[0]
-            agent = self.agents[aid]
-            await self._tick_single_agent(aid, agent, local_actions, local_messages, local_events, stream_callback)
-            return
-
-        # Multi-agent scene: pick initiator by extraversion, order turns
-        try:
-            initiator_id = self.scene_director.pick_initiator(available, self.agents)
-        except ValueError:
-            return
-        ordered = [initiator_id] + [a for a in available if a != initiator_id]
-        turn_ids = ordered[:self.scene_director.max_turns]
-
-        # Inject scene context into world state so agents know who is present
-        try:
-            self.world_state["_scene_location"] = location
-            self.world_state["_scene_participants"] = [
-                self.agents[aid].name for aid in available if aid in self.agents
-            ]
-
-            last_speech: dict[str, str | None] = {}
-            for agent_id in turn_ids:
-                agent = self.agents[agent_id]
-                msg_count_before = len(local_messages)
-
-                await self._tick_single_agent(
-                    agent_id, agent, local_actions, local_messages, local_events, stream_callback
-                )
-
-                # Capture speech from any message sent during this turn
-                speech: str | None = None
-                if len(local_messages) > msg_count_before:
-                    newest = local_messages[-1]
-                    speech = newest.get("content")
-                last_speech[agent_id] = speech
-
-                # Emit per-turn scene event
-                self.on_event("scene_turn", {
-                    "location": location,
-                    "agent_id": agent_id,
-                    "agent_name": agent.name,
-                    "action": getattr(agent, '_last_cinematic', {}).get("action", ""),
-                    "speech": speech,
-                    "thought": getattr(agent, '_last_cinematic', {}).get("thought", ""),
-                    "emotion": getattr(agent, '_last_cinematic', {}).get("emotion", ""),
-                    "step": self.current_step,
-                })
-
-                # Update world state after each turn so next agent sees latest position
-                self._update_agents_in_world_state()
-
-            # Emit scene_completed event
-            self.on_event("scene_completed", {
-                "location": location,
-                "participants": [self.agents[aid].name for aid in available if aid in self.agents],
-                "turn_count": len(turn_ids),
-                "step": self.current_step,
-            })
-        finally:
-            self.world_state.pop("_scene_location", None)
-            self.world_state.pop("_scene_participants", None)
+        """Run a single scene (delegates to SceneProcessor — Step 7)."""
+        await self.scene_processor.run_single_scene(
+            location, available, local_actions, local_messages, local_events, stream_callback
+        )
 
     async def _process_agents_as_scenes(
         self,
@@ -1420,77 +1752,10 @@ class SimulationEngine:
         step_events: list[str],
         stream_callback: Callable[[str, str], Awaitable[None]] | None = None,
     ) -> None:
-        """Process human agents as dramatic scenes grouped by location.
-
-        Independent scenes at different locations run in parallel via
-        asyncio.gather, leveraging vLLM's continuous batching for higher
-        throughput. Within each scene, turns remain sequential so agents
-        can react to prior speech.
-        """
-        settings = self._settings
-
-        # Build agent_locations dict from current tracking
-        agent_locations = {
-            agent_id: self._agent_locations.get(agent_id, agent.dynamic_state.get("location", "unknown"))
-            for agent_id, agent in self.agents.items()
-            if hasattr(agent, 'dynamic_state')
-        }
-
-        groups = self.scene_director.group_agents_by_location(self.agents, agent_locations)
-
-        # Collect scenes to process
-        scenes: list[tuple[str, list[str]]] = []
-        for location, agent_ids in groups.items():
-            available = [
-                aid for aid in agent_ids
-                if self.supervisor.is_agent_available(aid)
-            ]
-            if available:
-                scenes.append((location, available))
-
-        if not scenes:
-            return
-
-        # Decide: parallel scenes if vLLM backend, sequential otherwise
-        parallel_scenes = settings.llm_backend == "vllm" and len(scenes) > 1
-
-        if parallel_scenes:
-            # Run independent location-scenes concurrently
-            async def _run_scene_isolated(location: str, available: list[str]):
-                local_actions: list[dict[str, Any]] = []
-                local_messages: list[dict[str, Any]] = []
-                local_events: list[str] = []
-                try:
-                    await self._run_single_scene(
-                        location, available, local_actions, local_messages, local_events, stream_callback
-                    )
-                except Exception as e:
-                    logger.error(f"Scene at {location} failed: {e}")
-                    self.on_event("agent_error", {
-                        "error": f"Scene at {location} failed: {e}",
-                        "step": self.current_step,
-                        "context": "parallel_scene",
-                    })
-                return local_actions, local_messages, local_events
-
-            tasks = [_run_scene_isolated(loc, avail) for loc, avail in scenes]
-            results = await asyncio.gather(*tasks, return_exceptions=True)
-
-            for result in results:
-                if isinstance(result, Exception):
-                    logger.error(f"Parallel scene raised: {result}")
-                    continue
-                local_actions, local_messages, local_events = result
-                step_actions.extend(local_actions)
-                step_messages.extend(local_messages)
-                step_events.extend(local_events)
-        else:
-            # Sequential fallback (Ollama or single scene)
-            for location, available in scenes:
-                await self._run_single_scene(
-                    location, available, step_actions, step_messages, step_events, stream_callback
-                )
-
+        """Process human agents as scenes (delegates to SceneProcessor — Step 7)."""
+        await self.scene_processor.process_agents_as_scenes(
+            step_actions, step_messages, step_events, stream_callback
+        )
 
     async def _process_agent_action(
         self,
@@ -1579,78 +1844,10 @@ class SimulationEngine:
         step_events: list[str],
         stream_callback: Callable[[str, str], Awaitable[None]] | None = None,
     ) -> None:
-        """
-        After all agents tick, agents who received direct messages or proposals
-        this step get a quick reactive tick with restricted actions.
-        This enables same-step proposal->response instead of 2+ step latency.
-        """
-        reactive_agents = set()
-
-        # Agents with pending proposals that were created this step
-        for prop in self.negotiation._proposals.values():
-            if (
-                prop.created_at_step == self.current_step
-                and prop.state == ProposalState.PENDING
-                and prop.target_id
-            ):
-                reactive_agents.add(prop.target_id)
-
-        # Agents who received direct messages this step
-        for msg in step_messages:
-            if msg.get("message_type") == "direct":
-                target = msg.get("to_target")
-                if target and target in self.agents:
-                    reactive_agents.add(target)
-
-        if not reactive_agents:
-            return
-
-        for agent_id in reactive_agents:
-            agent = self.agents.get(agent_id)
-            if not agent or agent.role != "human":
-                continue
-            if not self.supervisor.is_agent_available(agent_id):
-                continue
-
-            messages = self.message_bus.get_messages(agent_id)
-            if not messages:
-                continue
-
-            # Build minimal reactive context
-            agent_world_state = self.world_state.copy()
-            agent_world_state["negotiations"] = self.negotiation.get_negotiation_context(agent_id)
-            agent_world_state["_reactive_round"] = True
-
-            response = await self.supervisor.supervised_tick(
-                agent, agent_world_state, messages,
-                step_actions, step_messages, step_events,
-            )
-            agent.last_reasoning = response.reasoning or None
-
-            for action in response.actions:
-                # Only allow reactive actions
-                if action.action_type in (
-                    "speak", "accept_proposal", "reject_proposal",
-                    "counter_propose", "help", "wait",
-                ):
-                    await self._process_agent_action(
-                        agent_id, agent, action, step_actions, step_messages,
-                        False, None,
-                    )
-
-            if response.message and response.message.content.strip():
-                stored_msg = self._route_message(agent_id, agent, response.message, False, None)
-                step_messages.append(stored_msg)
-                self.diff_tracker.record_message()
-                await self._persist_message(agent_id, response.message)
-
-                self.on_event("message", {
-                    "type": "message",
-                    "data": stored_msg,
-                    "timestamp": datetime.now(timezone.utc).strftime("%H:%M:%S")
-                })
-
-            self._update_agents_in_world_state()
+        """Run the intra-step reaction round (delegates to ReactionRound — Step 7)."""
+        await self.reaction_round.execute(
+            step_actions, step_messages, step_events, stream_callback
+        )
 
     # === L2: Negotiation Action Handlers ===
 
@@ -2152,28 +2349,14 @@ class SimulationEngine:
         msg: Any,
         conversation_id: str | None = None,
     ) -> None:
-        """Persist a message to the database"""
-        # Determine message type
-        msg_type = msg.message_type if hasattr(msg, 'message_type') else "broadcast"
-        if conversation_id:
-            msg_type = "conversation"
-
-        # Map to MessageType enum
-        try:
-            db_msg_type = MessageType(msg_type)
-        except ValueError:
-            db_msg_type = MessageType.BROADCAST
-
-        db_message = Message(
-            run_id=self.run_id,
-            from_agent_id=agent_id,
-            to_target=conversation_id or msg.to_target,
-            message_type=db_msg_type,
-            content=msg.content,
-            step_index=self.current_step,
-            msg_metadata={"conversation_id": conversation_id} if conversation_id else {},
+        """Persist a message to the database (delegates to RunPersistence)."""
+        await self.persistence.save_message(
+            self.run_id,
+            agent_id,
+            msg,
+            self.current_step,
+            conversation_id=conversation_id,
         )
-        self.db.add(db_message)
 
     def _apply_environment_update(self, params: dict[str, Any]) -> None:
         """Apply environment agent updates to world state"""
@@ -2727,14 +2910,23 @@ class SimulationEngine:
         except Exception as e:
             evaluation = {"error": str(e)}
 
-        # Update run in DB
-        run = await self.db.get(Run, self.run_id)
-        if run:
-            run.status = RunStatus.COMPLETED
-            run.completed_at = datetime.now(timezone.utc)
-            run.metrics = self._compute_step_metrics()
-            run.evaluation = evaluation
-            await self.db.commit()
+        # Update run in DB (metrics augmented with cost/latency/token telemetry)
+        metrics = self._compute_step_metrics()
+        metrics["tokens"] = sum(self._agent_token_counts.values())
+        metrics["tokens_per_agent"] = dict(self._agent_token_counts)
+        telemetry = self.supervisor.get_all_telemetry()
+        metrics["latency_ms"] = round(
+            sum(t.get("last_tick_duration_ms", 0) for t in telemetry.values()), 2
+        )
+        rate = self._settings.llm_cost_per_1k_tokens
+        metrics["cost_estimate_usd"] = round(
+            metrics["tokens"] / 1000.0 * rate, 6
+        )
+        await self.persistence.complete_run(
+            self.run_id,
+            metrics,
+            evaluation,
+        )
 
         self.state = SimulationState.IDLE
 

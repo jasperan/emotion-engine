@@ -6,6 +6,7 @@ and episodic agent memory backed by Oracle DB (or any SQLAlchemy-compatible stor
 
 from __future__ import annotations
 
+import logging
 import math
 import uuid
 from typing import Optional
@@ -22,6 +23,8 @@ from emotionsim.models.graph import (
 )
 from emotionsim.storage.embedding_service import EmbeddingService
 from emotionsim.storage.graph_storage import Edge, Entity, GraphStorage, SearchResult
+
+logger = logging.getLogger(__name__)
 
 # Hybrid search weights
 VECTOR_WEIGHT = 0.7
@@ -74,10 +77,19 @@ class OracleGraphStorage(GraphStorage):
         self.embedding_service = embedding_service
 
     async def _auto_embed(self, text: str) -> list[float]:
-        """Embed text if an embedding service is available, otherwise return empty."""
+        """Embed text if an embedding service is available, otherwise return empty.
+
+        Any failure (e.g. Ollama not running) degrades gracefully to an empty
+        vector so hybrid search falls back to keyword scoring — the simulation
+        must never crash because embeddings are unavailable.
+        """
         if self.embedding_service is None:
             return []
-        return await self.embedding_service.embed_text(text)
+        try:
+            return await self.embedding_service.embed_text(text)
+        except Exception:
+            logger.debug("Embedding failed, continuing without vector", exc_info=True)
+            return []
 
     # ------------------------------------------------------------------
     # Graph CRUD

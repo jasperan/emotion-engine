@@ -4,9 +4,12 @@ from typing import Any, Callable, Awaitable
 
 from emotionsim.agents.base import Agent
 from emotionsim.agents.cognitive_engine import CognitiveEngine, CognitivePhase
+from emotionsim.agents.graph_memory import GraphMemory
+from emotionsim.agents.lightweight_agent import LightweightAgent
 from emotionsim.llm.base import LLMMessage
 from emotionsim.llm.router import LLMRouter
-from emotionsim.schemas.agent import AgentResponse
+from emotionsim.llm.schemas import ActResponse, validate_content
+from emotionsim.schemas.agent import AgentResponse, AgentAction, AgentMessage
 from emotionsim.schemas.persona import Persona
 
 
@@ -25,6 +28,7 @@ class HumanAgent(Agent):
         provider: str = "ollama",
         persona: Persona | None = None,
         goals: list[str] | None = None,
+        background: bool = False,
     ):
         super().__init__(
             agent_id=agent_id,
@@ -56,6 +60,24 @@ class HumanAgent(Agent):
             "inventory": self.persona.inventory.copy(),
             "location": self.persona.location,
         }
+
+        # Graph-backed memory (MiroFish). Attached by the engine when
+        # settings.graph_memory_enabled is on and a knowledge graph exists
+        # for this run. When None, the agent uses flat sliding-window memory.
+        self.graph_memory: GraphMemory | None = None
+        # Deduplication set for observations already stored in the graph.
+        self._graph_seen_events: set[str] = set()
+
+        # Hybrid population mode (LightweightAgent scaling).
+        # Background agents act via rule-based decisions with zero LLM calls;
+        # the engine promotes them to full LLM agents on demand and demotes
+        # them back after a period of inactivity.
+        self.background = background
+        self.started_background = background
+        self._steps_since_promotion = 0
+        self._promote_reason: str | None = None
+        self._lightweight_agent: LightweightAgent | None = None
+        self.dynamic_state["_background"] = background
 
     def should_respond(
         self,
@@ -214,7 +236,30 @@ Rules:
         # ── Core scene header (always included, never compacted) ──
         core = f"""━━ Scene: {current_loc} (Step {current_step}) ━━
 Threat level: {hazard_str}
+"""
 
+        # Goal tree context (mission -> group -> individual, Step 6)
+        goal_ctx = world_state.get("goal_tree")
+        if goal_ctx:
+            core += f"\n{goal_ctx}\n"
+
+        # Governance warning for a previously flagged action (Step 6)
+        gov_ctx = world_state.get("governance")
+        if gov_ctx:
+            categories = ", ".join(gov_ctx.get("categories", []))
+            core += (
+                f"\n⚠️ GOVERNANCE WARNING: Your last action was flagged as "
+                f"ethically significant ({categories}). "
+                f"Consider the consequences of your choices.\n"
+            )
+
+        # Eval prompt variant (Step 8): experiment instruction injected into
+        # the prompt so the harness can compare prompt variants offline.
+        variant = world_state.get("_prompt_variant")
+        if variant:
+            core += f"\n[Experiment instruction: {variant}]\n"
+
+        core += f"""
 With you:
 {chr(10).join('  - ' + a for a in agents_here) if agents_here else '  (you are alone)'}
 
@@ -266,7 +311,8 @@ Your inventory: {inv_str}
 
         def _build_memory(max_episodic: int, max_fact_len: int) -> str:
             ctx = self.agent_memory.get_conversation_context(
-                max_recent=5, max_episodic=max_episodic
+                max_recent=5, max_episodic=max_episodic,
+                current_step=current_step,
             )
             if not ctx:
                 return ""
@@ -325,6 +371,11 @@ Your inventory: {inv_str}
         Execute one simulation tick using the cognitive cycle:
         think -> plan -> act -> reflect.
         """
+        # Background (lightweight) agents act via rule-based decisions,
+        # never calling the LLM.
+        if self.background:
+            return await self._background_tick(world_state, messages, current_step=world_state.get("current_step", 0))
+
         # 1. Store incoming messages in memory (same as base)
         for msg in messages:
             self.add_to_memory({"type": "message", "data": msg})
@@ -381,6 +432,11 @@ Your inventory: {inv_str}
         if plan_context:
             context = plan_context + "\n\n" + context
 
+        # Prepend graph-backed memory context (relevance recall, MiroFish)
+        graph_context = await self._recall_graph_context(world_state, messages)
+        if graph_context:
+            context = graph_context + "\n\n" + context
+
         # Enforce current plan step if a plan exists
         if intent.current_plan and intent.current_plan.current_step < len(intent.current_plan.steps):
             step_desc = intent.current_plan.steps[intent.current_plan.current_step]
@@ -403,6 +459,34 @@ Your inventory: {inv_str}
             agent_role=self.role,
         )
 
+        # Structured-output enforcement (Step 3): validate the act output
+        # against the cinematic schema; retry once with the validation error
+        # injected into the prompt. Final fallback remains defensive parsing.
+        ok, _, err = validate_content(response.content, ActResponse)
+        if not ok:
+            response = await LLMRouter.generate_with_fallback(
+                messages=llm_messages
+                + [
+                    LLMMessage(
+                        role="user",
+                        content=(
+                            f"Your previous response failed validation: {err}\n"
+                            "Return ONLY valid JSON with fields: action (string), "
+                            "speech (string or null), thought (string or null), "
+                            "emotion (string or null), move_to (string or null), "
+                            "stress_level (integer 1-10)."
+                        ),
+                    )
+                ],
+                system=system_prompt,
+                temperature=0.8,
+                max_tokens=2048,
+                json_mode=True,
+                stream_callback=stream_callback,
+                model_override=self.model_id,
+                agent_role=self.role,
+            )
+
         # Parse response
         agent_response = self.parse_llm_response(response)
 
@@ -423,11 +507,318 @@ Your inventory: {inv_str}
             "context_size": context_size,
         })
 
+        # 9b. Store graph-backed memories (observations + decision)
+        await self._store_graph_memories(agent_response, current_step, step_events)
+
+        # 9c. Batched reflection (every N steps): distill lessons into memory
+        await self._maybe_reflect(current_step)
+
         # 10. REFLECT phase
         actions_taken = [a.action_type for a in agent_response.actions]
         self._cognitive_engine.reflect(intent, actions_taken, current_step)
 
         return agent_response
+
+    # ── Graph-backed memory (MiroFish) ────────────────────────────────────
+
+    def _graph_situation(
+        self,
+        world_state: dict[str, Any],
+        messages: list[dict[str, Any]],
+    ) -> str:
+        """Build the current-situation query used for relevance recall.
+
+        Combines the agent's location, hazard level, nearby places and the
+        most recent speech into a natural-language query — graph memories
+        are recalled by *relevance* to this, not by recency.
+        """
+        current_loc = self.dynamic_state.get("location", "unknown")
+        hazard = world_state.get("hazard_level", 0)
+        loc_info = world_state.get("locations", {}).get(current_loc, {})
+        nearby = ", ".join(loc_info.get("nearby", []))
+        parts = [
+            f"I am at {current_loc}.",
+            f"Hazard level: {hazard}.",
+        ]
+        if nearby:
+            parts.append(f"Nearby: {nearby}.")
+        recent = [m.get("content", "") for m in (messages or []) if m.get("content")]
+        if recent:
+            parts.append("Recent talk: " + " ".join(recent[-5:]))
+        return " ".join(parts)
+
+    async def _recall_graph_context(
+        self,
+        world_state: dict[str, Any],
+        messages: list[dict[str, Any]],
+    ) -> str:
+        """Recall relevant graph memories + facts for the current situation.
+
+        Returns an empty string on any failure so the simulation continues
+        with flat-memory context (graceful fallback).
+        """
+        gm = self.graph_memory
+        if gm is None:
+            return ""
+        try:
+            situation = self._graph_situation(world_state, messages)
+            return await gm.build_context(situation, max_memories=5, max_graph_facts=3)
+        except Exception:
+            return ""
+
+    def _graph_link_entities(self) -> list[str] | None:
+        """Entity ids to link a new memory node to (current location)."""
+        gm = self.graph_memory
+        if gm is None:
+            return None
+        loc = self.dynamic_state.get("location")
+        eid = gm.entity_id_for(loc) if loc else None
+        return [eid] if eid else None
+
+    async def _store_graph_memories(
+        self,
+        response: AgentResponse,
+        current_step: int,
+        step_events: list[str] | None = None,
+    ) -> None:
+        """Persist this tick's observations + decision as graph memory nodes.
+
+        Observations come from world events (deduplicated, capped per step);
+        the decision records the agent's action, emotion and speech. Both are
+        linked to the current location entity when one was seeded for it.
+        Any failure is swallowed — graph memory is best-effort.
+        """
+        gm = self.graph_memory
+        if gm is None:
+            return
+        try:
+            # Observations from step events (deduped, capped per step)
+            seen = self._graph_seen_events
+            new_events = [e for e in (step_events or []) if e and e not in seen]
+            for evt in new_events[:3]:
+                seen.add(evt)
+                await gm.store(
+                    content=evt,
+                    memory_type="observation",
+                    importance=5,
+                    step_number=current_step,
+                    linked_entity_ids=self._graph_link_entities(),
+                )
+
+            # Decision: what the agent did this tick
+            cinematic = getattr(self, "_last_cinematic", {}) or {}
+            action = cinematic.get("action") or "I kept going."
+            emotion = cinematic.get("emotion", "")
+            speech = response.message.content if response.message else None
+            stress = self.dynamic_state.get("stress_level", 5)
+
+            content = f"Step {current_step}: I {action}"
+            if emotion:
+                content += f" Feeling {emotion}."
+            if speech:
+                content += f" I said: \"{speech}\""
+
+            importance = 8 if stress >= 8 else 6 if stress >= 6 else 4
+            valence = 0.0
+            el = emotion.lower()
+            if any(w in el for w in ("fear", "panic", "despair", "anger", "angry")):
+                valence = -0.4
+            elif any(w in el for w in ("hope", "calm", "relief", "grateful")):
+                valence = 0.3
+
+            await gm.store(
+                content=content,
+                memory_type="decision",
+                importance=importance,
+                emotional_valence=valence,
+                step_number=current_step,
+                linked_entity_ids=self._graph_link_entities(),
+            )
+        except Exception:
+            return
+
+    # ── Hybrid population mode (LightweightAgent scaling) ────────────────
+
+    def _lightweight(self) -> LightweightAgent:
+        """Lazily construct the rule-based decision engine for this agent."""
+        if self._lightweight_agent is None:
+            self._lightweight_agent = LightweightAgent(
+                agent_id=self.id,
+                name=self.name,
+                persona=self.persona,
+                location=self.dynamic_state.get("location", "unknown"),
+            )
+        return self._lightweight_agent
+
+    def should_promote(
+        self,
+        addressed_directly: bool = False,
+        in_active_scene: bool = False,
+    ) -> bool:
+        """Whether this background agent should be promoted to a full LLM agent."""
+        return self._lightweight().should_promote(
+            addressed_directly=addressed_directly,
+            in_active_scene=in_active_scene,
+        )
+
+    def promote(self, reason: str = "") -> None:
+        """Promote to a full LLM agent (foreground)."""
+        self.background = False
+        self._steps_since_promotion = 0
+        self._promote_reason = reason
+        self.dynamic_state["_background"] = False
+
+    def demote(self) -> None:
+        """Demote back to rule-based background behavior."""
+        self.background = True
+        self._steps_since_promotion = 0
+        self.dynamic_state["_background"] = True
+
+    def _cinematic_action_text(self, decision: Any) -> str:
+        """Human-readable stage direction for a lightweight decision."""
+        texts = {
+            "speak": "They speak to those nearby.",
+            "move": f"They move toward {decision.target_location or 'another location'}.",
+            "help": f"They go to help {decision.target_agent or 'someone'}.",
+            "gather": "They search for useful supplies.",
+            "observe": "They watch the situation carefully.",
+            "wait": "They wait and keep alert.",
+        }
+        return texts.get(decision.action_type, f"They {decision.action_type}.")
+
+    def _cinematic_emotion(self, action_type: str) -> str:
+        """A simple emotion label for a lightweight action."""
+        return {"observe": "anxious", "wait": "tense"}.get(action_type, "determined")
+
+    async def _background_tick(
+        self,
+        world_state: dict[str, Any],
+        messages: list[dict[str, Any]],
+        current_step: int,
+    ) -> AgentResponse:
+        """Rule-based decision tick with zero LLM calls (background mode)."""
+        agents_state = world_state.get("agents", {})
+        my_loc = self.dynamic_state.get("location", "unknown")
+        nearby = [
+            info.get("name", aid)
+            for aid, info in agents_state.items()
+            if aid != self.id and info.get("location") == my_loc
+        ]
+
+        decision = self._lightweight().tick(
+            world_state=world_state,
+            nearby_agents=nearby,
+            recent_messages=messages,
+            step=current_step,
+        )
+
+        actions: list[AgentAction] = []
+        message: AgentMessage | None = None
+        if decision.action_type == "move" and decision.target_location:
+            actions.append(
+                AgentAction(action_type="move", target=decision.target_location, parameters={})
+            )
+        elif decision.action_type == "gather":
+            actions.append(AgentAction(action_type="search", target=None, parameters={}))
+        elif decision.action_type == "speak" and decision.message:
+            message = AgentMessage(
+                content=decision.message,
+                to_target="broadcast",
+                message_type="broadcast",
+            )
+        elif decision.action_type == "help" and decision.target_agent:
+            message = AgentMessage(
+                content=f"I'm coming to help, {decision.target_agent}!",
+                to_target=decision.target_agent,
+                message_type="direct",
+            )
+
+        self._last_cinematic = {
+            "action": self._cinematic_action_text(decision),
+            "thought": decision.reasoning,
+            "emotion": self._cinematic_emotion(decision.action_type),
+            "speech": message.content if message else None,
+        }
+
+        response = AgentResponse(
+            actions=actions,
+            message=message,
+            state_changes={},
+            reasoning=decision.reasoning,
+        )
+        self.add_to_memory({
+            "type": "action",
+            "actions": [a.model_dump() for a in actions],
+            "message": message.model_dump() if message else None,
+            "background": True,
+        })
+        return response
+
+    def _reflection_interval(self) -> int:
+        from emotionsim.core.config import get_settings
+        return get_settings().reflection_interval_steps
+
+    async def _maybe_reflect(self, current_step: int) -> None:
+        """Batched LLM reflection every N steps (best-effort).
+
+        Distills the recent activity window into a summary + lessons stored
+        as episodic memories with importance, so agents visibly learn over a
+        run. Any failure is swallowed — reflection never breaks the tick.
+        """
+        interval = self._reflection_interval()
+        if interval <= 0 or current_step <= 0 or current_step % interval != 0:
+            return
+        if self.background:
+            return
+        try:
+            from emotionsim.llm.schemas import ReflectionResponse, validate_content
+
+            recent = self.agent_memory.get_recent_events(limit=20)
+            if not recent:
+                return
+            lines: list[str] = []
+            for evt in recent[-12:]:
+                if evt.get("type") == "message":
+                    data = evt.get("data", {})
+                    lines.append(
+                        f"{data.get('from_agent_name', '?')}: {data.get('content', '')}"
+                    )
+                elif evt.get("type") == "action":
+                    acts = evt.get("actions", [])
+                    lines.append(
+                        "I did: " + (", ".join(a.get("action_type", "") for a in acts) or "nothing")
+                    )
+                elif evt.get("type") == "observation":
+                    lines.append(f"I observed: {evt.get('content', '')}")
+            activity = "\n".join(lines) or "No notable activity."
+
+            system = (
+                f"You are {self.name}, reflecting on what just happened. "
+                "Respond with JSON: summary (one sentence), "
+                "lessons (list of 1-3 concise lessons learned), "
+                "importance (integer 1-10)."
+            )
+            user = (
+                f"Recent activity:\n{activity}\n\n"
+                "Reflect on this. What did you learn that you should remember?"
+            )
+            response = await LLMRouter.generate_with_fallback(
+                messages=[LLMMessage(role="user", content=user)],
+                system=system,
+                temperature=0.5,
+                max_tokens=512,
+                json_mode=True,
+                model_override=self.model_id,
+                agent_role=self.role,
+            )
+            ok, parsed, _ = validate_content(response.content, ReflectionResponse)
+            if not ok:
+                return
+            self.agent_memory.add_lesson(parsed.summary, current_step, parsed.importance)
+            for lesson in parsed.lessons[:3]:
+                self.agent_memory.add_lesson(lesson, current_step, max(1, parsed.importance - 1))
+        except Exception:
+            return
 
     def update_stress(self, delta: int) -> None:
         """Update stress level with bounds checking"""

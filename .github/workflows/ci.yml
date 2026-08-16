@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install
+        run: |
+          pip install --upgrade pip
+          pip install -e .
+
+      - name: Run test suite
+        run: pytest tests/ -q --no-header -p no:cacheprovider
+
+      # Offline eval gate: scenario × seed × prompt-variant matrix against the
+      # stub LLM. Fails (exit 1) when determinism fingerprints diverge.
+      - name: Run eval gate
+        run: emotionsim eval --scenarios "Rising Flood,Space Station" --seeds 3 --max-steps 4
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install
+        run: |
+          pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      # Coverage gate. The timing-sensitive performance test is deselected
+      # because coverage instrumentation skews wall-clock assertions.
+      - name: Coverage gate
+        run: >
+          pytest tests/ -q --no-header -p no:cacheprovider
+          --cov=emotionsim --cov-report=term-missing --cov-fail-under=60
+          --deselect tests/test_behavioral_fingerprint.py::TestPerformance::test_100_agents_50_steps_under_1_second

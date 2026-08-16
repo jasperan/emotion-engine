@@ -84,20 +84,43 @@ class Settings(BaseSettings):
     scene_mode: bool = True               # enable scene-based tick processing
     scene_max_turns: int = 3              # max dialogue turns per scene per tick
 
+    # Hybrid populations (LightweightAgent scaling)
+    # Background agents (scenario templates with "background": true) act via
+    # rule-based decisions with zero LLM calls and are promoted to full LLM
+    # agents when addressed / in an active scene / high-leadership & low-stress.
+    max_llm_agents_per_step: int = 0       # per-step LLM-agent budget (0 = unlimited)
+    background_demote_after_steps: int = 5 # foreground steps without activity before demotion
+
+    # Cognitive reflection (Step 4): every N steps, foreground agents run a
+    # batched LLM reflection that distills lessons into episodic memory.
+    reflection_interval_steps: int = 5
+
     # Agent conclusion enforcement
     agent_max_tokens_per_run: int = 50000   # per-agent token budget across the run (0 = unlimited)
     agent_conclude_at_pct: float = 0.85     # inject "conclude" prompt at this % of budget
     agent_max_stagnant_steps: int = 5       # force conclusion after N consecutive stuck steps
 
-    # Engine V2: Heartbeat
-    heartbeat_enabled: bool = False  # Use V2 engine
+    # Graph-backed agent memory (MiroFish)
+    # When enabled, HumanAgents use GraphMemory (hybrid vector+keyword recall)
+    # instead of the flat sliding-window AgentMemory for prompt context.
+    # Requires a knowledge graph per run (created automatically); falls back
+    # to flat memory gracefully if the graph layer is unavailable.
+    graph_memory_enabled: bool = False
 
-    # Engine V2: Governance
+    # Governance gates (wired into the V1 tick loop — Step 6)
     governance_enabled: bool = True
     governance_threshold: float = 0.7
     governance_timeout_seconds: float = 60.0
     governance_timeout_action: str = "deny"
     governance_use_llm_scorer: bool = False
+
+    # Goal tree (mission -> group -> individual, wired into V1 — Step 6)
+    goal_tree_enabled: bool = True
+
+    # Cost accounting for observability (Step 9)
+    # Estimated cost per 1k streamed chars (the engine's token proxy).
+    # Set > 0 to enable cost estimates in run metrics.
+    llm_cost_per_1k_tokens: float = 0.0
 
     class Config:
         env_file = ".env"

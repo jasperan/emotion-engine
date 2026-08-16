@@ -31,12 +31,32 @@ class GraphMemory:
         self.graph_id = graph_id
         self.storage = storage
         self.embedding_service = embedding_service
+        # name (lowercased) -> entity_id, so stored memories can link to
+        # entities the engine seeded for this run (e.g. locations).
+        self._entity_ids_by_name: dict[str, str] = {}
+
+    def register_entity(self, name: str, entity_id: str) -> None:
+        """Record the entity_id for a graph entity by its display name."""
+        if name:
+            self._entity_ids_by_name[name.lower()] = entity_id
+
+    def entity_id_for(self, name: str) -> Optional[str]:
+        """Look up the entity_id for a named graph entity (e.g. a location)."""
+        return self._entity_ids_by_name.get(name.lower())
 
     async def _embed(self, text: str) -> Optional[list[float]]:
-        """Embed text if an embedding service is available."""
+        """Embed text if an embedding service is available, otherwise return None.
+
+        Embedding failures (e.g. Ollama is down) degrade gracefully to None so
+        hybrid search falls back to keyword scoring — the simulation must never
+        crash because embeddings are unavailable.
+        """
         if self.embedding_service is None:
             return None
-        return await self.embedding_service.embed_text(text)
+        try:
+            return await self.embedding_service.embed_text(text)
+        except Exception:
+            return None
 
     async def store(
         self,

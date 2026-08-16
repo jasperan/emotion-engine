@@ -3,6 +3,26 @@
 const API_BASE = '/api';
 
 // Types
+export interface RunStep {
+	step_index: number;
+	state_snapshot: Record<string, unknown>;
+	actions: Record<string, unknown>[];
+	step_metrics: Record<string, unknown>;
+}
+
+export interface RunMetrics {
+	run_id: string;
+	status: string;
+	current_step: number;
+	metrics: Record<string, unknown>;
+}
+
+export interface DatalakeCompare {
+	run_ids: string[];
+	metrics: Record<string, Record<string, number | null>>;
+	total_metrics: number;
+}
+
 export interface Run {
 	id: string;
 	scenario_id: string;
@@ -163,6 +183,21 @@ export const runs = {
 		});
 		if (agentId) params.append('agent_id', agentId);
 		return apiCall<Message[]>(`/runs/${runId}/messages?${params}`);
+	},
+
+	steps: async (runId: string): Promise<RunStep[]> => {
+		return apiCall<RunStep[]>(`/runs/${runId}/steps`);
+	},
+
+	metrics: async (runId: string): Promise<RunMetrics> => {
+		return apiCall<RunMetrics>(`/runs/${runId}/metrics`);
+	},
+};
+
+// Datalake analytics
+export const datalake = {
+	compare: async (runIds: string[]): Promise<DatalakeCompare> => {
+		return apiCall<DatalakeCompare>(`/datalake/compare?run_ids=${runIds.join(',')}`);
 	},
 };
 

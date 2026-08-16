@@ -227,6 +227,59 @@ class AgentMemory:
             if len(rel.notes) > 10:
                 rel.notes = rel.notes[-10:]
 
+    def add_lesson(
+        self,
+        summary: str,
+        step_index: int,
+        importance: int = 5,
+    ) -> None:
+        """Store a distilled lesson (from reflection) as an episodic memory.
+
+        Lessons live in the episodic store so they survive the sliding window
+        and are eligible for importance-weighted recall.
+        """
+        self._episodic_counter += 1
+        self._episodic_memories.append(EpisodicMemory(
+            id=f"ep_{self.agent_id}_{self._episodic_counter}",
+            summary=summary,
+            participants=[],
+            location=None,
+            step_range=(step_index, step_index),
+            emotional_impact="neutral",
+            importance=max(1, min(10, importance)),
+            key_facts=[],
+        ))
+        # Keep only the most important episodic memories
+        if len(self._episodic_memories) > 20:
+            self._episodic_memories.sort(key=lambda x: x.importance, reverse=True)
+            self._episodic_memories = self._episodic_memories[:20]
+
+    def get_salient_memories(
+        self,
+        limit: int = 3,
+        current_step: int | None = None,
+        decay: float = 0.98,
+    ) -> list[EpisodicMemory]:
+        """Importance-weighted recall with recency decay.
+
+        Each episodic memory scores ``importance * decay ** age_in_steps`` so
+        a high-importance memory from many steps ago still outranks a
+        low-importance one from last step, while genuinely stale low-value
+        memories fade out.
+        """
+        if not self._episodic_memories:
+            return []
+
+        latest_step = max(m.step_range[1] for m in self._episodic_memories)
+        now = current_step if current_step is not None else latest_step
+
+        def _score(mem: EpisodicMemory) -> float:
+            age = max(0, now - mem.step_range[1])
+            return mem.importance * (decay ** age)
+
+        ranked = sorted(self._episodic_memories, key=_score, reverse=True)
+        return ranked[:limit]
+
     def _create_episodic_summary(self) -> None:
         """Create an episodic memory summary from pending events"""
         if not self._pending_summarization:
@@ -338,8 +391,18 @@ class AgentMemory:
         """Get all relationship memories"""
         return self._relationships.copy()
 
-    def get_conversation_context(self, max_recent: int = 10, max_episodic: int = 3) -> str:
-        """Build a context string for conversation including memory"""
+    def get_conversation_context(
+        self,
+        max_recent: int = 10,
+        max_episodic: int = 3,
+        current_step: int | None = None,
+    ) -> str:
+        """Build a context string for conversation including memory.
+
+        When ``current_step`` is provided, episodic memories are selected by
+        importance-weighted recall with recency decay (salience) instead of
+        recency alone.
+        """
         context_parts = []
 
         # Arrival context
@@ -350,8 +413,11 @@ class AgentMemory:
                 f"because: {self._arrival_context.get('reason', 'I needed to be here')}."
             )
 
-        # Key episodic memories
-        episodic = self.get_episodic_memories(max_episodic)
+        # Episodic memories: salient (importance + decay) or recency-based
+        if current_step is not None:
+            episodic = self.get_salient_memories(max_episodic, current_step=current_step)
+        else:
+            episodic = self.get_episodic_memories(max_episodic)
         if episodic:
             context_parts.append("\nKey memories from earlier:")
             for mem in episodic:

@@ -65,6 +65,10 @@ class LLMRouter:
             elif provider == "openai":
                 from emotionsim.llm.openai_client import OpenAIClient
                 cls._clients[provider] = OpenAIClient()
+            elif provider == "stub":
+                # Deterministic offline client for the eval harness (no network)
+                from emotionsim.llm.stub import StubLLMClient
+                cls._clients[provider] = StubLLMClient()
             elif provider == "anthropic":
                 raise NotImplementedError(
                     "Anthropic/Claude provider not yet implemented. "

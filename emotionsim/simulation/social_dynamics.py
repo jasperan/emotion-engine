@@ -7,6 +7,7 @@ from typing import Any
 from emotionsim.simulation.opinion_dynamics import OpinionDynamics, OpinionShift
 from emotionsim.simulation.sentiment_tracker import SentimentTracker
 from emotionsim.simulation.influence_network import InfluenceNetwork
+from emotionsim.simulation.topic_extractor import estimate_stance, extract_topics
 
 
 class SocialDynamicsEngine:
@@ -29,14 +30,21 @@ class SocialDynamicsEngine:
         self,
         step: int,
         agents: dict[str, Any],  # agent_id -> agent object (has .persona with opinion_vectors)
-        interactions: list[tuple[str, str, int]],  # (speaker_id, listener_id, trust_level 1-10)
+        interactions: list[tuple[str, str, int]] | list[tuple[str, str, int, str]],
+        # (speaker_id, listener_id, trust_level 1-10) or
+        # (speaker_id, listener_id, trust_level, message_content)
     ) -> dict[str, Any]:
         """Process all social dynamics for a simulation step.
 
         Args:
             step: Current step number
             agents: Dict of agent_id -> agent (each has .persona with opinion_vectors, opinion_bias, etc.)
-            interactions: List of (speaker_id, listener_id, trust_level) tuples from this step's conversations
+            interactions: List of (speaker_id, listener_id, trust_level) or
+                (speaker_id, listener_id, trust_level, message_content) tuples
+                from this step's conversations. When message content is
+                provided, topics are extracted from what was actually said
+                (topic-aware opinion dynamics); otherwise pre-seeded persona
+                vectors drive the shifts (backward compatible).
 
         Returns dict with:
             - opinion_shifts: list of OpinionShift from this step
@@ -46,7 +54,13 @@ class SocialDynamicsEngine:
         self._step_shifts.clear()
 
         # 1. Process opinion shifts for each interaction
-        for speaker_id, listener_id, trust_level in interactions:
+        for interaction in interactions:
+            if len(interaction) >= 4:
+                speaker_id, listener_id, trust_level, content = interaction
+            else:
+                speaker_id, listener_id, trust_level = interaction
+                content = ""
+
             speaker = agents.get(speaker_id)
             listener = agents.get(listener_id)
             if not speaker or not listener:
@@ -55,9 +69,25 @@ class SocialDynamicsEngine:
             speaker_persona = getattr(speaker, "persona", speaker)
             listener_persona = getattr(listener, "persona", listener)
 
-            # Skip if no opinion vectors
-            if not getattr(speaker_persona, "opinion_vectors", None):
+            has_vectors = bool(getattr(speaker_persona, "opinion_vectors", None))
+            if not content.strip() and not has_vectors:
                 continue
+
+            # Topic-aware: ground topics in the actual message content.
+            # Falls back to pre-seeded vectors when no topic matches.
+            extracted = extract_topics(content) if content.strip() else []
+            topics: list[str] | None = extracted if extracted else None
+
+            if topics:
+                # Give the speaker a stance derived from what they said, and
+                # the listener a neutral starting stance, so opinions can form
+                # even without pre-seeded vectors.
+                for topic in topics:
+                    if topic not in getattr(speaker_persona, "opinion_vectors", {}):
+                        stance = estimate_stance(content)
+                        speaker_persona.opinion_vectors[topic] = stance if stance is not None else 0.0
+                    if topic not in getattr(listener_persona, "opinion_vectors", {}):
+                        listener_persona.opinion_vectors[topic] = 0.0
 
             shifts = self.opinion_dynamics.process_interaction(
                 speaker_persona=speaker_persona,
@@ -65,6 +95,7 @@ class SocialDynamicsEngine:
                 speaker_id=speaker_id,
                 listener_id=listener_id,
                 trust_level=trust_level,
+                topics=topics,
             )
 
             # Record in influence network

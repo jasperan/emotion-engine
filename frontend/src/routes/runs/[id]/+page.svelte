@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { onMount, onDestroy } from 'svelte';
-	import { runs, type Run, type Agent, type Message } from '$lib/api';
+	import { runs, type Run, type Agent, type Message, type RunMetrics, type RunStep } from '$lib/api';
 	import { websocket } from '$lib/stores/websocket';
 	import AgentCard from '$lib/components/AgentCard.svelte';
 	import MessageLog from '$lib/components/MessageLog.svelte';
@@ -13,6 +13,9 @@
 	let run: Run | null = null;
 	let agents: Agent[] = [];
 	let messages: Message[] = [];
+	let metrics: RunMetrics | null = null;
+	let steps: RunStep[] = [];
+	let expandedStep: number | null = null;
 	let loading = true;
 	let error: string | null = null;
 
@@ -71,10 +74,32 @@
 		}
 	}
 
+	async function loadAnalytics() {
+		try {
+			[metrics, steps] = await Promise.all([
+				runs.metrics(runId),
+				runs.steps(runId)
+			]);
+		} catch (e) {
+			console.error('Failed to load analytics:', e);
+		}
+	}
+
+	function metricValue(key: string): number | string {
+		const m = metrics?.metrics;
+		if (!m || m[key] === undefined) return '—';
+		const v = m[key];
+		return typeof v === 'number' ? v.toFixed(2) : String(v);
+	}
+
+	$: stressSeries = steps.map((s) => Number(s.step_metrics?.avg_stress) || 0);
+	$: maxStress = Math.max(10, ...stressSeries);
+
 	onMount(() => {
 		async function init() {
 			try {
 				await refreshData();
+				loadAnalytics();
 				websocket.connect(runId);
 				updateHeader();
 			} catch (e) {
@@ -235,6 +260,90 @@
 				{/if}
 			</div>
 		{/if}
+
+		<!-- Analytics + Replay (Step 9) -->
+		<div class="card">
+			<h2 class="text-xl font-display font-semibold mb-4">Run Analytics</h2>
+			<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+				<div class="text-center p-3 bg-storm-800/50 rounded-lg">
+					<div class="text-2xl font-bold text-flood-400">{metricValue('avg_stress')}</div>
+					<div class="text-xs text-storm-400">Avg Stress</div>
+				</div>
+				<div class="text-center p-3 bg-storm-800/50 rounded-lg">
+					<div class="text-2xl font-bold text-flood-400">{metricValue('avg_health')}</div>
+					<div class="text-xs text-storm-400">Avg Health</div>
+				</div>
+				<div class="text-center p-3 bg-storm-800/50 rounded-lg">
+					<div class="text-2xl font-bold text-flood-400">{metricValue('tokens')}</div>
+					<div class="text-xs text-storm-400">Streamed Tokens</div>
+				</div>
+				<div class="text-center p-3 bg-storm-800/50 rounded-lg">
+					<div class="text-2xl font-bold text-flood-400">{metricValue('cost_estimate_usd')} $</div>
+					<div class="text-xs text-storm-400">Est. Cost</div>
+				</div>
+				<div class="text-center p-3 bg-storm-800/50 rounded-lg">
+					<div class="text-2xl font-bold text-flood-400">{metricValue('latency_ms')} ms</div>
+					<div class="text-xs text-storm-400">Last Tick Latency</div>
+				</div>
+				<div class="text-center p-3 bg-storm-800/50 rounded-lg">
+					<div class="text-2xl font-bold text-flood-400">{metricValue('message_count')}</div>
+					<div class="text-xs text-storm-400">Messages</div>
+				</div>
+			</div>
+
+			{#if stressSeries.length > 1}
+				<h3 class="text-lg font-semibold font-display mb-2">Avg Stress per Step</h3>
+				<div class="flex items-end gap-1 h-24 mb-6" role="img" aria-label="Average stress per step bar chart">
+					{#each stressSeries as s, i}
+						<div
+							class="flex-1 rounded-t bg-flood-500/70 hover:bg-flood-400 transition-colors"
+							style="height: {Math.max(4, (s / maxStress) * 100)}%"
+							title="Step {i + 1}: stress {s.toFixed(1)}"
+						></div>
+					{/each}
+				</div>
+			{/if}
+		</div>
+
+		<!-- Replay timeline (Step 9) -->
+		<div class="card">
+			<h2 class="text-xl font-display font-semibold mb-4">Replay Timeline</h2>
+			{#if steps.length === 0}
+				<p class="text-storm-400 text-sm">No steps recorded yet.</p>
+			{:else}
+				<ol class="relative border-l border-outline/20 ml-3 space-y-4">
+					{#each steps as step}
+						<li class="ml-4">
+							<button
+								class="text-left w-full flex items-center justify-between gap-3 group"
+								on:click={() => (expandedStep = expandedStep === step.step_index ? null : step.step_index)}
+							>
+								<div class="flex items-center gap-3">
+									<span class="absolute -left-1.5 w-3 h-3 rounded-full bg-primary border-2 border-background"></span>
+									<span class="font-mono text-primary">Step {step.step_index}</span>
+								</div>
+								<div class="text-xs text-storm-400 group-hover:text-storm-200">
+									{step.actions?.length ?? 0} actions ·
+									hazard {String(step.step_metrics?.hazard_level ?? '?')}
+								</div>
+							</button>
+							{#if expandedStep === step.step_index && step.actions?.length}
+								<ul class="mt-2 space-y-1 text-xs text-storm-300">
+									{#each step.actions.slice(0, 30) as action}
+										<li class="flex gap-2">
+											<span class="text-primary font-mono">{action.action_type}</span>
+											<span class="text-storm-400">
+												{String(action.agent_name ?? '')} {String(action.target ?? '')}
+											</span>
+										</li>
+									{/each}
+								</ul>
+							{/if}
+						</li>
+					{/each}
+				</ol>
+			{/if}
+		</div>
 	</div>
 {/if}
 

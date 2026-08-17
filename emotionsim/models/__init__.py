@@ -1,5 +1,6 @@
 """SQLAlchemy database models"""
 from emotionsim.models.scenario import Scenario
+from emotionsim.models.user import User
 from emotionsim.models.run import Run
 from emotionsim.models.agent import AgentModel
 from emotionsim.models.step import Step
@@ -17,6 +18,7 @@ from emotionsim.models.graph import (
 
 __all__ = [
     "Scenario",
+    "User",
     "Run",
     "AgentModel",
     "Step",

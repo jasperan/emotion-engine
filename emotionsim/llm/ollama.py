@@ -99,6 +99,80 @@ def _native_url(base_url: str) -> str:
     return url
 
 
+_TAG_CACHE: dict[tuple[str, str], str] = {}
+_TAG_CACHE_TS: dict[tuple[str, str], float] = {}
+_TAG_TTL = 120.0  # seconds; model lists change rarely
+
+
+def resolve_ollama_tag(native_url: str, model: str, timeout: float = 3.0) -> str:
+    """Resolve a model name to an existing Ollama tag.
+
+    Handles two local-run frictions:
+    - Built-in scenarios reference bare names (``gemma3``) while Ollama
+      requires the full tag (``gemma3:4b``).
+    - Code defaults reference tags that may not exist on the machine
+      (``qwen3.5:27b`` → any available ``qwen3.5:*``).
+
+    Resolution order: exact tag → bare-name family match → same-family tag
+    (wrong-version case) → the name as-is (let Ollama 404 rather than
+    silently substituting a different family). Results are cached per
+    (server, model) with a short TTL.
+    """
+    import time
+
+    now = time.monotonic()
+    key = (native_url, model)
+    cached = _TAG_CACHE.get(key)
+    ts = _TAG_CACHE_TS.get(key, 0.0)
+    if cached is not None and now - ts < _TAG_TTL:
+        return cached
+
+    family = model.split(":", 1)[0] if ":" in model else model
+
+    try:
+        import httpx
+
+        with httpx.Client(timeout=timeout) as client:
+            resp = client.get(native_url + "/api/tags")
+            if resp.status_code >= 400:
+                _TAG_CACHE[key] = model
+                _TAG_CACHE_TS[key] = now
+                return model
+            tags = [m.get("name", "") for m in resp.json().get("models", [])]
+        if model in tags:
+            _TAG_CACHE[key] = model
+            _TAG_CACHE_TS[key] = now
+            return model
+        for tag in tags:
+            if tag.startswith(model + ":"):
+                logger.info("Ollama tag resolve: %s → %s", model, tag)
+                _TAG_CACHE[key] = tag
+                _TAG_CACHE_TS[key] = now
+                return tag
+        for tag in tags:
+            if tag.startswith(family + ":"):
+                logger.info(
+                    "Ollama tag resolve: %s not on server → family member %s",
+                    model,
+                    tag,
+                )
+                _TAG_CACHE[key] = tag
+                _TAG_CACHE_TS[key] = now
+                return tag
+    except Exception:
+        pass
+
+    _TAG_CACHE[key] = model
+    _TAG_CACHE_TS[key] = now
+    return model
+
+
+def clear_tag_cache() -> None:
+    """Drop cached tag resolutions (tests)."""
+    _TAG_CACHE.clear()
+    _TAG_CACHE_TS.clear()
+
+
 def _is_retryable_error(exc: Exception) -> bool:
     """Check if an error is retryable (transient failures)."""
     err_str = str(exc).lower()
@@ -169,9 +243,13 @@ class OllamaClient(LLMClient):
         self.native_url = _native_url(raw_url)
         self.default_model = default_model or settings.ollama_default_model
 
+        # Read timeout honors OLLAMA_TIMEOUT with a 120s floor: first-token
+        # latency on a loaded model with a long system prompt can exceed 90s,
+        # and a too-tight read timeout wastes the whole generation on retry.
+        request_timeout = max(float(settings.ollama_timeout), 120.0)
         self.http_client = httpx.AsyncClient(
             timeout=httpx.Timeout(
-                timeout=90.0,   # 90s for completion (prompt eval can take 30s+)
+                timeout=request_timeout,  # completion (prompt eval can take 30s+)
                 connect=10.0,
             )
         )
@@ -252,7 +330,8 @@ class OllamaClient(LLMClient):
                     raise
 
                 logger.warning(
-                    f"Retryable LLM error (attempt {attempt + 1}/{self.MAX_RETRIES}): {exc}"
+                    f"Retryable LLM error (attempt {attempt + 1}/{self.MAX_RETRIES}): "
+                    f"{exc!r}"
                 )
 
             # Exponential backoff before retry
@@ -304,6 +383,7 @@ class OllamaClient(LLMClient):
     ) -> LLMResponse:
         """Generate via native Ollama /api/chat endpoint."""
         model = model or self.default_model
+        model = resolve_ollama_tag(self.native_url, model)
 
         # Build native Ollama message list
         ollama_messages = []
@@ -316,6 +396,7 @@ class OllamaClient(LLMClient):
             "model": model,
             "messages": ollama_messages,
             "think": False,  # Disable qwen3.5 internal thinking
+            "keep_alive": get_settings().ollama_keep_alive,
             "options": {
                 "temperature": temperature,
                 "num_predict": max_tokens,

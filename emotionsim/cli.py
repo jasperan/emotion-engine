@@ -197,7 +197,7 @@ async def _run_standalone(
     from sqlalchemy import select
 
     from emotionsim.core.config import get_settings
-    from emotionsim.core.database import Base
+    from emotionsim.core.database import Base, configure_engine
     from emotionsim.models.scenario import Scenario
     from emotionsim.models.run import Run, RunStatus
     from emotionsim.simulation.engine import SimulationEngine
@@ -219,7 +219,7 @@ async def _run_standalone(
     backend_info = await check_model_selection()
 
     # Create database engine
-    engine = create_async_engine(settings.database_url, echo=False)
+    engine = create_async_engine(configure_engine(), echo=False)
     async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     # Initialize database
@@ -859,12 +859,12 @@ async def _list_scenarios(create_builtin: bool):
     from sqlalchemy import select
 
     from emotionsim.core.config import get_settings
-    from emotionsim.core.database import Base
+    from emotionsim.core.database import Base, configure_engine
     from emotionsim.models.scenario import Scenario
     from emotionsim.scenarios.defaults import DEFAULT_SCENARIOS
 
     settings = get_settings()
-    engine = create_async_engine(settings.database_url, echo=False)
+    engine = create_async_engine(configure_engine(), echo=False)
     async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     async with engine.begin() as conn:
@@ -986,7 +986,7 @@ async def _interactive_wizard():
     from sqlalchemy import select
 
     from emotionsim.core.config import get_settings
-    from emotionsim.core.database import Base
+    from emotionsim.core.database import Base, configure_engine
     from emotionsim.models.scenario import Scenario
     from emotionsim.scenarios.defaults import DEFAULT_SCENARIOS
 
@@ -994,7 +994,7 @@ async def _interactive_wizard():
     console.print("[pi.dim]Interactive Simulation Wizard[/pi.dim]\n")
 
     settings = get_settings()
-    engine = create_async_engine(settings.database_url, echo=False)
+    engine = create_async_engine(configure_engine(), echo=False)
     async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     async with engine.begin() as conn:
@@ -1209,6 +1209,165 @@ async def _check_status(base_url: str):
 
 
 # ============================================================================
+# Doctor Command (environment health report)
+# ============================================================================
+
+@cli.command()
+def doctor():
+    """Report environment health: LLM backends, database, GPU, embeddings.
+
+    Runs the same auto-detection the stack uses at startup, so what you see
+    here is exactly what `emotionsim run` / `emotionsim dev` will use.
+    """
+    from emotionsim.core.runtime import collect_runtime_report
+
+    report = collect_runtime_report()
+
+    console.print("\n[bold cyan]EmotionSim Doctor[/bold cyan]")
+    console.print("Environment health report\n")
+
+    def row(ok: bool, label: str, detail: str = "") -> None:
+        icon = "[green]✓[/green]" if ok else "[red]✗[/red]"
+        suffix = f" [dim]({detail})[/dim]" if detail else ""
+        console.print(f"  {icon} {label}{suffix}")
+
+    console.print("[bold]LLM Backend[/bold]")
+    console.print(f"  configured: [white]{report.llm_backend}[/white]")
+    if report.vllm_reachable:
+        row(True, "vLLM", report.vllm_url)
+    else:
+        row(False, f"vLLM ({report.vllm_url})", "not reachable — parallel scene mode unavailable")
+    if report.ollama_reachable:
+        row(True, f"Ollama ({report.ollama_url})")
+        if report.ollama_models:
+            console.print(f"    models: [dim]{', '.join(report.ollama_models[:8])}[/dim]")
+        if report.ollama_chosen_model:
+            console.print(f"    will use: [green]{report.ollama_chosen_model}[/green]")
+        if not report.ollama_uses_gpu:
+            console.print(
+                "  [red]✗[/red] models running on [bold]CPU[/bold] (size_vram=0) — "
+                "ticks will take minutes each."
+            )
+            console.print(
+                "    Fix: check Ollama's GPU setup (container GPU exposure / OLLAMA_LLAMALIB), "
+                "or set LLM_BACKEND=stub for fast deterministic iteration."
+            )
+    else:
+        row(False, f"Ollama ({report.ollama_url})", "not reachable")
+    if not report.vllm_reachable and not report.ollama_reachable:
+        console.print(
+            "  [yellow]![/yellow] No live LLM; the offline [white]stub[/white] backend will be used. "
+            "Sims run deterministically without inference."
+        )
+
+    console.print("\n[bold]Hardware[/bold]")
+    if report.gpu_present:
+        row(True, "GPU", report.gpu_name)
+    else:
+        row(False, "GPU (nvidia-smi)", "none detected — CPU inference only")
+
+    console.print("\n[bold]Database[/bold]")
+    if report.oracle_reachable:
+        row(True, "Oracle DB", report.oracle_url)
+    else:
+        row(False, f"Oracle ({report.oracle_db_host}:{report.oracle_db_port})", "unreachable — SQLite fallback will be used")
+        console.print(f"    fallback: [green]sqlite+aiosqlite:///{report.sqlite_path}[/green]")
+
+    console.print("\n[bold]Extras[/bold]")
+    if report.embedder_present:
+        row(True, "Embeddings (nomic-embed-text)")
+    else:
+        row(False, "Embeddings (nomic-embed-text)", "not in Ollama — graph memory degrades to keyword-only")
+    row(report.frontend_ready, "Frontend (frontend/node_modules)", "npm install needed" if not report.frontend_ready else "ready")
+
+    console.print("\n[bold]Effective runtime[/bold]")
+    console.print(
+        f"  LLM: [green]{report.resolved_backend}[/green]  |  "
+        f"DB: [green]{report.database_backend}[/green]  |  "
+        f"Parallel scenes: [green]{'yes' if report.vllm_reachable else 'no (sequential)'}[/green]"
+    )
+    console.print()
+
+
+# ============================================================================
+# Dev Command (one-shot local dev stack)
+# ============================================================================
+
+@cli.command()
+@click.option("--no-frontend", is_flag=True, help="Skip starting the SvelteKit frontend")
+@click.option("--port", "-p", default=8000, help="Backend port")
+@click.option("--reload", is_flag=True, help="Auto-reload the backend on code changes")
+def dev(no_frontend: bool, port: int, reload: bool):
+    """Start the full local stack with auto-detected services (one command).
+
+    Detects LLM backend (vLLM → Ollama → stub) and database (Oracle →
+    SQLite), then starts the FastAPI backend — and the SvelteKit frontend
+    when available. Ctrl-C stops everything.
+    """
+    import os
+    import signal
+    import subprocess
+    import sys
+
+    from emotionsim.core.runtime import collect_runtime_report
+
+    report = collect_runtime_report()
+    console.print(f"\n[bold cyan]EmotionSim dev[/bold cyan]")
+    console.print(
+        f"  LLM: [green]{report.resolved_backend}[/green]  |  "
+        f"DB: [green]{report.database_backend}[/green]"
+    )
+    if report.resolved_backend == "stub":
+        console.print(
+            "  [yellow]![/yellow] No LLM reachable — simulations use the deterministic stub. "
+            "Start Ollama/vLLM for real inference."
+        )
+
+    env = os.environ.copy()
+    env.setdefault("LLM_BACKEND", "auto")
+    if report.ollama_reachable and report.ollama_chosen_model:
+        env.setdefault("OLLAMA_DEFAULT_MODEL", report.ollama_chosen_model)
+
+    backend_cmd = [sys.executable, "-m", "uvicorn", "emotionsim.main:app", "--host", "0.0.0.0", "--port", str(port)]
+    if reload:
+        backend_cmd.append("--reload")
+
+    procs: list[subprocess.Popen] = []
+    try:
+        console.print(f"[bold]Starting backend[/bold] on http://localhost:{port}")
+        procs.append(subprocess.Popen(backend_cmd, env=env))
+
+        if not no_frontend and os.path.isdir("frontend") and os.path.isdir("frontend/node_modules"):
+            console.print("[bold]Starting frontend[/bold] on http://localhost:5173")
+            procs.append(
+                subprocess.Popen(
+                    ["npm", "run", "dev"],
+                    cwd="frontend",
+                    env=env,
+                )
+            )
+        elif not no_frontend:
+            console.print("[yellow]![/yellow] frontend/node_modules missing — run [white]npm install[/white] in frontend/ (skipping)")
+
+        console.print("\nPress Ctrl-C to stop everything.\n")
+        while True:
+            import time
+
+            time.sleep(1)
+    except KeyboardInterrupt:
+        console.print("\n[yellow]Stopping...[/yellow]")
+    finally:
+        for p in procs:
+            p.terminate()
+        for p in procs:
+            try:
+                p.wait(timeout=5)
+            except Exception:
+                p.kill()
+        console.print("[green]Stopped.[/green]")
+
+
+# ============================================================================
 # Best Runs Command
 # ============================================================================
 
@@ -1231,9 +1390,10 @@ async def _show_best_runs(limit: int):
 
     from emotionsim.core.config import get_settings
     from emotionsim.models.run import Run, RunStatus
+    from emotionsim.core.database import configure_engine
 
     settings = get_settings()
-    engine = create_async_engine(settings.database_url, echo=False)
+    engine = create_async_engine(configure_engine(), echo=False)
     async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     console.print(f"\n[bold cyan]EmotionSim[/bold cyan] - Best Simulations")
@@ -1322,7 +1482,7 @@ async def _run_auto_loop(count: int | None):
     import random
 
     from emotionsim.core.config import get_settings
-    from emotionsim.core.database import Base
+    from emotionsim.core.database import Base, configure_engine
     from emotionsim.models.scenario import Scenario
     from emotionsim.models.run import Run, RunStatus
     from emotionsim.scenarios.defaults import DEFAULT_SCENARIOS
@@ -1361,7 +1521,7 @@ async def _run_auto_loop(count: int | None):
     console.print()
 
     # Setup DB
-    engine = create_async_engine(settings.database_url, echo=False)
+    engine = create_async_engine(configure_engine(), echo=False)
     async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     # Ensure DB exists
@@ -1488,9 +1648,10 @@ async def _execute_existing_run(run_id: str, simple: bool = True):
     from sqlalchemy import select
     from sqlalchemy.orm import selectinload
     from emotionsim.models.run import Run, RunStatus
+    from emotionsim.core.database import configure_engine
 
     settings = get_settings()
-    engine = create_async_engine(settings.database_url, echo=False)
+    engine = create_async_engine(configure_engine(), echo=False)
     async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     async with async_session() as db:
@@ -1643,11 +1804,11 @@ async def select_active_run() -> str | None:
     from sqlalchemy import select, or_
 
     from emotionsim.core.config import get_settings
-    from emotionsim.core.database import Base
+    from emotionsim.core.database import Base, configure_engine
     from emotionsim.models.run import Run, RunStatus
 
     settings = get_settings()
-    engine = create_async_engine(settings.database_url, echo=False)
+    engine = create_async_engine(configure_engine(), echo=False)
     async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     async with engine.begin() as conn:

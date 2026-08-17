@@ -46,19 +46,39 @@ class LLMRouter:
     _clients: dict[str, LLMClient] = {}
 
     @classmethod
-    def get_client(cls, provider: Literal["ollama", "vllm", "openai", "anthropic"] | None = None) -> LLMClient:
+    def get_client(cls, provider: Literal["ollama", "vllm", "openai", "anthropic", "stub"] | None = None) -> LLMClient:
         """Get an LLM client for the specified provider.
 
-        If provider is None, uses settings.llm_backend to auto-select.
+        If provider is None, uses settings.llm_backend. The special value
+        "auto" probes vLLM → Ollama → stub and caches the result (pi/local
+        compatibility: the same code runs with or without external services).
         """
         if provider is None:
             from emotionsim.core.config import get_settings
             provider = get_settings().llm_backend  # type: ignore
 
+        if provider == "auto":
+            from emotionsim.core.runtime import detect_llm_backend
+
+            provider = detect_llm_backend()  # type: ignore
+
         if provider not in cls._clients:
             if provider == "ollama":
                 from emotionsim.llm.ollama import OllamaClient
-                cls._clients[provider] = OllamaClient()
+                from emotionsim.core.config import get_settings
+
+                # Pick the best available Ollama model (qwen parity on machines
+                # whose local model tag differs from the configured default).
+                settings = get_settings()
+                if settings.llm_backend == "auto":
+                    from emotionsim.core.runtime import pick_ollama_model
+
+                    model = pick_ollama_model(
+                        settings.ollama_default_model, settings.ollama_base_url
+                    )
+                else:
+                    model = settings.ollama_default_model
+                cls._clients[provider] = OllamaClient(default_model=model)
             elif provider == "vllm":
                 from emotionsim.llm.vllm import VLLMClient
                 cls._clients[provider] = VLLMClient()
@@ -112,6 +132,17 @@ class LLMRouter:
         settings = get_settings()
         client = LLMRouter.get_client()  # auto-selects based on settings.llm_backend
 
+        # Semantic response cache (opt-in via LLM_CACHE_ENABLED). On a hit the
+        # cached content is replayed through the stream callback so UI token
+        # streaming still renders (instant tokens).
+        cache = None
+        if settings.llm_cache_enabled is True:
+            # Identity check: real Settings use a bool; MagicMock settings in
+            # unit tests are truthy-but-not-True and must stay off the cache.
+            from emotionsim.llm.cache import get_semantic_cache
+
+            cache = get_semantic_cache()
+
         # Per-agent-type model routing
         role_model = get_model_for_role(agent_role) if agent_role else None
 
@@ -139,8 +170,17 @@ class LLMRouter:
         else:
             primary_model = model_override or role_model or settings.ollama_default_model
 
+        if cache is not None:
+            hit = await cache.get(messages, system, json_mode, primary_model)
+            if hit is not None:
+                if stream_callback is not None:
+                    content = hit.content or ""
+                    for i in range(0, len(content), 32):
+                        await stream_callback(content[i : i + 32])
+                return hit
+
         try:
-            return await client.generate(
+            result = await client.generate(
                 messages=messages,
                 model=primary_model,
                 system=system,
@@ -149,6 +189,9 @@ class LLMRouter:
                 max_tokens=max_tokens,
                 stream_callback=stream_callback,
             )
+            if cache is not None:
+                await cache.put(messages, system, json_mode, primary_model, result)
+            return result
         except Exception as primary_error:
             if not settings.ollama_auto_fallback:
                 raise
@@ -160,7 +203,7 @@ class LLMRouter:
                 )
                 try:
                     fallback_client = LLMRouter.get_client("ollama")
-                    return await fallback_client.generate(
+                    result = await fallback_client.generate(
                         messages=messages,
                         model=settings.ollama_fallback_model,
                         system=system,
@@ -169,6 +212,9 @@ class LLMRouter:
                         max_tokens=max_tokens,
                         stream_callback=stream_callback,
                     )
+                    if cache is not None:
+                        await cache.put(messages, system, json_mode, settings.ollama_fallback_model, result)
+                    return result
                 except Exception:
                     raise primary_error
 
@@ -183,7 +229,7 @@ class LLMRouter:
             )
 
             try:
-                return await client.generate(
+                result = await client.generate(
                     messages=messages,
                     model=fallback_model,
                     system=system,
@@ -192,5 +238,8 @@ class LLMRouter:
                     max_tokens=max_tokens,
                     stream_callback=stream_callback,
                 )
+                if cache is not None:
+                    await cache.put(messages, system, json_mode, fallback_model, result)
+                return result
             except Exception:
                 raise primary_error

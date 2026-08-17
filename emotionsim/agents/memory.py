@@ -227,6 +227,28 @@ class AgentMemory:
             if len(rel.notes) > 10:
                 rel.notes = rel.notes[-10:]
 
+    def note_interaction(
+        self,
+        agent_id: str,
+        agent_name: str,
+        step: int,
+        trust_delta: int = 0,
+        note: str | None = None,
+    ) -> None:
+        """Record a direct observation of another agent (ToM trust nudges).
+
+        Creates the relationship row when missing (relationships normally arise
+        from message traffic) without polluting episodic memory.
+        """
+        if agent_id not in self._relationships:
+            self._relationships[agent_id] = RelationshipMemory(
+                agent_id=agent_id,
+                agent_name=agent_name,
+                first_met_step=step,
+                first_met_location=None,
+            )
+        self.update_relationship(agent_id, trust_delta=trust_delta, note=note)
+
     def add_lesson(
         self,
         summary: str,

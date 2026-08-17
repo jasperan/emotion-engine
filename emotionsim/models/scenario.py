@@ -31,6 +31,9 @@ class Scenario(Base):
     # Agent templates for this scenario
     agent_templates: Mapped[list] = mapped_column(OracleJSON, default=list)
 
+    # Multi-tenant ownership: user id for authenticated creators, None = public
+    tenant_id: Mapped[str | None] = mapped_column(String(36), nullable=True, default=None)
+
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
         DateTime,

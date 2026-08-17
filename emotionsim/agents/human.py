@@ -79,6 +79,97 @@ class HumanAgent(Agent):
         self._lightweight_agent: LightweightAgent | None = None
         self.dynamic_state["_background"] = background
 
+        # Theory of Mind: beliefs about other agents (opt-in, see theory_of_mind.py)
+        self.theory_of_mind = None
+
+        # Continuous emotion dimensions (valence/arousal) — off by default
+        # (EMOTION_DIMENSIONS_ENABLED=false keeps the default path byte-identical).
+        # Lazily initialized on first tick/build_context via get_settings().
+        self.emotion_dimensions_enabled = False
+        self.valence = 0.0
+        self.arousal = 0.0
+        self._emotion_base_valence = 0.0
+        self._emotion_base_arousal = 0.0
+
+    def _maybe_init_theory_of_mind(self) -> None:
+        """Create the ToM belief store when the config flag is on."""
+        if self.theory_of_mind is not None:
+            return
+        from emotionsim.core.config import get_settings
+
+        if get_settings().theory_of_mind_enabled is True:
+            from emotionsim.agents.theory_of_mind import TheoryOfMind
+
+            self.theory_of_mind = TheoryOfMind(self.id, self.name)
+
+    def _maybe_init_emotion_dimensions(self) -> None:
+        """Enable + baseline emotion dimensions when the config flag is on."""
+        from emotionsim.core.config import get_settings
+
+        if get_settings().emotion_dimensions_enabled is True:
+            self.emotion_dimensions_enabled = True
+            if not self.dynamic_state.get("valence", None):
+                from emotionsim.agents.emotion_dimensions import personality_baselines
+
+                base_v, base_a = personality_baselines(self.persona)
+                self._emotion_base_valence = base_v
+                self._emotion_base_arousal = base_a
+                self.valence = self.dynamic_state.get("valence", base_v)
+                self.arousal = self.dynamic_state.get("arousal", base_a)
+                self.dynamic_state["valence"] = round(self.valence, 3)
+                self.dynamic_state["arousal"] = round(self.arousal, 3)
+
+    def update_emotion_dimensions(
+        self,
+        world_state: dict[str, Any],
+        helped: bool = False,
+        danger_observed: bool = False,
+    ) -> None:
+        """One tick of valence/arousal dynamics (events + relaxation to baseline)."""
+        if not self.emotion_dimensions_enabled:
+            return
+        from emotionsim.agents.emotion_dimensions import compute_emotion_update
+        from emotionsim.core.config import get_settings
+
+        stress = self.dynamic_state.get("stress_level", self.persona.stress_level)
+        self.valence, self.arousal = compute_emotion_update(
+            self.valence,
+            self.arousal,
+            self._emotion_base_valence,
+            self._emotion_base_arousal,
+            stress,
+            world_state.get("hazard_level", 0),
+            helped,
+            danger_observed,
+            decay=get_settings().emotion_decay,
+        )
+        self.dynamic_state["valence"] = round(self.valence, 3)
+        self.dynamic_state["arousal"] = round(self.arousal, 3)
+
+    def _apply_emotion_pull(self) -> None:
+        """Pull valence/arousal toward the dominant emotion of the last decision.
+
+        Uses the parsed act response's emotion word (from the LLM or the
+        rule-based background decision), mapped through EMOTION_LEXICON.
+        """
+        if not self.emotion_dimensions_enabled:
+            return
+        from emotionsim.agents.emotion_dimensions import (
+            clamp,
+            emotion_to_vector,
+        )
+        from emotionsim.core.config import get_settings
+
+        cinematic = getattr(self, "_last_cinematic", {}) or {}
+        vec = emotion_to_vector(cinematic.get("emotion", ""))
+        if vec is None:
+            return
+        pull = get_settings().emotion_lm_pull
+        self.valence = clamp(self.valence + pull * (vec[0] - self.valence))
+        self.arousal = clamp(self.arousal + pull * (vec[1] - self.arousal))
+        self.dynamic_state["valence"] = round(self.valence, 3)
+        self.dynamic_state["arousal"] = round(self.arousal, 3)
+
     def should_respond(
         self,
         has_events: bool,
@@ -102,10 +193,17 @@ class HumanAgent(Agent):
         # Stress makes agents more reactive
         stress_mod = (self.persona.stress_level - 5) * 0.05
 
+        # Arousal (emotion dimensions, when enabled) makes agents more reactive
+        arousal_mod = 0.0
+        if getattr(self, "emotion_dimensions_enabled", False):
+            from emotionsim.agents.emotion_dimensions import clamp
+
+            arousal_mod = clamp(self.arousal) * 0.15
+
         # Location activity (more people = more likely to interact)
         activity_mod = min(location_activity * 0.1, 0.3)
 
-        probability = base_probability + extraversion_mod + neuroticism_mod + leadership_mod + stress_mod + activity_mod
+        probability = base_probability + extraversion_mod + neuroticism_mod + leadership_mod + stress_mod + activity_mod + arousal_mod
         probability = max(0.1, min(0.9, probability))  # Clamp between 10% and 90%
 
         return random.random() < probability
@@ -253,6 +351,20 @@ Threat level: {hazard_str}
                 f"Consider the consequences of your choices.\n"
             )
 
+        # Continuous emotion dimensions (valence/arousal, opt-in)
+        self._maybe_init_emotion_dimensions()
+        if self.emotion_dimensions_enabled:
+            from emotionsim.agents.emotion_dimensions import emotion_line
+
+            core += f"\n{emotion_line(self.valence, self.arousal)}\n"
+
+        # Theory of Mind: what I believe about the others (opt-in)
+        self._maybe_init_theory_of_mind()
+        if self.theory_of_mind is not None:
+            tom_section = self.theory_of_mind.beliefs_for_prompt()
+            if tom_section:
+                core += f"\n{tom_section}\n"
+
         # Eval prompt variant (Step 8): experiment instruction injected into
         # the prompt so the harness can compare prompt variants offline.
         variant = world_state.get("_prompt_variant")
@@ -296,9 +408,28 @@ Your inventory: {inv_str}
 
         def _build_speech(max_items: int, max_len: int) -> str:
             lines: list[str] = []
+            rumors = world_state.get("_rumors") or {}
             for msg in all_step_msgs[-max_items:]:
                 from_name = msg.get("from_agent_name", "?")
                 content = (msg.get("content") or "")[:max_len]
+                # Rumor distortion: retold stories surface degraded (opt-in).
+                if rumors:
+                    from emotionsim.simulation.rumor import (
+                        distort_text,
+                        find_chain,
+                    )
+
+                    cid = find_chain(
+                        rumors, content, 0.5, exclude_reader=self.id
+                    )
+                    if cid is not None:
+                        info = rumors.get(cid, {})
+                        content = distort_text(
+                            content,
+                            info.get("hops", 1),
+                            cid,
+                            fidelity_drop=get_settings().rumor_fidelity_drop,
+                        )[:max_len]
                 mtype = msg.get("message_type", "direct")
                 if mtype == "broadcast":
                     lines.append(f'  {from_name} (to all): "{content}"')
@@ -375,6 +506,19 @@ Your inventory: {inv_str}
         # never calling the LLM.
         if self.background:
             return await self._background_tick(world_state, messages, current_step=world_state.get("current_step", 0))
+
+        self._maybe_init_emotion_dimensions()
+        if self.emotion_dimensions_enabled:
+            # Did someone help me this step? Did I observe danger?
+            helped = any(
+                a.get("action") == "help" and a.get("target") == self.id
+                for a in (step_actions or [])
+            )
+            danger_observed = any(
+                any(w in (e or "").lower() for w in ("collaps", "fire", "flood", "danger", "injur", "falling"))
+                for e in (step_events or [])
+            ) or world_state.get("hazard_level", 0) >= 7
+            self.update_emotion_dimensions(world_state, helped=helped, danger_observed=danger_observed)
 
         # 1. Store incoming messages in memory (same as base)
         for msg in messages:
@@ -489,6 +633,9 @@ Your inventory: {inv_str}
 
         # Parse response
         agent_response = self.parse_llm_response(response)
+
+        # Emotion dimensions: pull toward the LLM-stated dominant emotion.
+        self._apply_emotion_pull()
 
         # Add context size to message metadata
         if agent_response.message:
@@ -739,6 +886,11 @@ Your inventory: {inv_str}
             "emotion": self._cinematic_emotion(decision.action_type),
             "speech": message.content if message else None,
         }
+
+        # Emotion dimensions from the rule-based decision's inferred emotion.
+        if self.emotion_dimensions_enabled:
+            self.update_emotion_dimensions(world_state)
+            self._apply_emotion_pull()
 
         response = AgentResponse(
             actions=actions,

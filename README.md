@@ -57,6 +57,12 @@ Simulates disaster scenarios with diverse LLM-driven personas that interact, mak
 | **Governance + Goals** | Ethics gates on agent actions and mission → group → individual goal trees surfaced in prompts |
 | **Auto-Evaluation** | Built-in evaluator agents that analyze run performance and narrative arcs |
 | **Offline Eval Harness** | `emotionsim eval` runs scenario × seed × prompt-variant matrices against a stub LLM with determinism fingerprints |
+| **Semantic LLM Caching** | Prompt embeddings serve cosine-similar responses — repeated/near-identical calls skip the LLM (opt-in) |
+| **Emotion Dimensions** | Continuous valence/arousal: personality baselines, event + LLM-driven shifts, prompt surfacing |
+| **Rumor Spread** | Retold messages lose fidelity per hop; distorted versions reach other agents' prompts |
+| **Dynamic Population** | Evacuees arrive mid-run, exhausted agents leave — spawn/evict events + persistence |
+| **Theory of Mind** | Agents infer peers' goals/states/intentions from observed actions and messages |
+| **Multi-Tenant Auth** | Optional users + API keys; tenant-scoped scenarios/runs; anonymous access preserved |
 | **Modern Stack** | FastAPI + SvelteKit + Oracle DB 26ai Free + vLLM/Ollama |
 
 ## Quick Start
@@ -96,6 +102,31 @@ emotionsim run --scenario "Rising Flood" --max-steps 50 --seed 42
 ```
 
 Local runs need Oracle DB plus either vLLM or Ollama. The Docker stack can provide Oracle, and Ollama can be started separately with `ollama serve` and `ollama pull qwen3.5:4b`.
+
+### Zero-Config Local Runs (auto-detect)
+
+Since `LLM_BACKEND=auto` is the default, the stack picks the first available
+service and falls back gracefully when nothing is running:
+
+```bash
+emotionsim doctor                # what's reachable: vLLM → Ollama → stub; Oracle → SQLite
+emotionsim dev                   # one command: backend + frontend with detected services
+emotionsim scenarios --create-builtin   # seed scenarios (auto-detects the DB)
+emotionsim run --scenario "Rising Flood" --max-steps 20   # runs on whatever is available
+```
+
+Detection order — **LLM**: vLLM → Ollama → offline stub (deterministic, no network).
+**Database**: Oracle (real credential check) → local SQLite file (`emotionsim_runtime.db`).
+Ollama model tags are auto-resolved (a scenario asking for `gemma3` uses `gemma3:4b`;
+`qwen3.5:27b` uses the best local `qwen3.5:*`). Models stay warm across ticks
+(`OLLAMA_KEEP_ALIVE=30m`).
+
+Explicit configuration always wins over detection: set `LLM_BACKEND=vllm|ollama|openai|stub`,
+`DATABASE_BACKEND=oracle_forced`, or `VLLM_BASE_URL`/`OLLAMA_DEFAULT_MODEL` in `.env`.
+
+> **Tip:** the first tick after a cold start loads the model into GPU memory and
+> can take a few minutes. `ollama run qwen3.5:9b ""` (or `emotionsim doctor`) warms it;
+> subsequent runs start fast.
 
 ### TUI Dashboard
 

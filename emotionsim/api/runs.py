@@ -5,6 +5,7 @@ from sqlalchemy import select
 
 from emotionsim.core.database import get_db
 from emotionsim.models.run import Run
+from emotionsim.auth.deps import TenantScope, get_tenant
 from emotionsim.models.agent import AgentModel
 from emotionsim.models.step import Step
 from emotionsim.models.message import Message
@@ -25,8 +26,9 @@ router = APIRouter(prefix="/runs", tags=["runs"])
 async def create_run(
     data: RunCreate,
     db: AsyncSession = Depends(get_db),
+    scope: TenantScope = Depends(get_tenant),
 ):
-    """Create a new run for a scenario"""
+    """Create a new run for a scenario (tenant-scoped when authenticated)"""
     manager = SimulationManager.get_instance()
 
     try:
@@ -37,9 +39,17 @@ async def create_run(
             max_steps=data.max_steps,
             llm_backend=data.llm_backend,
         )
-        return run
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+    if scope.is_authenticated:
+        run_id = run.id if hasattr(run, "id") else run.get("id")
+        if run_id:
+            row = await db.get(Run, run_id)
+            if row is not None:
+                row.tenant_id = scope.tenant
+                await db.commit()
+    return run
 
 
 @router.get("/", response_model=list[RunResponse])
@@ -48,12 +58,19 @@ async def list_runs(
     skip: int = 0,
     limit: int = 50,
     db: AsyncSession = Depends(get_db),
+    scope: TenantScope = Depends(get_tenant),
 ):
-    """List runs, optionally filtered by scenario"""
+    """List runs (tenant-scoped: own + public for tenants, public for anonymous)"""
     query = select(Run).order_by(Run.created_at.desc())
 
     if scenario_id:
         query = query.where(Run.scenario_id == scenario_id)
+    if scope.is_authenticated:
+        query = query.where(
+            (Run.tenant_id == scope.tenant) | (Run.tenant_id.is_(None))
+        )
+    else:
+        query = query.where(Run.tenant_id.is_(None))
 
     result = await db.execute(query.offset(skip).limit(limit))
     return result.scalars().all()

@@ -187,6 +187,36 @@ class SimulationEngine:
         self.action_dispatcher = AgentActionDispatcher(self)
         self.reaction_round = ReactionRound(self)
 
+        # Message distortion / rumor spread (opt-in, see simulation/rumor.py)
+        self.rumor_tracker = None
+        self._rumor_state: dict = {}
+        self._last_rumor_events = 0
+        if get_settings().rumor_distortion_enabled is True:
+            from emotionsim.simulation.rumor import RumorTracker
+
+            self.rumor_tracker = RumorTracker(
+                overlap_threshold=get_settings().rumor_overlap_threshold
+            )
+
+        # Dynamic agent spawning / departure (opt-in, see dynamic_spawner.py)
+        self._dynamic_spawner = None
+        self._spawned_count = 0
+        if get_settings().dynamic_spawning_enabled is True:
+            from emotionsim.simulation.dynamic_spawner import (
+                DynamicSpawner,
+                SpawnConfig,
+            )
+
+            self._dynamic_spawner = DynamicSpawner(
+                SpawnConfig(
+                    interval_steps=get_settings().spawn_interval_steps,
+                    max_extra_agents=get_settings().spawn_max_extra_agents,
+                    location=get_settings().spawn_location,
+                    evict_health_threshold=get_settings().spawn_evict_health_threshold,
+                    evict_stress_threshold=get_settings().spawn_evict_stress_threshold,
+                )
+            )
+
         # L9: Configure per-agent-type model routing
         configure_model_routing({
             "environment": settings.model_route_environment or settings.ollama_fallback_model,
@@ -673,6 +703,9 @@ class SimulationEngine:
         # Build current agent states for world state
         self._update_agents_in_world_state()
 
+        # Dynamic population: evacuees arrive / exhausted agents leave (opt-in)
+        await self._maybe_dynamic_population(step_actions, step_events)
+
         # Process all agents sequentially
         await self._process_agents_sequentially(
             step_actions,
@@ -719,6 +752,13 @@ class SimulationEngine:
 
         # L11: Social Dynamics — opinion shifts, influence tracking, tipping points
         social_dynamics_result = await self._execute_social_dynamics(step_messages)
+
+        # L12: Rumor scan — retold messages lose fidelity per hop (opt-in)
+        await self._rumor_scan(step_messages)
+
+        # L13: Theory of Mind — agents update beliefs about their peers
+        if get_settings().theory_of_mind_enabled is True:
+            self._execute_tom_updates(step_actions, step_messages)
 
         # L8: End diff tracking
         self.diff_tracker.end_step(self.world_state)
@@ -878,6 +918,196 @@ class SimulationEngine:
             await log_pipeline_event(
                 f"🧠 Emotion contagion: {len(total_events)} agents affected"
             )
+
+    async def _rumor_scan(self, step_messages: list[dict[str, Any]]) -> None:
+        """L12: Track retold stories; inject the rumor state into world_state.
+
+        Runs at the end of every step. Detected relays bump hop counts; the
+        state is injected as the transient world_state key ``_rumors`` so the
+        next step's agent prompts render retold messages distorted.
+        New relays are surfaced as ``rumor_spread`` events for observability.
+        """
+        if self.rumor_tracker is None:
+            return
+        self.rumor_tracker.feed_step(step_messages)
+        self._rumor_state = self.rumor_tracker.state()
+        self.world_state["_rumors"] = self._rumor_state
+        events = self.rumor_tracker.rumor_events
+        for event in events[self._last_rumor_events:]:
+            self.on_event("rumor_spread", {**event, "step": self.current_step})
+        self._last_rumor_events = len(events)
+
+    async def _maybe_dynamic_population(
+        self,
+        step_actions: list[dict[str, Any]],
+        step_events: list[str],
+    ) -> None:
+        """Dynamic population: spawn arrivals, evict exhausted agents (opt-in).
+
+        Runs at the start of each step, before agent processing, so arrivals
+        participate in this step and departures leave cleanly.
+        """
+        spawner = self._dynamic_spawner
+        if spawner is None:
+            return
+
+        hazard = self.world_state.get("hazard_level", 0)
+        if spawner.should_spawn(self.current_step, hazard, self._spawned_count):
+            await self._spawn_agent(spawner)
+
+        # Departures: remove exhausted agents from the live population.
+        leaving = [
+            aid
+            for aid, agent in self.agents.items()
+            if agent.role == "human" and spawner.should_evict(agent)
+        ]
+        for aid in leaving:
+            await self._evict_agent(aid)
+
+        if leaving:
+            self._update_agents_in_world_state()
+
+    async def _spawn_agent(self, spawner) -> None:
+        """Create + register + persist a new human agent mid-run."""
+        persona_data = spawner.build_persona()
+        # Ensure the spawn location exists in the world.
+        locations = self.world_state.get("locations", {})
+        if persona_data["location"] not in locations and locations:
+            persona_data["location"] = next(iter(locations))
+
+        agent = self._create_agent({"role": "human", "persona": persona_data})
+        self._register_agent(agent)
+        self.message_bus.register_agent(agent.id, agent.name)
+        self.acp_registry.register(agent.get_acp_identity())
+        self.supervisor.register_agent(agent.id, agent.name)
+
+        loc = agent.dynamic_state.get("location", "unknown")
+        self._agent_locations[agent.id] = loc
+        self.conversation_manager.update_agent_location(agent.id, loc)
+        self.message_bus.join_room(agent.id, loc)
+
+        self.db.add(
+            AgentModel(
+                id=agent.id,
+                run_id=self.run_id,
+                role=agent.role,
+                name=agent.name,
+                model_id=agent.model_id,
+                provider=agent.provider,
+                persona=agent.to_dict().get("persona", {}),
+                dynamic_state=agent.dynamic_state,
+            )
+        )
+        await self.db.commit()
+
+        self._spawned_count += 1
+        spawner.spawned.append(agent.id)
+        self._update_agents_in_world_state()
+        self.on_event("agent_spawned", {
+            "agent_id": agent.id,
+            "name": agent.name,
+            "location": loc,
+            "step": self.current_step,
+            "total": len(self.agents),
+        })
+
+    async def _evict_agent(self, agent_id: str) -> None:
+        """Remove an agent from the live population (mid-run departure)."""
+        agent = self.agents.get(agent_id)
+        if agent is None:
+            return
+        name = agent.name
+        self.agents.pop(agent_id, None)
+        self._name_to_id.pop(name, None)
+        self.message_bus._agent_queues.pop(agent_id, None)
+        # Drop supervisor telemetry (no unregister API; mutate internals directly).
+        self.supervisor._telemetry.pop(agent_id, None)
+        self.supervisor._retry_counts.pop(agent_id, None)
+        self._agent_locations.pop(agent_id, None)
+        self.conversation_manager.update_agent_location(agent_id, None)
+        # Keep the persisted Agent row (history), mark it departed.
+        row = await self.db.get(AgentModel, agent_id)
+        if row is not None:
+            row.dynamic_state = dict(row.dynamic_state or {})
+            row.dynamic_state["departed"] = True
+            await self.db.commit()
+        self.on_event("agent_left", {
+            "agent_id": agent_id,
+            "name": name,
+            "step": self.current_step,
+            "total": len(self.agents),
+        })
+
+    def _execute_tom_updates(
+        self,
+        step_actions: list[dict[str, Any]],
+        step_messages: list[dict[str, Any]],
+    ) -> None:
+        """L13: Feed this step's actions/messages into every agent's ToM.
+
+        Each human agent observes what the *others* did/said and updates
+        beliefs about their goals, states and intentions. Beliefs also nudge
+        relationship trust when someone helps the observer.
+        """
+        from emotionsim.agents.theory_of_mind import TheoryOfMind
+
+        observers = [
+            aid for aid, a in self.agents.items()
+            if isinstance(a, HumanAgent)
+        ]
+
+        for action in step_actions:
+            actor_id = action.get("agent_id")
+            actor_name = action.get("agent_name") or actor_id
+            a_type = action.get("action_type", "")
+            target = action.get("target")
+            if not actor_id:
+                continue
+            for aid in observers:
+                if aid == actor_id:
+                    continue
+                agent = self.agents[aid]
+                agent._maybe_init_theory_of_mind()
+                if agent.theory_of_mind is None:
+                    continue
+                tom = agent.theory_of_mind
+                tom.observe(
+                    actor_id, actor_name, a_type, target, "",
+                    self.current_step,
+                )
+                # Trust nudge: someone helped me → I trust them more.
+                if a_type == "help" and target == aid and agent.agent_memory:
+                    agent.agent_memory.note_interaction(
+                        actor_id,
+                        actor_name,
+                        self.current_step,
+                        trust_delta=1,
+                        note=f"{actor_name} helped me (step {self.current_step})",
+                    )
+
+        for msg in step_messages:
+            actor_id = msg.get("from_agent")
+            actor_name = msg.get("from_agent_name") or actor_id
+            text = msg.get("content") or ""
+            if not actor_id:
+                continue
+            for aid in observers:
+                if aid == actor_id:
+                    continue
+                agent = self.agents[aid]
+                agent._maybe_init_theory_of_mind()
+                if agent.theory_of_mind is None:
+                    continue
+                agent.theory_of_mind.observe(
+                    actor_id, actor_name, "speak", None, text,
+                    self.current_step,
+                )
+
+        for aid in observers:
+            agent = self.agents[aid]
+            agent._maybe_init_theory_of_mind()
+            if agent.theory_of_mind is not None:
+                agent.theory_of_mind.tick_decay(self.current_step)
 
     async def _execute_social_dynamics(self, step_messages: list[dict[str, Any]]) -> dict[str, Any]:
         """L11: Process opinion dynamics, influence tracking, and sentiment tipping points.

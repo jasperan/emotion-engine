@@ -8,6 +8,7 @@ from sqlalchemy import select
 
 from emotionsim.core.database import get_db
 from emotionsim.models.scenario import Scenario
+from emotionsim.auth.deps import TenantScope, get_tenant, tenant_visibility
 from emotionsim.schemas.scenario import ScenarioCreate, ScenarioUpdate, ScenarioResponse
 from emotionsim.scenarios.generator import ScenarioGenerator
 from emotionsim.scenarios.storage import (
@@ -166,13 +167,15 @@ async def import_scenario_file(
 async def create_scenario(
     data: ScenarioCreate,
     db: AsyncSession = Depends(get_db),
+    scope: TenantScope = Depends(get_tenant),
 ):
-    """Create a new scenario"""
+    """Create a new scenario (tenant-scoped when authenticated)"""
     scenario = Scenario(
         name=data.name,
         description=data.description,
         config=data.config.model_dump(),
         agent_templates=[t.model_dump() for t in data.agent_templates],
+        tenant_id=scope.tenant if scope.is_authenticated else None,
     )
     db.add(scenario)
     await db.commit()
@@ -186,13 +189,18 @@ async def list_scenarios(
     skip: int = 0,
     limit: int = 50,
     db: AsyncSession = Depends(get_db),
+    scope: TenantScope = Depends(get_tenant),
 ):
-    """List all scenarios"""
+    """List scenarios: tenants see own + public; anonymous sees public only"""
+    query = select(Scenario)
+    if scope.is_authenticated:
+        query = query.where(
+            (Scenario.tenant_id == scope.tenant) | (Scenario.tenant_id.is_(None))
+        )
+    else:
+        query = query.where(Scenario.tenant_id.is_(None))
     result = await db.execute(
-        select(Scenario)
-        .order_by(Scenario.created_at.desc())
-        .offset(skip)
-        .limit(limit)
+        query.order_by(Scenario.created_at.desc()).offset(skip).limit(limit)
     )
     return result.scalars().all()
 

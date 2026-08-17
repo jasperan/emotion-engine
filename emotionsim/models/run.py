@@ -37,6 +37,8 @@ class Run(Base):
         primary_key=True,
         default=lambda: str(uuid.uuid4())
     )
+    # Multi-tenant ownership: user id for authenticated creators, None = public
+    tenant_id: Mapped[str | None] = mapped_column(String(36), nullable=True, default=None)
     scenario_id: Mapped[str] = mapped_column(
         String(36),
         ForeignKey("scenarios.id"),

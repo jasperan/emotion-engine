@@ -18,6 +18,9 @@ async def lifespan(app: FastAPI):
     """Application lifespan manager"""
     # Startup
     print(f"Starting {settings.app_name}...")
+    from emotionsim.core.database import detect_and_configure, init_db
+
+    detect_and_configure()  # Oracle → SQLite auto-fallback
     await init_db() # Keep database initialization
 
     # Auto-seed default scenarios if none exist

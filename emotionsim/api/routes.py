@@ -3,6 +3,7 @@ from fastapi import APIRouter
 
 from emotionsim.api.scenarios import router as scenarios_router
 from emotionsim.api.runs import router as runs_router
+from emotionsim.api.auth import router as auth_router
 from emotionsim.api.websocket import router as websocket_router
 from emotionsim.api.seed import router as seed_router
 from emotionsim.api.datalake import router as datalake_router
@@ -17,6 +18,7 @@ router = APIRouter()
 # Include sub-routers
 router.include_router(scenarios_router)
 router.include_router(runs_router)
+router.include_router(auth_router)
 router.include_router(websocket_router)
 router.include_router(seed_router)
 router.include_router(datalake_router)

@@ -109,6 +109,24 @@
 		};
 	}
 
+	function closeModal() {
+		showAddAgent = false;
+		resetNewAgent();
+	}
+
+	function handleWindowKeydown(e: KeyboardEvent) {
+		if (showAddAgent && e.key === 'Escape') {
+			closeModal();
+		}
+	}
+
+	function focus(node: HTMLElement) {
+		node.focus();
+		return {
+			destroy() {}
+		};
+	}
+
 	function removeAgent(index: number) {
 		agentTemplates = agentTemplates.filter((_, i) => i !== index);
 	}
@@ -157,6 +175,8 @@
 <svelte:head>
 	<title>Create Scenario | EmotionSim</title>
 </svelte:head>
+
+<svelte:window on:keydown={handleWindowKeydown} />
 
 <div class="max-w-4xl mx-auto space-y-6">
 	<div class="flex items-center justify-between">
@@ -280,11 +300,17 @@
 
 	<!-- Add Agent Modal -->
 	{#if showAddAgent}
+		<!-- svelte-ignore a11y-click-events-have-key-events -->
+		<!-- svelte-ignore a11y-no-static-element-interactions -->
 		<div
 			class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+			on:click|self={closeModal}
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="modal-title"
 		>
 			<div class="card max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-				<h3 class="text-xl font-display font-semibold mb-4">Add Agent</h3>
+				<h3 id="modal-title" class="text-xl font-display font-semibold mb-4">Add Agent</h3>
 
 				<div class="space-y-4">
 					<div class="grid grid-cols-2 gap-4">
@@ -292,6 +318,7 @@
 							<label for="agent-name" class="label">Agent Name</label>
 							<input
 								id="agent-name"
+								use:focus
 								type="text"
 								bind:value={newAgent.name}
 								on:input={() => (addAgentError = null)}

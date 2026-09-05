@@ -9,6 +9,7 @@
 	let agentTemplates: AgentTemplate[] = [];
 	let saving = false;
 	let error: string | null = null;
+	let addAgentButton: HTMLButtonElement;
 
 	// New agent form state
 	let showAddAgent = false;
@@ -44,6 +45,16 @@
 		{ key: 'neuroticism', label: 'Neuroticism', min: 'Confident', max: 'Sensitive' },
 		{ key: 'risk_tolerance', label: 'Risk Tolerance', min: 'Averse', max: 'Seeking' }
 	];
+
+	function closeModal() {
+		showAddAgent = false;
+		resetNewAgent();
+		addAgentButton?.focus();
+	}
+
+	function focus(node: HTMLElement) {
+		node.focus();
+	}
 
 	function addAgent() {
 		if (!newAgent.name) {
@@ -83,8 +94,7 @@
 		}
 
 		agentTemplates = [...agentTemplates, template];
-		showAddAgent = false;
-		resetNewAgent();
+		closeModal();
 	}
 
 	function resetNewAgent() {
@@ -111,6 +121,12 @@
 
 	function removeAgent(index: number) {
 		agentTemplates = agentTemplates.filter((_, i) => i !== index);
+	}
+
+	function handleModalKeydown(e: KeyboardEvent) {
+		if (showAddAgent && e.key === 'Escape') {
+			closeModal();
+		}
 	}
 
 	async function handleSubmit() {
@@ -157,6 +173,8 @@
 <svelte:head>
 	<title>Create Scenario | EmotionSim</title>
 </svelte:head>
+
+<svelte:window on:keydown={handleModalKeydown} />
 
 <div class="max-w-4xl mx-auto space-y-6">
 	<div class="flex items-center justify-between">
@@ -227,7 +245,12 @@
 		<div class="card">
 			<div class="flex items-center justify-between mb-4">
 				<h2 class="text-lg font-semibold font-display">Agents</h2>
-				<button type="button" class="btn-secondary text-sm" on:click={() => (showAddAgent = true)}>
+				<button
+					type="button"
+					class="btn-secondary text-sm"
+					on:click={() => (showAddAgent = true)}
+					bind:this={addAgentButton}
+				>
 					+ Add Agent
 				</button>
 			</div>
@@ -282,9 +305,16 @@
 	{#if showAddAgent}
 		<div
 			class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+			role="presentation"
+			on:click|self={closeModal}
 		>
-			<div class="card max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-				<h3 class="text-xl font-display font-semibold mb-4">Add Agent</h3>
+			<div
+				class="card max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+				role="dialog"
+				aria-modal="true"
+				aria-labelledby="add-agent-title"
+			>
+				<h3 id="add-agent-title" class="text-xl font-display font-semibold mb-4">Add Agent</h3>
 
 				<div class="space-y-4">
 					<div class="grid grid-cols-2 gap-4">
@@ -293,6 +323,7 @@
 							<input
 								id="agent-name"
 								type="text"
+								use:focus
 								bind:value={newAgent.name}
 								on:input={() => (addAgentError = null)}
 								class="input"
@@ -384,14 +415,7 @@
 
 				<div class="flex gap-4 mt-6">
 					<button type="button" class="btn-primary flex-1" on:click={addAgent}>Add Agent</button>
-					<button
-						type="button"
-						class="btn-secondary"
-						on:click={() => {
-							showAddAgent = false;
-							resetNewAgent();
-						}}>Cancel</button
-					>
+					<button type="button" class="btn-secondary" on:click={closeModal}>Cancel</button>
 				</div>
 			</div>
 		</div>

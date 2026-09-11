@@ -6,7 +6,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from emotionsim.core.config import get_settings
-from emotionsim.core.database import init_db
 from emotionsim.api.routes import router as api_router
 
 
@@ -134,7 +133,7 @@ if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
         "emotionsim.main:app",
-        host="0.0.0.0",
+        host=settings.api_host,
         port=8000,
         reload=settings.debug,
     )

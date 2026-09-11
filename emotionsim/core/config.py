@@ -13,6 +13,13 @@ class Settings(BaseSettings):
     # CORS: comma-separated origins allowed to call the API
     cors_origins: str = "http://localhost:3000,http://localhost:5173"
 
+    # Bind address for the API server (env var: API_HOST).
+    # Loopback by default: the API permits anonymous (public-tenant) access and
+    # several mutating endpoints do not require an API key, so binding every
+    # interface would expose them to the network. Set API_HOST=0.0.0.0 to
+    # expose the API deliberately.
+    api_host: str = "127.0.0.1"
+
     # Database (Oracle DB 26ai Free, primary; SQLite file fallback for dev/pi)
     # NOTE: These defaults are for local dev only. In production, override via
     # ORACLE_DB_USER / ORACLE_DB_PASSWORD environment variables or .env file.

@@ -1328,7 +1328,8 @@ def dev(no_frontend: bool, port: int, reload: bool):
     if report.ollama_reachable and report.ollama_chosen_model:
         env.setdefault("OLLAMA_DEFAULT_MODEL", report.ollama_chosen_model)
 
-    backend_cmd = [sys.executable, "-m", "uvicorn", "emotionsim.main:app", "--host", "0.0.0.0", "--port", str(port)]
+    backend_cmd = [sys.executable, "-m", "uvicorn", "emotionsim.main:app", "--host",
+                   os.environ.get("API_HOST", "127.0.0.1"), "--port", str(port)]
     if reload:
         backend_cmd.append("--reload")
 

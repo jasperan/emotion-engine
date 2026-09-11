@@ -8,7 +8,6 @@ with restricted actions — enabling same-step proposal->response instead of
 
 from __future__ import annotations
 
-import asyncio
 from datetime import datetime, timezone
 from typing import Any, Callable, Awaitable
 

@@ -12,7 +12,6 @@ Explicit configuration always wins over detection.
 """
 from __future__ import annotations
 
-import asyncio
 import logging
 import socket
 from dataclasses import dataclass, field

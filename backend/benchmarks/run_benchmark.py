@@ -3,7 +3,6 @@ Benchmark runner: runs simulations across multiple models for comparison.
 Uses the CLI directly (which handles Ollama model loading gracefully).
 Results are persisted in Oracle DB and indexed in local manifest JSON.
 """
-import asyncio
 import json
 import subprocess
 import sys

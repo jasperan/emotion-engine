@@ -7,7 +7,6 @@ This tool provides multiple modes for generating scenarios:
 - Batch mode: Generate multiple scenarios from preset prompts
 """
 import asyncio
-import json
 import sys
 from pathlib import Path
 

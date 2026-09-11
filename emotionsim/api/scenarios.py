@@ -14,7 +14,10 @@ from emotionsim.scenarios.generator import ScenarioGenerator
 from emotionsim.scenarios.storage import (
     save_scenario,
     load_scenario,
-    list_scenarios,
+    # Aliased: the route handler below is also named `list_scenarios`, and a
+    # module-level def rebinds the global, so the plain name would resolve to
+    # the route (whose db/scope are Depends objects) instead of this helper.
+    list_scenarios as list_stored_scenarios,
     delete_scenario as delete_scenario_file,
     SCENARIOS_DIR,
 )
@@ -92,7 +95,7 @@ async def generate_scenario(
 @router.get("/files", response_model=list[ScenarioFileResponse])
 async def list_scenario_files():
     """List all generated scenario JSON files"""
-    scenarios = list_scenarios()
+    scenarios = list_stored_scenarios()
     return [
         ScenarioFileResponse(
             filename=s["filename"],

@@ -3,6 +3,7 @@
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
   import { setHeader, resetHeader } from '$lib/stores/header';
+  import SimulationIntro from '$lib/components/SimulationIntro.svelte';
 
   let prompt = '';
   let isLoading = false;
@@ -45,7 +46,7 @@
   }
 
   onMount(() => {
-    setHeader({ title: 'New Chat' });
+    setHeader({ title: 'Simulation lab' });
     return resetHeader;
   });
 
@@ -57,22 +58,18 @@
   }
 </script>
 
-<div class="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] max-w-6xl mx-auto px-6 relative">
+<svelte:head><title>Emotion Engine — Social simulation lab</title><meta name="description" content="Design personality-driven scenarios and observe emergent cooperation in multi-agent simulations." /></svelte:head>
 
-  <div class="text-center mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-     <h1 class="text-5xl md:text-6xl font-display font-semibold tracking-[-0.03em] mb-4 text-on-background">
-       What should we simulate?
-     </h1>
-     <p class="text-lg text-on-surface/70 max-w-lg mx-auto leading-relaxed">
-       Describe a social scenario. Agents with unique personalities will play it out.
-     </p>
-  </div>
+<div class="simulation-entry flex flex-col items-center max-w-6xl mx-auto relative">
+
+  <SimulationIntro />
+  <div class="sim-prompt-heading"><span>01 / SET THE SCENE</span><span>Start with a question worth exploring</span></div>
 
   <!-- Chat Input Area -->
   <div class="w-full max-w-2xl relative group">
       <div class="absolute -inset-0.5 bg-gradient-to-r from-accent-blue/15 to-accent-teal/10 rounded-2xl blur opacity-0 group-hover:opacity-50 transition duration-700"></div>
 
-      <div class="relative bg-surface/90 rounded-2xl border border-outline/30 shadow-xl overflow-hidden focus-within:border-primary/30 focus-within:shadow-2xl transition-all duration-300">
+      <div class="sim-composer relative bg-surface/90 rounded-2xl border border-outline/30 shadow-xl overflow-hidden focus-within:border-primary/30 focus-within:shadow-2xl transition-all duration-300">
          <textarea
             bind:this={textareaElement}
             bind:value={prompt}
@@ -87,12 +84,12 @@
 
          <div class="flex justify-between items-center px-4 pb-3">
              <div class="flex gap-2">
-                 <!-- Optional tools/attachments icons could go here -->
+                 <span class="sim-composer-hint">5 personalities · Enter to generate</span>
              </div>
              <button
                 on:click={handleSubmit}
                 disabled={!prompt.trim() || isLoading}
-                class="btn-icon p-2 rounded-full bg-on-primary/10 text-on-background/50 hover:bg-primary hover:text-on-primary transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                class="sim-send btn-icon p-2 rounded-full bg-on-primary/10 text-on-background/50 hover:bg-primary hover:text-on-primary transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                 aria-label={isLoading ? "Generating scenario" : "Send prompt"}
              >
                 {#if isLoading}
@@ -105,7 +102,7 @@
       </div>
 
       {#if error}
-         <div id="prompt-error" role="alert" class="absolute -bottom-12 left-0 right-0 text-center text-red-400 text-sm">
+         <div id="prompt-error" role="alert" class="mt-4 text-red-400 text-sm">
             {error}
          </div>
       {/if}

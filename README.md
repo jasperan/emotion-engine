@@ -20,6 +20,20 @@
 
 Simulates disaster scenarios with diverse LLM-driven personas that interact, make decisions, and cooperate based on Big Five personality traits and dynamic emotional states. Each agent runs a full cognitive pipeline (think, plan, act, reflect) and maintains episodic memory, relationship tracking, and inventory across a discrete-event simulation. The engine supports parallel scene processing via vLLM, a real-time Go TUI dashboard, a SvelteKit web frontend, and Oracle DB 26ai Free for persistence and cross-run analytics.
 
+## The social simulation lab
+
+A warmer, quieter space to set a scene: a personality-network concept, a generous scenario composer, and accessible navigation across desktop and mobile. The network is explicitly illustrative, not a simulation result.
+
+![Emotion Engine social simulation lab](docs/visuals/desktop.jpg)
+
+<details><summary>Mobile simulation entry</summary>
+
+<img src="docs/visuals/mobile.jpg" alt="Emotion Engine mobile scenario composer" width="320">
+
+</details>
+
+Actual SvelteKit browser captures. No model or Oracle service was called. [Visual notes](docs/visuals/README.md).
+
 ## Architecture at a Glance
 
 <table>

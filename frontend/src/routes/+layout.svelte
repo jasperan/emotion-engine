@@ -1,5 +1,6 @@
 <script>
   import '../app.css';
+  import '../lab.css';
   import { headerStore } from '$lib/stores/header';
   import { page } from '$app/stores';
 
@@ -24,7 +25,7 @@
   Skip to main content
 </a>
 
-<div class="flex h-screen bg-background text-on-background overflow-hidden selection:bg-primary selection:text-on-primary">
+<div class="sim-shell flex h-dvh bg-background text-on-background overflow-hidden selection:bg-primary selection:text-on-primary">
 
   <!-- Mobile overlay -->
   {#if sidebarOpen}
@@ -60,7 +61,7 @@
     <nav class="flex-1 overflow-y-auto py-5 px-3 space-y-1" aria-label="Main navigation">
       <a href="/" class="flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary {$page.url.pathname === '/' ? 'bg-primary/8 text-primary' : 'text-on-surface/70 hover:bg-surface-alt/60 hover:text-on-background'}">
         <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        Chat
+        Simulation lab
       </a>
       <a href="/library" class="flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary {$page.url.pathname.startsWith('/library') || $page.url.pathname.startsWith('/scenarios') || $page.url.pathname.startsWith('/runs') ? 'bg-primary/8 text-primary' : 'text-on-surface/70 hover:bg-surface-alt/60 hover:text-on-background'}">
         <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg>
@@ -74,10 +75,10 @@
 
     <!-- Footer -->
     <div class="p-4 border-t border-outline/15">
-       <button class="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-[13px] font-medium text-on-surface/60 hover:bg-surface-alt/50 hover:text-on-surface transition-all cursor-pointer">
+       <a href="/settings" class="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-[13px] font-medium text-on-surface/60 hover:bg-surface-alt/50 hover:text-on-surface transition-all cursor-pointer">
           <div class="w-6 h-6 rounded-lg bg-accent-teal/12 text-accent-teal flex items-center justify-center text-[10px] font-bold">U</div>
-          <span>User Profile</span>
-       </button>
+          <span>Workspace settings</span>
+       </a>
     </div>
   </aside>
 

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"charm.land/lipgloss/v2"
 	"github.com/jasperan/emotion-engine/tui/internal/theme"
 )
 
@@ -42,8 +41,6 @@ func RenderBarChart(entries []BarChartEntry, width int) string {
 		barWidth = 4
 	}
 
-	filledStyle := lipgloss.NewStyle().Foreground(theme.Accent)
-	emptyStyle := lipgloss.NewStyle().Foreground(theme.Muted)
 	pctStyle := theme.MutedText
 
 	var sb strings.Builder
@@ -66,11 +63,7 @@ func RenderBarChart(entries []BarChartEntry, width int) string {
 				ratio = 0
 			}
 		}
-		filled := int(ratio * float64(barWidth))
-		empty := barWidth - filled
-
-		bar := filledStyle.Render(strings.Repeat("█", filled)) +
-			emptyStyle.Render(strings.Repeat("░", empty))
+		bar := NewProgressBar(barWidth, theme.Accent, theme.Muted).ViewAs(ratio)
 
 		pct := fmt.Sprintf("%3.0f%%", ratio*100)
 

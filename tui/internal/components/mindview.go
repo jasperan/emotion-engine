@@ -94,13 +94,13 @@ func traitBar(name string, value int, barWidth int) string {
 	if value > 10 {
 		value = 10
 	}
-	filled := value * barWidth / 10
-	empty := barWidth - filled
-	bar := lipgloss.NewStyle().Foreground(theme.Accent).Render(strings.Repeat("█", filled)) +
-		theme.MutedText.Render(strings.Repeat("░", empty))
+	bar := NewProgressBar(barWidth, theme.Accent, theme.Muted).ViewAs(float64(value) / 10)
 	label := fmt.Sprintf("%-18s", name)
 	return fmt.Sprintf("%s %s %2d", label, bar, value)
 }
+
+// trustBarWidth is the fixed width of the relationship trust bar.
+const trustBarWidth = 5
 
 // trustBar renders a 5-char trust bar for relationships.
 func trustBar(trust float64) string {
@@ -110,10 +110,7 @@ func trustBar(trust float64) string {
 	if trust > 1 {
 		trust = 1
 	}
-	filled := int(trust * 5)
-	empty := 5 - filled
-	return lipgloss.NewStyle().Foreground(theme.Accent).Render(strings.Repeat("█", filled)) +
-		theme.MutedText.Render(strings.Repeat("░", empty))
+	return NewProgressBar(trustBarWidth, theme.Accent, theme.Muted).ViewAs(trust)
 }
 
 // wrapText wraps text to the given width, returning joined lines.

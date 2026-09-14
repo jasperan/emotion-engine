@@ -9,6 +9,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/jasperan/emotion-engine/tui/internal/api"
+	"github.com/jasperan/emotion-engine/tui/internal/components"
 	"github.com/jasperan/emotion-engine/tui/internal/theme"
 )
 
@@ -335,11 +336,11 @@ func (m ReplayModel) renderTransportBar(width int) string {
 	}
 
 	const barWidth = 30
-	filled := int(pct * barWidth)
-	if filled > barWidth {
-		filled = barWidth
-	}
-	progressBar := strings.Repeat("█", filled) + strings.Repeat("░", barWidth-filled)
+	// Both halves keep theme.Text, which is the colour the bar already rendered
+	// in: it sits inside the StatusBar style, whose foreground is Text, and the
+	// old hand-rolled bar set no colour of its own. Replacing the renderer must
+	// not quietly recolour it.
+	progressBar := components.NewProgressBar(barWidth, theme.Text, theme.Text).ViewAs(pct)
 
 	speedStr := fmt.Sprintf("%.2fs/step", m.playSpeed.Seconds())
 

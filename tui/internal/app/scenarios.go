@@ -169,9 +169,7 @@ func (m ScenarioModel) View(width, height int) string {
 
 	m.list.SetSize(width, height-2)
 
-	hints := theme.KeyName.Render("Enter") + theme.KeyHint.Render(" launch") +
-		"  " + theme.KeyName.Render("/") + theme.KeyHint.Render(" filter") +
-		"  " + theme.KeyName.Render("q/Esc") + theme.KeyHint.Render(" back")
+	hints := hintBar(width, footerBindingsForScreen(ScreenScenarios))
 
 	return m.list.View() + "\n" + hints
 }

@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
@@ -279,39 +280,38 @@ func (m LauncherModel) renderProviderSelector(width int) string {
 	return label + lipgloss.JoinHorizontal(lipgloss.Center, pills...)
 }
 
+// renderHints builds the launcher footer. It keeps its own width branches: below
+// 62 columns it falls back to shorter descriptions rather than relying on the
+// help component to elide them.
 func (m LauncherModel) renderHints(width int) string {
-	back := renderLauncherHint("q/Esc", "back")
+	back := kb("q/Esc", "back", "q", "esc")
 	if width > 0 && width < 62 {
 		if m.focusIndex == 2 {
-			return strings.Join([]string{
-				renderLauncherHint("left/right", "provider"),
-				renderLauncherHint("Enter", "launch"),
+			return hintBar(width, []key.Binding{
+				kb("left/right", "provider", "left", "right"),
+				kb("Enter", "launch", "enter"),
 				back,
-			}, "  ")
+			})
 		}
-		return strings.Join([]string{
-			renderLauncherHint("Tab", "field"),
-			renderLauncherHint("Enter", "launch"),
+		return hintBar(width, []key.Binding{
+			kb("Tab", "field", "tab"),
+			kb("Enter", "launch", "enter"),
 			back,
-		}, "  ")
+		})
 	}
 	if m.focusIndex == 2 {
-		return strings.Join([]string{
-			renderLauncherHint("left/right", "change provider"),
-			renderLauncherHint("Tab", "switch field"),
-			renderLauncherHint("Enter", "launch"),
+		return hintBar(width, []key.Binding{
+			kb("left/right", "change provider", "left", "right"),
+			kb("Tab", "switch field", "tab"),
+			kb("Enter", "launch", "enter"),
 			back,
-		}, "  ")
+		})
 	}
-	return strings.Join([]string{
-		renderLauncherHint("Tab", "switch field"),
-		renderLauncherHint("Enter", "launch"),
+	return hintBar(width, []key.Binding{
+		kb("Tab", "switch field", "tab"),
+		kb("Enter", "launch", "enter"),
 		back,
-	}, "  ")
-}
-
-func renderLauncherHint(key, desc string) string {
-	return theme.KeyName.Render(key) + theme.KeyHint.Render(" "+desc)
+	})
 }
 
 func launcherContentWidth(width int) int {

@@ -146,10 +146,7 @@ func (m AnalyticsModel) View(width, height int) string {
 	)
 
 	// Hint bar.
-	hints := theme.KeyName.Render("s") + theme.KeyHint.Render(" cycle filter") +
-		"  " + theme.KeyName.Render("j/k") + theme.KeyHint.Render(" select") +
-		"  " + theme.KeyName.Render("Enter") + theme.KeyHint.Render(" replay") +
-		"  " + theme.KeyName.Render("q/Esc") + theme.KeyHint.Render(" back")
+	hints := hintBar(width, footerBindingsForScreen(ScreenAnalytics))
 
 	bodyHeight := height - 2 // status + hints
 	leftWidth := width / 2

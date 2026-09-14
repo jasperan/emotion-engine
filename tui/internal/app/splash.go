@@ -162,14 +162,7 @@ func (m SplashModel) View(width, height int) string {
 		status = theme.MutedText.Render("Waiting...")
 	}
 
-	var hints string
-	if m.connected {
-		hints = theme.KeyName.Render("Enter") + theme.KeyHint.Render(" browse scenarios") +
-			"  " + theme.KeyName.Render("q") + theme.KeyHint.Render(" quit")
-	} else {
-		hints = theme.KeyName.Render("r") + theme.KeyHint.Render(" retry") +
-			"  " + theme.KeyName.Render("q") + theme.KeyHint.Render(" quit")
-	}
+	hints := hintBar(width, SplashHintBindings(m.connected))
 
 	versionLine := theme.MutedText.Render("v" + m.version)
 	guidance := m.connectionGuidance(width)

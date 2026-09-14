@@ -364,18 +364,7 @@ func (m ReplayModel) renderTransportBar(width int) string {
 
 // renderHintBar renders the bottom key hint bar.
 func (m ReplayModel) renderHintBar(width int) string {
-	hints := []string{
-		theme.KeyName.Render("←/h") + theme.KeyHint.Render(" prev"),
-		theme.KeyName.Render("→/l") + theme.KeyHint.Render(" next"),
-		theme.KeyName.Render("H/L") + theme.KeyHint.Render(" ±5"),
-		theme.KeyName.Render("Home/End") + theme.KeyHint.Render(" first/last"),
-		theme.KeyName.Render("Space") + theme.KeyHint.Render(" play"),
-		theme.KeyName.Render("+/-") + theme.KeyHint.Render(" speed"),
-		theme.KeyName.Render("d") + theme.KeyHint.Render(" diff"),
-		theme.KeyName.Render("e") + theme.KeyHint.Render(" eval"),
-		theme.KeyName.Render("q/Esc") + theme.KeyHint.Render(" back"),
-	}
-	bar := strings.Join(hints, "  ")
+	bar := hintBar(width, footerBindingsForScreen(ScreenReplay))
 	return theme.StatusBar.Width(width).Render(" " + bar)
 }
 

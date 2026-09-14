@@ -188,10 +188,7 @@ func (m HistoryModel) View(width, height int) string {
 
 	m.list.SetSize(width, height-2)
 
-	hints := theme.KeyName.Render("Enter") + theme.KeyHint.Render(" view") +
-		"  " + theme.KeyName.Render("r") + theme.KeyHint.Render(" replay") +
-		"  " + theme.KeyName.Render("↑/↓") + theme.KeyHint.Render(" navigate") +
-		"  " + theme.KeyName.Render("q/Esc") + theme.KeyHint.Render(" back")
+	hints := hintBar(width, footerBindingsForScreen(ScreenHistory))
 
 	return m.list.View() + "\n" + hints
 }

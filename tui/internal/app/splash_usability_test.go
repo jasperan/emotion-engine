@@ -40,10 +40,9 @@ func TestSplashCompactViewFits80Columns(t *testing.T) {
 }
 
 func TestHelpLauncherDocumentsActualBackKeys(t *testing.T) {
-	h := HelpModel{}
 	found := false
-	for _, binding := range h.bindingsForScreen(ScreenLauncher) {
-		if binding.key == "q/Esc" && binding.desc == "Back" {
+	for _, binding := range bindingsForScreen(ScreenLauncher) {
+		if line := binding.Help(); line.Key == "q/Esc" && line.Desc == "Back" {
 			found = true
 		}
 	}

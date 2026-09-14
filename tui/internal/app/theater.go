@@ -290,13 +290,8 @@ func (m TheaterModel) View(width, height int) string {
 		maxSteps = m.run.MaxSteps
 	}
 	status := lipgloss.NewStyle().Background(theme.Surface).Width(width).Render(
-		fmt.Sprintf(" Step %d/%d  %s  %s  %s  %s",
-			step, maxSteps,
-			theme.KeyName.Render("Space")+theme.KeyHint.Render(" pause"),
-			theme.KeyName.Render("1-9")+theme.KeyHint.Render(" focus"),
-			theme.KeyName.Render("0")+theme.KeyHint.Render(" all"),
-			theme.KeyName.Render("q/Esc")+theme.KeyHint.Render(" back"),
-		))
+		fmt.Sprintf(" Step %d/%d  %s", step, maxSteps,
+			hintBar(width, footerBindingsForScreen(ScreenTheater))))
 
 	return lipgloss.JoinVertical(lipgloss.Left, header, main, director, status)
 }

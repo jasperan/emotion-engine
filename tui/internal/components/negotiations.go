@@ -11,11 +11,11 @@ import (
 type NegotiationStatus int
 
 const (
-	NegPending  NegotiationStatus = iota
-	NegAccepted                   // proposal was accepted
-	NegRejected                   // proposal was rejected
-	NegExpired                    // proposal timed out
-	NegCountered                  // counter-proposal issued
+	NegPending   NegotiationStatus = iota
+	NegAccepted                    // proposal was accepted
+	NegRejected                    // proposal was rejected
+	NegExpired                     // proposal timed out
+	NegCountered                   // counter-proposal issued
 )
 
 // NegotiationEntry holds a single proposal and all responses to it.

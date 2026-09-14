@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/jasperan/emotion-engine/tui/internal/api"
 	"github.com/jasperan/emotion-engine/tui/internal/theme"
 )
@@ -158,7 +158,7 @@ func (m ReplayModel) Update(msg tea.Msg) (ReplayModel, tea.Cmd) {
 		cmds = append(cmds, m.scheduleTick())
 		return m, tea.Batch(cmds...)
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		return m.handleKey(msg)
 	}
 
@@ -166,7 +166,7 @@ func (m ReplayModel) Update(msg tea.Msg) (ReplayModel, tea.Cmd) {
 }
 
 // handleKey processes key input for the replay screen.
-func (m ReplayModel) handleKey(msg tea.KeyMsg) (ReplayModel, tea.Cmd) {
+func (m ReplayModel) handleKey(msg tea.KeyPressMsg) (ReplayModel, tea.Cmd) {
 	switch msg.String() {
 	case "left", "h":
 		m.playing = false
@@ -231,7 +231,8 @@ func (m ReplayModel) handleKey(msg tea.KeyMsg) (ReplayModel, tea.Cmd) {
 		}
 		return m, nil
 
-	case " ":
+	// v2 renders the space key as "space", not " "; accept both.
+	case " ", "space":
 		if m.playing {
 			m.playing = false
 			return m, nil

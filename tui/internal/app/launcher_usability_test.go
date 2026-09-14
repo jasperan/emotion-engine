@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/jasperan/emotion-engine/tui/internal/api"
 )
 
@@ -13,7 +13,7 @@ func TestLauncherRejectsInvalidMaxSteps(t *testing.T) {
 	m := NewLauncherModel(nil, "scenario-1")
 	m.maxStepsInput.SetValue("abc")
 
-	updated, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	updated, cmd := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	m = updated
 
 	if cmd != nil {
@@ -31,7 +31,7 @@ func TestLauncherRejectsInvalidSeed(t *testing.T) {
 	m := NewLauncherModel(nil, "scenario-1")
 	m.seedInput.SetValue("not-a-number")
 
-	updated, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	updated, cmd := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	m = updated
 
 	if cmd != nil {
@@ -45,7 +45,7 @@ func TestLauncherRejectsInvalidSeed(t *testing.T) {
 func TestLauncherQReturnsToScenarios(t *testing.T) {
 	m := NewLauncherModel(nil, "scenario-1")
 
-	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
+	_, cmd := m.Update(tea.KeyPressMsg{Code: 'q', Text: "q"})
 	if cmd == nil {
 		t.Fatal("q should produce a screen switch command")
 	}

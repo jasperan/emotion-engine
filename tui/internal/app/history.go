@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/charmbracelet/bubbles/list"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/list"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/jasperan/emotion-engine/tui/internal/api"
 	"github.com/jasperan/emotion-engine/tui/internal/theme"
 )
@@ -132,7 +132,7 @@ func (m HistoryModel) Update(msg tea.Msg) (HistoryModel, tea.Cmd) {
 		m.list.SetSize(msg.Width, msg.Height-2)
 		return m, nil
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		if m.list.FilterState() == list.Filtering {
 			break
 		}

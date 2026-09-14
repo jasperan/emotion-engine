@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/jasperan/emotion-engine/tui/internal/api"
 	"github.com/jasperan/emotion-engine/tui/internal/theme"
 )
@@ -62,14 +62,14 @@ func NewLauncherModel(client *api.Client, scenarioID string) LauncherModel {
 	maxSteps := textinput.New()
 	maxSteps.Placeholder = "50"
 	maxSteps.CharLimit = 5
-	maxSteps.Width = 20
+	maxSteps.SetWidth(20)
 	maxSteps.Prompt = "Max Steps: "
 	maxSteps.Focus()
 
 	seed := textinput.New()
 	seed.Placeholder = "random"
 	seed.CharLimit = 10
-	seed.Width = 20
+	seed.SetWidth(20)
 	seed.Prompt = "Seed:      "
 
 	return LauncherModel{
@@ -116,7 +116,7 @@ func (m LauncherModel) Update(msg tea.Msg) (LauncherModel, tea.Cmd) {
 			}
 		}
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "tab", "shift+tab":
 			numFields := 3

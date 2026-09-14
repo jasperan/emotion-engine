@@ -5,8 +5,8 @@ import (
 	"sort"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/jasperan/emotion-engine/tui/internal/api"
 	"github.com/jasperan/emotion-engine/tui/internal/theme"
 )
@@ -78,7 +78,7 @@ func (m AnalyticsModel) Update(msg tea.Msg) (AnalyticsModel, tea.Cmd) {
 		}
 		return m, nil
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		if !m.available {
 			switch msg.String() {
 			case "q", "esc":

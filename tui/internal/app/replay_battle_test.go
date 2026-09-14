@@ -4,18 +4,18 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/jasperan/emotion-engine/tui/internal/api"
 )
 
-// runeKey builds a tea.KeyMsg for a printable character like "d", "+", "H", etc.
-func runeKey(r rune) tea.KeyMsg {
-	return tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}}
+// runeKey builds a tea.KeyPressMsg for a printable character like "d", "+", "H", etc.
+func runeKey(r rune) tea.KeyPressMsg {
+	return tea.KeyPressMsg{Code: r, Text: string(r)}
 }
 
-// specialKey builds a tea.KeyMsg for a named key (left, right, home, end, space, etc.)
-func specialKey(kt tea.KeyType) tea.KeyMsg {
-	return tea.KeyMsg{Type: kt}
+// specialKey builds a tea.KeyPressMsg for a named key (left, right, home, end, space, etc.)
+func specialKey(kt rune) tea.KeyPressMsg {
+	return tea.KeyPressMsg{Code: kt}
 }
 
 // --- computeDiff edge cases ---

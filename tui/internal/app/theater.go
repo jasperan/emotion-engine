@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/jasperan/emotion-engine/tui/internal/api"
 	"github.com/jasperan/emotion-engine/tui/internal/theme"
 )
@@ -67,7 +67,7 @@ func (m TheaterModel) Update(msg tea.Msg) (TheaterModel, tea.Cmd) {
 		m.handleWSEvent(msg.Event)
 		return m, nil
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		return m.handleKey(msg)
 	}
 	return m, nil
@@ -177,9 +177,10 @@ func (m *TheaterModel) trackAgent(name string) {
 	m.agentNames = append(m.agentNames, name)
 }
 
-func (m TheaterModel) handleKey(msg tea.KeyMsg) (TheaterModel, tea.Cmd) {
+func (m TheaterModel) handleKey(msg tea.KeyPressMsg) (TheaterModel, tea.Cmd) {
 	switch msg.String() {
-	case " ":
+	// v2 renders the space key as "space", not " "; accept both.
+	case " ", "space":
 		m.paused = !m.paused
 
 	case "1", "2", "3", "4", "5", "6", "7", "8", "9":

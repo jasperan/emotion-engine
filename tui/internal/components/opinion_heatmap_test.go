@@ -113,8 +113,8 @@ func TestStanceColor_Range(t *testing.T) {
 	// Verify stanceColor doesn't panic across range
 	for v := -1.0; v <= 1.0; v += 0.1 {
 		c := stanceColor(v)
-		if c == "" {
-			t.Errorf("stanceColor(%f) returned empty", v)
+		if c == nil {
+			t.Errorf("stanceColor(%f) returned nil", v)
 		}
 	}
 }

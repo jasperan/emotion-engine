@@ -2,9 +2,10 @@ package components
 
 import (
 	"fmt"
+	"image/color"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 	"github.com/jasperan/emotion-engine/tui/internal/theme"
 )
 
@@ -60,7 +61,7 @@ type MindAction struct {
 
 // coloredStat returns a styled "Label: N" string with HP/Stress color coding.
 func coloredStat(label string, value int, isStress bool) string {
-	var color lipgloss.Color
+	var color color.Color
 	if isStress {
 		switch {
 		case value > 80:

@@ -3,7 +3,7 @@ package app
 import (
 	"fmt"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/jasperan/emotion-engine/tui/internal/api"
 	"github.com/jasperan/emotion-engine/tui/internal/components"
 )
@@ -109,7 +109,7 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.height = msg.Height
 		return a, nil
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "ctrl+c":
 			a.wsClient.Close()
@@ -182,7 +182,14 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 // View renders the current screen, with an optional help overlay.
-func (a App) View() string {
+//
+// AltScreen is declared HERE rather than as a program option. v2 removed the
+// alt-screen program option, so terminal features moved onto the returned tea.View.
+// That is also what makes the SSH entry point work: internal/ssh hands a model
+// to a Wish middleware and cannot pass the terminal a program option, so the
+// model has to declare the alternate screen itself. Both entry points
+// (cmd/root.go for local, internal/ssh for remote) therefore get it from here.
+func (a App) View() tea.View {
 	var content string
 
 	switch a.screen {
@@ -210,7 +217,9 @@ func (a App) View() string {
 		content = a.renderHelpOverlay(content)
 	}
 
-	return content
+	v := tea.NewView(content)
+	v.AltScreen = true
+	return v
 }
 
 // switchScreen creates a fresh sub-model for the target screen and initialises it.

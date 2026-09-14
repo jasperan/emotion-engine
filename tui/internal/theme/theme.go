@@ -1,24 +1,28 @@
 package theme
 
-import "github.com/charmbracelet/lipgloss"
+import (
+	"image/color"
+
+	"charm.land/lipgloss/v2"
+)
 
 // Catppuccin Mocha palette (see docs/tui-design-tokens.md).
 // 14 approved tokens — single source of truth for the whole TUI.
 var (
-	Bg       = lipgloss.Color("#1e1e2e")
-	Surface  = lipgloss.Color("#181825")
-	Elevated = lipgloss.Color("#313244")
-	Highest  = lipgloss.Color("#45475a")
-	Text     = lipgloss.Color("#cdd6f4")
-	Subtext  = lipgloss.Color("#a6adc8")
-	Muted    = lipgloss.Color("#6c7086")
-	Dim      = lipgloss.Color("#585b70")
-	Primary  = lipgloss.Color("#89b4fa")
+	Bg        = lipgloss.Color("#1e1e2e")
+	Surface   = lipgloss.Color("#181825")
+	Elevated  = lipgloss.Color("#313244")
+	Highest   = lipgloss.Color("#45475a")
+	Text      = lipgloss.Color("#cdd6f4")
+	Subtext   = lipgloss.Color("#a6adc8")
+	Muted     = lipgloss.Color("#6c7086")
+	Dim       = lipgloss.Color("#585b70")
+	Primary   = lipgloss.Color("#89b4fa")
 	Secondary = lipgloss.Color("#cba6f7")
-	Info     = lipgloss.Color("#89dceb")
-	Accent   = lipgloss.Color("#a6e3a1") // success
-	Warning  = lipgloss.Color("#f9e2af")
-	Danger   = lipgloss.Color("#f38ba8")
+	Info      = lipgloss.Color("#89dceb")
+	Accent    = lipgloss.Color("#a6e3a1") // success
+	Warning   = lipgloss.Color("#f9e2af")
+	Danger    = lipgloss.Color("#f38ba8")
 )
 
 // Panel styles.
@@ -34,9 +38,9 @@ var (
 			Padding(1, 2)
 
 	GeneratingPanel = lipgloss.NewStyle().
-				Border(lipgloss.RoundedBorder()).
-				BorderForeground(Accent).
-				Padding(1, 2)
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(Accent).
+			Padding(1, 2)
 )
 
 // Text styles.
@@ -99,7 +103,7 @@ var (
 var Cursor = lipgloss.NewStyle().Background(Primary)
 
 // HazardColor returns a lipgloss.Color based on a 0.0-1.0 hazard level.
-func HazardColor(level float64) lipgloss.Color {
+func HazardColor(level float64) color.Color {
 	switch {
 	case level >= 0.7:
 		return Danger
@@ -111,7 +115,7 @@ func HazardColor(level float64) lipgloss.Color {
 }
 
 // StatusColor returns a lipgloss.Color based on a status string.
-func StatusColor(status string) lipgloss.Color {
+func StatusColor(status string) color.Color {
 	switch status {
 	case "active", "generating", "running", "completed":
 		return Accent

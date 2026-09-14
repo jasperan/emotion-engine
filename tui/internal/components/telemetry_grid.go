@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 	"github.com/jasperan/emotion-engine/tui/internal/theme"
 )
 
 // AgentTelemetryInfo holds operational metrics for one agent.
 type AgentTelemetryInfo struct {
 	Name             string
-	Status           string  // "healthy", "recovering", "degraded", "failed"
+	Status           string // "healthy", "recovering", "degraded", "failed"
 	AvgTickMs        float64
 	TokensUsed       int
 	ActionCount      int

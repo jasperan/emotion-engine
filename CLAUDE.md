@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 EmotionSim: Multi-agent simulation engine analyzing emergent cooperative behaviors in AI agent swarms. Simulates disaster scenarios (e.g., "The Great Flood") with diverse personas where LLM-driven agents interact, make decisions, and cooperate based on personality traits and emotional states.
 
-**Tech Stack:** Python 3.11+ (FastAPI, SQLAlchemy, Oracle DB 26ai Free, vLLM/Ollama), Go 1.24+ (Bubble Tea TUI), SvelteKit 2.0 + Vite (frontend)
+**Tech Stack:** Python 3.11+ (FastAPI, SQLAlchemy, Oracle DB 26ai Free, vLLM/Ollama), Go 1.26+ (Bubble Tea TUI), SvelteKit 2.0 + Vite (frontend)
 
 **Branch: `mirofish-integration`** adds knowledge graph infrastructure (Oracle SQL/PGQ), document ingestion via NER/RE, graph-backed agent memory with hybrid search, post-sim analysis tools, opinion dynamics, and lightweight agents for 100+ scaling. The core MiroFish features are now wired into the live engine (see Gotchas for the runtime switches: `GRAPH_MEMORY_ENABLED`, hybrid populations, governance gates, goal trees).
 

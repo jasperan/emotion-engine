@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/jasperan/emotion-engine/tui/internal/app"
 	"github.com/jasperan/emotion-engine/tui/internal/backend"
 	sshsrv "github.com/jasperan/emotion-engine/tui/internal/ssh"
@@ -87,7 +87,9 @@ var rootCmd = &cobra.Command{
 
 		a := app.NewApp(serverURL, false, Version)
 
-		p := tea.NewProgram(a, tea.WithAltScreen())
+		// AltScreen is not set here: v2 removed the alt-screen program option, and
+		// App.View declares View.AltScreen instead, so local and SSH sessions match.
+		p := tea.NewProgram(a)
 		a.SetProgram(p)
 
 		// Re-wrap since SetProgram mutates the pointer receiver

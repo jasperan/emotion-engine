@@ -2,10 +2,11 @@ package components
 
 import (
 	"fmt"
+	"image/color"
 	"sort"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 	"github.com/jasperan/emotion-engine/tui/internal/theme"
 )
 
@@ -20,35 +21,35 @@ type OpinionStance struct {
 type TippingPointInfo struct {
 	Step       int
 	Topic      string
-	Type       string  // "convergence" or "divergence"
+	Type       string // "convergence" or "divergence"
 	MeanBefore float64
 	MeanAfter  float64
 }
 
 // InfluenceProfile summarizes an agent's influence footprint.
 type InfluenceProfile struct {
-	AgentName      string
-	Exerted        float64
-	Received       float64
+	AgentName       string
+	Exerted         float64
+	Received        float64
 	IsSuperSpreader bool
-	IsAnchor       bool
+	IsAnchor        bool
 }
 
 // OpinionHeatmapData holds everything for the social dynamics panel.
 type OpinionHeatmapData struct {
-	Stances         []OpinionStance
-	TippingPoints   []TippingPointInfo
-	Profiles        []InfluenceProfile
+	Stances            []OpinionStance
+	TippingPoints      []TippingPointInfo
+	Profiles           []InfluenceProfile
 	ConvergenceByTopic map[string]float64 // topic -> 0.0-1.0
-	Width           int
-	Height          int
+	Width              int
+	Height             int
 }
 
 // stanceColor returns a color interpolated along the 3-step semantic ramp
 // error (-1) → warning (0) → success (+1), per the design token rules.
 // Endpoints are approved tokens; the runtime-blended midpoint is computed
 // (not a source literal) and is exempt from the palette checker.
-func stanceColor(v float64) lipgloss.Color {
+func stanceColor(v float64) color.Color {
 	switch {
 	case v < -0.34:
 		return lipgloss.Color("#f38ba8") // strong oppose (error)

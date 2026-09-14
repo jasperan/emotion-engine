@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/jasperan/emotion-engine/tui/internal/api"
 	"github.com/jasperan/emotion-engine/tui/internal/components"
 	"github.com/jasperan/emotion-engine/tui/internal/theme"
@@ -208,7 +208,7 @@ func (m DashboardModel) Update(msg tea.Msg) (DashboardModel, tea.Cmd) {
 		}
 		return m, nil
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		m.errMsg = "" // clear error on next keypress
 		return m.handleKey(msg)
 	}
@@ -910,7 +910,7 @@ func (m DashboardModel) renderRightPanel(rightWidth, rightHeight int) string {
 }
 
 // handleKey processes keyboard input for the dashboard.
-func (m DashboardModel) handleKey(msg tea.KeyMsg) (DashboardModel, tea.Cmd) {
+func (m DashboardModel) handleKey(msg tea.KeyPressMsg) (DashboardModel, tea.Cmd) {
 	switch msg.String() {
 	case "tab":
 		m.panelMode = (m.panelMode + 1) % panelModeCount
@@ -943,7 +943,8 @@ func (m DashboardModel) handleKey(msg tea.KeyMsg) (DashboardModel, tea.Cmd) {
 			m.mode = ModeFocus
 		}
 
-	case " ":
+	// v2 renders the space key as "space", not " "; accept both.
+	case " ", "space":
 		if !m.readOnly && m.run != nil {
 			action := "pause"
 			if m.run.Status == "paused" {

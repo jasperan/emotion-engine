@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/jasperan/emotion-engine/tui/internal/api"
 )
 
@@ -140,7 +140,7 @@ func TestTheaterModel_Pause(t *testing.T) {
 		t.Error("should not start paused")
 	}
 
-	m, _ = m.handleKey(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{' '}})
+	m, _ = m.handleKey(tea.KeyPressMsg{Code: ' ', Text: " "})
 	if !m.paused {
 		t.Error("should be paused after Space")
 	}
@@ -158,7 +158,7 @@ func TestTheaterModel_Pause(t *testing.T) {
 		t.Error("should not add entries when paused")
 	}
 
-	m, _ = m.handleKey(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{' '}})
+	m, _ = m.handleKey(tea.KeyPressMsg{Code: ' ', Text: " "})
 	if m.paused {
 		t.Error("should be unpaused after second Space")
 	}
@@ -169,23 +169,23 @@ func TestTheaterModel_FocusAgent(t *testing.T) {
 	m.agentNames = []string{"Alice", "Bob", "Carol"}
 
 	// Focus on agent 2 (Bob)
-	m, _ = m.handleKey(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'2'}})
+	m, _ = m.handleKey(tea.KeyPressMsg{Code: '2', Text: "2"})
 	if m.focusAgent != 1 {
 		t.Errorf("expected focus on index 1, got %d", m.focusAgent)
 	}
 
 	// Toggle off
-	m, _ = m.handleKey(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'2'}})
+	m, _ = m.handleKey(tea.KeyPressMsg{Code: '2', Text: "2"})
 	if m.focusAgent != -1 {
 		t.Errorf("expected focus off, got %d", m.focusAgent)
 	}
 
 	// Focus then reset to all
-	m, _ = m.handleKey(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'1'}})
+	m, _ = m.handleKey(tea.KeyPressMsg{Code: '1', Text: "1"})
 	if m.focusAgent != 0 {
 		t.Errorf("expected focus 0, got %d", m.focusAgent)
 	}
-	m, _ = m.handleKey(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'0'}})
+	m, _ = m.handleKey(tea.KeyPressMsg{Code: '0', Text: "0"})
 	if m.focusAgent != -1 {
 		t.Error("expected focus reset to -1")
 	}
@@ -246,7 +246,7 @@ func TestTheaterModel_RunStatusUpdate(t *testing.T) {
 func TestTheaterModel_EscReturns(t *testing.T) {
 	m := newTestTheater()
 	var cmd tea.Cmd
-	m, cmd = m.handleKey(tea.KeyMsg{Type: tea.KeyEsc})
+	m, cmd = m.handleKey(tea.KeyPressMsg{Code: tea.KeyEsc})
 	if cmd == nil {
 		t.Error("expected SwitchScreenMsg command on Esc")
 	}

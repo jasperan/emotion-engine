@@ -397,7 +397,7 @@ Agents communicate through a structured protocol with direct, broadcast, and roo
 **Docker path** (one-command install): Docker + Docker Compose only.
 
 **Manual path:**
-- Python 3.11+, Go 1.24+ (for TUI), Node.js 18+ (for web dashboard)
+- Python 3.11+, Go 1.26+ (for TUI), Node.js 18+ (for web dashboard)
 - [vLLM](https://docs.vllm.ai/) (recommended) or [Ollama](https://ollama.ai/) for local inference
 - Oracle DB 26ai Free (localhost:1522)
 

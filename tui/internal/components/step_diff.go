@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 	"github.com/jasperan/emotion-engine/tui/internal/theme"
 )
 
@@ -28,14 +28,14 @@ type DiffEntry struct {
 
 // ContagionEvent represents a stress propagation event.
 type ContagionEvent struct {
-	SourceName  string
-	TargetName  string
-	StressDelta float64
+	SourceName   string
+	TargetName   string
+	StressDelta  float64
 	StressBefore float64
-	StressAfter float64
-	Mechanism   string // "panic_spread" or "calm_anchor"
-	Location    string
-	Step        int
+	StressAfter  float64
+	Mechanism    string // "panic_spread" or "calm_anchor"
+	Location     string
+	Step         int
 }
 
 // StepDiffData holds everything for the step diff + contagion panel.

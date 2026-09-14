@@ -2,9 +2,10 @@ package components
 
 import (
 	"fmt"
+	"image/color"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 	"github.com/jasperan/emotion-engine/tui/internal/theme"
 )
 
@@ -73,7 +74,7 @@ func RenderAgentPane(d AgentPaneData, width, height int) string {
 		var statParts []string
 		// Always show HP/ST when enrichment data is present (HP:0 = dead is valid)
 		{
-			var hpColor lipgloss.Color
+			var hpColor color.Color
 			switch {
 			case d.Health >= 50:
 				hpColor = theme.Accent
@@ -85,7 +86,7 @@ func RenderAgentPane(d AgentPaneData, width, height int) string {
 			statParts = append(statParts, lipgloss.NewStyle().Foreground(hpColor).Render(fmt.Sprintf("HP:%d", d.Health)))
 		}
 		{
-			var stColor lipgloss.Color
+			var stColor color.Color
 			switch {
 			case d.Stress <= 60:
 				stColor = theme.Accent

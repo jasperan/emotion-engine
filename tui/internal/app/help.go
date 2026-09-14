@@ -3,7 +3,7 @@ package app
 import (
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 	"github.com/jasperan/emotion-engine/tui/internal/theme"
 )
 
@@ -43,7 +43,7 @@ func (h HelpModel) Overlay(bg string, w, h2 int, screen Screen) string {
 		lipgloss.Center, lipgloss.Center,
 		helpContent,
 		lipgloss.WithWhitespaceChars(" "),
-		lipgloss.WithWhitespaceForeground(theme.Bg),
+		lipgloss.WithWhitespaceStyle(lipgloss.NewStyle().Foreground(theme.Bg)),
 	)
 }
 

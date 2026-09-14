@@ -2,10 +2,11 @@ package components
 
 import (
 	"fmt"
+	"image/color"
 	"sort"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 	"github.com/jasperan/emotion-engine/tui/internal/theme"
 )
 
@@ -31,10 +32,10 @@ type CoalitionInfo struct {
 
 // InfluenceEdgeInfo tracks directed influence between agents.
 type InfluenceEdgeInfo struct {
-	Source          string
-	Target          string
-	Topic           string
-	TotalDelta      float64
+	Source           string
+	Target           string
+	Topic            string
+	TotalDelta       float64
 	InteractionCount int
 }
 
@@ -51,7 +52,7 @@ type NetworkMatrixData struct {
 
 // cellColor returns a colored block based on relationship type and strength.
 func cellColor(edgeType RelEdgeType, strength float64) string {
-	var fg lipgloss.Color
+	var fg color.Color
 	switch edgeType {
 	case RelTrust:
 		fg = theme.Accent
@@ -84,7 +85,7 @@ func influenceCellColor(delta float64) string {
 		abs = -abs
 	}
 
-	var fg lipgloss.Color
+	var fg color.Color
 	if delta > 0 {
 		fg = theme.Accent // positive influence
 	} else if delta < 0 {
@@ -171,7 +172,7 @@ func RenderNetworkMatrix(d NetworkMatrixData) string {
 		// Coalition marker
 		marker := " "
 		if ci, ok := coalitionOf[rowAgent.Name]; ok {
-			colors := []lipgloss.Color{theme.Primary, theme.Accent, theme.Warning, theme.Danger}
+			colors := []color.Color{theme.Primary, theme.Accent, theme.Warning, theme.Danger}
 			c := colors[ci%len(colors)]
 			marker = lipgloss.NewStyle().Foreground(c).Render("\u2502") // │
 		}

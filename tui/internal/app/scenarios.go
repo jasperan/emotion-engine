@@ -2,12 +2,12 @@ package app
 
 import (
 	"fmt"
-	"io"
 
-	"charm.land/bubbles/v2/list"
 	tea "charm.land/bubbletea/v2"
+	"charm.land/huh/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/jasperan/emotion-engine/tui/internal/api"
+	"github.com/jasperan/emotion-engine/tui/internal/huhstyle"
 	"github.com/jasperan/emotion-engine/tui/internal/theme"
 )
 
@@ -18,84 +18,72 @@ type scenariosLoadedMsg struct {
 	err       error
 }
 
-// --- scenarioItem implements list.Item ---
+const keyScenario = "scenario"
 
-type scenarioItem struct {
-	scenario api.ScenarioResponse
+// scenarioSelection is the storage the scenario Select is bound to. It is a
+// pointer for the same reason launcherAnswers is: the Elm architecture copies
+// models by value, so a bound field must live where every copy can see it.
+type scenarioSelection struct {
+	id string
 }
 
-func (i scenarioItem) FilterValue() string { return i.scenario.Name }
-func (i scenarioItem) Title() string       { return i.scenario.Name }
-func (i scenarioItem) Description() string { return i.scenario.Description }
+// scenarioOptionLabel is the option text for a scenario. The old list delegate
+// drew the name, the agent count and the description on three lines; a Select
+// option is a single line, so the count joins the label and the description is
+// rendered beneath the form for the option under the cursor.
+func scenarioOptionLabel(s api.ScenarioResponse) string {
+	return fmt.Sprintf("%s (%d agents)", s.Name, len(s.AgentTemplates))
+}
 
-// --- Custom delegate ---
-
-type scenarioDelegate struct{}
-
-func (d scenarioDelegate) Height() int                             { return 3 }
-func (d scenarioDelegate) Spacing() int                            { return 1 }
-func (d scenarioDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
-
-func (d scenarioDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-	item, ok := listItem.(scenarioItem)
-	if !ok {
-		return
+// buildScenarioForm builds the scenario browser as a huh form.
+func buildScenarioForm(scenarios []api.ScenarioResponse, sel *scenarioSelection) (*huh.Form, *huh.Select[string]) {
+	opts := make([]huh.Option[string], 0, len(scenarios))
+	for _, s := range scenarios {
+		opts = append(opts, huh.NewOption(scenarioOptionLabel(s), s.ID))
 	}
 
-	s := item.scenario
-	agentCount := len(s.AgentTemplates)
+	selectField := huh.NewSelect[string]().
+		Key(keyScenario).
+		Title("Scenarios").
+		Description("Pick a scenario to configure and launch.").
+		Options(opts...).
+		Value(&sel.id)
 
-	isSelected := index == m.Index()
+	form := huh.NewForm(huh.NewGroup(selectField)).
+		WithTheme(huh.ThemeFunc(huhstyle.Theme)).
+		WithAccessible(huhstyle.Accessible()).
+		// The screen draws its own hint bar from footerBindingsForScreen, and
+		// the F1 overlay documents the same keys. huh's footer would be a
+		// second, differently-worded copy of the same hints.
+		WithShowHelp(false)
 
-	// Name line
-	var nameStyle lipgloss.Style
-	if isSelected {
-		nameStyle = lipgloss.NewStyle().Bold(true).Foreground(theme.Primary)
-	} else {
-		nameStyle = theme.Title
-	}
-	name := nameStyle.Render(s.Name)
-	agents := theme.MutedText.Render(fmt.Sprintf(" (%d agents)", agentCount))
-
-	// Description
-	desc := s.Description
-	if len(desc) > 80 {
-		desc = desc[:77] + "..."
-	}
-	descLine := theme.MutedText.Render("  " + desc)
-
-	// Cursor
-	cursor := "  "
-	if isSelected {
-		cursor = theme.Subtitle.Render("> ")
-	}
-
-	fmt.Fprintf(w, "%s%s%s\n%s", cursor, name, agents, descLine)
+	return form, selectField
 }
 
 // --- ScenarioModel ---
 
 // ScenarioModel is the scenario browser screen.
 type ScenarioModel struct {
-	client *api.Client
-	list   list.Model
-	loaded bool
-	err    error
+	client    *api.Client
+	scenarios []api.ScenarioResponse
+	selection *scenarioSelection
+	form      *huh.Form
+	selectF   *huh.Select[string]
+	loaded    bool
+	err       error
+
+	// width and height are the last size reported by tea.WindowSizeMsg. The
+	// form is sized from these in Update, because huh rebuilds a form's content
+	// on Update and a width applied during View would land a frame too late.
+	width  int
+	height int
 }
 
 // NewScenarioModel creates a new scenario browser.
 func NewScenarioModel(client *api.Client) ScenarioModel {
-	delegate := scenarioDelegate{}
-	l := list.New([]list.Item{}, delegate, 0, 0)
-	l.Title = "Scenarios"
-	l.SetShowStatusBar(true)
-	l.SetFilteringEnabled(true)
-	l.Styles.Title = theme.Title
-	l.SetShowHelp(false)
-
 	return ScenarioModel{
-		client: client,
-		list:   l,
+		client:    client,
+		selection: &scenarioSelection{},
 	}
 }
 
@@ -116,60 +104,98 @@ func (m ScenarioModel) Update(msg tea.Msg) (ScenarioModel, tea.Cmd) {
 			m.err = msg.err
 			return m, nil
 		}
-		items := make([]list.Item, len(msg.scenarios))
-		for i, s := range msg.scenarios {
-			items[i] = scenarioItem{scenario: s}
-		}
-		m.list.SetItems(items)
+		// The options only exist once the scenarios are known, so the form is
+		// built here rather than in the constructor.
+		m.scenarios = msg.scenarios
+		m.form, m.selectF = buildScenarioForm(msg.scenarios, m.selection)
 		m.loaded = true
-		return m, nil
+		m.resizeForm()
+		return m, m.form.Init()
+
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
+		m.resizeForm()
+		// Still delegated to the form below, which is what rebuilds its content.
 
 	case tea.KeyPressMsg:
-		// Don't intercept keys when filtering is active.
-		if m.list.FilterState() == list.Filtering {
-			break
-		}
-		switch msg.String() {
-		case "enter":
-			if item, ok := m.list.SelectedItem().(scenarioItem); ok {
-				return m, func() tea.Msg {
-					return SwitchScreenMsg{
-						Screen: ScreenLauncher,
-						Data:   item.scenario.ID,
-					}
-				}
-			}
-		case "h":
-			return m, func() tea.Msg {
-				return SwitchScreenMsg{Screen: ScreenHistory}
-			}
-		case "a":
-			return m, func() tea.Msg {
-				return SwitchScreenMsg{Screen: ScreenAnalytics}
-			}
-		case "q", "esc":
-			return m, func() tea.Msg {
-				return SwitchScreenMsg{Screen: ScreenSplash}
+		// The Select owns every key while its "/" filter is capturing input, so
+		// the screen bindings only apply once filtering has stopped.
+		if m.selectF != nil && !m.selectF.GetFiltering() {
+			switch msg.String() {
+			case "h":
+				return m, switchTo(ScreenHistory)
+			case "a":
+				return m, switchTo(ScreenAnalytics)
+			case "q", "esc":
+				return m, switchTo(ScreenSplash)
 			}
 		}
 	}
 
-	var cmd tea.Cmd
-	m.list, cmd = m.list.Update(msg)
+	if m.form == nil {
+		return m, nil
+	}
+
+	model, cmd := m.form.Update(msg)
+	if form, ok := model.(*huh.Form); ok {
+		m.form = form
+	}
+	if m.form.State == huh.StateCompleted {
+		return m, switchToData(ScreenLauncher, m.selection.id)
+	}
 	return m, cmd
 }
 
-// View renders the scenario list.
+// resizeForm applies the last reported terminal size to the form. It is a
+// no-op until the form exists, so a size that arrives before the scenarios load
+// is applied when the form is built.
+func (m *ScenarioModel) resizeForm() {
+	if m.form == nil {
+		return
+	}
+	m.form.WithWidth(formContentWidth(m.width))
+	m.form.WithHeight(formHeight(m.height))
+	m.selectF.Height(selectHeight(m.height, len(m.scenarios)))
+}
+
+// hoveredScenario returns the scenario under the cursor.
+func (m ScenarioModel) hoveredScenario() (api.ScenarioResponse, bool) {
+	if m.selectF == nil {
+		return api.ScenarioResponse{}, false
+	}
+	id, ok := m.selectF.Hovered()
+	if !ok {
+		return api.ScenarioResponse{}, false
+	}
+	for _, s := range m.scenarios {
+		if s.ID == id {
+			return s, true
+		}
+	}
+	return api.ScenarioResponse{}, false
+}
+
+// View renders the scenario browser.
 func (m ScenarioModel) View(width, height int) string {
 	if m.err != nil {
 		errView := theme.ErrorText.Render("Failed to load scenarios: "+m.err.Error()) +
 			"\n\n" + theme.KeyName.Render("q/Esc") + theme.KeyHint.Render(" back")
 		return lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, errView)
 	}
+	if !m.loaded {
+		return lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center,
+			theme.MutedText.Render("Loading scenarios..."))
+	}
 
-	m.list.SetSize(width, height-2)
+	contentWidth := formContentWidth(width)
+
+	body := trimFormPad(m.form.View())
+	if s, ok := m.hoveredScenario(); ok && s.Description != "" {
+		body += "\n\n" + theme.MutedText.Width(contentWidth).Render(s.Description)
+	}
 
 	hints := hintBar(width, footerBindingsForScreen(ScreenScenarios))
 
-	return m.list.View() + "\n" + hints
+	return lipgloss.Place(width, height-2, lipgloss.Center, lipgloss.Center, body) + "\n" + hints
 }

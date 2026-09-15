@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"strings"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/jasperan/emotion-engine/tui/internal/api"
@@ -33,6 +34,88 @@ const (
 type SwitchScreenMsg struct {
 	Screen Screen
 	Data   interface{}
+}
+
+// switchTo requests a screen transition with no payload.
+func switchTo(screen Screen) tea.Cmd {
+	return func() tea.Msg { return SwitchScreenMsg{Screen: screen} }
+}
+
+// switchToData requests a screen transition carrying a screen payload, which
+// the router reads back as the scenario or run id.
+func switchToData(screen Screen, data interface{}) tea.Cmd {
+	return func() tea.Msg { return SwitchScreenMsg{Screen: screen, Data: data} }
+}
+
+// formContentWidth is the usable width for a huh form: the terminal less the
+// margins the screens place around the body, clamped so a form stays readable
+// on a narrow terminal and does not sprawl on a wide one.
+func formContentWidth(width int) int {
+	if width <= 0 {
+		return 64
+	}
+	contentWidth := width - 10
+	if contentWidth < 36 {
+		contentWidth = 36
+	}
+	if contentWidth > 84 {
+		contentWidth = 84
+	}
+	return contentWidth
+}
+
+// selectHeight returns the height to set on a Select, or 0 when every option
+// fits.
+//
+// huh sizes a Select's viewport to the option count when no height is set, and
+// pads it out to the height when one is. Sizing it for a short list would
+// therefore leave a hole inside the field's border, so the height is only set
+// when the options would otherwise overflow.
+func selectHeight(screenHeight, options int) int {
+	// Rows left for options after the screen chrome and the Select's own title
+	// and description lines.
+	rows := screenHeight - 14
+	if rows < 1 {
+		rows = 1
+	}
+	if options <= rows {
+		return 0
+	}
+	// The height also covers the title and description the viewport is offset by.
+	return rows + 2
+}
+
+// formHeight bounds a form's height to the rows left over after the screen's
+// own chrome (title block, hovered-item line, footer hints and margins).
+//
+// A form needs this because huh sizes each group's viewport from the height of
+// its fields BEFORE the theme is applied: the rounded field cards are taller
+// than the built-in styles assume, so without it the last field is scrolled out
+// of view on a roomy terminal. Groups pad themselves out to this height, which
+// trimFormPad removes again; when the room really is too small huh scrolls to
+// the focused field, which is the right fallback.
+func formHeight(height int) int {
+	h := height - 12
+	if h < 9 {
+		h = 9
+	}
+	if h > 30 {
+		h = 30
+	}
+	return h
+}
+
+// trimFormPad drops the blank rows a huh group pads itself out to the height
+// set by formHeight. Without this the pad sits between the last field and the
+// screen's own hint bar, which reads as a hole in the layout. The forms hide
+// huh's help footer (the screens already draw one), so the pad is always the
+// trailing run of blank lines.
+func trimFormPad(view string) string {
+	lines := strings.Split(view, "\n")
+	for len(lines) > 0 && strings.TrimSpace(lines[len(lines)-1]) == "" {
+		lines = lines[:len(lines)-1]
+	}
+	return strings.Join(lines, "\n")
 }
 
 // WSEventMsg wraps a WebSocket event for the Bubble Tea update loop.
@@ -107,7 +190,10 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		a.width = msg.Width
 		a.height = msg.Height
-		return a, nil
+		// Deliberately no return: the size is also delegated to the current
+		// screen below. An embedded huh form rebuilds its content on Update,
+		// not on View, so a screen that only learned its size while rendering
+		// would draw one mis-sized frame and then reflow on the next keystroke.
 
 	case tea.KeyPressMsg:
 		switch msg.String() {

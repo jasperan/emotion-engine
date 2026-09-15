@@ -133,7 +133,7 @@ func bindingsForScreen(screen Screen) []key.Binding {
 		}
 	case ScreenLauncher:
 		return []key.Binding{
-			kb("Enter", "Start run", "enter"),
+			kb("Enter", "Next field / start run", "enter"),
 			kb("Tab", "Next field", "tab"),
 			kb("Shift+Tab", "Prev field", "shift+tab"),
 			kb("←/→", "Change provider", "left", "right"),
@@ -168,6 +168,7 @@ func bindingsForScreen(screen Screen) []key.Binding {
 			kb("Enter", "Open run (Replay/Dashboard)", "enter"),
 			kb("r", "Replay selected run", "r"),
 			kb("↑/↓", "Navigate", "up", "down"),
+			kb("/", "Filter", "/"),
 			kb("a", "Analytics", "a"),
 			kb("q/Esc", "Back", "q", "esc"),
 		}
@@ -207,7 +208,7 @@ func footerBindingsForScreen(screen Screen) []key.Binding {
 		}
 	case ScreenLauncher:
 		return []key.Binding{
-			kb("Enter", "start run", "enter"),
+			kb("Enter", "next / start", "enter"),
 			kb("Tab", "next field", "tab"),
 			kb("q/Esc", "back", "q", "esc"),
 		}
@@ -216,6 +217,7 @@ func footerBindingsForScreen(screen Screen) []key.Binding {
 			kb("Enter", "view", "enter"),
 			kb("r", "replay", "r"),
 			kb("↑/↓", "navigate", "up", "down"),
+			kb("/", "filter", "/"),
 			kb("q/Esc", "back", "q", "esc"),
 		}
 	case ScreenAnalytics:

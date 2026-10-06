@@ -10,7 +10,7 @@ from emotionsim.models.scenario import Scenario
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/documents", tags=["documents"])
+router = APIRouter(prefix="/documents", tags=["documents"])
 
 
 class DocumentUploadRequest(BaseModel):

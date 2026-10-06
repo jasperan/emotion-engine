@@ -201,3 +201,24 @@ class TestTenantByIdIsolation:
             # still intact for owner
             assert client.get(f"/api/runs/{run['id']}", headers=ha).status_code == 200
             assert client.delete(f"/api/runs/{run['id']}", headers=ha).status_code == 200
+
+    def test_chat_and_report_routes_mounted_and_scoped(self):
+        with _app_client() as client:
+            key = client.post("/api/auth/register", json={"username": "iso_c", "password": "secret123"}).json()["api_key"]
+            other = client.post("/api/auth/register", json={"username": "iso_d", "password": "secret123"}).json()["api_key"]
+            ha, hb = {"X-API-Key": key}, {"X-API-Key": other}
+            sc = client.post("/api/scenarios/", headers=ha, json=self._body("iso c")).json()
+            run = client.post("/api/runs/", headers=ha, json={"scenario_id": sc["id"], "seed": 1, "max_steps": 2}).json()
+            rid = run["id"]
+
+            paths = {r.path for r in client.app.routes}
+            assert "/api/runs/{run_id}/report" in paths
+            assert "/api/runs/{run_id}/agents/{agent_id}/chat" in paths
+            assert "/api/documents/" in paths
+            assert not any(p.startswith("/api/api/") for p in paths)
+
+            # other tenant cannot reach the private run through these routes
+            assert client.post(f"/api/runs/{rid}/report", headers=hb).status_code == 404
+            assert client.post(
+                f"/api/runs/{rid}/agents/a1/chat", headers=hb, json={"message": "hi"}
+            ).status_code == 404

@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from emotionsim.auth.deps import TenantScope, ensure_visible, get_tenant
 from emotionsim.core.database import get_db
 from emotionsim.llm.base import LLMMessage
 from emotionsim.llm.router import LLMRouter
@@ -21,7 +22,7 @@ from emotionsim.models.run import Run
 logger = logging.getLogger(__name__)
 
 router = APIRouter(
-    prefix="/api/runs/{run_id}/agents/{agent_id}",
+    prefix="/runs/{run_id}/agents/{agent_id}",
     tags=["chat"],
 )
 
@@ -137,8 +138,11 @@ async def chat_with_agent(
     agent_id: str,
     body: AgentChatRequest,
     db: AsyncSession = Depends(get_db),
+    scope: TenantScope = Depends(get_tenant),
 ):
     """Chat with an agent using its persona and simulation memories."""
+
+    ensure_visible(await db.get(Run, run_id), scope, "Run")
 
     # 1. Load agent
     result = await db.execute(

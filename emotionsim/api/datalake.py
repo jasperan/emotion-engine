@@ -1,9 +1,14 @@
 """Datalake API endpoints for querying Oracle 26ai Free logged data."""
 import asyncio
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 
+from emotionsim.auth.deps import TenantScope, ensure_visible, get_tenant
 from emotionsim.core.config import get_settings
+from emotionsim.core.database import get_db
+from emotionsim.models.run import Run
 
 router = APIRouter(prefix="/datalake", tags=["datalake"])
 
@@ -30,6 +35,25 @@ def _get_store():
     return SimulationStore(config)
 
 
+async def _authorize_run(db: AsyncSession, scope: TenantScope, run_id: str) -> None:
+    """404 when ``run_id`` belongs to another tenant.
+
+    Datalake rows share their id with the primary ``runs`` table, which holds
+    the tenant owner. Ids with no primary row are legacy/public.
+    """
+    row = await db.get(Run, run_id)
+    if row is not None:
+        ensure_visible(row, scope, "Run")
+
+
+async def _hidden_run_ids(db: AsyncSession, scope: TenantScope) -> list[str]:
+    """Ids of runs the caller must not see (owned by someone else)."""
+    query = select(Run.id).where(Run.tenant_id.is_not(None))
+    if scope.is_authenticated:
+        query = query.where(Run.tenant_id != scope.tenant)
+    return list((await db.execute(query)).scalars().all())
+
+
 async def _run_sync(func, *args, **kwargs):
     """Run a synchronous SimulationStore method in a thread to avoid blocking the event loop."""
     return await asyncio.to_thread(func, *args, **kwargs)
@@ -51,8 +75,10 @@ async def list_runs(
     status: Optional[str] = None,
     limit: int = Query(50, le=200),
     offset: int = 0,
+    db: AsyncSession = Depends(get_db),
+    scope: TenantScope = Depends(get_tenant),
 ):
-    """List logged runs with optional filtering."""
+    """List logged runs with optional filtering (other tenants' runs excluded)."""
     store = _get_store()
     try:
         return await _run_sync(
@@ -61,14 +87,20 @@ async def list_runs(
             status=status,
             limit=limit,
             offset=offset,
+            exclude_ids=await _hidden_run_ids(db, scope),
         )
     finally:
         store.close()
 
 
 @router.get("/runs/{run_id}")
-async def get_run(run_id: str):
+async def get_run(
+    run_id: str,
+    db: AsyncSession = Depends(get_db),
+    scope: TenantScope = Depends(get_tenant),
+):
     """Get a specific logged run with counts."""
+    await _authorize_run(db, scope, run_id)
     store = _get_store()
     try:
         result = await _run_sync(store.get_run, run_id)
@@ -85,8 +117,11 @@ async def get_run_events(
     event_type: Optional[str] = None,
     agent_name: Optional[str] = None,
     limit: int = Query(500, le=2000),
+    db: AsyncSession = Depends(get_db),
+    scope: TenantScope = Depends(get_tenant),
 ):
     """Get events for a logged run."""
+    await _authorize_run(db, scope, run_id)
     store = _get_store()
     try:
         return await _run_sync(
@@ -104,8 +139,11 @@ async def get_run_events(
 async def get_run_plans(
     run_id: str,
     agent_name: Optional[str] = None,
+    db: AsyncSession = Depends(get_db),
+    scope: TenantScope = Depends(get_tenant),
 ):
     """Get cognitive plan snapshots for a logged run."""
+    await _authorize_run(db, scope, run_id)
     store = _get_store()
     try:
         return await _run_sync(store.get_run_plans, run_id=run_id, agent_name=agent_name)
@@ -114,8 +152,13 @@ async def get_run_plans(
 
 
 @router.get("/runs/{run_id}/metrics")
-async def get_run_metrics(run_id: str):
+async def get_run_metrics(
+    run_id: str,
+    db: AsyncSession = Depends(get_db),
+    scope: TenantScope = Depends(get_tenant),
+):
     """Get all metrics for a logged run."""
+    await _authorize_run(db, scope, run_id)
     store = _get_store()
     try:
         return await _run_sync(store.get_run_metrics, run_id=run_id)
@@ -126,6 +169,8 @@ async def get_run_metrics(run_id: str):
 @router.get("/compare")
 async def compare_runs(
     run_ids: str = Query(..., description="Comma-separated run ids to compare"),
+    db: AsyncSession = Depends(get_db),
+    scope: TenantScope = Depends(get_tenant),
 ):
     """Compare metrics across logged runs: metric -> {run_id: value}."""
     store = _get_store()
@@ -133,6 +178,8 @@ async def compare_runs(
         ids = [rid.strip() for rid in run_ids.split(",") if rid.strip()]
         if not ids:
             raise HTTPException(status_code=400, detail="Provide at least one run_id")
+        for rid in ids:
+            await _authorize_run(db, scope, rid)
         results: dict[str, dict[str, float]] = {}
         for rid in ids:
             rows = await _run_sync(store.get_run_metrics, rid)
@@ -155,8 +202,13 @@ async def compare_runs(
 
 
 @router.delete("/runs/{run_id}")
-async def delete_run(run_id: str):
+async def delete_run(
+    run_id: str,
+    db: AsyncSession = Depends(get_db),
+    scope: TenantScope = Depends(get_tenant),
+):
     """Delete a logged run and all its data."""
+    await _authorize_run(db, scope, run_id)
     store = _get_store()
     try:
         deleted = await _run_sync(store.delete_run, run_id)

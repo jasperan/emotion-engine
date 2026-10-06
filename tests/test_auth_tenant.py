@@ -223,3 +223,52 @@ class TestTenantByIdIsolation:
             assert client.post(
                 f"/api/runs/{rid}/agents/a1/chat", headers=hb, json={"message": "hi"}
             ).status_code == 404
+
+
+class TestDatalakeTenantIsolation:
+    def test_datalake_by_id_routes_respect_run_ownership(self, monkeypatch):
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import sessionmaker
+        from sqlalchemy.pool import StaticPool
+
+        from emotionsim.api import datalake as dl_api
+        from emotionsim.datalake.models import DatalakeBase
+        from emotionsim.datalake.store import SimulationStore
+
+        store = SimulationStore.__new__(SimulationStore)
+        store.engine = create_engine(
+            "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
+        )
+        store.SessionFactory = sessionmaker(bind=store.engine)
+        DatalakeBase.metadata.create_all(store.engine)
+        store.close = lambda: None  # shared across requests in this test
+        monkeypatch.setattr(dl_api, "_get_store", lambda: store)
+
+        body = {"name": "dl", "description": "", "config": {"name": "w", "max_steps": 5}, "agent_templates": []}
+        with _app_client() as client:
+            def reg(u):
+                return client.post("/api/auth/register", json={"username": u, "password": "secret123"}).json()["api_key"]
+
+            ha, hb = {"X-API-Key": reg("dl_a")}, {"X-API-Key": reg("dl_b")}
+            sc = client.post("/api/scenarios/", headers=ha, json=body).json()
+            priv = client.post("/api/runs/", headers=ha, json={"scenario_id": sc["id"], "seed": 1, "max_steps": 2}).json()["id"]
+            pub_sc = client.post("/api/scenarios/", json=body).json()
+            pub = client.post("/api/runs/", json={"scenario_id": pub_sc["id"], "seed": 1, "max_steps": 2}).json()["id"]
+            for rid in (priv, pub):
+                store.create_run(run_id=rid, scenario_name="dl", model="m")
+
+            # owner sees both, others only the public one
+            ids = lambda h: {r["id"] for r in client.get("/api/datalake/runs", headers=h).json()["runs"]}
+            assert ids(ha) == {priv, pub}
+            assert ids(hb) == {pub}
+            assert ids({}) == {pub}
+
+            for h in (hb, {}):
+                for suffix in ("", "/events", "/plans", "/metrics"):
+                    assert client.get(f"/api/datalake/runs/{priv}{suffix}", headers=h).status_code == 404, suffix
+                    assert client.get(f"/api/datalake/runs/{pub}{suffix}", headers=h).status_code == 200, suffix
+                assert client.get(f"/api/datalake/compare?run_ids={pub},{priv}", headers=h).status_code == 404
+                assert client.delete(f"/api/datalake/runs/{priv}", headers=h).status_code == 404
+
+            assert client.get(f"/api/datalake/compare?run_ids={pub},{priv}", headers=ha).status_code == 200
+            assert client.delete(f"/api/datalake/runs/{priv}", headers=ha).status_code == 200

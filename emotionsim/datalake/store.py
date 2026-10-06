@@ -312,10 +312,13 @@ class SimulationStore:
         status: Optional[str] = None,
         limit: int = 50,
         offset: int = 0,
+        exclude_ids: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         """List runs with optional filtering and pagination."""
         with self.SessionFactory() as db:
             query = db.query(SimulationRun)
+            if exclude_ids:
+                query = query.filter(SimulationRun.id.notin_(exclude_ids))
             if scenario_name:
                 query = query.filter(SimulationRun.scenario_name == scenario_name)
             if status:

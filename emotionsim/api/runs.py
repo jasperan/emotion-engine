@@ -130,11 +130,8 @@ async def get_run_status(
     scope: TenantScope = Depends(get_tenant),
 ):
     """Get current status of a run"""
-    row = await db.get(Run, run_id)
-    # Unknown ids keep the engine's own "not found" status payload; only
-    # rows owned by another tenant are hidden.
-    if row is not None:
-        ensure_visible(row, scope, "Run")
+    # Unknown ids and other tenants' runs are indistinguishable (both 404).
+    ensure_visible(await db.get(Run, run_id), scope, "Run")
     manager = SimulationManager.get_instance()
     return manager.get_run_status(run_id)
 

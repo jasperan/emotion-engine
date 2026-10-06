@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from emotionsim.auth.deps import TenantScope, get_tenant
 from emotionsim.core.database import get_db
 from emotionsim.models.scenario import Scenario
 
@@ -34,6 +35,7 @@ class DocumentUploadResponse(BaseModel):
 async def upload_document(
     request: DocumentUploadRequest,
     db: AsyncSession = Depends(get_db),
+    scope: TenantScope = Depends(get_tenant),
 ):
     """
     Upload a document, extract entities via NER, generate personas,
@@ -78,6 +80,7 @@ async def upload_document(
 
         # Step 4: Save scenario to DB
         scenario = Scenario(
+            tenant_id=scope.tenant if scope.is_authenticated else None,
             name=request.scenario_name,
             description=request.scenario_description,
             config=assembled.config if isinstance(assembled.config, dict) else assembled.config,

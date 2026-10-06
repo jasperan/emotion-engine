@@ -272,3 +272,126 @@ class TestDatalakeTenantIsolation:
 
             assert client.get(f"/api/datalake/compare?run_ids={pub},{priv}", headers=ha).status_code == 200
             assert client.delete(f"/api/datalake/runs/{priv}", headers=ha).status_code == 200
+
+
+class TestWebsocketAndCreationScoping:
+    def _body(self, name):
+        return {"name": name, "description": "", "config": {"name": "w", "max_steps": 5}, "agent_templates": []}
+
+    def test_websocket_checks_ownership_before_accept(self):
+        from starlette.websockets import WebSocketDisconnect
+
+        with _app_client() as client:
+            def reg(u):
+                return client.post("/api/auth/register", json={"username": u, "password": "secret123"}).json()["api_key"]
+
+            ka, kb = reg("ws_a"), reg("ws_b")
+            sc = client.post("/api/scenarios/", headers={"X-API-Key": ka}, json=self._body("ws")).json()
+            priv = client.post("/api/runs/", headers={"X-API-Key": ka}, json={"scenario_id": sc["id"], "seed": 1, "max_steps": 2}).json()["id"]
+            pub_sc = client.post("/api/scenarios/", json=self._body("wspub")).json()
+            pub = client.post("/api/runs/", json={"scenario_id": pub_sc["id"], "seed": 1, "max_steps": 2}).json()["id"]
+
+            # anonymous, wrong tenant, bad key, unknown run: handshake refused
+            for url, hdr in (
+                (f"/api/ws/{priv}", {}),
+                (f"/api/ws/{priv}", {"X-API-Key": kb}),
+                (f"/api/ws/{priv}?api_key={kb}", {}),
+                (f"/api/ws/{priv}", {"X-API-Key": "nope"}),
+                ("/api/ws/does-not-exist", {}),
+            ):
+                with pytest.raises(WebSocketDisconnect):
+                    with client.websocket_connect(url, headers=hdr):
+                        pass
+
+            # owner (header or query param) and anonymous-on-public are accepted
+            for url, hdr in (
+                (f"/api/ws/{priv}", {"X-API-Key": ka}),
+                (f"/api/ws/{priv}?api_key={ka}", {}),
+                (f"/api/ws/{pub}", {}),
+            ):
+                with client.websocket_connect(url, headers=hdr) as ws:
+                    assert ws.receive_json()["event"] == "connected"
+
+    def test_status_does_not_distinguish_unknown_from_foreign(self):
+        with _app_client() as client:
+            ka = client.post("/api/auth/register", json={"username": "st_a", "password": "secret123"}).json()["api_key"]
+            sc = client.post("/api/scenarios/", headers={"X-API-Key": ka}, json=self._body("st")).json()
+            priv = client.post("/api/runs/", headers={"X-API-Key": ka}, json={"scenario_id": sc["id"], "seed": 1, "max_steps": 2}).json()["id"]
+            assert client.get(f"/api/runs/{priv}/status").status_code == 404
+            assert client.get("/api/runs/no-such-run/status").status_code == 404
+
+    def test_datalake_init_requires_api_key(self, monkeypatch):
+        from emotionsim.api import datalake as dl_api
+
+        calls = []
+
+        class _Store:
+            def init_db(self):
+                calls.append(1)
+
+            def close(self):
+                pass
+
+        monkeypatch.setattr(dl_api, "_get_store", lambda: _Store())
+        with _app_client() as client:
+            key = client.post("/api/auth/register", json={"username": "init_a", "password": "secret123"}).json()["api_key"]
+            assert client.post("/api/datalake/init").status_code == 401
+            assert calls == []
+            assert client.post("/api/datalake/init", headers={"X-API-Key": key}).status_code == 200
+            assert calls == [1]
+
+    def test_import_scenario_file_is_tenant_tagged(self, monkeypatch, tmp_path):
+        import json as _json
+
+        from emotionsim.api import scenarios as sc_api
+
+        (tmp_path / "mine.json").write_text(_json.dumps({
+            "name": "imported", "description": "d",
+            "config": {"name": "w", "max_steps": 5}, "agent_templates": [],
+        }))
+        monkeypatch.setattr(sc_api, "SCENARIOS_DIR", tmp_path)
+        with _app_client() as client:
+            ka = client.post("/api/auth/register", json={"username": "imp_a", "password": "secret123"}).json()["api_key"]
+            kb = client.post("/api/auth/register", json={"username": "imp_b", "password": "secret123"}).json()["api_key"]
+            r = client.post("/api/scenarios/files/mine.json/import", headers={"X-API-Key": ka})
+            assert r.status_code == 200, r.text
+            sid = r.json()["id"]
+            assert client.get(f"/api/scenarios/{sid}", headers={"X-API-Key": ka}).status_code == 200
+            assert client.get(f"/api/scenarios/{sid}", headers={"X-API-Key": kb}).status_code == 404
+            assert client.get(f"/api/scenarios/{sid}").status_code == 404
+
+    def test_document_upload_scenario_is_tenant_tagged(self, monkeypatch):
+        from types import SimpleNamespace
+        from unittest.mock import AsyncMock, MagicMock
+
+        import emotionsim.services.document_ingestor as di
+        import emotionsim.services.persona_generator as pg
+        import emotionsim.services.scenario_assembler as sa
+        import emotionsim.storage.embedding_service as es
+        import emotionsim.storage.ner_extractor as ne
+        import emotionsim.storage.oracle_graph_storage as og
+
+        ingested = SimpleNamespace(graph_id="g1", entity_count=1, relation_count=0)
+        assembled = SimpleNamespace(
+            config={"name": "doc", "max_steps": 20}, agent_templates=[]
+        )
+        ingestor = MagicMock(ingest=AsyncMock(return_value=ingested))
+        assembler = MagicMock(assemble=AsyncMock(return_value=assembled))
+        monkeypatch.setattr(di, "DocumentIngestor", lambda **kw: ingestor)
+        monkeypatch.setattr(sa, "ScenarioAssembler", lambda **kw: assembler)
+        for mod, name in ((pg, "PersonaGenerator"), (es, "EmbeddingService"),
+                          (ne, "NERExtractor"), (og, "OracleGraphStorage")):
+            monkeypatch.setattr(mod, name, lambda *a, **kw: MagicMock())
+
+        with _app_client() as client:
+            ka = client.post("/api/auth/register", json={"username": "doc_a", "password": "secret123"}).json()["api_key"]
+            kb = client.post("/api/auth/register", json={"username": "doc_b", "password": "secret123"}).json()["api_key"]
+            r = client.post(
+                "/api/documents/",
+                headers={"X-API-Key": ka},
+                json={"text": "A sufficiently long document body.", "scenario_name": "from doc"},
+            )
+            assert r.status_code == 200, r.text
+            sid = r.json()["scenario_id"]
+            assert client.get(f"/api/scenarios/{sid}", headers={"X-API-Key": ka}).status_code == 200
+            assert client.get(f"/api/scenarios/{sid}", headers={"X-API-Key": kb}).status_code == 404

@@ -41,11 +41,11 @@ def tenant_visibility(scope: TenantScope):
     return column("tenant_id").is_(None)
 
 
-async def get_tenant(
-    x_api_key: str | None = Header(default=None),
-    db: AsyncSession = Depends(get_db),
-) -> TenantScope:
-    """Resolve the caller's tenant scope from the API key header (optional)."""
+async def resolve_scope(x_api_key: str | None, db: AsyncSession) -> TenantScope:
+    """Resolve a tenant scope from a raw API key (None = anonymous).
+
+    Raises 401 for a key that does not match an active user.
+    """
     from emotionsim.core.config import get_settings
 
     if not get_settings().auth_enabled:
@@ -62,6 +62,14 @@ async def get_tenant(
     if user is None:
         raise HTTPException(status_code=401, detail="Invalid API key")
     return TenantScope(tenant=user.tenant_id, username=user.username)
+
+
+async def get_tenant(
+    x_api_key: str | None = Header(default=None),
+    db: AsyncSession = Depends(get_db),
+) -> TenantScope:
+    """Resolve the caller's tenant scope from the API key header (optional)."""
+    return await resolve_scope(x_api_key, db)
 
 
 def ensure_visible(row, scope: TenantScope, what: str):

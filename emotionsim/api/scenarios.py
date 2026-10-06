@@ -142,6 +142,7 @@ async def delete_scenario_file_endpoint(filename: str):
 async def import_scenario_file(
     filename: str,
     db: AsyncSession = Depends(get_db),
+    scope: TenantScope = Depends(get_tenant),
 ):
     """Import a scenario file into the database"""
     filepath = (SCENARIOS_DIR / filename).resolve()
@@ -154,6 +155,7 @@ async def import_scenario_file(
 
     # Create database entry
     scenario = Scenario(
+        tenant_id=scope.tenant if scope.is_authenticated else None,
         name=scenario_data.name,
         description=scenario_data.description,
         config=scenario_data.config.model_dump(),

@@ -220,8 +220,10 @@ async def delete_run(
 
 
 @router.post("/init")
-async def init_datalake():
-    """Initialize datalake tables (create if not exist)."""
+async def init_datalake(scope: TenantScope = Depends(get_tenant)):
+    """Initialize datalake tables (create if not exist). Requires an API key."""
+    if get_settings().auth_enabled and not scope.is_authenticated:
+        raise HTTPException(status_code=401, detail="API key required")
     store = _get_store()
     try:
         await _run_sync(store.init_db)

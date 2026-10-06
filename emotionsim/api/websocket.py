@@ -4,8 +4,11 @@ import asyncio
 from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 
+from emotionsim.auth.deps import ensure_visible, resolve_scope
+from emotionsim.core import database
+from emotionsim.models.run import Run
 from emotionsim.simulation import SimulationManager
 
 router = APIRouter()
@@ -61,7 +64,23 @@ connection_manager = ConnectionManager()
 
 @router.websocket("/ws/{run_id}")
 async def websocket_endpoint(websocket: WebSocket, run_id: str):
-    """WebSocket endpoint for run updates"""
+    """WebSocket endpoint for run updates.
+
+    Ownership is checked before the handshake is accepted. Private runs need
+    the owner's API key, sent as an ``X-API-Key`` header or (for browsers,
+    which cannot set headers on a WebSocket) an ``api_key`` query parameter.
+    Public runs stay open to anonymous clients.
+    """
+    api_key = websocket.headers.get("x-api-key") or websocket.query_params.get("api_key")
+    try:
+        # Short-lived session: the socket itself can stay open for hours.
+        async with database.async_session_maker() as db:
+            scope = await resolve_scope(api_key, db)
+            ensure_visible(await db.get(Run, run_id), scope, "Run")
+    except HTTPException:
+        await websocket.close(code=1008)  # policy violation; rejected pre-accept
+        return
+
     await connection_manager.connect(websocket, run_id)
 
     # Set up event handler for this connection

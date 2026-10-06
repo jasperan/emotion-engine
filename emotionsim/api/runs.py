@@ -124,8 +124,17 @@ async def control_run(
 
 
 @router.get("/{run_id}/status")
-async def get_run_status(run_id: str):
+async def get_run_status(
+    run_id: str,
+    db: AsyncSession = Depends(get_db),
+    scope: TenantScope = Depends(get_tenant),
+):
     """Get current status of a run"""
+    row = await db.get(Run, run_id)
+    # Unknown ids keep the engine's own "not found" status payload; only
+    # rows owned by another tenant are hidden.
+    if row is not None:
+        ensure_visible(row, scope, "Run")
     manager = SimulationManager.get_instance()
     return manager.get_run_status(run_id)
 

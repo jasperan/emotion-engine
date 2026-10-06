@@ -186,13 +186,14 @@ class TestTenantByIdIsolation:
             # owner can reach both
             assert client.get(f"/api/scenarios/{sc['id']}", headers=ha).status_code == 200
             assert client.get(f"/api/runs/{run['id']}", headers=ha).status_code == 200
+            assert client.get(f"/api/runs/{run['id']}/status", headers=ha).status_code == 200
 
             # other tenant and anonymous get 404 on every by-id route
             for h in (hb, {}):
                 assert client.get(f"/api/scenarios/{sc['id']}", headers=h).status_code == 404
                 assert client.put(f"/api/scenarios/{sc['id']}", headers=h, json={"name": "x"}).status_code == 404
                 assert client.post("/api/runs/", headers=h, json={"scenario_id": sc["id"], "seed": 1, "max_steps": 2}).status_code == 404
-                for suffix in ("", "/metrics", "/agents", "/steps", "/messages"):
+                for suffix in ("", "/status", "/metrics", "/agents", "/steps", "/messages"):
                     assert client.get(f"/api/runs/{run['id']}{suffix}", headers=h).status_code == 404, suffix
                 assert client.post(f"/api/runs/{run['id']}/control", headers=h, json={"action": "stop"}).status_code == 404
                 assert client.delete(f"/api/runs/{run['id']}", headers=h).status_code == 404

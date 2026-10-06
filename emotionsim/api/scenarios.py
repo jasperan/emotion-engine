@@ -8,7 +8,7 @@ from sqlalchemy import select
 
 from emotionsim.core.database import get_db
 from emotionsim.models.scenario import Scenario
-from emotionsim.auth.deps import TenantScope, get_tenant, tenant_visibility
+from emotionsim.auth.deps import TenantScope, ensure_visible, get_tenant, tenant_visibility
 from emotionsim.schemas.scenario import ScenarioCreate, ScenarioUpdate, ScenarioResponse
 from emotionsim.scenarios.generator import ScenarioGenerator
 from emotionsim.scenarios.storage import (
@@ -212,11 +212,10 @@ async def list_scenarios(
 async def get_scenario(
     scenario_id: str,
     db: AsyncSession = Depends(get_db),
+    scope: TenantScope = Depends(get_tenant),
 ):
     """Get a specific scenario"""
-    scenario = await db.get(Scenario, scenario_id)
-    if not scenario:
-        raise HTTPException(status_code=404, detail="Scenario not found")
+    scenario = ensure_visible(await db.get(Scenario, scenario_id), scope, "Scenario")
     return scenario
 
 
@@ -225,11 +224,10 @@ async def update_scenario(
     scenario_id: str,
     data: ScenarioUpdate,
     db: AsyncSession = Depends(get_db),
+    scope: TenantScope = Depends(get_tenant),
 ):
     """Update a scenario"""
-    scenario = await db.get(Scenario, scenario_id)
-    if not scenario:
-        raise HTTPException(status_code=404, detail="Scenario not found")
+    scenario = ensure_visible(await db.get(Scenario, scenario_id), scope, "Scenario")
 
     if data.name is not None:
         scenario.name = data.name
@@ -250,11 +248,10 @@ async def update_scenario(
 async def delete_scenario(
     scenario_id: str,
     db: AsyncSession = Depends(get_db),
+    scope: TenantScope = Depends(get_tenant),
 ):
     """Delete a scenario"""
-    scenario = await db.get(Scenario, scenario_id)
-    if not scenario:
-        raise HTTPException(status_code=404, detail="Scenario not found")
+    scenario = ensure_visible(await db.get(Scenario, scenario_id), scope, "Scenario")
 
     await db.delete(scenario)
     await db.commit()

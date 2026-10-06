@@ -168,3 +168,36 @@ class TestTenantScoping:
             # the owner sees it
             runs_a = client.get("/api/runs/", headers={"X-API-Key": key_a}).json()
             assert any(r["id"] == run_id for r in runs_a)
+
+class TestTenantByIdIsolation:
+    def _body(self, name):
+        return {"name": name, "description": "", "config": {"name": "w", "max_steps": 5}, "agent_templates": []}
+
+    def test_private_rows_hidden_from_other_callers_by_id(self):
+        with _app_client() as client:
+            def reg(u):
+                return client.post("/api/auth/register", json={"username": u, "password": "secret123"}).json()["api_key"]
+
+            ka, kb = reg("iso_a"), reg("iso_b")
+            ha, hb = {"X-API-Key": ka}, {"X-API-Key": kb}
+            sc = client.post("/api/scenarios/", headers=ha, json=self._body("iso private")).json()
+            run = client.post("/api/runs/", headers=ha, json={"scenario_id": sc["id"], "seed": 1, "max_steps": 2}).json()
+
+            # owner can reach both
+            assert client.get(f"/api/scenarios/{sc['id']}", headers=ha).status_code == 200
+            assert client.get(f"/api/runs/{run['id']}", headers=ha).status_code == 200
+
+            # other tenant and anonymous get 404 on every by-id route
+            for h in (hb, {}):
+                assert client.get(f"/api/scenarios/{sc['id']}", headers=h).status_code == 404
+                assert client.put(f"/api/scenarios/{sc['id']}", headers=h, json={"name": "x"}).status_code == 404
+                assert client.post("/api/runs/", headers=h, json={"scenario_id": sc["id"], "seed": 1, "max_steps": 2}).status_code == 404
+                for suffix in ("", "/metrics", "/agents", "/steps", "/messages"):
+                    assert client.get(f"/api/runs/{run['id']}{suffix}", headers=h).status_code == 404, suffix
+                assert client.post(f"/api/runs/{run['id']}/control", headers=h, json={"action": "stop"}).status_code == 404
+                assert client.delete(f"/api/runs/{run['id']}", headers=h).status_code == 404
+                assert client.delete(f"/api/scenarios/{sc['id']}", headers=h).status_code == 404
+
+            # still intact for owner
+            assert client.get(f"/api/runs/{run['id']}", headers=ha).status_code == 200
+            assert client.delete(f"/api/runs/{run['id']}", headers=ha).status_code == 200

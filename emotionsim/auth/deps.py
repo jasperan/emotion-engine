@@ -62,3 +62,19 @@ async def get_tenant(
     if user is None:
         raise HTTPException(status_code=401, detail="Invalid API key")
     return TenantScope(tenant=user.tenant_id, username=user.username)
+
+
+def ensure_visible(row, scope: TenantScope, what: str):
+    """Raise 404 unless ``row`` is public or owned by the caller's tenant.
+
+    Applied to by-id routes so a private row can't be read or mutated by
+    anyone who merely knows its id. 404 (not 403) avoids confirming existence.
+    """
+    from fastapi import HTTPException
+
+    if row is None:
+        raise HTTPException(status_code=404, detail=f"{what} not found")
+    owner = getattr(row, "tenant_id", None)
+    if owner is not None and owner != scope.tenant:
+        raise HTTPException(status_code=404, detail=f"{what} not found")
+    return row

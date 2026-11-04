@@ -93,7 +93,7 @@
 		{:else}
 			{#if hasMore}
 				<button
-					class="w-full text-center py-2.5 text-sm text-flood-400 hover:text-flood-300 bg-surface hover:bg-surface_alt rounded-lg border border-outline/30 hover:border-flood-500/30 transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+					class="w-full text-center py-2.5 text-sm text-flood-400 hover:text-flood-300 bg-surface hover:bg-surface-alt rounded-lg border border-outline/30 hover:border-flood-500/30 transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
 					on:click={() => (showAll = true)}
 				>
 					Load earlier ({messages.length - WINDOW_SIZE} more)

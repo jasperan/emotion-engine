@@ -60,10 +60,9 @@
 	<div class="card bg-surface/50 border-outline/15">
 		<div class="flex items-center gap-5">
 			<div
-				class="w-14 h-14 rounded-xl flex items-center justify-center shadow-sm flex-shrink-0"
-				style="background: linear-gradient(135deg, #5cd4c4, #8fb4e0);"
+				class="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 bg-flood-500/15 text-flood-400"
 			>
-				<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/></svg>
+				<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/></svg>
 			</div>
 			<div>
 				<h1 class="font-display text-2xl font-medium tracking-tight mb-1">Emotion Engine</h1>

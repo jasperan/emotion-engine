@@ -178,7 +178,7 @@
 		<!-- Header -->
 		<div class="flex items-end justify-between border-b border-outline/20 pb-4">
 			<div>
-				<h1 class="text-2xl font-display font-bold text-on-background">
+				<h1 class="font-display text-2xl font-medium text-on-background">
 					Simulation Run <span class="font-mono text-primary ml-1">#{run.id.slice(0, 8)}</span>
 				</h1>
 			</div>
@@ -192,13 +192,13 @@
 
 				<!-- World State -->
 				<div class="card">
-					<h3 class="text-lg font-semibold font-display mb-3">World State</h3>
+					<h3 class="text-lg font-medium mb-3">World State</h3>
 					<div class="space-y-2 text-sm">
 						<div class="flex justify-between">
 							<span id="hazard-level-label" class="text-storm-400">Hazard Level</span>
 							<div class="flex items-center gap-2">
 								<div
-									class="w-20 h-2 bg-storm-800 rounded-full overflow-hidden"
+									class="w-20 h-1.5 bg-storm-900 rounded-full overflow-hidden"
 									role="progressbar"
 									aria-labelledby="hazard-level-label"
 									aria-valuenow={Number(run.world_state?.hazard_level) || 0}
@@ -206,7 +206,7 @@
 									aria-valuemax="10"
 								>
 									<div
-										class="h-full bg-gradient-to-r from-yellow-500 to-red-500 rounded-full"
+										class="h-full bg-flood-400 rounded-full"
 										style="width: {(Number(run.world_state?.hazard_level) || 0) * 10}%"
 									></div>
 								</div>
@@ -220,7 +220,7 @@
 
 				<!-- Agent Cards -->
 				<div class="space-y-4">
-					<h3 class="text-lg font-semibold font-display">Agents ({agents.length})</h3>
+					<h3 class="text-lg font-medium">Agents ({agents.length})</h3>
 					{#each agents as agent}
 						<AgentCard {agent} />
 					{/each}
@@ -240,13 +240,13 @@
 		<!-- Evaluation (if completed) -->
 		{#if run.status === 'completed' && run.evaluation && Object.keys(run.evaluation).length > 0}
 			<div class="card border-flood-500/30">
-				<h2 class="text-xl font-display font-semibold mb-4">Evaluation Results</h2>
+				<h2 class="text-xl font-medium mb-4">Evaluation Results</h2>
 
 				{#if run.evaluation.scores}
 					<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
 						{#each Object.entries(run.evaluation.scores) as [key, value]}
-							<div class="text-center p-3 bg-storm-800/50 rounded-lg">
-								<div class="text-2xl font-bold text-flood-400">{value}</div>
+							<div class="text-center p-3 border border-outline/30 rounded-lg">
+								<div class="text-2xl font-medium text-on-background">{value}</div>
 								<div class="text-xs text-storm-400 capitalize">{key.replace('_', ' ')}</div>
 							</div>
 						{/each}
@@ -263,36 +263,36 @@
 
 		<!-- Analytics + Replay (Step 9) -->
 		<div class="card">
-			<h2 class="text-xl font-display font-semibold mb-4">Run Analytics</h2>
+			<h2 class="text-xl font-medium mb-4">Run Analytics</h2>
 			<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-				<div class="text-center p-3 bg-storm-800/50 rounded-lg">
-					<div class="text-2xl font-bold text-flood-400">{metricValue('avg_stress')}</div>
+				<div class="text-center p-3 border border-outline/30 rounded-lg">
+					<div class="text-2xl font-medium text-on-background">{metricValue('avg_stress')}</div>
 					<div class="text-xs text-storm-400">Avg Stress</div>
 				</div>
-				<div class="text-center p-3 bg-storm-800/50 rounded-lg">
-					<div class="text-2xl font-bold text-flood-400">{metricValue('avg_health')}</div>
+				<div class="text-center p-3 border border-outline/30 rounded-lg">
+					<div class="text-2xl font-medium text-on-background">{metricValue('avg_health')}</div>
 					<div class="text-xs text-storm-400">Avg Health</div>
 				</div>
-				<div class="text-center p-3 bg-storm-800/50 rounded-lg">
-					<div class="text-2xl font-bold text-flood-400">{metricValue('tokens')}</div>
+				<div class="text-center p-3 border border-outline/30 rounded-lg">
+					<div class="text-2xl font-medium text-on-background">{metricValue('tokens')}</div>
 					<div class="text-xs text-storm-400">Streamed Tokens</div>
 				</div>
-				<div class="text-center p-3 bg-storm-800/50 rounded-lg">
-					<div class="text-2xl font-bold text-flood-400">{metricValue('cost_estimate_usd')} $</div>
+				<div class="text-center p-3 border border-outline/30 rounded-lg">
+					<div class="text-2xl font-medium text-on-background">{metricValue('cost_estimate_usd')} $</div>
 					<div class="text-xs text-storm-400">Est. Cost</div>
 				</div>
-				<div class="text-center p-3 bg-storm-800/50 rounded-lg">
-					<div class="text-2xl font-bold text-flood-400">{metricValue('latency_ms')} ms</div>
+				<div class="text-center p-3 border border-outline/30 rounded-lg">
+					<div class="text-2xl font-medium text-on-background">{metricValue('latency_ms')} ms</div>
 					<div class="text-xs text-storm-400">Last Tick Latency</div>
 				</div>
-				<div class="text-center p-3 bg-storm-800/50 rounded-lg">
-					<div class="text-2xl font-bold text-flood-400">{metricValue('message_count')}</div>
+				<div class="text-center p-3 border border-outline/30 rounded-lg">
+					<div class="text-2xl font-medium text-on-background">{metricValue('message_count')}</div>
 					<div class="text-xs text-storm-400">Messages</div>
 				</div>
 			</div>
 
 			{#if stressSeries.length > 1}
-				<h3 class="text-lg font-semibold font-display mb-2">Avg Stress per Step</h3>
+				<h3 class="text-lg font-medium mb-2">Avg Stress per Step</h3>
 				<div class="flex items-end gap-1 h-24 mb-6" role="img" aria-label="Average stress per step bar chart">
 					{#each stressSeries as s, i}
 						<div
@@ -307,7 +307,7 @@
 
 		<!-- Replay timeline (Step 9) -->
 		<div class="card">
-			<h2 class="text-xl font-display font-semibold mb-4">Replay Timeline</h2>
+			<h2 class="text-xl font-medium mb-4">Replay Timeline</h2>
 			{#if steps.length === 0}
 				<p class="text-storm-400 text-sm">No steps recorded yet.</p>
 			{:else}

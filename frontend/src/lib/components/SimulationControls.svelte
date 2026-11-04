@@ -43,7 +43,7 @@
 </script>
 
 <div class="card">
-	<h3 class="text-lg font-semibold font-display mb-4">Simulation Controls</h3>
+	<h3 class="text-lg font-medium mb-4">Simulation Controls</h3>
 
 	{#if run}
 		<!-- Status -->
@@ -58,9 +58,9 @@
 					{run.current_step}/{run.max_steps}
 				</span>
 			</div>
-			<div class="w-full h-2 bg-storm-800 rounded-full overflow-hidden" role="progressbar" aria-label="Simulation progress" aria-valuenow={run.current_step} aria-valuemin={0} aria-valuemax={run.max_steps}>
+			<div class="w-full h-2 bg-storm-900 rounded-full overflow-hidden" role="progressbar" aria-label="Simulation progress" aria-valuenow={run.current_step} aria-valuemin={0} aria-valuemax={run.max_steps}>
 				<div
-					class="h-full bg-flood-500 rounded-full transition-all duration-300"
+					class="h-full bg-flood-500 rounded-full transition-colors duration-150"
 					style="width: {(run.current_step / run.max_steps) * 100}%"
 				></div>
 			</div>
@@ -76,7 +76,7 @@
 		<div class="space-y-2">
 			{#if run.status === 'pending' || run.status === 'paused'}
 				<button
-					class="btn btn-primary w-full transition-all duration-200"
+					class="btn btn-primary w-full transition-colors duration-150"
 					disabled={controlling}
 					aria-label={run.status === 'paused' ? 'Resume simulation' : 'Start simulation'}
 					on:click={() => handleAction(run.status === 'paused' ? 'resume' : 'start')}
@@ -94,7 +94,7 @@
 			{#if run.status === 'running'}
 				<div class="grid grid-cols-2 gap-2">
 					<button
-						class="btn btn-secondary transition-all duration-200"
+						class="btn btn-secondary transition-colors duration-150"
 						disabled={controlling}
 						aria-label="Pause simulation"
 						on:click={() => handleAction('pause')}
@@ -107,7 +107,7 @@
 						Pause
 					</button>
 					<button
-						class="btn btn-secondary transition-all duration-200"
+						class="btn btn-secondary transition-colors duration-150"
 						disabled={controlling}
 						aria-label="Advance one step"
 						on:click={() => handleAction('step')}
@@ -121,7 +121,7 @@
 					</button>
 				</div>
 				<button
-					class="btn btn-danger w-full transition-all duration-200"
+					class="btn btn-danger w-full transition-colors duration-150"
 					disabled={controlling}
 					aria-label="Stop simulation"
 					on:click={() => handleAction('stop')}

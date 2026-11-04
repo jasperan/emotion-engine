@@ -18,31 +18,18 @@
 		autoScroll = container.scrollHeight - container.scrollTop - container.clientHeight < 40;
 	}
 
-	const EVENT_COLORS: Record<string, string> = {
-		run_started:          'text-green-400',
-		run_completed:        'text-green-300',
-		run_stopped:          'text-amber-400',
-		run_paused:           'text-amber-300',
-		step_completed:       'text-blue-400',
-		message:              'text-storm-300',
-		agent_error:          'text-red-400',
-		movement_failed:      'text-orange-400',
-		proposal_created:     'text-purple-400',
-		proposal_accepted:    'text-purple-300',
-		proposal_rejected:    'text-red-300',
-		counter_proposal:     'text-purple-200',
-		conversation_outcome: 'text-teal-400',
-		vouch_for:            'text-cyan-400',
-		plan_shared:          'text-cyan-300',
-		initialized:          'text-storm-400',
-		resumed:              'text-storm-400',
-		connected:            'text-storm-500',
-		ping:                 'text-storm-600',
-		pong:                 'text-storm-600',
-	};
+	// Colour carries meaning only: failures, run lifecycle, everything else quiet.
+	const ERROR_EVENTS = new Set(['agent_error', 'movement_failed', 'proposal_rejected']);
+	const LIFECYCLE_EVENTS = new Set(['run_started', 'run_completed', 'initialized', 'resumed']);
 
 	function eventColor(type: string): string {
-		return EVENT_COLORS[type] ?? 'text-storm-400';
+		if (ERROR_EVENTS.has(type)) return 'text-red-400';
+		if (LIFECYCLE_EVENTS.has(type)) return 'text-flood-400';
+		return 'text-storm-300';
+	}
+
+	function tick(index: number): string {
+		return `t·${String(index + 1).padStart(3, '0')}`;
 	}
 
 	function formatTime(ts?: string): string {
@@ -98,7 +85,7 @@
 
 <div class="card h-full flex flex-col">
 	<div class="flex items-center justify-between mb-3">
-		<h3 class="text-lg font-semibold font-display">Live Event Stream</h3>
+		<h3 class="text-lg font-medium">Live Event Stream</h3>
 		<div class="flex items-center gap-3">
 			{#if !autoScroll}
 				<button
@@ -115,7 +102,7 @@
 
 	<div
 		class="flex-1 overflow-y-auto font-mono text-xs space-y-0.5 max-h-[400px] scrollbar-thin"
-		style="scrollbar-color: #2f30a9 transparent;"
+		style="scrollbar-color: #3a3d48 transparent;"
 		bind:this={container}
 		on:scroll={onScroll}
 	>
@@ -124,10 +111,11 @@
 				Waiting for simulation events&hellip;
 			</div>
 		{:else}
-			{#each displayEvents as ev}
-				<div class="flex items-start gap-2 py-0.5 px-1 hover:bg-storm-800/40 rounded">
-					<span class="text-storm-600 shrink-0 w-20">{formatTime(ev.timestamp)}</span>
-					<span class="shrink-0 w-36 {eventColor(ev.event)} font-semibold">{ev.event}</span>
+			{#each displayEvents as ev, i}
+				<div class="flex items-start gap-2 py-0.5 px-1 hover:bg-surface-alt/60 rounded">
+					<span class="text-storm-500 shrink-0 w-12">{tick(i)}</span>
+					<span class="text-storm-500 shrink-0 w-20">{formatTime(ev.timestamp)}</span>
+					<span class="shrink-0 w-36 {eventColor(ev.event)}">{ev.event}</span>
 					<span class="text-storm-300 truncate">{summarize(ev)}</span>
 				</div>
 			{/each}

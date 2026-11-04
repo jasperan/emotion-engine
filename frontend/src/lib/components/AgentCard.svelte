@@ -15,17 +15,6 @@
 		leadership: 'Leader'
 	};
 
-	const traitColors: Record<string, string> = {
-		openness: 'bg-blue-500/15 text-blue-400 border-blue-500/25',
-		conscientiousness: 'bg-green-500/15 text-green-400 border-green-500/25',
-		extraversion: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/25',
-		agreeableness: 'bg-pink-500/15 text-pink-400 border-pink-500/25',
-		neuroticism: 'bg-red-500/15 text-red-400 border-red-500/25',
-		risk_tolerance: 'bg-orange-500/15 text-orange-400 border-orange-500/25',
-		empathy_level: 'bg-purple-500/15 text-purple-400 border-purple-500/25',
-		leadership: 'bg-teal-500/15 text-teal-400 border-teal-500/25'
-	};
-
 	// Get top personality traits (highest values)
 	function getTopTraits(persona: Record<string, unknown> | null, count = 3): { key: string; name: string; value: number }[] {
 		if (!persona) return [];
@@ -54,15 +43,15 @@
 	$: topTraits = getTopTraits(agent.persona);
 </script>
 
-<div class="card transition-all duration-200 {agent.current_plan ? 'border-l-2 border-l-flood-400' : ''}" style="{agent.current_plan ? 'box-shadow: -2px 0 10px rgba(36, 158, 179, 0.15);' : ''}">
+<div class="card {agent.current_plan ? 'border-l-2 border-l-flood-400' : ''}">
 	<div class="flex items-start justify-between mb-2">
 		<div>
 			<h4 class="font-semibold text-storm-100">{agent.name}</h4>
 		</div>
 		{#if agent.is_active}
-			<span class="badge badge-success text-xs transition-all duration-200">Active</span>
+			<span class="badge badge-success">Active</span>
 		{:else}
-			<span class="badge badge-warning text-xs transition-all duration-200">Inactive</span>
+			<span class="badge badge-warning">Inactive</span>
 		{/if}
 	</div>
 
@@ -84,14 +73,14 @@
 	{/if}
 
 	{#if agent.dynamic_state}
-		<div class="mt-3 pt-3 border-t border-storm-700/30 space-y-2 text-sm">
+		<div class="mt-3 pt-3 border-t border-outline/30 space-y-2 text-sm">
 			{#if agent.dynamic_state.health !== undefined}
 				<div class="flex justify-between items-center">
 					<span class="text-storm-400">Health</span>
 					<div class="flex items-center gap-2">
-						<div class="w-16 h-2 bg-storm-800 rounded-full overflow-hidden">
+						<div class="w-16 h-1.5 bg-storm-900 rounded-full overflow-hidden">
 							<div
-								class="h-full bg-gradient-to-r from-green-500 to-red-500 rounded-full transition-all"
+								class="h-full bg-flood-400 rounded-full"
 								style="width: {((Number(agent.dynamic_state.health) || 0) / 10) * 100}%"
 							></div>
 						</div>
@@ -105,9 +94,9 @@
 				<div class="flex justify-between items-center">
 					<span class="text-storm-400">Stress</span>
 					<div class="flex items-center gap-2">
-						<div class="w-16 h-2 bg-storm-800 rounded-full overflow-hidden">
+						<div class="w-16 h-1.5 bg-storm-900 rounded-full overflow-hidden">
 							<div
-								class="h-full bg-gradient-to-r from-yellow-500 to-red-500 rounded-full transition-all"
+								class="h-full bg-storm-400 rounded-full"
 								style="width: {((Number(agent.dynamic_state.stress_level) || 0) / 10) * 100}%"
 							></div>
 						</div>
@@ -127,19 +116,19 @@
 	{/if}
 
 	{#if agent.current_plan}
-		<div class="mt-3 pt-3 border-t border-storm-700/30 space-y-1.5">
+		<div class="mt-3 pt-3 border-t border-outline/30 space-y-1.5">
 			<div class="flex items-center gap-1.5 mb-1">
 				<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-flood-400"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-				<span class="text-xs font-semibold text-flood-400 uppercase tracking-wide">Current Plan</span>
+				<span class="text-xs text-flood-400">Current plan</span>
 			</div>
 			<p class="text-sm text-storm-200">{agent.current_plan.goal}</p>
 			<div class="flex items-center justify-between text-xs">
 				<span class="text-storm-400">{agent.current_plan.step_progress}</span>
 				<span class="text-storm-500">deadline: step {agent.current_plan.deadline_step}</span>
 			</div>
-			<div class="w-full h-1.5 bg-storm-800 rounded-full overflow-hidden mt-1" role="progressbar" aria-label="Plan progress" aria-valuenow={parsePlanProgress(agent.current_plan.step_progress)} aria-valuemin={0} aria-valuemax={100}>
+			<div class="w-full h-1.5 bg-storm-900 rounded-full overflow-hidden mt-1" role="progressbar" aria-label="Plan progress" aria-valuenow={parsePlanProgress(agent.current_plan.step_progress)} aria-valuemin={0} aria-valuemax={100}>
 				<div
-					class="h-full bg-flood-400 rounded-full transition-all duration-300"
+					class="h-full bg-flood-400 rounded-full"
 					style="width: {parsePlanProgress(agent.current_plan.step_progress)}%"
 				></div>
 			</div>
@@ -148,16 +137,16 @@
 	{/if}
 
 	{#if agent.last_reasoning}
-		<div class="mt-3 pt-3 border-t border-storm-700/30">
-			<span class="text-xs font-semibold text-storm-400 uppercase tracking-wide">Last Reasoning</span>
-			<p class="text-xs text-storm-300 italic mt-1">{truncate(agent.last_reasoning)}</p>
+		<div class="mt-3 pt-3 border-t border-outline/30">
+			<span class="text-xs text-storm-400">Last reasoning</span>
+			<p class="text-xs text-storm-300 mt-1">{truncate(agent.last_reasoning)}</p>
 		</div>
 	{/if}
 
 	{#if topTraits.length > 0}
-		<div class="mt-3 pt-3 border-t border-storm-700/30 flex flex-wrap gap-1.5">
+		<div class="mt-3 pt-3 border-t border-outline/30 flex flex-wrap gap-1.5">
 			{#each topTraits as trait}
-				<span class="text-[10px] px-2 py-0.5 rounded-full border font-medium cursor-default transition-all duration-200 hover:brightness-125 {traitColors[trait.key] || 'bg-primary/10 text-primary border-primary/20'}">
+				<span class="text-xs px-2 py-0.5 rounded border border-outline/40 text-storm-300">
 					{trait.name}
 				</span>
 			{/each}

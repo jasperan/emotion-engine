@@ -59,26 +59,24 @@
 
 <div class="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] max-w-6xl mx-auto px-6 relative">
 
-  <div class="text-center mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-     <h1 class="text-5xl md:text-6xl font-display font-semibold tracking-[-0.03em] mb-4 text-on-background">
+  <div class="text-center mb-12 animate-fade-in">
+     <h1 class="font-display text-4xl md:text-5xl font-medium tracking-[-0.02em] mb-4 text-on-background">
        What should we simulate?
      </h1>
-     <p class="text-lg text-on-surface/70 max-w-lg mx-auto leading-relaxed">
+     <p class="text-lg text-on-surface max-w-lg mx-auto leading-relaxed">
        Describe a social scenario. Agents with unique personalities will play it out.
      </p>
   </div>
 
   <!-- Chat Input Area -->
-  <div class="w-full max-w-2xl relative group">
-      <div class="absolute -inset-0.5 bg-gradient-to-r from-accent-blue/15 to-accent-teal/10 rounded-2xl blur opacity-0 group-hover:opacity-50 transition duration-700"></div>
-
-      <div class="relative bg-surface/90 rounded-2xl border border-outline/30 shadow-xl overflow-hidden focus-within:border-primary/30 focus-within:shadow-2xl transition-all duration-300">
+  <div class="w-full max-w-2xl relative">
+      <div class="relative bg-surface rounded-xl border border-outline/40 overflow-hidden focus-within:border-flood-500 transition-colors duration-150">
          <textarea
             bind:this={textareaElement}
             bind:value={prompt}
             on:keydown={handleKeydown}
-            class="w-full bg-transparent border-0 p-4 text-base text-on-background placeholder:text-on-surface/50 focus:ring-0 resize-none min-h-[120px]"
-            placeholder="Ex: Create a scenario where 5 neighbors in a small town have to decide how to allocate a limited water supply during a drought..."
+            class="w-full bg-transparent border-0 p-4 text-base text-on-background placeholder:text-on-surface/60 focus:ring-0 resize-none min-h-[120px]"
+            placeholder="Describe a scenario"
             disabled={isLoading}
             aria-label="Simulation prompt"
             aria-invalid={error ? 'true' : undefined}
@@ -92,7 +90,7 @@
              <button
                 on:click={handleSubmit}
                 disabled={!prompt.trim() || isLoading}
-                class="btn-icon p-2 rounded-full bg-on-primary/10 text-on-background/50 hover:bg-primary hover:text-on-primary transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                class="btn-icon p-2 rounded-lg bg-surface-alt text-on-surface hover:bg-flood-500 hover:text-white transition-colors duration-150 disabled:opacity-30 disabled:cursor-not-allowed"
                 aria-label={isLoading ? "Generating scenario" : "Send prompt"}
              >
                 {#if isLoading}
@@ -111,19 +109,23 @@
       {/if}
   </div>
 
+  <p class="mt-3 text-sm text-on-surface/60 text-center max-w-xl mx-auto">
+    Example: five neighbours in a small town share a limited water supply during a drought
+  </p>
+
   <!-- Suggestions / Chips -->
   {#if !isLoading && !prompt}
-  <div class="mt-8 flex flex-wrap justify-center gap-2.5 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-100">
-      <button on:click={() => applySuggestion("Disaster Strike: A flash flood hits a coastal village.")} class="flex items-center gap-2 px-4 py-2 rounded-xl bg-surface/60 border border-outline/20 text-[13px] text-on-surface/70 hover:bg-surface-alt/60 hover:border-outline/40 hover:text-on-background transition-all duration-200 cursor-pointer hover:-translate-y-0.5 active:scale-[0.98]">
-          <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-flood-400/70"><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/></svg>
+  <div class="mt-8 flex flex-wrap justify-center gap-2">
+      <button on:click={() => applySuggestion("Disaster Strike: A flash flood hits a coastal village.")} class="flex items-center gap-2 px-4 py-2 rounded-lg bg-surface border border-outline/30 text-sm text-on-surface hover:bg-surface-alt hover:border-outline/50 hover:text-on-background transition-colors duration-150 cursor-pointer">
+          <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-on-surface/50"><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/></svg>
           Flash flood
       </button>
-      <button on:click={() => applySuggestion("Mystery: Guests at a dinner party discover a theft.")} class="flex items-center gap-2 px-4 py-2 rounded-xl bg-surface/60 border border-outline/20 text-[13px] text-on-surface/70 hover:bg-surface-alt/60 hover:border-outline/40 hover:text-on-background transition-all duration-200 cursor-pointer hover:-translate-y-0.5 active:scale-[0.98]">
-          <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-accent-purple/70"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+      <button on:click={() => applySuggestion("Mystery: Guests at a dinner party discover a theft.")} class="flex items-center gap-2 px-4 py-2 rounded-lg bg-surface border border-outline/30 text-sm text-on-surface hover:bg-surface-alt hover:border-outline/50 hover:text-on-background transition-colors duration-150 cursor-pointer">
+          <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-on-surface/50"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
           Dinner party mystery
       </button>
-       <button on:click={() => applySuggestion("Negotiation: Three companies bidding for a contract.")} class="flex items-center gap-2 px-4 py-2 rounded-xl bg-surface/60 border border-outline/20 text-[13px] text-on-surface/70 hover:bg-surface-alt/60 hover:border-outline/40 hover:text-on-background transition-all duration-200 cursor-pointer hover:-translate-y-0.5 active:scale-[0.98]">
-          <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-accent-teal/70"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+       <button on:click={() => applySuggestion("Negotiation: Three companies bidding for a contract.")} class="flex items-center gap-2 px-4 py-2 rounded-lg bg-surface border border-outline/30 text-sm text-on-surface hover:bg-surface-alt hover:border-outline/50 hover:text-on-background transition-colors duration-150 cursor-pointer">
+          <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-on-surface/50"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           Contract negotiation
       </button>
   </div>

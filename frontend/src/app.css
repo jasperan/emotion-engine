@@ -102,9 +102,11 @@
 
 @layer components {
 	.btn {
-		@apply inline-flex items-center justify-center rounded-xl px-4 py-2.5 font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
+		@apply inline-flex items-center justify-center rounded-lg px-4 py-2.5 font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
 		min-height: var(--touch-preferred);
-		transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+		transition: background-color var(--duration-fast) ease-out,
+		            border-color var(--duration-fast) ease-out,
+		            color var(--duration-fast) ease-out;
 	}
 
 	.btn:focus-visible {
@@ -113,26 +115,15 @@
 	}
 
 	.btn-primary {
-		@apply bg-flood-500 hover:bg-flood-400 text-white active:scale-[0.98];
-		box-shadow: 0 2px 12px rgba(36, 158, 179, 0.2), 0 1px 2px rgba(0,0,0,0.1);
-	}
-
-	.btn-primary:hover {
-		box-shadow: 0 4px 20px rgba(36, 158, 179, 0.3), 0 2px 4px rgba(0,0,0,0.15);
-		transform: translateY(-1px);
+		@apply bg-flood-500 hover:bg-flood-400 text-white;
 	}
 
 	.btn-secondary {
-		@apply bg-storm-700/80 hover:bg-storm-600 text-white active:scale-[0.98];
-	}
-
-	.btn-secondary:hover {
-		transform: translateY(-1px);
+		@apply bg-storm-700 hover:bg-storm-600 text-white;
 	}
 
 	.btn-danger {
-		@apply bg-red-600/90 hover:bg-red-500 text-white active:scale-[0.98];
-		box-shadow: 0 2px 12px rgba(220, 38, 38, 0.15);
+		@apply bg-red-600 hover:bg-red-500 text-white;
 	}
 
 	.btn-ghost {
@@ -140,38 +131,28 @@
 	}
 
 	.card {
-		@apply bg-storm-800/40 backdrop-blur-sm border border-storm-700/40 rounded-2xl p-6;
-		transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+		@apply bg-surface border border-outline/30 rounded-xl p-5;
 	}
 
 	.card-interactive {
 		@apply card cursor-pointer;
-		transition: border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-		            background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-		            box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-		            transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+		transition: border-color var(--duration-fast) ease-out,
+		            background-color var(--duration-fast) ease-out;
 	}
 
 	.card-interactive:hover {
-		@apply border-flood-500/30 bg-storm-800/60;
-		box-shadow: 0 0 24px rgba(92, 212, 196, 0.04), 0 8px 24px -4px rgba(0, 0, 0, 0.25);
-		transform: translateY(-2px);
-	}
-
-	.card-interactive:active {
-		transform: scale(0.99);
+		@apply border-outline/50 bg-surface-alt/70;
 	}
 
 	.input {
-		@apply w-full px-4 py-2.5 bg-storm-800/80 border border-storm-600/60 rounded-xl text-white placeholder-storm-400 transition-all duration-200;
+		@apply w-full px-4 py-2.5 bg-surface border border-outline/50 rounded-lg text-white placeholder-storm-400;
 		min-height: var(--touch-min);
+		transition: border-color var(--duration-fast) ease-out;
 	}
 
 	.input:focus {
-		@apply ring-2 ring-flood-500/60 border-transparent;
+		@apply border-flood-500;
 		outline: none;
-		box-shadow: 0 0 0 3px rgba(36, 158, 179, 0.1);
 	}
 
 	.input:focus-visible {
@@ -180,28 +161,29 @@
 	}
 
 	.label {
-		@apply block text-sm font-medium text-storm-300 mb-1.5;
+		@apply block text-sm font-medium text-storm-300 mb-2;
 	}
 
+	/* Status reads as a dot and a word, not a filled chip. */
 	.badge {
-		@apply inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-medium;
+		@apply inline-flex items-center gap-2 px-2 py-0.5 rounded text-xs;
+		border: 1px solid theme('colors.outline');
+		color: theme('colors.on_surface');
 	}
 
-	.badge-success {
-		@apply bg-green-500/15 text-green-400 border border-green-500/25;
+	.badge::before {
+		content: '';
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background: currentColor;
+		opacity: 0.9;
 	}
 
-	.badge-warning {
-		@apply bg-yellow-500/15 text-yellow-400 border border-yellow-500/25;
-	}
-
-	.badge-danger {
-		@apply bg-red-500/15 text-red-400 border border-red-500/25;
-	}
-
-	.badge-info {
-		@apply bg-flood-500/15 text-flood-400 border border-flood-500/25;
-	}
+	.badge-success { color: theme('colors.green.400'); }
+	.badge-warning { color: theme('colors.yellow.400'); }
+	.badge-danger  { color: theme('colors.red.400'); }
+	.badge-info    { color: theme('colors.flood.400'); }
 
 	/* Skeleton loading animation */
 	.skeleton {
@@ -231,13 +213,13 @@
 	}
 
 	.animate-fade-in {
-		animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+		animation: fadeIn 240ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
 	}
 
 	/* Staggered children animation */
 	.stagger-children > * {
 		opacity: 0;
-		animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+		animation: fadeIn 240ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
 	}
 	.stagger-children > *:nth-child(1) { animation-delay: 0.04s; }
 	.stagger-children > *:nth-child(2) { animation-delay: 0.08s; }

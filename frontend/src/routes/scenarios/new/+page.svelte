@@ -160,7 +160,7 @@
 
 <div class="max-w-4xl mx-auto space-y-6">
 	<div class="flex items-center justify-between">
-		<h1 class="text-2xl font-display font-bold">Create New Scenario</h1>
+		<h1 class="font-display text-2xl font-medium">Create New Scenario</h1>
 		<a href="/" class="text-storm-400 hover:text-white text-sm">← Back to Dashboard</a>
 	</div>
 
@@ -173,7 +173,7 @@
 	<form on:submit|preventDefault={handleSubmit} class="space-y-6">
 		<!-- Basic Info -->
 		<div class="card">
-			<h2 class="text-lg font-semibold font-display mb-4">Basic Information</h2>
+			<h2 class="text-lg font-medium mb-4">Basic Information</h2>
 			<div class="space-y-4">
 				<div>
 					<label for="name" class="label">Scenario Name</label>
@@ -226,7 +226,7 @@
 		<!-- Agents -->
 		<div class="card">
 			<div class="flex items-center justify-between mb-4">
-				<h2 class="text-lg font-semibold font-display">Agents</h2>
+				<h2 class="text-lg font-medium">Agents</h2>
 				<button type="button" class="btn-secondary text-sm" on:click={() => (showAddAgent = true)}>
 					+ Add Agent
 				</button>
@@ -237,7 +237,7 @@
 			{:else}
 				<div class="space-y-3">
 					{#each agentTemplates as agent, i}
-						<div class="flex items-center gap-4 p-3 bg-storm-800/50 rounded-lg">
+						<div class="flex items-center gap-4 p-3 border border-outline/30 rounded-lg">
 							<div class="flex-1">
 								<div class="font-medium">{agent.name}</div>
 							</div>
@@ -284,7 +284,7 @@
 			class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
 		>
 			<div class="card max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-				<h3 class="text-xl font-display font-semibold mb-4">Add Agent</h3>
+				<h3 class="text-xl font-medium mb-4">Add Agent</h3>
 
 				<div class="space-y-4">
 					<div class="grid grid-cols-2 gap-4">
@@ -372,7 +372,7 @@
 										class="w-full h-2 bg-storm-700 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-flood-500"
 										aria-valuetext="{newPersona[trait.key]} out of 10 ({trait.min} to {trait.max})"
 									/>
-									<div class="flex justify-between text-[10px] text-storm-500 px-1 mt-1">
+									<div class="flex justify-between text-xs text-storm-500 px-1 mt-1">
 										<span>{trait.min}</span>
 										<span>{trait.max}</span>
 									</div>

@@ -101,7 +101,7 @@
 
 <div class="card h-full flex flex-col">
 	<div class="flex items-center justify-between mb-3">
-		<h3 class="text-lg font-semibold font-display">Token Stream</h3>
+		<h3 class="text-lg font-medium">Token Stream</h3>
 		<div class="flex items-center gap-4">
 			<span class="text-xs font-mono text-flood-400">{tokensPerSec} tok/s</span>
 			<span class="flex items-center gap-1.5 text-xs text-storm-400">
@@ -121,7 +121,7 @@
 
 	<div
 		class="flex-1 overflow-y-auto space-y-3 max-h-[500px] scrollbar-thin"
-		style="scrollbar-color: #2f30a9 transparent;"
+		style="scrollbar-color: #3a3d48 transparent;"
 		bind:this={container}
 		on:scroll={onScroll}
 	>
@@ -142,7 +142,7 @@
 					<span class="text-xs font-mono text-storm-400">step {stream.step}</span>
 				</div>
 				<div class="font-mono text-xs text-storm-200 whitespace-pre-wrap break-words leading-relaxed">
-					{truncateTokens(stream.tokens)}<span class="inline-block w-1.5 h-4 bg-flood-400 animate-pulse ml-0.5 align-text-bottom"></span>
+					{truncateTokens(stream.tokens)}<span class="inline-block w-1.5 h-4 bg-flood-400 ml-0.5 align-text-bottom"></span>
 				</div>
 			</div>
 		{/each}

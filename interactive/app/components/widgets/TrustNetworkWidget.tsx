@@ -23,8 +23,8 @@ function clamp(val: number, min: number, max: number): number {
 }
 
 function getEdgeColor(trust: number): string {
-  if (trust <= 3) return "#f43f5e";
-  if (trust >= 7) return "#4ade80";
+  if (trust <= 3) return "var(--neg)";
+  if (trust >= 7) return "var(--pos)";
   return "rgba(255,255,255,0.15)";
 }
 
@@ -32,6 +32,13 @@ function getEdgeOpacity(trust: number): number {
   if (trust <= 3) return 0.8;
   if (trust >= 7) return 0.4 + (trust - 7) * 0.2; // 0.4 at 7, 1.0 at 10
   return 0.3;
+}
+
+/* A node reads its own standing: the mean of its outgoing trust. */
+function nodeTone(trust: number): { fill: string; text: string; stroke: string } {
+  if (trust >= 7) return { fill: "var(--pos)", text: "var(--inset)", stroke: "var(--pos)" };
+  if (trust <= 3) return { fill: "var(--neg)", text: "var(--text-primary)", stroke: "var(--neg)" };
+  return { fill: "var(--surface-alt)", text: "var(--text-primary)", stroke: "var(--line-strong)" };
 }
 
 function getEdgeLabel(trust: number): string | null {
@@ -134,7 +141,7 @@ export default function TrustNetworkWidget() {
     selected.length === 2 ? matrix[selected[0]][selected[1]] : null;
 
   return (
-    <div className="widget-container s-trust" suppressHydrationWarning>
+    <div className="widget-container" suppressHydrationWarning>
       <div className="widget-label">Interactive &middot; Trust Network</div>
 
       {/* Preset Buttons */}
@@ -154,11 +161,13 @@ export default function TrustNetworkWidget() {
       <svg
         viewBox="0 0 500 400"
         style={{
+          display: "block",
           width: "100%",
-          maxWidth: "500px",
-          background: "rgba(0,0,0,0.3)",
+          maxWidth: "600px",
+          margin: "0 auto",
+          background: "var(--inset)",
           borderRadius: "8px",
-          border: "1px solid rgba(255,255,255,0.08)",
+          border: "1px solid var(--line)",
         }}
       >
         {/* Edges */}
@@ -182,7 +191,7 @@ export default function TrustNetworkWidget() {
                 y1={y1}
                 x2={x2}
                 y2={y2}
-                stroke={isSelected ? "#22d3ee" : color}
+                stroke={isSelected ? "var(--accent)" : color}
                 strokeWidth={isSelected ? thickness + 1 : thickness}
                 opacity={isSelected ? 1 : opacity}
                 strokeLinecap="round"
@@ -191,7 +200,7 @@ export default function TrustNetworkWidget() {
                 <text
                   x={(x1 + x2) / 2}
                   y={(y1 + y2) / 2 - 6}
-                  fill="#f43f5e"
+                  fill="var(--neg)"
                   fontSize="9"
                   textAnchor="middle"
                   fontWeight={600}
@@ -208,6 +217,9 @@ export default function TrustNetworkWidget() {
         {AGENTS.map((name, idx) => {
           const [cx, cy] = NODE_POSITIONS[idx];
           const isSelected = selected.includes(idx);
+          const others = matrix[idx].filter((_, j) => j !== idx);
+          const avgTrust = others.reduce((sum, v) => sum + v, 0) / others.length;
+          const tone = nodeTone(avgTrust);
 
           return (
             <g
@@ -222,20 +234,27 @@ export default function TrustNetworkWidget() {
                   cy={cy}
                   r={36}
                   fill="none"
-                  stroke="#22d3ee"
+                  stroke="var(--accent)"
                   strokeWidth={2}
                   opacity={0.9}
                 />
               )}
               {/* Node circle */}
-              <circle cx={cx} cy={cy} r={30} fill="#4ade80" opacity={0.85} />
+              <circle
+                cx={cx}
+                cy={cy}
+                r={30}
+                fill={tone.fill}
+                stroke={tone.stroke}
+                strokeWidth={1}
+              />
               {/* Initials inside node */}
               <text
                 x={cx}
                 y={cy + 1}
-                fill="#000"
+                fill={tone.text}
                 fontSize="13"
-                fontWeight={700}
+                fontWeight={600}
                 textAnchor="middle"
                 dominantBaseline="central"
                 style={{ pointerEvents: "none" }}
@@ -246,7 +265,7 @@ export default function TrustNetworkWidget() {
               <text
                 x={cx}
                 y={cy + 46}
-                fill="#fff"
+                fill="var(--text-primary)"
                 fontSize="11"
                 textAnchor="middle"
                 style={{ pointerEvents: "none" }}
@@ -269,16 +288,16 @@ export default function TrustNetworkWidget() {
             flexWrap: "wrap",
           }}
         >
-          <span style={{ fontSize: "13px", color: "#a1a1aa" }}>
+          <span style={{ fontSize: "13px", color: "var(--text-secondary)" }}>
             {AGENTS[selected[0]]} &harr; {AGENTS[selected[1]]}:
             <span
               style={{
                 fontWeight: 700,
                 color: pairTrust !== null && pairTrust <= 3
-                  ? "#f43f5e"
+                  ? "var(--neg)"
                   : pairTrust !== null && pairTrust >= 7
-                    ? "#4ade80"
-                    : "#fff",
+                    ? "var(--pos)"
+                    : "var(--text-primary)",
                 marginLeft: "6px",
                 fontVariantNumeric: "tabular-nums",
               }}
@@ -296,7 +315,7 @@ export default function TrustNetworkWidget() {
       )}
 
       {selected.length === 1 && (
-        <div style={{ marginTop: "14px", fontSize: "13px", color: "#a1a1aa" }}>
+        <div style={{ marginTop: "14px", fontSize: "13px", color: "var(--text-secondary)" }}>
           Selected {AGENTS[selected[0]]} &mdash; click another node to form a pair
         </div>
       )}
@@ -305,11 +324,9 @@ export default function TrustNetworkWidget() {
       <div style={{ marginTop: "20px" }}>
         <h3
           style={{
-            fontSize: "13px",
-            fontWeight: 600,
-            color: "#4ade80",
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
+            fontSize: "12px",
+            fontWeight: 500,
+            color: "var(--text-muted)",
             marginBottom: "10px",
           }}
         >
@@ -322,7 +339,8 @@ export default function TrustNetworkWidget() {
               fontSize: "11px",
               fontVariantNumeric: "tabular-nums",
               width: "100%",
-              maxWidth: "480px",
+              maxWidth: "600px",
+              margin: "0 auto",
             }}
           >
             <thead>
@@ -330,7 +348,7 @@ export default function TrustNetworkWidget() {
                 <th
                   style={{
                     padding: "4px 6px",
-                    color: "#a1a1aa",
+                    color: "var(--text-secondary)",
                     fontWeight: 500,
                     textAlign: "left",
                     borderBottom: "1px solid rgba(255,255,255,0.08)",
@@ -341,7 +359,7 @@ export default function TrustNetworkWidget() {
                     key={name}
                     style={{
                       padding: "4px 6px",
-                      color: "#a1a1aa",
+                      color: "var(--text-secondary)",
                       fontWeight: 500,
                       textAlign: "center",
                       borderBottom: "1px solid rgba(255,255,255,0.08)",
@@ -359,7 +377,7 @@ export default function TrustNetworkWidget() {
                   <td
                     style={{
                       padding: "4px 6px",
-                      color: "#a1a1aa",
+                      color: "var(--text-secondary)",
                       fontWeight: 500,
                       whiteSpace: "nowrap",
                       borderRight: "1px solid rgba(255,255,255,0.08)",
@@ -377,8 +395,8 @@ export default function TrustNetworkWidget() {
 
                     let cellColor = "rgba(255,255,255,0.5)";
                     if (!isSelf) {
-                      if (val <= 3) cellColor = "#f43f5e";
-                      else if (val >= 7) cellColor = "#4ade80";
+                      if (val <= 3) cellColor = "var(--neg)";
+                      else if (val >= 7) cellColor = "var(--pos)";
                       else cellColor = "rgba(255,255,255,0.5)";
                     }
 

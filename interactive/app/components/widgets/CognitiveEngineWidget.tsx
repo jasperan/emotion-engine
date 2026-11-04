@@ -13,19 +13,19 @@ interface StageInfo {
 
 const STAGES: StageInfo[] = [
   {
-    name: "THINK",
+    name: "Think",
     description: "Assess situation, determine urgency, identify top needs",
   },
   {
-    name: "PLAN",
+    name: "Plan",
     description: "Generate action plan with steps, deadlines, contingencies",
   },
   {
-    name: "ACT",
+    name: "Act",
     description: "Execute action, emit message, update state",
   },
   {
-    name: "REFLECT",
+    name: "Reflect",
     description: "Store in memory, update relationships, adjust stress",
   },
 ];
@@ -75,7 +75,7 @@ const monoBlock: React.CSSProperties = {
   fontFamily: "var(--font-mono), ui-monospace, monospace",
   fontSize: "12px",
   lineHeight: 1.7,
-  color: "#a1a1aa",
+  color: "var(--text-secondary)",
   background: "rgba(255,255,255,0.03)",
   border: "1px solid rgba(255,255,255,0.06)",
   borderRadius: "8px",
@@ -83,12 +83,12 @@ const monoBlock: React.CSSProperties = {
 };
 
 const keyStyle: React.CSSProperties = {
-  color: "#22d3ee",
+  color: "var(--accent)",
   fontWeight: 600,
 };
 
 const valStyle: React.CSSProperties = {
-  color: "#e4e4e7",
+  color: "var(--text-primary)",
 };
 
 const AUTO_PLAY_INTERVAL = 1500;
@@ -176,9 +176,9 @@ export default function CognitiveEngineWidget() {
     if (currentStage < 0) {
       return (
         <div style={monoBlock}>
-          <span style={{ color: "#a1a1aa", fontStyle: "italic" }}>
-            Press <strong style={{ color: "#e4e4e7" }}>Step Through</strong> or{" "}
-            <strong style={{ color: "#e4e4e7" }}>Auto Play</strong> to begin the
+          <span style={{ color: "var(--text-secondary)" }}>
+            Press <strong style={{ color: "var(--text-primary)" }}>Step Through</strong> or{" "}
+            <strong style={{ color: "var(--text-primary)" }}>Auto Play</strong> to begin the
             cognitive cycle.
           </span>
         </div>
@@ -188,7 +188,7 @@ export default function CognitiveEngineWidget() {
     switch (currentStage) {
       case 0:
         return (
-          <div style={monoBlock} className="animate-fade-in">
+          <div style={monoBlock} className="rise">
             <div style={{ marginBottom: "8px" }}>
               <span style={keyStyle}>situation: </span>
               <span style={valStyle}>&quot;{THINK_DETAIL.situation}&quot;</span>
@@ -197,13 +197,12 @@ export default function CognitiveEngineWidget() {
               <span style={keyStyle}>urgency: </span>
               <span
                 style={{
-                  background: "rgba(239,68,68,0.2)",
-                  color: "#f87171",
+                  background: "var(--neg-dim)",
+                  color: "var(--neg)",
                   padding: "2px 8px",
                   borderRadius: "4px",
                   fontSize: "11px",
-                  fontWeight: 700,
-                  letterSpacing: "0.05em",
+                  fontWeight: 500,
                 }}
               >
                 {THINK_DETAIL.urgency}
@@ -215,7 +214,7 @@ export default function CognitiveEngineWidget() {
               {THINK_DETAIL.topNeeds.map((need, i) => (
                 <span key={need}>
                   <br />
-                  <span style={{ paddingLeft: "16px", color: "#e4e4e7" }}>
+                  <span style={{ paddingLeft: "16px", color: "var(--text-primary)" }}>
                     &quot;{need}&quot;
                     {i < THINK_DETAIL.topNeeds.length - 1 ? "," : ""}
                   </span>
@@ -228,7 +227,7 @@ export default function CognitiveEngineWidget() {
         );
       case 1:
         return (
-          <div style={monoBlock} className="animate-fade-in">
+          <div style={monoBlock} className="rise">
             <div style={{ marginBottom: "8px" }}>
               <span style={keyStyle}>goal: </span>
               <span style={valStyle}>&quot;{PLAN_DETAIL.goal}&quot;</span>
@@ -239,7 +238,7 @@ export default function CognitiveEngineWidget() {
               {PLAN_DETAIL.steps.map((step, i) => (
                 <span key={step}>
                   <br />
-                  <span style={{ paddingLeft: "16px", color: "#e4e4e7" }}>
+                  <span style={{ paddingLeft: "16px", color: "var(--text-primary)" }}>
                     &quot;{step}&quot;
                     {i < PLAN_DETAIL.steps.length - 1 ? "," : ""}
                   </span>
@@ -260,7 +259,7 @@ export default function CognitiveEngineWidget() {
         );
       case 2:
         return (
-          <div style={monoBlock} className="animate-fade-in">
+          <div style={monoBlock} className="rise">
             <div style={{ marginBottom: "8px" }}>
               <span style={keyStyle}>action: </span>
               <span style={valStyle}>&quot;{ACT_DETAIL.action}&quot;</span>
@@ -274,22 +273,22 @@ export default function CognitiveEngineWidget() {
               <span style={valStyle}>{"{"}</span>
               <br />
               <span style={{ paddingLeft: "16px" }}>
-                <span style={{ color: "#a1a1aa" }}>location: </span>
+                <span style={{ color: "var(--text-secondary)" }}>location: </span>
                 <span style={valStyle}>
                   {ACT_DETAIL.stateChange.location.from}
                 </span>
-                <span style={{ color: "#22d3ee" }}> {"\u2192"} </span>
+                <span style={{ color: "var(--accent)" }}> {"\u2192"} </span>
                 <span style={valStyle}>
                   {ACT_DETAIL.stateChange.location.to}
                 </span>
               </span>
               <br />
               <span style={{ paddingLeft: "16px" }}>
-                <span style={{ color: "#a1a1aa" }}>stress: </span>
+                <span style={{ color: "var(--text-secondary)" }}>stress: </span>
                 <span style={valStyle}>
                   {ACT_DETAIL.stateChange.stress.from}
                 </span>
-                <span style={{ color: "#22d3ee" }}> {"\u2192"} </span>
+                <span style={{ color: "var(--accent)" }}> {"\u2192"} </span>
                 <span style={valStyle}>
                   {ACT_DETAIL.stateChange.stress.to}
                 </span>
@@ -301,7 +300,7 @@ export default function CognitiveEngineWidget() {
         );
       case 3:
         return (
-          <div style={monoBlock} className="animate-fade-in">
+          <div style={monoBlock} className="rise">
             <div style={{ marginBottom: "8px" }}>
               <span style={keyStyle}>memoryStored: </span>
               <span style={valStyle}>
@@ -310,7 +309,7 @@ export default function CognitiveEngineWidget() {
             </div>
             <div style={{ marginBottom: "8px" }}>
               <span style={keyStyle}>emotionalValence: </span>
-              <span style={{ color: "#4ade80", fontWeight: 600 }}>
+              <span style={{ color: "var(--pos)", fontWeight: 600 }}>
                 {REFLECT_DETAIL.emotionalValence}
               </span>
             </div>
@@ -336,7 +335,7 @@ export default function CognitiveEngineWidget() {
   /* ---------- render ---------- */
 
   return (
-    <div className="widget-container s-cognitive" suppressHydrationWarning>
+    <div className="widget-container" suppressHydrationWarning>
       <div className="widget-label">
         Interactive &middot; Cognitive Engine
       </div>
@@ -393,14 +392,13 @@ export default function CognitiveEngineWidget() {
               <div
                 style={{
                   fontSize: "13px",
-                  fontWeight: 700,
+                  fontWeight: 500,
                   color:
                     i === currentStage
-                      ? "#22d3ee"
+                      ? "var(--accent)"
                       : i < currentStage
-                        ? "#4ade80"
-                        : "#e4e4e7",
-                  letterSpacing: "0.05em",
+                        ? "var(--pos)"
+                        : "var(--text-primary)",
                   marginBottom: "4px",
                   fontFamily: "var(--font-mono), ui-monospace, monospace",
                 }}
@@ -410,7 +408,7 @@ export default function CognitiveEngineWidget() {
               <div
                 style={{
                   fontSize: "11px",
-                  color: "#a1a1aa",
+                  color: "var(--text-secondary)",
                   lineHeight: 1.4,
                 }}
               >
@@ -427,9 +425,9 @@ export default function CognitiveEngineWidget() {
                   fontSize: "18px",
                   color:
                     i < currentStage
-                      ? "#4ade80"
+                      ? "var(--pos)"
                       : i === currentStage
-                        ? "#22d3ee"
+                        ? "var(--accent)"
                         : "rgba(255,255,255,0.15)",
                   fontWeight: 700,
                   transition: "color 0.3s",
@@ -450,7 +448,7 @@ export default function CognitiveEngineWidget() {
           style={{ marginBottom: "12px", fontSize: "12px" }}
           onClick={() => setDetailOpen((o) => !o)}
         >
-          {detailOpen ? "\u25BC" : "\u25B6"} Stage Detail
+          Stage detail
           {currentStage >= 0 ? ` \u2014 ${STAGES[currentStage].name}` : ""}
         </button>
 

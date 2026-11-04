@@ -20,10 +20,10 @@ const CALM_FACTOR = 0.5;
 const AUTO_INTERVAL_MS = 800;
 
 function stressColor(stress: number): string {
-  if (stress <= 2) return "#4ade80";
-  if (stress <= 5) return "#facc15";
-  if (stress <= 8) return "#fb923c";
-  return "#f43f5e";
+  if (stress <= 2) return "var(--pos)";
+  if (stress <= 5) return "color-mix(in srgb, var(--warn) 55%, var(--text-secondary))";
+  if (stress <= 8) return "var(--warn)";
+  return "var(--neg)";
 }
 
 function createInitialAgents(): Agent[] {
@@ -97,7 +97,7 @@ export default function EmotionContagionWidget() {
     agents.reduce((sum, a) => sum + a.stress, 0) / agents.length;
 
   return (
-    <div className="widget-container s-emotion" suppressHydrationWarning>
+    <div className="widget-container" suppressHydrationWarning>
       <div className="widget-label">Interactive &middot; Emotion Contagion</div>
 
       {/* Controls */}
@@ -117,15 +117,7 @@ export default function EmotionContagionWidget() {
       </div>
 
       {/* Agent Grid */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
-          gap: "16px",
-          maxWidth: "360px",
-          margin: "0 auto 24px",
-        }}
-      >
+      <div className="grid grid-cols-4 sm:grid-cols-6 gap-5 max-w-[600px] mx-auto mb-6">
         {agents.map((agent, i) => {
           const color = stressColor(agent.stress);
           const isHighStress = agent.stress >= 7;
@@ -145,7 +137,7 @@ export default function EmotionContagionWidget() {
                   width: "64px",
                   height: "64px",
                   borderRadius: "50%",
-                  background: `${color}22`,
+                  background: `color-mix(in srgb, ${color} 13%, transparent)`,
                   border: `2px solid ${color}`,
                   display: "flex",
                   alignItems: "center",
@@ -153,11 +145,8 @@ export default function EmotionContagionWidget() {
                   fontSize: "16px",
                   fontWeight: 700,
                   color: color,
-                  transition: "all 0.3s ease",
-                  boxShadow: isHighStress
-                    ? `0 0 12px ${color}66, 0 0 24px ${color}33`
-                    : "none",
-                  animation: isHighStress ? "contagionPulse 1.2s ease-in-out infinite" : "none",
+                  transition:
+                    "border-color var(--dur) var(--ease), background-color var(--dur) var(--ease), color var(--dur) var(--ease)",
                   fontVariantNumeric: "tabular-nums",
                 }}
                 suppressHydrationWarning
@@ -168,7 +157,7 @@ export default function EmotionContagionWidget() {
                 style={{
                   marginTop: "6px",
                   fontSize: "11px",
-                  color: "#a1a1aa",
+                  color: "var(--text-secondary)",
                   textAlign: "center",
                   lineHeight: 1.2,
                   whiteSpace: "nowrap",
@@ -189,13 +178,13 @@ export default function EmotionContagionWidget() {
           gap: "24px",
           marginBottom: "16px",
           fontSize: "13px",
-          color: "#a1a1aa",
+          color: "var(--text-secondary)",
         }}
       >
         <span>
           Step:{" "}
           <span
-            style={{ color: "#f472b6", fontWeight: 700, fontVariantNumeric: "tabular-nums" }}
+            style={{ color: "var(--text-primary)", fontWeight: 500, fontVariantNumeric: "tabular-nums" }}
             suppressHydrationWarning
           >
             {step}
@@ -224,14 +213,14 @@ export default function EmotionContagionWidget() {
           gap: "16px",
           flexWrap: "wrap",
           fontSize: "11px",
-          color: "#a1a1aa",
+          color: "var(--text-secondary)",
         }}
       >
         {[
-          { color: "#4ade80", label: "0-2 Calm" },
-          { color: "#facc15", label: "3-5 Tense" },
-          { color: "#fb923c", label: "6-8 Stressed" },
-          { color: "#f43f5e", label: "9-10 Panic" },
+          { color: "var(--pos)", label: "0-2 Calm" },
+          { color: "color-mix(in srgb, var(--warn) 55%, var(--text-secondary))", label: "3-5 Tense" },
+          { color: "var(--warn)", label: "6-8 Stressed" },
+          { color: "var(--neg)", label: "9-10 Panic" },
         ].map((item) => (
           <div
             key={item.label}
@@ -255,7 +244,7 @@ export default function EmotionContagionWidget() {
         style={{
           textAlign: "center",
           fontSize: "11px",
-          color: "#71717a",
+          color: "var(--text-muted)",
           marginTop: "12px",
           marginBottom: 0,
         }}
@@ -263,13 +252,6 @@ export default function EmotionContagionWidget() {
         Click any agent to trigger panic (stress 10), then propagate to watch contagion spread.
       </p>
 
-      {/* Keyframe animation injected via style tag */}
-      <style>{`
-        @keyframes contagionPulse {
-          0%, 100% { box-shadow: 0 0 8px var(--glow-color, rgba(244,63,94,0.4)); }
-          50% { box-shadow: 0 0 20px var(--glow-color, rgba(244,63,94,0.7)), 0 0 40px var(--glow-color, rgba(244,63,94,0.3)); }
-        }
-      `}</style>
     </div>
   );
 }

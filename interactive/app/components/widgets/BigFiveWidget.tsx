@@ -122,7 +122,7 @@ export default function BigFiveWidget() {
   const personaText = generatePersonaPreview(traits);
 
   return (
-    <div className="widget-container s-personality" suppressHydrationWarning>
+    <div className="widget-container" suppressHydrationWarning>
       <div className="widget-label">Interactive &middot; Big Five Personality</div>
 
       {/* Preset Buttons */}
@@ -144,11 +144,9 @@ export default function BigFiveWidget() {
         <div>
           <h3
             style={{
-              fontSize: "13px",
-              fontWeight: 600,
-              color: "#f97316",
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
+              fontSize: "12px",
+              fontWeight: 500,
+              color: "var(--text-muted)",
               marginBottom: "16px",
             }}
           >
@@ -168,7 +166,7 @@ export default function BigFiveWidget() {
                   <label
                     style={{
                       fontSize: "13px",
-                      color: "#a1a1aa",
+                      color: "var(--text-secondary)",
                       fontWeight: 500,
                     }}
                   >
@@ -176,7 +174,7 @@ export default function BigFiveWidget() {
                       style={{
                         display: "inline-block",
                         width: "20px",
-                        color: "#f97316",
+                        color: "var(--accent)",
                         fontWeight: 700,
                       }}
                     >
@@ -188,7 +186,7 @@ export default function BigFiveWidget() {
                     style={{
                       fontSize: "14px",
                       fontWeight: 700,
-                      color: "#fff",
+                      color: "var(--text-primary)",
                       fontVariantNumeric: "tabular-nums",
                       minWidth: "20px",
                       textAlign: "right",
@@ -206,7 +204,7 @@ export default function BigFiveWidget() {
                   onChange={(e) => updateTrait(trait.key, Number(e.target.value))}
                   style={{
                     width: "100%",
-                    accentColor: "#f97316",
+                    accentColor: "var(--accent)",
                   }}
                 />
               </div>
@@ -218,11 +216,9 @@ export default function BigFiveWidget() {
         <div>
           <h3
             style={{
-              fontSize: "13px",
-              fontWeight: 600,
-              color: "#f97316",
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
+              fontSize: "12px",
+              fontWeight: 500,
+              color: "var(--text-muted)",
               marginBottom: "16px",
             }}
           >
@@ -241,14 +237,14 @@ export default function BigFiveWidget() {
                       marginBottom: "4px",
                     }}
                   >
-                    <span style={{ fontSize: "13px", color: "#a1a1aa" }}>
+                    <span style={{ fontSize: "13px", color: "var(--text-secondary)" }}>
                       {prob.label}
                     </span>
                     <span
                       style={{
                         fontSize: "13px",
                         fontWeight: 700,
-                        color: "#fff",
+                        color: "var(--text-primary)",
                         fontVariantNumeric: "tabular-nums",
                       }}
                       suppressHydrationWarning
@@ -270,8 +266,8 @@ export default function BigFiveWidget() {
                         width: `${pct}%`,
                         height: "100%",
                         borderRadius: "4px",
-                        background: "#f97316",
-                        transition: "width 0.2s ease",
+                        background: "var(--accent)",
+                        transition: "width var(--dur) var(--ease)",
                       }}
                       suppressHydrationWarning
                     />
@@ -279,10 +275,10 @@ export default function BigFiveWidget() {
                   <div
                     style={{
                       fontSize: "11px",
-                      color: "#a1a1aa",
+                      color: "var(--text-secondary)",
                       marginTop: "2px",
                       opacity: 0.6,
-                      fontFamily: "monospace",
+                      fontFamily: "var(--font-mono)",
                     }}
                   >
                     {prob.formula}
@@ -298,17 +294,15 @@ export default function BigFiveWidget() {
               marginTop: "20px",
               padding: "12px 14px",
               borderRadius: "8px",
-              background: "#12131a",
+              background: "var(--inset)",
               border: "1px solid rgba(255,255,255,0.08)",
             }}
           >
             <div
               style={{
-                fontSize: "11px",
-                fontWeight: 600,
-                color: "#f97316",
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
+                fontSize: "12px",
+                fontWeight: 500,
+                color: "var(--text-muted)",
                 marginBottom: "6px",
               }}
             >
@@ -317,7 +311,7 @@ export default function BigFiveWidget() {
             <p
               style={{
                 fontSize: "13px",
-                color: "#a1a1aa",
+                color: "var(--text-secondary)",
                 lineHeight: 1.5,
                 margin: 0,
               }}

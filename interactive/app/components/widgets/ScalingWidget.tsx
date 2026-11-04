@@ -6,8 +6,8 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 /*  Constants & types                                                  */
 /* ------------------------------------------------------------------ */
 
-const ACCENT = "#e879f9";
-const ACCENT_DIM = "rgba(232,121,249,0.2)";
+const ACCENT = "var(--accent)";
+const ACCENT_DIM = "var(--accent-dim)";
 
 const FULL_PIPELINE = ["Think", "Plan", "Act", "Reflect"];
 const LITE_PIPELINE = ["Evaluate", "Weighted Action"];
@@ -48,7 +48,7 @@ const monoBlock: React.CSSProperties = {
   fontFamily: "var(--font-mono), ui-monospace, monospace",
   fontSize: "12px",
   lineHeight: 1.7,
-  color: "#a1a1aa",
+  color: "var(--text-secondary)",
   background: "rgba(255,255,255,0.03)",
   border: "1px solid rgba(255,255,255,0.06)",
   borderRadius: "8px",
@@ -56,26 +56,22 @@ const monoBlock: React.CSSProperties = {
 };
 
 const sectionTitle: React.CSSProperties = {
-  fontSize: "13px",
-  fontWeight: 600,
-  color: ACCENT,
-  textTransform: "uppercase",
-  letterSpacing: "0.05em",
+  fontSize: "12px",
+  fontWeight: 500,
+  color: "var(--text-muted)",
   marginBottom: "16px",
 };
 
 const statLabel: React.CSSProperties = {
-  fontSize: "11px",
-  color: "#a1a1aa",
-  textTransform: "uppercase",
-  letterSpacing: "0.05em",
+  fontSize: "12px",
+  color: "var(--text-muted)",
   marginBottom: "4px",
 };
 
 const statValue: React.CSSProperties = {
   fontSize: "18px",
   fontWeight: 700,
-  color: "#fff",
+  color: "var(--text-primary)",
   fontVariantNumeric: "tabular-nums",
 };
 
@@ -255,7 +251,7 @@ export default function ScalingWidget() {
               padding: "6px 12px",
               borderRadius: "6px",
               background: "rgba(255,255,255,0.04)",
-              border: `1px solid ${color}33`,
+              border: `1px solid color-mix(in srgb, ${color} 20%, transparent)`,
               fontSize: "12px",
               fontWeight: 600,
               color,
@@ -270,7 +266,7 @@ export default function ScalingWidget() {
             <span
               style={{
                 padding: "0 6px",
-                color: `${color}88`,
+                color: `color-mix(in srgb, ${color} 55%, transparent)`,
                 fontSize: "14px",
                 fontWeight: 700,
                 userSelect: "none",
@@ -301,12 +297,12 @@ export default function ScalingWidget() {
             marginBottom: "4px",
           }}
         >
-          <span style={{ fontSize: "12px", color: "#a1a1aa" }}>{label}</span>
+          <span style={{ fontSize: "12px", color: "var(--text-secondary)" }}>{label}</span>
           <span
             style={{
               fontSize: "12px",
               fontWeight: 700,
-              color: "#fff",
+              color: "var(--text-primary)",
               fontVariantNumeric: "tabular-nums",
               fontFamily: "var(--font-mono), ui-monospace, monospace",
             }}
@@ -330,7 +326,7 @@ export default function ScalingWidget() {
               height: "100%",
               borderRadius: "4px",
               background: color,
-              transition: "width 0.3s ease",
+              transition: "width var(--dur) var(--ease)",
             }}
             suppressHydrationWarning
           />
@@ -351,12 +347,11 @@ export default function ScalingWidget() {
       border = ACCENT;
       animClass = "animate-pulse";
     } else if (agent.status === "done") {
-      bg = agent.type === "full" ? ACCENT : "#4ade80";
+      bg = agent.type === "full" ? ACCENT : "var(--pos)";
       border = "transparent";
     } else if (agent.status === "promoted") {
-      bg = "#fbbf24";
-      border = "#f59e0b";
-      animClass = "animate-pulse";
+      bg = "var(--warn)";
+      border = "var(--warn)";
     }
 
     return (
@@ -370,7 +365,7 @@ export default function ScalingWidget() {
           borderRadius: "50%",
           background: bg,
           border: `1.5px solid ${border}`,
-          transition: "background 0.3s, border 0.3s",
+          transition: "background-color var(--dur) var(--ease), border-color var(--dur) var(--ease)",
           flexShrink: 0,
         }}
       />
@@ -380,7 +375,7 @@ export default function ScalingWidget() {
   /* ---------- render ---------- */
 
   return (
-    <div className="widget-container s-scaling" suppressHydrationWarning>
+    <div className="widget-container" suppressHydrationWarning>
       <div className="widget-label">Interactive &middot; Agent Scaling</div>
 
       {/* ---- Agent Count Slider ---- */}
@@ -396,7 +391,7 @@ export default function ScalingWidget() {
           <label
             style={{
               fontSize: "13px",
-              color: "#a1a1aa",
+              color: "var(--text-secondary)",
               fontWeight: 500,
             }}
           >
@@ -406,7 +401,7 @@ export default function ScalingWidget() {
             style={{
               fontSize: "18px",
               fontWeight: 700,
-              color: "#fff",
+              color: "var(--text-primary)",
               fontVariantNumeric: "tabular-nums",
               minWidth: "40px",
               textAlign: "right",
@@ -432,7 +427,7 @@ export default function ScalingWidget() {
             display: "flex",
             justifyContent: "space-between",
             fontSize: "11px",
-            color: "#71717a",
+            color: "var(--text-muted)",
             marginTop: "4px",
           }}
         >
@@ -452,7 +447,7 @@ export default function ScalingWidget() {
 
           {/* Pipeline */}
           <div style={{ marginBottom: "16px" }}>
-            {renderPipeline(FULL_PIPELINE, "#22d3ee")}
+            {renderPipeline(FULL_PIPELINE, "var(--accent)")}
           </div>
 
           {/* Stats */}
@@ -463,7 +458,7 @@ export default function ScalingWidget() {
             </div>
             <div style={{ marginBottom: "12px" }}>
               <div style={statLabel}>Features</div>
-              <div style={{ fontSize: "12px", color: "#e4e4e7", lineHeight: 1.6 }}>
+              <div style={{ fontSize: "12px", color: "var(--text-primary)", lineHeight: 1.6 }}>
                 Rich dialogue, nuanced decisions, memory, personality expression
               </div>
             </div>
@@ -474,7 +469,7 @@ export default function ScalingWidget() {
             <div>
               <div style={statLabel}>Max Scalable</div>
               <div style={statValue}>~10&ndash;15 agents</div>
-              <div style={{ fontSize: "11px", color: "#71717a", marginTop: "2px" }}>
+              <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>
                 Limited by LLM throughput
               </div>
             </div>
@@ -487,7 +482,7 @@ export default function ScalingWidget() {
 
           {/* Pipeline */}
           <div style={{ marginBottom: "16px" }}>
-            {renderPipeline(LITE_PIPELINE, "#4ade80")}
+            {renderPipeline(LITE_PIPELINE, "var(--pos)")}
           </div>
 
           {/* Stats */}
@@ -498,7 +493,7 @@ export default function ScalingWidget() {
             </div>
             <div style={{ marginBottom: "12px" }}>
               <div style={statLabel}>Features</div>
-              <div style={{ fontSize: "12px", color: "#e4e4e7", lineHeight: 1.6 }}>
+              <div style={{ fontSize: "12px", color: "var(--text-primary)", lineHeight: 1.6 }}>
                 Personality-weighted probabilities, basic actions, no dialogue
               </div>
             </div>
@@ -509,7 +504,7 @@ export default function ScalingWidget() {
             <div>
               <div style={statLabel}>Max Scalable</div>
               <div style={statValue}>100+ agents</div>
-              <div style={{ fontSize: "11px", color: "#71717a", marginTop: "2px" }}>
+              <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>
                 CPU-bound only, no LLM bottleneck
               </div>
             </div>
@@ -530,27 +525,27 @@ export default function ScalingWidget() {
             }}
           >
             {/* Header */}
-            <div style={{ fontSize: "11px", color: "#71717a", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            <div style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 500 }}>
               Trait
             </div>
-            <div style={{ fontSize: "11px", color: "#71717a", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            <div style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 500 }}>
               Action
             </div>
-            <div style={{ fontSize: "11px", color: "#71717a", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "right" }}>
+            <div style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 500, textAlign: "right" }}>
               Weight
             </div>
 
             {/* Rows */}
             {BEHAVIOR_WEIGHTS.map((bw) => (
               <React.Fragment key={bw.traitKey}>
-                <div style={{ fontSize: "12px", color: "#a1a1aa" }}>
+                <div style={{ fontSize: "12px", color: "var(--text-secondary)" }}>
                   <span style={{ color: ACCENT, fontWeight: 700 }}>{bw.traitKey}</span>{" "}
                   {bw.trait}
                 </div>
                 <div
                   style={{
                     fontSize: "12px",
-                    color: "#e4e4e7",
+                    color: "var(--text-primary)",
                     fontFamily: "var(--font-mono), ui-monospace, monospace",
                   }}
                 >
@@ -559,7 +554,7 @@ export default function ScalingWidget() {
                 <div
                   style={{
                     fontSize: "12px",
-                    color: "#4ade80",
+                    color: "var(--pos)",
                     fontWeight: 600,
                     fontFamily: "var(--font-mono), ui-monospace, monospace",
                     textAlign: "right",
@@ -592,7 +587,7 @@ export default function ScalingWidget() {
             <div
               style={{
                 fontSize: "11px",
-                color: "#71717a",
+                color: "var(--text-muted)",
                 marginTop: "4px",
                 fontFamily: "var(--font-mono), ui-monospace, monospace",
               }}
@@ -611,7 +606,7 @@ export default function ScalingWidget() {
             <div
               style={{
                 fontSize: "11px",
-                color: "#71717a",
+                color: "var(--text-muted)",
                 marginTop: "4px",
                 fontFamily: "var(--font-mono), ui-monospace, monospace",
               }}
@@ -624,13 +619,13 @@ export default function ScalingWidget() {
           {/* Lightweight */}
           <div style={monoBlock}>
             <div style={statLabel}>Lightweight</div>
-            <div style={{ ...statValue, color: "#4ade80" }} suppressHydrationWarning>
+            <div style={{ ...statValue, color: "var(--pos)" }} suppressHydrationWarning>
               {formatTime(liteTime)}
             </div>
             <div
               style={{
                 fontSize: "11px",
-                color: "#71717a",
+                color: "var(--text-muted)",
                 marginTop: "4px",
                 fontFamily: "var(--font-mono), ui-monospace, monospace",
               }}
@@ -656,7 +651,7 @@ export default function ScalingWidget() {
             `Lightweight Agents (${liteAgentCount})`,
             liteTokens,
             Math.max(fullTokens, 1),
-            "#4ade80",
+            "var(--pos)",
           )}
           <div
             style={{
@@ -668,12 +663,12 @@ export default function ScalingWidget() {
               alignItems: "baseline",
             }}
           >
-            <span style={{ fontSize: "12px", color: "#a1a1aa" }}>Total</span>
+            <span style={{ fontSize: "12px", color: "var(--text-secondary)" }}>Total</span>
             <span
               style={{
                 fontSize: "14px",
                 fontWeight: 700,
-                color: "#fff",
+                color: "var(--text-primary)",
                 fontVariantNumeric: "tabular-nums",
                 fontFamily: "var(--font-mono), ui-monospace, monospace",
               }}
@@ -691,7 +686,7 @@ export default function ScalingWidget() {
         <p
           style={{
             fontSize: "12px",
-            color: "#71717a",
+            color: "var(--text-muted)",
             marginBottom: "12px",
             lineHeight: 1.5,
           }}
@@ -711,11 +706,11 @@ export default function ScalingWidget() {
                   padding: "10px 14px",
                   borderRadius: "8px",
                   background: active
-                    ? "rgba(232,121,249,0.08)"
+                    ? "var(--agent-dim)"
                     : "rgba(255,255,255,0.03)",
-                  border: `1px solid ${active ? `${ACCENT}44` : "rgba(255,255,255,0.06)"}`,
+                  border: `1px solid ${active ? "var(--accent-dim)" : "rgba(255,255,255,0.06)"}`,
                   cursor: "pointer",
-                  transition: "all 0.2s",
+                  transition: "background-color var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease)",
                 }}
               >
                 <input
@@ -733,14 +728,14 @@ export default function ScalingWidget() {
                     style={{
                       fontSize: "13px",
                       fontWeight: 600,
-                      color: active ? "#e4e4e7" : "#71717a",
+                      color: active ? "var(--text-primary)" : "var(--text-muted)",
                       transition: "color 0.2s",
                     }}
                   >
                     {trigger.label}{" "}
                     <span
                       style={{
-                        color: active ? "#4ade80" : "#71717a",
+                        color: active ? "var(--pos)" : "var(--text-muted)",
                         fontWeight: 700,
                         fontSize: "14px",
                       }}
@@ -751,7 +746,7 @@ export default function ScalingWidget() {
                   <div
                     style={{
                       fontSize: "11px",
-                      color: "#71717a",
+                      color: "var(--text-muted)",
                       marginTop: "2px",
                       lineHeight: 1.4,
                     }}
@@ -769,19 +764,37 @@ export default function ScalingWidget() {
       <div style={{ marginTop: "28px" }}>
         <h3 style={sectionTitle}>Simulation Demo</h3>
 
-        <button
-          className={`btn-mono${isSimulating ? " active" : ""}`}
-          onClick={() => {
-            if (isSimulating) {
-              setIsSimulating(false);
-            } else {
-              startSimulation();
-            }
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            flexWrap: "wrap",
+            marginBottom: "16px",
           }}
-          style={{ marginBottom: "16px" }}
         >
-          {isSimulating ? "Stop" : "Simulate"} (50 agents: 5 full + 45 lightweight)
-        </button>
+          <button
+            className={`btn-mono${isSimulating ? " active" : ""}`}
+            onClick={() => {
+              if (isSimulating) {
+                setIsSimulating(false);
+              } else {
+                startSimulation();
+              }
+            }}
+          >
+            {isSimulating ? "Stop" : "Simulate 50 agents"}
+          </button>
+          <span
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "12px",
+              color: "var(--text-muted)",
+            }}
+          >
+            5 full &middot; 45 lightweight
+          </span>
+        </div>
 
         {/* Agent grid visualization */}
         {simAgents.length > 0 && (
@@ -799,8 +812,8 @@ export default function ScalingWidget() {
                 { color: "rgba(255,255,255,0.1)", border: "transparent", label: "Idle" },
                 { color: ACCENT_DIM, border: ACCENT, label: "Thinking (Full)" },
                 { color: ACCENT, border: "transparent", label: "Done (Full)" },
-                { color: "#4ade80", border: "transparent", label: "Done (Lightweight)" },
-                { color: "#fbbf24", border: "#f59e0b", label: "Promoted" },
+                { color: "var(--pos)", border: "transparent", label: "Done (Lightweight)" },
+                { color: "var(--warn)", border: "var(--warn)", label: "Promoted" },
               ].map((item) => (
                 <div
                   key={item.label}
@@ -809,7 +822,7 @@ export default function ScalingWidget() {
                     alignItems: "center",
                     gap: "6px",
                     fontSize: "11px",
-                    color: "#71717a",
+                    color: "var(--text-muted)",
                   }}
                 >
                   <div
@@ -831,11 +844,9 @@ export default function ScalingWidget() {
             <div style={{ marginBottom: "12px" }}>
               <div
                 style={{
-                  fontSize: "11px",
-                  color: ACCENT,
-                  fontWeight: 600,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
+                  fontSize: "12px",
+                  color: "var(--text-muted)",
+                  fontWeight: 500,
                   marginBottom: "8px",
                 }}
               >
@@ -852,11 +863,9 @@ export default function ScalingWidget() {
             <div>
               <div
                 style={{
-                  fontSize: "11px",
-                  color: "#4ade80",
-                  fontWeight: 600,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
+                  fontSize: "12px",
+                  color: "var(--text-muted)",
+                  fontWeight: 500,
                   marginBottom: "8px",
                 }}
               >
@@ -877,7 +886,7 @@ export default function ScalingWidget() {
                   paddingTop: "12px",
                   borderTop: "1px solid rgba(255,255,255,0.06)",
                   fontSize: "12px",
-                  color: "#a1a1aa",
+                  color: "var(--text-secondary)",
                 }}
               >
                 <span style={{ color: ACCENT, fontWeight: 600 }}>Step {simStep}</span>
@@ -903,7 +912,7 @@ export default function ScalingWidget() {
                   paddingTop: "12px",
                   borderTop: "1px solid rgba(255,255,255,0.06)",
                   fontSize: "12px",
-                  color: "#4ade80",
+                  color: "var(--pos)",
                   fontWeight: 600,
                 }}
               >

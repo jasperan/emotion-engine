@@ -24,13 +24,13 @@ interface HistoryEntry {
 /* ------------------------------------------------------------------ */
 
 const INITIAL_AGENTS: Agent[] = [
-  { name: "Dr. Chen", influence: 0.8, trust: 0.7, bias: 0.2, opinion: 0.8, color: "#60a5fa" },
-  { name: "Marcus", influence: 0.5, trust: 0.6, bias: 0.4, opinion: -0.6, color: "#f97316" },
-  { name: "Sofia", influence: 0.6, trust: 0.8, bias: 0.1, opinion: 0.3, color: "#34d399" },
-  { name: "Amir", influence: 0.3, trust: 0.5, bias: 0.7, opinion: -0.3, color: "#facc15" },
+  { name: "Dr. Chen", influence: 0.8, trust: 0.7, bias: 0.2, opinion: 0.8, color: "var(--cat-1)" },
+  { name: "Marcus", influence: 0.5, trust: 0.6, bias: 0.4, opinion: -0.6, color: "var(--cat-2)" },
+  { name: "Sofia", influence: 0.6, trust: 0.8, bias: 0.1, opinion: 0.3, color: "var(--cat-3)" },
+  { name: "Amir", influence: 0.3, trust: 0.5, bias: 0.7, opinion: -0.3, color: "var(--cat-4)" },
 ];
 
-const ACCENT = "#a78bfa";
+const ACCENT = "var(--accent)";
 
 /* ------------------------------------------------------------------ */
 /*  Simulation logic                                                   */
@@ -98,9 +98,12 @@ function HistoryChart({ history, agents }: { history: HistoryEntry[]; agents: Ag
       viewBox={`0 0 ${W} ${H}`}
       style={{
         display: "block",
+        width: "100%",
+        maxWidth: "560px",
+        margin: "0 auto",
         borderRadius: "6px",
-        background: "#12131a",
-        border: "1px solid rgba(255,255,255,0.08)",
+        background: "var(--inset)",
+        border: "1px solid var(--line)",
       }}
     >
       {/* Center line */}
@@ -113,10 +116,10 @@ function HistoryChart({ history, agents }: { history: HistoryEntry[]; agents: Ag
         strokeDasharray="4 4"
       />
       {/* +1 / -1 labels */}
-      <text x={4} y={12} fill="rgba(255,255,255,0.25)" fontSize="9" fontFamily="monospace">
+      <text x={4} y={12} fill="rgba(255,255,255,0.3)" fontSize="10" fontFamily="var(--font-mono)">
         +1
       </text>
-      <text x={4} y={H - 4} fill="rgba(255,255,255,0.25)" fontSize="9" fontFamily="monospace">
+      <text x={4} y={H - 4} fill="rgba(255,255,255,0.3)" fontSize="10" fontFamily="var(--font-mono)">
         -1
       </text>
 
@@ -158,12 +161,29 @@ function HistoryChart({ history, agents }: { history: HistoryEntry[]; agents: Ag
 /*  Main widget                                                        */
 /* ------------------------------------------------------------------ */
 
+/* Four steps of the same interaction run before the widget mounts, so the
+   trajectory chart opens on a real line instead of one point. Deterministic,
+   so the static export and the client agree. */
+const SEED_STEPS = 4;
+
+function seedState() {
+  let current = INITIAL_AGENTS.map((a) => ({ ...a }));
+  const history: HistoryEntry[] = [{ opinions: current.map((a) => a.opinion) }];
+  for (let i = 0; i < SEED_STEPS; i++) {
+    current = runInteraction(current);
+    history.push({ opinions: current.map((a) => a.opinion) });
+  }
+  return { agents: current, history };
+}
+
+const SEED = seedState();
+
 export default function OpinionDynamicsWidget() {
-  const [agents, setAgents] = useState<Agent[]>(INITIAL_AGENTS.map((a) => ({ ...a })));
-  const [step, setStep] = useState(0);
-  const [history, setHistory] = useState<HistoryEntry[]>([
-    { opinions: INITIAL_AGENTS.map((a) => a.opinion) },
-  ]);
+  const [agents, setAgents] = useState<Agent[]>(() => SEED.agents.map((a) => ({ ...a })));
+  const [step, setStep] = useState(SEED_STEPS);
+  const [history, setHistory] = useState<HistoryEntry[]>(() =>
+    SEED.history.map((h) => ({ opinions: [...h.opinions] }))
+  );
   const [running, setRunning] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -204,9 +224,9 @@ export default function OpinionDynamicsWidget() {
     if (intervalRef.current) clearInterval(intervalRef.current);
     intervalRef.current = null;
     setRunning(false);
-    setAgents(INITIAL_AGENTS.map((a) => ({ ...a })));
-    setStep(0);
-    setHistory([{ opinions: INITIAL_AGENTS.map((a) => a.opinion) }]);
+    setAgents(SEED.agents.map((a) => ({ ...a })));
+    setStep(SEED_STEPS);
+    setHistory(SEED.history.map((h) => ({ opinions: [...h.opinions] })));
   };
 
   const handleSlider = (index: number, value: number) => {
@@ -221,10 +241,10 @@ export default function OpinionDynamicsWidget() {
 
   /* ---- helpers for opinion bar ---- */
   const opinionBarBg =
-    "linear-gradient(to right, #ef4444 0%, #71717a 50%, #22c55e 100%)";
+    "linear-gradient(to right, rgba(229,72,77,0.35) 0%, rgba(255,255,255,0.08) 50%, rgba(76,195,138,0.35) 100%)";
 
   return (
-    <div className="widget-container s-opinion" suppressHydrationWarning>
+    <div className="widget-container" suppressHydrationWarning>
       <div className="widget-label">Interactive &middot; Opinion Dynamics</div>
 
       {/* Topic */}
@@ -232,7 +252,7 @@ export default function OpinionDynamicsWidget() {
         style={{
           fontSize: "14px",
           fontWeight: 600,
-          color: "#e4e4e7",
+          color: "var(--text-primary)",
           marginBottom: "6px",
         }}
       >
@@ -241,7 +261,7 @@ export default function OpinionDynamicsWidget() {
       <div
         style={{
           fontSize: "12px",
-          color: "#71717a",
+          color: "var(--text-muted)",
           marginBottom: "16px",
         }}
       >
@@ -295,7 +315,7 @@ export default function OpinionDynamicsWidget() {
                     fontSize: "10px",
                     padding: "1px 6px",
                     borderRadius: "4px",
-                    background: "rgba(167,139,250,0.15)",
+                    background: "var(--agent-dim)",
                     color: ACCENT,
                     fontWeight: 600,
                     letterSpacing: "0.02em",
@@ -309,7 +329,7 @@ export default function OpinionDynamicsWidget() {
                     padding: "1px 6px",
                     borderRadius: "4px",
                     background: "rgba(255,255,255,0.06)",
-                    color: "#a1a1aa",
+                    color: "var(--text-secondary)",
                     fontWeight: 600,
                     letterSpacing: "0.02em",
                   }}
@@ -321,7 +341,7 @@ export default function OpinionDynamicsWidget() {
                     marginLeft: "auto",
                     fontSize: "14px",
                     fontWeight: 700,
-                    color: "#fff",
+                    color: "var(--text-primary)",
                     fontVariantNumeric: "tabular-nums",
                     minWidth: "48px",
                     textAlign: "right",
@@ -338,14 +358,14 @@ export default function OpinionDynamicsWidget() {
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
-                  fontSize: "10px",
-                  color: "#71717a",
-                  marginBottom: "2px",
+                  fontSize: "11px",
+                  color: "var(--text-muted)",
+                  marginBottom: "4px",
                 }}
               >
-                <span style={{ color: "#ef4444" }}>Against</span>
+                <span>Against</span>
                 <span>Neutral</span>
-                <span style={{ color: "#22c55e" }}>For</span>
+                <span>For</span>
               </div>
 
               {/* Opinion bar with dot */}
@@ -383,10 +403,9 @@ export default function OpinionDynamicsWidget() {
                     height: "16px",
                     borderRadius: "50%",
                     background: agent.color,
-                    border: "2px solid #18181b",
-                    boxShadow: `0 0 6px ${agent.color}88`,
+                    border: "2px solid var(--inset)",
                     zIndex: 2,
-                    transition: "left 0.2s ease",
+                    transition: "left var(--dur) var(--ease)",
                   }}
                   suppressHydrationWarning
                 />
@@ -427,11 +446,9 @@ export default function OpinionDynamicsWidget() {
         <div>
           <div
             style={{
-              fontSize: "11px",
-              fontWeight: 600,
-              color: ACCENT,
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
+              fontSize: "12px",
+              fontWeight: 500,
+              color: "var(--text-muted)",
               marginBottom: "2px",
             }}
           >
@@ -441,7 +458,7 @@ export default function OpinionDynamicsWidget() {
             style={{
               fontSize: "20px",
               fontWeight: 700,
-              color: "#fff",
+              color: "var(--text-primary)",
               fontVariantNumeric: "tabular-nums",
             }}
             suppressHydrationWarning
@@ -452,11 +469,9 @@ export default function OpinionDynamicsWidget() {
         <div>
           <div
             style={{
-              fontSize: "11px",
-              fontWeight: 600,
-              color: ACCENT,
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
+              fontSize: "12px",
+              fontWeight: 500,
+              color: "var(--text-muted)",
               marginBottom: "2px",
             }}
           >
@@ -466,7 +481,7 @@ export default function OpinionDynamicsWidget() {
             style={{
               fontSize: "20px",
               fontWeight: 700,
-              color: consensus < 0.15 ? "#22c55e" : consensus < 0.4 ? "#facc15" : "#ef4444",
+              color: consensus < 0.15 ? "var(--pos)" : consensus < 0.4 ? "var(--warn)" : "var(--neg)",
               fontVariantNumeric: "tabular-nums",
             }}
             suppressHydrationWarning
@@ -474,7 +489,7 @@ export default function OpinionDynamicsWidget() {
             {consensus.toFixed(2)}
           </div>
           <div
-            style={{ fontSize: "11px", color: "#71717a", marginTop: "2px" }}
+            style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}
           >
             {consensus < 0.15
               ? "Strong consensus"
@@ -489,11 +504,9 @@ export default function OpinionDynamicsWidget() {
       <div>
         <div
           style={{
-            fontSize: "11px",
-            fontWeight: 600,
-            color: ACCENT,
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
+            fontSize: "12px",
+            fontWeight: 500,
+            color: "var(--text-muted)",
             marginBottom: "8px",
           }}
         >
@@ -517,7 +530,7 @@ export default function OpinionDynamicsWidget() {
                 alignItems: "center",
                 gap: "4px",
                 fontSize: "11px",
-                color: "#a1a1aa",
+                color: "var(--text-secondary)",
               }}
             >
               <span

@@ -17,10 +17,10 @@ interface Proposal {
 }
 
 const STATUS_COLORS: Record<ProposalStatus, string> = {
-  PENDING: "#facc15",
-  ACCEPTED: "#4ade80",
-  REJECTED: "#f43f5e",
-  COUNTERED: "#fb923c",
+  PENDING: "var(--warn)",
+  ACCEPTED: "var(--pos)",
+  REJECTED: "var(--neg)",
+  COUNTERED: "var(--agent)",
 };
 
 const STATUS_ICONS: Record<ProposalStatus, string> = {
@@ -110,7 +110,7 @@ export default function NegotiationWidget() {
     return (
       <div
         key={proposal.id}
-        className="animate-slide-in"
+        className="rise"
         style={{
           marginLeft: isChild ? "2rem" : 0,
           display: "flex",
@@ -141,7 +141,7 @@ export default function NegotiationWidget() {
             flex: 1,
             padding: "12px 14px",
             borderRadius: "8px",
-            background: "#12131a",
+            background: "var(--inset)",
             border: `1px solid ${statusColor}30`,
           }}
         >
@@ -159,18 +159,18 @@ export default function NegotiationWidget() {
             <span
               style={{
                 fontSize: "13px",
-                color: "#a1a1aa",
+                color: "var(--text-secondary)",
               }}
             >
-              <span style={{ fontWeight: 600, color: "#fff" }}>
+              <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>
                 Step {proposal.step}
               </span>
               {" \u2014 "}
-              <span style={{ color: "#facc15", fontWeight: 500 }}>
+              <span style={{ color: "var(--warn)", fontWeight: 500 }}>
                 {proposal.from}
               </span>
               {" \u2192 "}
-              <span style={{ color: "#facc15", fontWeight: 500 }}>
+              <span style={{ color: "var(--warn)", fontWeight: 500 }}>
                 {proposal.to}
               </span>
             </span>
@@ -182,16 +182,15 @@ export default function NegotiationWidget() {
                 alignItems: "center",
                 gap: "4px",
                 fontSize: "11px",
-                fontWeight: 700,
-                color: "#000",
-                backgroundColor: statusColor,
+                fontWeight: 500,
+                color: statusColor,
+                backgroundColor: "var(--surface-alt)",
+                border: "1px solid var(--line)",
                 padding: "2px 8px",
-                borderRadius: "9999px",
-                textTransform: "uppercase",
-                letterSpacing: "0.04em",
+                borderRadius: "4px",
               }}
             >
-              {statusIcon} {proposal.status}
+              {statusIcon} {proposal.status.toLowerCase()}
             </span>
           </div>
 
@@ -199,10 +198,10 @@ export default function NegotiationWidget() {
           <p
             style={{
               fontSize: "13px",
-              color: "#d4d4d8",
+              color: "var(--text-primary)",
               lineHeight: 1.5,
               margin: "0 0 8px 0",
-              fontStyle: "italic",
+              fontWeight: 500,
             }}
           >
             &ldquo;{proposal.terms}&rdquo;
@@ -222,7 +221,7 @@ export default function NegotiationWidget() {
               <span
                 style={{
                   fontSize: "11px",
-                  color: "#71717a",
+                  color: "var(--text-muted)",
                 }}
               >
                 Expires in {expiresIn} step{expiresIn !== 1 ? "s" : ""}
@@ -234,36 +233,21 @@ export default function NegotiationWidget() {
               <div style={{ display: "flex", gap: "6px" }}>
                 <button
                   className="btn-mono"
-                  style={{
-                    fontSize: "11px",
-                    padding: "3px 10px",
-                    color: "#4ade80",
-                    borderColor: "#4ade8040",
-                  }}
+                  style={{ height: 26, padding: "0 10px", fontSize: "11.5px" }}
                   onClick={() => handleAccept(proposal.id)}
                 >
                   Accept
                 </button>
                 <button
                   className="btn-mono"
-                  style={{
-                    fontSize: "11px",
-                    padding: "3px 10px",
-                    color: "#f43f5e",
-                    borderColor: "#f43f5e40",
-                  }}
+                  style={{ height: 26, padding: "0 10px", fontSize: "11.5px" }}
                   onClick={() => handleReject(proposal.id)}
                 >
                   Reject
                 </button>
                 <button
                   className="btn-mono"
-                  style={{
-                    fontSize: "11px",
-                    padding: "3px 10px",
-                    color: "#fb923c",
-                    borderColor: "#fb923c40",
-                  }}
+                  style={{ height: 26, padding: "0 10px", fontSize: "11.5px" }}
                   onClick={() => handleCounter(proposal)}
                 >
                   Counter
@@ -277,7 +261,7 @@ export default function NegotiationWidget() {
   };
 
   return (
-    <div className="widget-container s-negotiation" suppressHydrationWarning>
+    <div className="widget-container" suppressHydrationWarning>
       <div className="widget-label">Interactive &middot; Negotiation Theater</div>
 
       {/* New Proposal button */}
@@ -285,7 +269,7 @@ export default function NegotiationWidget() {
         <button
           className="btn-mono"
           onClick={() => setShowForm((s) => !s)}
-          style={{ color: "#facc15", borderColor: "#facc1540" }}
+          style={{ color: "var(--accent)", borderColor: "rgba(92, 212, 196, 0.35)" }}
         >
           {showForm ? "Cancel" : "+ New Proposal"}
         </button>
@@ -294,11 +278,11 @@ export default function NegotiationWidget() {
       {/* New Proposal form */}
       {showForm && (
         <div
-          className="animate-slide-in"
+          className="rise"
           style={{
             padding: "14px",
             borderRadius: "8px",
-            background: "#12131a",
+            background: "var(--inset)",
             border: "1px solid rgba(255,255,255,0.08)",
             marginBottom: "20px",
             display: "flex",
@@ -308,11 +292,9 @@ export default function NegotiationWidget() {
         >
           <div
             style={{
-              fontSize: "11px",
-              fontWeight: 600,
-              color: "#facc15",
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
+              fontSize: "12px",
+              fontWeight: 500,
+              color: "var(--text-muted)",
               marginBottom: "2px",
             }}
           >
@@ -325,7 +307,7 @@ export default function NegotiationWidget() {
               <label
                 style={{
                   fontSize: "11px",
-                  color: "#71717a",
+                  color: "var(--text-muted)",
                   display: "block",
                   marginBottom: "4px",
                 }}
@@ -341,8 +323,8 @@ export default function NegotiationWidget() {
                   fontSize: "13px",
                   borderRadius: "6px",
                   border: "1px solid rgba(255,255,255,0.12)",
-                  background: "#0a0a0f",
-                  color: "#fff",
+                  background: "var(--inset)",
+                  color: "var(--text-primary)",
                   outline: "none",
                 }}
               >
@@ -359,7 +341,7 @@ export default function NegotiationWidget() {
               <label
                 style={{
                   fontSize: "11px",
-                  color: "#71717a",
+                  color: "var(--text-muted)",
                   display: "block",
                   marginBottom: "4px",
                 }}
@@ -375,8 +357,8 @@ export default function NegotiationWidget() {
                   fontSize: "13px",
                   borderRadius: "6px",
                   border: "1px solid rgba(255,255,255,0.12)",
-                  background: "#0a0a0f",
-                  color: "#fff",
+                  background: "var(--inset)",
+                  color: "var(--text-primary)",
                   outline: "none",
                 }}
               >
@@ -394,7 +376,7 @@ export default function NegotiationWidget() {
             <label
               style={{
                 fontSize: "11px",
-                color: "#71717a",
+                color: "var(--text-muted)",
                 display: "block",
                 marginBottom: "4px",
               }}
@@ -411,8 +393,8 @@ export default function NegotiationWidget() {
                 fontSize: "13px",
                 borderRadius: "6px",
                 border: "1px solid rgba(255,255,255,0.12)",
-                background: "#0a0a0f",
-                color: "#fff",
+                background: "var(--inset)",
+                color: "var(--text-primary)",
                 outline: "none",
                 boxSizing: "border-box",
               }}
@@ -424,8 +406,8 @@ export default function NegotiationWidget() {
             onClick={handleNewProposal}
             style={{
               alignSelf: "flex-start",
-              color: "#facc15",
-              borderColor: "#facc1540",
+              color: "var(--warn)",
+              borderColor: "var(--warn-dim)",
             }}
           >
             Submit Proposal
@@ -461,10 +443,10 @@ export default function NegotiationWidget() {
           marginTop: "16px",
           padding: "10px 14px",
           borderRadius: "8px",
-          background: "#12131a",
+          background: "var(--inset)",
           border: "1px solid rgba(255,255,255,0.08)",
           fontSize: "12px",
-          color: "#71717a",
+          color: "var(--text-muted)",
           display: "flex",
           flexWrap: "wrap",
           gap: "6px",
@@ -472,26 +454,26 @@ export default function NegotiationWidget() {
       >
         <span>
           Total proposals:{" "}
-          <span style={{ color: "#fff", fontWeight: 600 }}>{counts.total}</span>
+          <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{counts.total}</span>
         </span>
         <span style={{ opacity: 0.3 }}>|</span>
         <span>
           Accepted:{" "}
-          <span style={{ color: "#4ade80", fontWeight: 600 }}>
+          <span style={{ color: "var(--pos)", fontWeight: 600 }}>
             {counts.accepted}
           </span>
         </span>
         <span style={{ opacity: 0.3 }}>|</span>
         <span>
           Rejected:{" "}
-          <span style={{ color: "#f43f5e", fontWeight: 600 }}>
+          <span style={{ color: "var(--neg)", fontWeight: 600 }}>
             {counts.rejected}
           </span>
         </span>
         <span style={{ opacity: 0.3 }}>|</span>
         <span>
           Pending:{" "}
-          <span style={{ color: "#facc15", fontWeight: 600 }}>
+          <span style={{ color: "var(--warn)", fontWeight: 600 }}>
             {counts.pending}
           </span>
         </span>

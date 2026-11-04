@@ -4,19 +4,64 @@ import React, { useState, useRef, useCallback, useEffect } from "react";
 
 /* ── Phase Definitions ─────────────────────────────────────────────── */
 
+type PhaseIconName = "globe" | "users" | "message" | "save";
+
+const PHASE_ICONS: Record<PhaseIconName, React.ReactNode> = {
+  globe: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18" />
+    </>
+  ),
+  users: (
+    <>
+      <path d="M16 19v-1.5a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4V19" />
+      <circle cx="9.5" cy="7.5" r="3" />
+      <path d="M21 19v-1.5a4 4 0 0 0-3-3.87M16 4.6a3 3 0 0 1 0 5.8" />
+    </>
+  ),
+  message: (
+    <>
+      <path d="M20 15a2 2 0 0 1-2 2H8l-4 3V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z" />
+    </>
+  ),
+  save: (
+    <>
+      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+      <path d="M17 21v-7H7v7M7 3v4h7" />
+    </>
+  ),
+};
+
+function PhaseIcon({ name }: { name: PhaseIconName }) {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {PHASE_ICONS[name]}
+    </svg>
+  );
+}
+
 interface Phase {
   name: string;
-  icon: string;
-  badgeColor: string;
+  icon: PhaseIconName;
   description: string;
   detail: Record<string, unknown>;
 }
 
 const PHASES: Phase[] = [
   {
-    name: "ENVIRONMENT",
-    icon: "\u{1F30D}",
-    badgeColor: "#34d399",
+    name: "Environment",
+    icon: "globe",
     description:
       "Environment agents generate world events and update hazard levels",
     detail: {
@@ -26,9 +71,8 @@ const PHASES: Phase[] = [
     },
   },
   {
-    name: "AGENTS",
-    icon: "\u{1F9D1}\u200D\u{1F91D}\u200D\u{1F9D1}",
-    badgeColor: "#22d3ee",
+    name: "Agents",
+    icon: "users",
     description: "Human agents process in parallel scenes by location",
     detail: {
       "Scene 1 (Rooftop)": "Dr. Chen speaks, Marcus moves",
@@ -37,9 +81,8 @@ const PHASES: Phase[] = [
     },
   },
   {
-    name: "REACTIONS",
-    icon: "\u{1F4AC}",
-    badgeColor: "#f472b6",
+    name: "Reactions",
+    icon: "message",
     description: "Reaction round for intra-step responses",
     detail: {
       reactions: [
@@ -50,9 +93,8 @@ const PHASES: Phase[] = [
     },
   },
   {
-    name: "PERSIST",
-    icon: "\u{1F4BE}",
-    badgeColor: "#facc15",
+    name: "Persist",
+    icon: "save",
     description:
       "State snapshot saved, WebSocket events emitted, consensus check",
     detail: {
@@ -77,12 +119,12 @@ function borderStyle(
 ): React.CSSProperties {
   if (phaseIndex === currentPhase) {
     return {
-      border: "2px solid #22d3ee",
-      boxShadow: "0 0 12px rgba(34,211,238,0.45)",
+      border: "2px solid var(--accent)",
+      boxShadow: "0 0 12px var(--accent-dim)",
     };
   }
   if (phaseIndex < completedUpTo) {
-    return { border: "2px solid #34d399" };
+    return { border: "2px solid var(--pos)" };
   }
   return { border: "2px solid rgba(255,255,255,0.12)" };
 }
@@ -95,7 +137,7 @@ function renderDetailValue(value: unknown): React.ReactNode {
         {value.map((v, i) => (
           <span key={i}>
             {i > 0 && ", "}
-            <span style={{ color: "#34d399" }}>
+            <span style={{ color: "var(--pos)" }}>
               &quot;{String(v)}&quot;
             </span>
           </span>
@@ -105,12 +147,12 @@ function renderDetailValue(value: unknown): React.ReactNode {
     );
   }
   if (typeof value === "boolean") {
-    return <span style={{ color: value ? "#34d399" : "#f472b6" }}>{String(value)}</span>;
+    return <span style={{ color: value ? "var(--pos)" : "var(--agent)" }}>{String(value)}</span>;
   }
   if (typeof value === "number") {
-    return <span style={{ color: "#22d3ee" }}>{value}</span>;
+    return <span style={{ color: "var(--accent)" }}>{value}</span>;
   }
-  return <span style={{ color: "#e2e8f0" }}>&quot;{String(value)}&quot;</span>;
+  return <span style={{ color: "var(--text-primary)" }}>&quot;{String(value)}&quot;</span>;
 }
 
 /* ── Component ─────────────────────────────────────────────────────── */
@@ -288,7 +330,7 @@ export default function SimTickWidget() {
   /* ── Render ──────────────────────────────────────────────── */
 
   return (
-    <div className="widget-container s-tick" suppressHydrationWarning>
+    <div className="widget-container" suppressHydrationWarning>
       <div className="widget-label">
         Interactive &middot; Simulation Tick Loop
       </div>
@@ -306,11 +348,11 @@ export default function SimTickWidget() {
           style={{
             fontFamily: "var(--font-mono, monospace)",
             fontSize: "14px",
-            color: "#94a3b8",
+            color: "var(--text-secondary)",
           }}
         >
           Step:{" "}
-          <span style={{ color: "#34d399", fontWeight: 700 }}>
+          <span style={{ color: "var(--pos)", fontWeight: 700 }}>
             {stepNumber}
           </span>{" "}
           of &infin;
@@ -320,9 +362,9 @@ export default function SimTickWidget() {
             style={{
               fontFamily: "var(--font-mono, monospace)",
               fontSize: "13px",
-              color: "#34d399",
+              color: "var(--pos)",
               fontWeight: 700,
-              animation: "fadeIn 0.3s ease",
+              animation: "rise var(--dur) var(--ease)",
             }}
           >
             Tick Complete
@@ -354,24 +396,30 @@ export default function SimTickWidget() {
                 borderRadius: "8px",
                 background:
                   currentPhase === idx
-                    ? "rgba(34,211,238,0.08)"
+                    ? "var(--accent-dim)"
                     : completedUpTo > idx
-                      ? "rgba(52,211,153,0.06)"
+                      ? "var(--pos-dim)"
                       : "rgba(255,255,255,0.03)",
                 cursor: "pointer",
-                transition: "all 0.3s ease",
+                transition: "border-color var(--dur) var(--ease), background-color var(--dur) var(--ease)",
                 ...borderStyle(idx, currentPhase, completedUpTo),
               }}
             >
               {/* Icon */}
               <div
                 style={{
-                  fontSize: "20px",
-                  textAlign: "center",
-                  marginBottom: "6px",
+                  display: "flex",
+                  justifyContent: "center",
+                  color:
+                    currentPhase === idx
+                      ? "var(--accent)"
+                      : completedUpTo > idx
+                        ? "var(--pos)"
+                        : "var(--text-muted)",
+                  marginBottom: "8px",
                 }}
               >
-                {phase.icon}
+                <PhaseIcon name={phase.icon} />
               </div>
               {/* Badge */}
               <div
@@ -385,13 +433,18 @@ export default function SimTickWidget() {
                   style={{
                     display: "inline-block",
                     padding: "2px 8px",
-                    borderRadius: "9999px",
+                    borderRadius: "4px",
                     fontSize: "11px",
-                    fontWeight: 700,
+                    fontWeight: 500,
                     fontFamily: "var(--font-mono, monospace)",
-                    letterSpacing: "0.05em",
-                    color: "#0f172a",
-                    background: phase.badgeColor,
+                    color:
+                      currentPhase === idx
+                        ? "var(--accent)"
+                        : "var(--text-secondary)",
+                    background:
+                      currentPhase === idx
+                        ? "var(--accent-dim)"
+                        : "var(--surface-alt)",
                   }}
                 >
                   {phase.name}
@@ -402,7 +455,7 @@ export default function SimTickWidget() {
                 style={{
                   textAlign: "center",
                   fontSize: "10px",
-                  color: "#64748b",
+                  color: "var(--text-secondary)",
                   fontFamily: "var(--font-mono, monospace)",
                 }}
               >
@@ -418,10 +471,10 @@ export default function SimTickWidget() {
                   alignItems: "center",
                   padding: "0 4px",
                   color:
-                    completedUpTo > idx ? "#34d399" : "rgba(255,255,255,0.2)",
+                    completedUpTo > idx ? "var(--pos)" : "rgba(255,255,255,0.2)",
                   fontSize: "18px",
                   fontWeight: 700,
-                  transition: "color 0.3s ease",
+                  transition: "color var(--dur) var(--ease)",
                   flexShrink: 0,
                 }}
               >
@@ -439,19 +492,19 @@ export default function SimTickWidget() {
             marginBottom: "20px",
             padding: "14px 16px",
             borderRadius: "8px",
-            border: `1px solid ${PHASES[expandedPhase].badgeColor}44`,
-            background: "rgba(0,0,0,0.25)",
+            border: "1px solid var(--line)",
+            background: "var(--inset)",
             fontFamily: "var(--font-mono, monospace)",
             fontSize: "12px",
             lineHeight: 1.7,
-            animation: "fadeIn 0.25s ease",
+            animation: "rise var(--dur) var(--ease)",
           }}
         >
           {/* Description */}
           <div
             style={{
-              color: PHASES[expandedPhase].badgeColor,
-              fontWeight: 600,
+              color: "var(--text-primary)",
+              fontWeight: 500,
               marginBottom: "10px",
               fontSize: "13px",
             }}
@@ -470,7 +523,7 @@ export default function SimTickWidget() {
                 borderBottom: "1px solid rgba(255,255,255,0.05)",
               }}
             >
-              <span style={{ color: "#64748b", minWidth: "160px", flexShrink: 0 }}>
+              <span style={{ color: "var(--text-secondary)", minWidth: "160px", flexShrink: 0 }}>
                 {key}:
               </span>
               <span>{renderDetailValue(value)}</span>
@@ -493,12 +546,9 @@ export default function SimTickWidget() {
           style={{
             height: "100%",
             width: `${progressPercent}%`,
-            background:
-              tickComplete
-                ? "#34d399"
-                : "linear-gradient(90deg, #34d399, #22d3ee)",
+            background: "var(--pos)",
             borderRadius: "4px",
-            transition: "width 0.4s ease",
+            transition: "width var(--dur) var(--ease)",
           }}
         />
       </div>
@@ -539,8 +589,8 @@ export default function SimTickWidget() {
           className={`btn-mono${isAutoRunning ? " active" : ""}`}
           onClick={toggleAutoRun}
           style={{
-            borderColor: isAutoRunning ? "#34d399" : undefined,
-            color: isAutoRunning ? "#34d399" : undefined,
+            borderColor: isAutoRunning ? "var(--pos)" : undefined,
+            color: isAutoRunning ? "var(--pos)" : undefined,
           }}
         >
           {isAutoRunning ? "Stop Auto" : "Auto Run"}
@@ -550,13 +600,6 @@ export default function SimTickWidget() {
         </button>
       </div>
 
-      {/* Inline animation keyframes */}
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(-4px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
     </div>
   );
 }

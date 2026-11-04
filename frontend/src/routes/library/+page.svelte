@@ -60,13 +60,12 @@
 	<div class="card bg-surface/50 border-outline/15">
 		<div class="flex items-center gap-5">
 			<div
-				class="w-14 h-14 rounded-xl flex items-center justify-center shadow-sm flex-shrink-0"
-				style="background: linear-gradient(135deg, #5cd4c4, #8fb4e0);"
+				class="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 bg-flood-500/15 text-flood-400"
 			>
-				<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/></svg>
+				<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/></svg>
 			</div>
 			<div>
-				<h1 class="text-2xl font-display font-bold tracking-tight mb-1">Emotion Engine</h1>
+				<h1 class="font-display text-2xl font-medium tracking-tight mb-1">Emotion Engine</h1>
 				<p class="text-on-surface/60 text-sm max-w-xl leading-relaxed">
 					Run AI agent swarms in parallel disaster simulations. Create scenarios, watch agents cooperate and make decisions.
 				</p>
@@ -77,8 +76,8 @@
 	<!-- Scenarios Section -->
 	<section>
 		<div class="flex items-center justify-between mb-5">
-			<h2 class="text-lg font-display font-semibold tracking-tight">Scenarios</h2>
-			<a href="/scenarios/new" class="btn btn-primary text-[13px] px-3.5 py-2">Create scenario</a>
+			<h2 class="text-lg font-medium tracking-tight">Scenarios</h2>
+			<a href="/scenarios/new" class="btn btn-primary text-sm px-4 py-2">Create scenario</a>
 		</div>
 
 		{#if loading}
@@ -111,7 +110,7 @@
 						href="/scenarios/{scenario.id}"
 						class="card-interactive block"
 					>
-						<h3 class="text-lg font-semibold font-display mb-2">{scenario.name}</h3>
+						<h3 class="text-lg font-medium mb-2">{scenario.name}</h3>
 						<p class="text-sm text-storm-400 mb-3 line-clamp-2">
 							{scenario.description || 'No description'}
 						</p>
@@ -127,7 +126,7 @@
 
 	<!-- Recent Runs Section -->
 	<section>
-		<h2 class="text-lg font-display font-semibold tracking-tight mb-5">Recent runs</h2>
+		<h2 class="text-lg font-medium tracking-tight mb-5">Recent runs</h2>
 
 		{#if runList.length === 0}
 			<div class="card text-center py-8">
@@ -147,7 +146,7 @@
 					</thead>
 					<tbody class="divide-y divide-outline/10">
 						{#each runList.slice(0, 10) as run}
-							<tr class="hover:bg-storm-800/30 cursor-pointer transition-colors" on:click={() => window.location.href = `/runs/${run.id}`}>
+							<tr class="hover:bg-surface-alt/60 cursor-pointer transition-colors" on:click={() => window.location.href = `/runs/${run.id}`}>
 								<td class="px-4 py-3">
 									<span class="font-mono text-sm text-storm-300">{run.id.slice(0, 8)}...</span>
 								</td>
@@ -157,7 +156,7 @@
 								<td class="px-4 py-3">
 									<div class="flex items-center gap-2">
 										<div
-											class="w-24 h-2 bg-storm-800 rounded-full overflow-hidden"
+											class="w-24 h-2 bg-storm-900 rounded-full overflow-hidden"
 											role="progressbar"
 											aria-label="Simulation progress"
 											aria-valuenow={Math.round((run.current_step / run.max_steps) * 100)}
@@ -165,7 +164,7 @@
 											aria-valuemax="100"
 										>
 											<div
-												class="h-full bg-flood-500 rounded-full transition-all"
+												class="h-full bg-flood-500 rounded-full transition-colors duration-150"
 												style="width: {(run.current_step / run.max_steps) * 100}%"
 											></div>
 										</div>

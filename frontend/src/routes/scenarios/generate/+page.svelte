@@ -120,7 +120,7 @@
 <div class="max-w-4xl mx-auto space-y-6">
 	<div class="flex items-center justify-between">
 		<div>
-			<h1 class="text-2xl font-display font-bold">AI Scenario Generator</h1>
+			<h1 class="font-display text-2xl font-medium">AI Scenario Generator</h1>
 			<p class="text-storm-400 mt-1">Describe your scenario and let phi3 create it for you</p>
 		</div>
 		<a href="/" class="text-storm-400 hover:text-white text-sm">← Back to Dashboard</a>
@@ -135,9 +135,9 @@
 	{#if !showPreview}
 		<!-- Generation Form -->
 		<div class="card">
-			<h2 class="text-lg font-semibold font-display mb-4 flex items-center gap-2">
-				<span class="text-2xl">✨</span>
-				Describe Your Scenario
+			<h2 class="text-lg font-medium mb-4 flex items-center gap-2">
+				<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-flood-400"><path d="M12 3v4"/><path d="M12 17v4"/><path d="M3 12h4"/><path d="M17 12h4"/><path d="m5.6 5.6 2.8 2.8"/><path d="m15.6 15.6 2.8 2.8"/><path d="m18.4 5.6-2.8 2.8"/><path d="m8.4 15.6-2.8 2.8"/></svg>
+				Describe your scenario
 			</h2>
 
 			<div class="space-y-6">
@@ -185,7 +185,7 @@ Examples:
 						{#each availableArchetypes as archetype}
 							<button
 								type="button"
-								class="px-3 py-1.5 rounded-full text-sm transition-all duration-200 {archetypes.includes(
+								class="px-3 py-1.5 rounded-full text-sm transition-colors duration-150 {archetypes.includes(
 									archetype
 								)
 									? 'bg-flood-500 text-white'
@@ -233,7 +233,7 @@ Examples:
 		</div>
 
 		<!-- Example Prompts -->
-		<div class="card bg-storm-800/30">
+		<div class="card">
 			<h3 class="font-medium text-storm-300 mb-3">Quick Start Examples</h3>
 			<div class="grid gap-2">
 				{#each [
@@ -244,7 +244,7 @@ Examples:
 				] as example}
 					<button
 						type="button"
-						class="text-left p-3 rounded-lg bg-storm-800/50 hover:bg-storm-700/50 text-storm-300 text-sm transition-colors"
+						class="text-left p-3 rounded-lg border border-outline/30 hover:bg-surface-alt text-storm-300 text-sm transition-colors duration-150"
 						on:click={() => (prompt = example)}
 					>
 						"{example}"
@@ -257,7 +257,7 @@ Examples:
 		<div class="card border-flood-500/30">
 			<div class="flex items-start justify-between mb-4">
 				<div>
-					<h2 class="text-xl font-semibold font-display">{previewData.scenario.name}</h2>
+					<h2 class="text-xl font-medium">{previewData.scenario.name}</h2>
 					<p class="text-storm-400 mt-1">{previewData.scenario.description}</p>
 				</div>
 				<span class="badge badge-success">Generated</span>
@@ -272,7 +272,7 @@ Examples:
 
 		<!-- World Config Preview -->
 		<div class="card">
-			<h3 class="font-semibold font-display mb-3">World Configuration</h3>
+			<h3 class="font-medium mb-3">World Configuration</h3>
 			<div class="grid grid-cols-2 gap-4 text-sm">
 				<div>
 					<span class="text-storm-500">Name:</span>
@@ -301,14 +301,14 @@ Examples:
 
 		<!-- Personas Preview -->
 		<div class="card">
-			<h3 class="font-semibold font-display mb-3">Characters</h3>
+			<h3 class="font-medium mb-3">Characters</h3>
 			<p class="text-sm text-storm-400 mb-4">
 				{stats.count} personas, ages {stats.ageRange}
 			</p>
 
 			<div class="space-y-3 max-h-96 overflow-y-auto">
 				{#each previewData.scenario.agent_templates as agent}
-					<div class="p-3 bg-storm-800/50 rounded-lg">
+					<div class="p-3 border border-outline/30 rounded-lg">
 						<div class="flex items-start justify-between">
 							<div>
 								<div class="font-medium text-white">{agent.name}</div>

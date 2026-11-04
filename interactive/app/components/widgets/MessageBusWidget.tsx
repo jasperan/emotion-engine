@@ -33,7 +33,7 @@ interface AnimatingEdge {
 /*  Constants                                                          */
 /* ------------------------------------------------------------------ */
 
-const ACCENT = "#fb923c";
+const ACCENT = "var(--accent)";
 
 const AGENTS: AgentDef[] = [
   { id: "chen", name: "Dr. Chen", room: "Rooftop" },
@@ -283,7 +283,7 @@ export default function MessageBusWidget() {
   /*  Render                                                           */
   /* ---------------------------------------------------------------- */
   return (
-    <div className="widget-container s-message" suppressHydrationWarning>
+    <div className="widget-container" suppressHydrationWarning>
       <div className="widget-label">Interactive &middot; Message Bus</div>
 
       {/* Mode toggle buttons */}
@@ -340,7 +340,7 @@ export default function MessageBusWidget() {
                 x={rx + ROOM_W / 2}
                 y={ROOM_Y + ROOM_PAD + 4}
                 textAnchor="middle"
-                fill="#a1a1aa"
+                fill="var(--text-secondary)"
                 fontSize={11}
                 fontWeight={600}
               >
@@ -353,25 +353,12 @@ export default function MessageBusWidget() {
         {/* Center "Message Bus" label */}
         <text
           x={SVG_W / 2}
-          y={ROOM_Y + ROOM_H / 2 - 8}
+          y={ROOM_Y + ROOM_H / 2 + 4}
           textAnchor="middle"
-          fill={ACCENT}
+          fill="var(--text-muted)"
           fontSize={12}
-          fontWeight={700}
-          letterSpacing="0.06em"
         >
-          MESSAGE
-        </text>
-        <text
-          x={SVG_W / 2}
-          y={ROOM_Y + ROOM_H / 2 + 8}
-          textAnchor="middle"
-          fill={ACCENT}
-          fontSize={12}
-          fontWeight={700}
-          letterSpacing="0.06em"
-        >
-          BUS
+          message bus
         </text>
         {/* Decorative lines from bus to rooms */}
         <line
@@ -379,7 +366,7 @@ export default function MessageBusWidget() {
           y1={ROOM_Y + ROOM_H / 2}
           x2={SVG_W / 2 - 30}
           y2={ROOM_Y + ROOM_H / 2}
-          stroke="rgba(251,146,60,0.25)"
+          stroke="var(--line-strong)"
           strokeWidth={1}
           strokeDasharray="4 4"
         />
@@ -388,7 +375,7 @@ export default function MessageBusWidget() {
           y1={ROOM_Y + ROOM_H / 2}
           x2={ROOM_RIGHT_X}
           y2={ROOM_Y + ROOM_H / 2}
-          stroke="rgba(251,146,60,0.25)"
+          stroke="var(--line-strong)"
           strokeWidth={1}
           strokeDasharray="4 4"
         />
@@ -490,7 +477,7 @@ export default function MessageBusWidget() {
                 r={AGENT_R}
                 fill={
                   isSender || isAnimSender
-                    ? `${ACCENT}33`
+                    ? "var(--accent-dim)"
                     : "rgba(255,255,255,0.06)"
                 }
                 stroke={
@@ -506,7 +493,7 @@ export default function MessageBusWidget() {
                 y={cy + 1}
                 textAnchor="middle"
                 dominantBaseline="central"
-                fill={isSender || isAnimSender ? ACCENT : "#a1a1aa"}
+                fill={isSender || isAnimSender ? ACCENT : "var(--text-secondary)"}
                 fontSize={11}
                 fontWeight={700}
               >
@@ -520,7 +507,7 @@ export default function MessageBusWidget() {
                 x={cx}
                 y={cy + AGENT_R + 14}
                 textAnchor="middle"
-                fill="#71717a"
+                fill="var(--text-muted)"
                 fontSize={10}
               >
                 {agent.name}
@@ -535,7 +522,7 @@ export default function MessageBusWidget() {
         style={{
           textAlign: "center",
           fontSize: "11px",
-          color: "#71717a",
+          color: "var(--text-muted)",
           margin: "12px 0 0",
           minHeight: "16px",
         }}
@@ -561,7 +548,7 @@ export default function MessageBusWidget() {
           gap: "20px",
           margin: "16px 0 12px",
           fontSize: "12px",
-          color: "#a1a1aa",
+          color: "var(--text-secondary)",
         }}
       >
         {(["Direct", "Broadcast", "Room"] as MessageMode[]).map((m) => (
@@ -584,11 +571,9 @@ export default function MessageBusWidget() {
       {/* Message Log */}
       <div
         style={{
-          fontSize: "11px",
-          fontWeight: 600,
-          color: ACCENT,
-          textTransform: "uppercase",
-          letterSpacing: "0.05em",
+          fontSize: "12px",
+          fontWeight: 500,
+          color: "var(--text-muted)",
           marginBottom: "6px",
         }}
       >
@@ -599,7 +584,7 @@ export default function MessageBusWidget() {
         style={{
           maxHeight: "160px",
           overflowY: "auto",
-          background: "#12131a",
+          background: "var(--inset)",
           border: "1px solid rgba(255,255,255,0.08)",
           borderRadius: "8px",
           padding: "8px 10px",
@@ -625,14 +610,14 @@ export default function MessageBusWidget() {
               key={entry.id}
               style={{
                 fontSize: "12px",
-                color: "#a1a1aa",
+                color: "var(--text-secondary)",
                 lineHeight: 1.4,
-                fontFamily: "monospace",
+                fontFamily: "var(--font-mono)",
               }}
             >
               <span style={{ color: ACCENT, fontWeight: 600 }}>{tag}</span>{" "}
-              <span style={{ color: "#d4d4d8" }}>{arrow}:</span>{" "}
-              <span style={{ color: "#71717a", fontStyle: "italic" }}>
+              <span style={{ color: "var(--text-primary)" }}>{arrow}:</span>{" "}
+              <span style={{ color: "var(--text-secondary)" }}>
                 {entry.text}
               </span>
             </div>
@@ -645,7 +630,7 @@ export default function MessageBusWidget() {
         style={{
           textAlign: "center",
           fontSize: "11px",
-          color: "#71717a",
+          color: "var(--text-muted)",
           marginTop: "10px",
           marginBottom: 0,
         }}

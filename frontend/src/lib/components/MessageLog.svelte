@@ -51,7 +51,7 @@
 			case 'action':
 				return 'border-l-amber-500 bg-amber-500/5';
 			default:
-				return 'border-l-storm-600 bg-storm-800/30';
+				return 'border-l-storm-600 bg-surface-alt/60';
 		}
 	}
 
@@ -68,7 +68,7 @@
 
 <div class="card h-full flex flex-col">
 	<div class="flex items-center justify-between mb-4">
-		<h3 class="text-lg font-semibold font-display">Message Log</h3>
+		<h3 class="text-lg font-medium">Message Log</h3>
 		<div class="flex items-center gap-3">
 			{#if !autoScroll}
 				<button
@@ -82,7 +82,7 @@
 
 	<div
 		class="flex-1 overflow-y-auto space-y-3 max-h-[600px] scrollbar-thin"
-		style="scrollbar-color: #2f30a9 transparent;"
+		style="scrollbar-color: #3a3d48 transparent;"
 		bind:this={logContainer}
 		on:scroll={onScroll}
 	>
@@ -93,14 +93,14 @@
 		{:else}
 			{#if hasMore}
 				<button
-					class="w-full text-center py-2.5 text-sm text-flood-400 hover:text-flood-300 bg-surface hover:bg-surface_alt rounded-lg border border-outline/30 hover:border-flood-500/30 transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+					class="w-full text-center py-2.5 text-sm text-flood-400 hover:text-flood-300 bg-surface hover:bg-surface-alt rounded-lg border border-outline/30 hover:border-flood-500/30 transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
 					on:click={() => (showAll = true)}
 				>
 					Load earlier ({messages.length - WINDOW_SIZE} more)
 				</button>
 			{/if}
 			{#each visibleMessages as message}
-				<div class="message-item border-l-3 {getMessageTypeColor(message.message_type)} p-3 rounded-r-lg transition-all duration-200">
+				<div class="message-item border-l-3 {getMessageTypeColor(message.message_type)} p-3 rounded-r-lg transition-colors duration-150">
 					<div class="flex items-start justify-between mb-1">
 						<div class="flex items-center gap-2">
 							<span class="font-semibold text-storm-100">

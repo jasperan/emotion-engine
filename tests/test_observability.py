@@ -134,9 +134,10 @@ async def test_run_metrics_endpoint_404(db_session):
 
 
 @pytest.mark.asyncio
-async def test_datalake_compare_endpoint():
+async def test_datalake_compare_endpoint(db_session):
     """compare_runs pivots metrics across runs: metric -> {run_id: value}."""
     from emotionsim.api.datalake import compare_runs
+    from emotionsim.auth.deps import TenantScope
 
     store = MagicMock()
     # Datalake endpoints call _run_sync (asyncio.to_thread) — sync methods.
@@ -148,7 +149,7 @@ async def test_datalake_compare_endpoint():
     store.close = MagicMock()
 
     with patch("emotionsim.api.datalake._get_store", return_value=store):
-        result = await compare_runs("run-a,run-b")
+        result = await compare_runs("run-a,run-b", db_session, TenantScope())
 
     assert result["run_ids"] == ["run-a", "run-b"]
     assert result["total_metrics"] == 2
@@ -159,12 +160,13 @@ async def test_datalake_compare_endpoint():
 
 
 @pytest.mark.asyncio
-async def test_datalake_compare_requires_ids():
+async def test_datalake_compare_requires_ids(db_session):
     from emotionsim.api.datalake import compare_runs
+    from emotionsim.auth.deps import TenantScope
 
     store = MagicMock()
     store.close = MagicMock()
     with patch("emotionsim.api.datalake._get_store", return_value=store):
         with pytest.raises(HTTPException) as exc:
-            await compare_runs("   , ,")
+            await compare_runs("   , ,", db_session, TenantScope())
     assert exc.value.status_code == 400

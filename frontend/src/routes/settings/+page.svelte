@@ -65,7 +65,7 @@
 
 <div class="max-w-4xl mx-auto space-y-8">
     <div class="border-b border-outline/15 pb-6">
-        <h1 class="text-2xl font-display font-bold tracking-tight text-on-background">Settings</h1>
+        <h1 class="font-display text-2xl font-medium tracking-tight text-on-background">Settings</h1>
         <p class="text-on-surface/60 mt-1.5 text-sm">Manage your simulation environment and API configurations.</p>
     </div>
 
@@ -100,7 +100,7 @@
                         </button>
                     </div>
                     <div class="flex justify-between items-start">
-                        <p class="text-[10px] text-on-surface/50">The endpoint for your Ollama instance (OpenAI-compatible).</p>
+                        <p class="text-xs text-on-surface/50">The endpoint for your Ollama instance (OpenAI-compatible).</p>
                         {#if statusMsg['ollamaUrl']}
                             <span role="alert" class="text-xs {statusMsg['ollamaUrl'].type === 'success' ? 'text-green-500' : 'text-red-500'} animate-in fade-in">
                                 {statusMsg['ollamaUrl'].text}
@@ -144,7 +144,7 @@
                         </button>
                     </div>
                     <div class="flex justify-between items-start">
-                         <p class="text-[10px] text-on-surface/50">The primary model to use for simulations.</p>
+                         <p class="text-xs text-on-surface/50">The primary model to use for simulations.</p>
                          {#if statusMsg['defaultModel']}
                             <span role="alert" class="text-xs {statusMsg['defaultModel'].type === 'success' ? 'text-green-500' : 'text-red-500'} animate-in fade-in">
                                 {statusMsg['defaultModel'].text}
@@ -188,7 +188,7 @@
                         </button>
                     </div>
                     <div class="flex justify-between items-start">
-                         <p class="text-[10px] text-on-surface/50">Used when the primary model is unavailable or fails.</p>
+                         <p class="text-xs text-on-surface/50">Used when the primary model is unavailable or fails.</p>
                          {#if statusMsg['fallbackModel']}
                             <span role="alert" class="text-xs {statusMsg['fallbackModel'].type === 'success' ? 'text-green-500' : 'text-red-500'} animate-in fade-in">
                                 {statusMsg['fallbackModel'].text}
@@ -264,11 +264,11 @@
             </h2>
             <div class="grid grid-cols-2 gap-4">
                 <div class="p-4 bg-surface-alt/10 border border-outline/10 rounded-lg">
-                    <span class="text-xs text-on-surface/50 uppercase font-bold block mb-1">Backend Version</span>
+                    <span class="text-xs text-on-surface/60 block mb-1">Backend Version</span>
                     <span class="font-mono text-primary">v0.1.0-alpha</span>
                 </div>
                 <div class="p-4 bg-surface-alt/10 border border-outline/10 rounded-lg">
-                    <span class="text-xs text-on-surface/50 uppercase font-bold block mb-1">Frontend Version</span>
+                    <span class="text-xs text-on-surface/60 block mb-1">Frontend Version</span>
                     <span class="font-mono text-primary">v0.1.0-alpha</span>
                 </div>
             </div>

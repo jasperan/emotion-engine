@@ -5,7 +5,7 @@ from sqlalchemy import select
 
 from emotionsim.core.database import get_db
 from emotionsim.models.run import Run
-from emotionsim.auth.deps import TenantScope, get_tenant
+from emotionsim.auth.deps import TenantScope, ensure_visible, get_tenant
 from emotionsim.models.agent import AgentModel
 from emotionsim.models.step import Step
 from emotionsim.models.message import Message
@@ -30,6 +30,12 @@ async def create_run(
 ):
     """Create a new run for a scenario (tenant-scoped when authenticated)"""
     manager = SimulationManager.get_instance()
+
+    from emotionsim.models.scenario import Scenario
+
+    scenario = await db.get(Scenario, data.scenario_id)
+    if scenario is not None:
+        ensure_visible(scenario, scope, "Scenario")
 
     try:
         run = await manager.create_run(
@@ -80,12 +86,11 @@ async def list_runs(
 async def get_run(
     run_id: str,
     db: AsyncSession = Depends(get_db),
+    scope: TenantScope = Depends(get_tenant),
 ):
     """Get a specific run"""
     run = await db.get(Run, run_id)
-    if not run:
-        raise HTTPException(status_code=404, detail="Run not found")
-    return run
+    return ensure_visible(run, scope, "Run")
 
 
 @router.post("/{run_id}/control")
@@ -93,13 +98,13 @@ async def control_run(
     run_id: str,
     control: RunControl,
     db: AsyncSession = Depends(get_db),
+    scope: TenantScope = Depends(get_tenant),
 ):
     """Control a run (start, pause, resume, stop, step)"""
     manager = SimulationManager.get_instance()
 
     run = await db.get(Run, run_id)
-    if not run:
-        raise HTTPException(status_code=404, detail="Run not found")
+    ensure_visible(run, scope, "Run")
 
     try:
         if control.action == "start":
@@ -119,8 +124,14 @@ async def control_run(
 
 
 @router.get("/{run_id}/status")
-async def get_run_status(run_id: str):
+async def get_run_status(
+    run_id: str,
+    db: AsyncSession = Depends(get_db),
+    scope: TenantScope = Depends(get_tenant),
+):
     """Get current status of a run"""
+    # Unknown ids and other tenants' runs are indistinguishable (both 404).
+    ensure_visible(await db.get(Run, run_id), scope, "Run")
     manager = SimulationManager.get_instance()
     return manager.get_run_status(run_id)
 
@@ -129,6 +140,7 @@ async def get_run_status(run_id: str):
 async def get_run_metrics(
     run_id: str,
     db: AsyncSession = Depends(get_db),
+    scope: TenantScope = Depends(get_tenant),
 ):
     """Per-run observability metrics: tokens, latency, cost, aggregates.
 
@@ -136,8 +148,7 @@ async def get_run_metrics(
     latency / cost telemetry — Step 9).
     """
     run = await db.get(Run, run_id)
-    if run is None:
-        raise HTTPException(status_code=404, detail="Run not found")
+    ensure_visible(run, scope, "Run")
     return {
         "run_id": run_id,
         "status": run.status.value if hasattr(run.status, "value") else str(run.status),
@@ -150,8 +161,10 @@ async def get_run_metrics(
 async def get_run_agents(
     run_id: str,
     db: AsyncSession = Depends(get_db),
+    scope: TenantScope = Depends(get_tenant),
 ):
     """Get all agents for a run"""
+    ensure_visible(await db.get(Run, run_id), scope, "Run")
     result = await db.execute(
         select(AgentModel).where(AgentModel.run_id == run_id)
     )
@@ -231,8 +244,10 @@ async def get_run_steps(
     skip: int = 0,
     limit: int = 100,
     db: AsyncSession = Depends(get_db),
+    scope: TenantScope = Depends(get_tenant),
 ):
     """Get steps for a run"""
+    ensure_visible(await db.get(Run, run_id), scope, "Run")
     result = await db.execute(
         select(Step)
         .where(Step.run_id == run_id)
@@ -250,8 +265,10 @@ async def get_run_messages(
     skip: int = 0,
     limit: int = 200,
     db: AsyncSession = Depends(get_db),
+    scope: TenantScope = Depends(get_tenant),
 ):
     """Get messages for a run, optionally filtered by agent"""
+    ensure_visible(await db.get(Run, run_id), scope, "Run")
     query = select(Message).where(Message.run_id == run_id)
 
     if agent_id:
@@ -271,16 +288,17 @@ async def get_run_messages(
 async def delete_run(
     run_id: str,
     db: AsyncSession = Depends(get_db),
+    scope: TenantScope = Depends(get_tenant),
 ):
     """Delete a run"""
-    # Stop if running
+    # Authorize before touching the live engine so callers can't stop
+    # someone else's run by id.
+    run = await db.get(Run, run_id)
+    ensure_visible(run, scope, "Run")
+
     manager = SimulationManager.get_instance()
     await manager.stop_run(run_id)
     manager.cleanup_run(run_id)
-
-    run = await db.get(Run, run_id)
-    if not run:
-        raise HTTPException(status_code=404, detail="Run not found")
 
     await db.delete(run)
     await db.commit()

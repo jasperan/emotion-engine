@@ -6,11 +6,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from emotionsim.auth.deps import TenantScope, ensure_visible, get_tenant
 from emotionsim.core.database import get_db
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/runs/{run_id}", tags=["report"])
+router = APIRouter(prefix="/runs/{run_id}", tags=["report"])
 
 
 class ReportResponse(BaseModel):
@@ -23,6 +24,7 @@ class ReportResponse(BaseModel):
 async def generate_report(
     run_id: str,
     db: AsyncSession = Depends(get_db),
+    scope: TenantScope = Depends(get_tenant),
 ):
     """Generate a post-simulation analysis report for a completed run.
 
@@ -43,6 +45,7 @@ async def generate_report(
         run = result.scalar_one_or_none()
         if run is None:
             raise HTTPException(status_code=404, detail=f"Run {run_id} not found")
+        ensure_visible(run, scope, "Run")
 
         # Extract graph_id and scenario name from run
         graph_id = getattr(run, "graph_id", None)

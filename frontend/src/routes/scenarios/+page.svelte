@@ -39,7 +39,7 @@
 <div class="max-w-7xl mx-auto px-6 py-8">
   <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
     <div>
-      <h1 class="text-2xl font-display font-bold tracking-tight text-on-background mb-1.5">
+      <h1 class="font-display text-2xl font-medium tracking-tight text-on-background mb-1.5">
         Scenario library
       </h1>
       <p class="text-on-surface/60 text-sm">
@@ -48,7 +48,7 @@
     </div>
     <a
       href="/scenarios/new"
-      class="flex items-center gap-2 px-3.5 py-2 bg-primary text-on-primary rounded-xl text-[13px] font-medium hover:bg-primary/90 transition-all duration-200 hover:-translate-y-0.5 shadow-sm"
+      class="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors duration-150 shadow-sm"
     >
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
       Create Scenario
@@ -81,7 +81,7 @@
       <button class="mt-4 px-4 py-2 bg-surface text-on-surface hover:bg-surface-alt rounded-lg" on:click={() => window.location.reload()}>Retry</button>
     </div>
   {:else if scenariosList.length === 0}
-    <div class="text-center py-20 bg-surface/30 rounded-2xl border border-outline/30 border-dashed">
+    <div class="text-center py-20 bg-surface/30 rounded-xl border border-outline/30 border-dashed">
       <div class="w-16 h-16 bg-surface-alt rounded-full flex items-center justify-center mx-auto mb-4 text-on-surface/50">
         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
       </div>
@@ -94,10 +94,8 @@
   {:else}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {#each scenariosList as scenario}
-        <div class="group relative bg-surface/60 hover:bg-surface-alt/40 border border-outline/20 hover:border-outline/35 rounded-2xl p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer">
-          <div class="absolute inset-0 bg-gradient-to-br from-primary/3 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl pointer-events-none"></div>
-
-          <div class="relative z-10">
+        <div class="group relative card card-interactive">
+          <div>
             <div class="flex justify-between items-start mb-4">
               <div class="p-3 bg-surface-alt rounded-lg text-accent-blue">
                  <!-- Icon based on config or random -->

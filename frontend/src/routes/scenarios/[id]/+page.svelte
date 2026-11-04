@@ -116,7 +116,7 @@
 	<!-- Header Area -->
 	<div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-outline/20 pb-6">
 		<div>
-			<h1 class="text-4xl font-display font-bold tracking-tight text-on-background">{scenario.name}</h1>
+			<h1 class="font-display text-4xl font-medium tracking-tight text-on-background">{scenario.name}</h1>
 			{#if scenario.description}
 				<p class="text-on-surface mt-2 max-w-3xl text-lg leading-relaxed">{scenario.description}</p>
 			{/if}
@@ -132,18 +132,18 @@
 		<!-- Sidebar Grid: Configuration -->
 		<div class="lg:col-span-1 space-y-6">
 			<div class="card p-4 bg-surface-alt/30 border-outline/10">
-				<h2 class="text-xs font-bold uppercase tracking-wider text-on-surface/60 mb-4">Configuration</h2>
+				<h2 class="text-sm text-on-surface mb-4">Configuration</h2>
 				<div class="space-y-3">
 					<div class="flex flex-col">
-						<span class="text-[10px] uppercase text-on-surface/40 font-bold">Max Steps</span>
+						<span class="text-xs text-on-surface/60">Max Steps</span>
 						<span class="text-sm font-mono text-primary">{scenario.config.max_steps || 100}</span>
 					</div>
 					<div class="flex flex-col">
-						<span class="text-[10px] uppercase text-on-surface/40 font-bold">Tick Delay</span>
+						<span class="text-xs text-on-surface/60">Tick Delay</span>
 						<span class="text-sm font-mono text-primary">{scenario.config.tick_delay || 0.5}s</span>
 					</div>
 					<div class="flex flex-col">
-						<span class="text-[10px] uppercase text-on-surface/40 font-bold">Created</span>
+						<span class="text-xs text-on-surface/60">Created</span>
 						<span class="text-sm text-on-surface/80">{formatDate(scenario.created_at)}</span>
 					</div>
 				</div>
@@ -154,7 +154,7 @@
 		<div class="lg:col-span-3 space-y-8">
 			<!-- Agent Templates -->
 			<section>
-				<h2 class="text-xl font-display font-semibold mb-4 flex items-center gap-2">
+				<h2 class="text-xl font-medium mb-4 flex items-center gap-2">
 					Agent Templates
 					<span class="text-sm font-normal text-on-surface/50 font-mono">({scenario.agent_templates?.length || 0})</span>
 				</h2>
@@ -162,9 +162,9 @@
 				{#if scenario.agent_templates?.length > 0}
 					<div class="grid sm:grid-cols-2 gap-4">
 						{#each scenario.agent_templates as agent}
-							<div class="group relative p-4 bg-surface border border-outline/30 rounded-xl hover:border-primary/50 transition-all duration-300">
+							<div class="group relative p-4 bg-surface border border-outline/30 rounded-xl hover:border-primary/50 transition-colors duration-150">
 								<div class="flex items-start justify-between mb-2">
-									<h3 class="font-bold text-on-background group-hover:text-primary transition-colors">{agent.name}</h3>
+									<h3 class="font-medium text-on-background group-hover:text-primary transition-colors">{agent.name}</h3>
 								</div>
 								
 								{#if agent.persona}
@@ -172,7 +172,7 @@
 										{agent.persona.age} year old {agent.persona.occupation}
 									</p>
 									<div class="flex items-center gap-2 flex-wrap">
-										<span class="text-[10px] font-mono px-2 py-0.5 rounded bg-surface-alt border border-outline/20 text-on-surface/70">
+										<span class="text-xs font-mono px-2 py-0.5 rounded bg-surface-alt border border-outline/30 text-on-surface/70">
 											{agent.model_id.split('/').pop()}
 										</span>
 									</div>
@@ -189,7 +189,7 @@
 
 			<!-- Runs -->
 			<section>
-				<h2 class="text-xl font-display font-semibold mb-4">Past Simulation Runs</h2>
+				<h2 class="text-xl font-medium mb-4">Past Simulation Runs</h2>
 				
 				{#if runList.length === 0}
 					<div class="p-12 text-center bg-surface-alt/10 border border-outline/10 rounded-2xl">
@@ -203,10 +203,10 @@
 						<table class="w-full text-left">
 							<thead class="bg-surface-alt/50 border-b border-outline/20">
 								<tr>
-									<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-on-surface/60">Run ID</th>
-									<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-on-surface/60">Status</th>
-									<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-on-surface/60">Progress</th>
-									<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-on-surface/60">Started</th>
+									<th class="px-6 py-3 text-xs font-medium text-on-surface/60">Run ID</th>
+									<th class="px-6 py-3 text-xs font-medium text-on-surface/60">Status</th>
+									<th class="px-6 py-3 text-xs font-medium text-on-surface/60">Progress</th>
+									<th class="px-6 py-3 text-xs font-medium text-on-surface/60">Started</th>
 									<th class="px-6 py-4"></th>
 								</tr>
 							</thead>
@@ -232,11 +232,11 @@
 													aria-valuemax="100"
 												>
 													<div
-														class="h-full bg-primary transition-all duration-500"
+														class="h-full bg-primary transition-colors duration-150"
 														style="width: {(run.current_step / run.max_steps) * 100}%"
 													></div>
 												</div>
-												<span class="text-[10px] font-mono text-on-surface/60" aria-hidden="true">
+												<span class="text-xs font-mono text-on-surface/60" aria-hidden="true">
 													{run.current_step}/{run.max_steps}
 												</span>
 											</div>

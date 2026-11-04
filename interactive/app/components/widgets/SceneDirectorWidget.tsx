@@ -8,12 +8,12 @@ interface Location {
   agents: string[];
 }
 
-const ACCENT = "#38bdf8";
+const ACCENT = "var(--accent)";
 
 const HAZARD_COLORS: Record<string, { bg: string; text: string }> = {
-  HIGH: { bg: "rgba(239,68,68,0.15)", text: "#ef4444" },
-  MEDIUM: { bg: "rgba(234,179,8,0.15)", text: "#eab308" },
-  LOW: { bg: "rgba(34,197,94,0.15)", text: "#22c55e" },
+  HIGH: { bg: "var(--neg-dim)", text: "var(--neg)" },
+  MEDIUM: { bg: "var(--warn-dim)", text: "var(--warn)" },
+  LOW: { bg: "var(--pos-dim)", text: "var(--pos)" },
 };
 
 const INITIAL_LOCATIONS: Location[] = [
@@ -161,7 +161,7 @@ export default function SceneDirectorWidget() {
   }
 
   return (
-    <div className="widget-container s-scene" suppressHydrationWarning>
+    <div className="widget-container" suppressHydrationWarning>
       <div className="widget-label">Interactive &middot; Scene Director</div>
 
       {/* Controls Row */}
@@ -190,15 +190,15 @@ export default function SceneDirectorWidget() {
               onClick={() => !isSimulating && setProcessingMode(mode)}
               style={{
                 background:
-                  processingMode === mode ? ACCENT : "rgba(255,255,255,0.04)",
-                color: processingMode === mode ? "#0c0d14" : "#a1a1aa",
-                fontWeight: processingMode === mode ? 700 : 500,
+                  processingMode === mode ? "var(--accent-dim)" : "transparent",
+                color: processingMode === mode ? "var(--accent)" : "var(--text-secondary)",
+                fontWeight: 500,
                 border: "none",
                 borderRadius: 0,
                 padding: "6px 14px",
                 fontSize: "12px",
                 cursor: isSimulating ? "not-allowed" : "pointer",
-                transition: "all 0.2s ease",
+                transition: "border-color var(--dur) var(--ease), background-color var(--dur) var(--ease)",
               }}
             >
               {mode}
@@ -225,9 +225,8 @@ export default function SceneDirectorWidget() {
           <span
             style={{
               fontSize: "12px",
-              color: ACCENT,
+              color: "var(--text-muted)",
               marginLeft: "8px",
-              fontStyle: "italic",
             }}
           >
             Click a location to move {selectedAgent}
@@ -251,13 +250,13 @@ export default function SceneDirectorWidget() {
                 padding: "16px",
                 borderRadius: "10px",
                 background: isTarget
-                  ? "rgba(56,189,248,0.06)"
+                  ? "var(--accent-dim)"
                   : "rgba(255,255,255,0.03)",
                 border: isTarget
                   ? `1.5px dashed ${ACCENT}`
                   : "1px solid rgba(255,255,255,0.08)",
                 cursor: isTarget ? "pointer" : "default",
-                transition: "all 0.25s ease",
+                transition: "border-color var(--dur) var(--ease), background-color var(--dur) var(--ease)",
                 minHeight: "120px",
               }}
             >
@@ -275,7 +274,7 @@ export default function SceneDirectorWidget() {
                     style={{
                       fontSize: "14px",
                       fontWeight: 700,
-                      color: "#fff",
+                      color: "var(--text-primary)",
                     }}
                   >
                     {loc.name}
@@ -289,11 +288,9 @@ export default function SceneDirectorWidget() {
                       borderRadius: "4px",
                       background: hazardStyle.bg,
                       color: hazardStyle.text,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.04em",
                     }}
                   >
-                    {loc.hazard}
+                    {loc.hazard.toLowerCase()}
                   </span>
                 </div>
                 {/* Scene label */}
@@ -308,7 +305,7 @@ export default function SceneDirectorWidget() {
                     <span
                       style={{
                         fontSize: "11px",
-                        color: "#a1a1aa",
+                        color: "var(--text-secondary)",
                         fontWeight: 500,
                       }}
                     >
@@ -317,22 +314,16 @@ export default function SceneDirectorWidget() {
                     {sceneState && (
                       <span
                         style={{
-                          fontSize: "10px",
-                          fontWeight: 700,
+                          fontSize: "11px",
+                          fontWeight: 500,
                           padding: "2px 7px",
                           borderRadius: "4px",
                           background:
                             sceneState === "Running"
-                              ? "rgba(34,197,94,0.15)"
-                              : "rgba(99,102,241,0.15)",
+                              ? "var(--pos-dim)"
+                              : "var(--agent-dim)",
                           color:
-                            sceneState === "Running" ? "#22c55e" : "#818cf8",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.04em",
-                          animation:
-                            sceneState === "Running"
-                              ? "pulse-badge 1s ease-in-out infinite"
-                              : "none",
+                            sceneState === "Running" ? "var(--pos)" : "var(--agent)",
                         }}
                       >
                         {sceneState}
@@ -355,8 +346,7 @@ export default function SceneDirectorWidget() {
                   <span
                     style={{
                       fontSize: "12px",
-                      color: "#52525b",
-                      fontStyle: "italic",
+                      color: "var(--text-muted)",
                     }}
                   >
                     No agents
@@ -378,7 +368,7 @@ export default function SceneDirectorWidget() {
                         borderRadius: "999px",
                         fontSize: "12px",
                         fontWeight: 600,
-                        color: isSelected ? "#0c0d14" : "#d4d4d8",
+                        color: isSelected ? "var(--inset)" : "var(--text-primary)",
                         background: isSelected
                           ? ACCENT
                           : "rgba(255,255,255,0.07)",
@@ -386,7 +376,7 @@ export default function SceneDirectorWidget() {
                           ? `2px solid ${ACCENT}`
                           : "1px solid rgba(255,255,255,0.12)",
                         cursor: isSimulating ? "not-allowed" : "pointer",
-                        transition: "all 0.2s ease",
+                        transition: "border-color var(--dur) var(--ease), background-color var(--dur) var(--ease)",
                         transform: isSelected ? "scale(1.05)" : "scale(1)",
                         fontFamily: "inherit",
                         lineHeight: 1.4,
@@ -403,7 +393,7 @@ export default function SceneDirectorWidget() {
                 style={{
                   marginTop: "10px",
                   fontSize: "11px",
-                  color: "#52525b",
+                  color: "var(--text-muted)",
                 }}
               >
                 {loc.agents.length} agent{loc.agents.length !== 1 ? "s" : ""}
@@ -419,7 +409,7 @@ export default function SceneDirectorWidget() {
           marginTop: "20px",
           padding: "14px 16px",
           borderRadius: "8px",
-          background: "#12131a",
+          background: "var(--inset)",
           border: "1px solid rgba(255,255,255,0.08)",
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
@@ -435,11 +425,9 @@ export default function SceneDirectorWidget() {
         <div>
           <div
             style={{
-              fontSize: "11px",
-              fontWeight: 600,
-              color: ACCENT,
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
+              fontSize: "12px",
+              fontWeight: 500,
+              color: "var(--text-muted)",
               marginBottom: "4px",
             }}
           >
@@ -448,23 +436,16 @@ export default function SceneDirectorWidget() {
           <div
             style={{
               fontSize: "13px",
-              color: "#a1a1aa",
+              color: "var(--text-secondary)",
               lineHeight: 1.5,
             }}
             suppressHydrationWarning
           >
-            Sequential: ~{sceneCount}s per step | Parallel: ~1s per step
+            Sequential ~{sceneCount}s per step &middot; parallel ~1s per step
           </div>
         </div>
       </div>
 
-      {/* Inline keyframes for the pulse animation */}
-      <style>{`
-        @keyframes pulse-badge {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
-        }
-      `}</style>
     </div>
   );
 }
@@ -474,11 +455,9 @@ function SummaryStat({ label, value }: { label: string; value: string }) {
     <div>
       <div
         style={{
-          fontSize: "11px",
-          fontWeight: 600,
-          color: ACCENT,
-          textTransform: "uppercase",
-          letterSpacing: "0.05em",
+          fontSize: "12px",
+          fontWeight: 500,
+          color: "var(--text-muted)",
           marginBottom: "4px",
         }}
       >
@@ -488,7 +467,7 @@ function SummaryStat({ label, value }: { label: string; value: string }) {
         style={{
           fontSize: "18px",
           fontWeight: 700,
-          color: "#fff",
+          color: "var(--text-primary)",
           fontVariantNumeric: "tabular-nums",
         }}
         suppressHydrationWarning

@@ -9,6 +9,8 @@ Enhanced with retry-at-fallback level: tries primary model, then fallback,
 with logging of which model/attempt succeeded or failed.
 """
 import logging
+from contextlib import contextmanager
+from contextvars import ContextVar
 from typing import Literal, Callable, Awaitable
 
 from emotionsim.llm.base import LLMClient, LLMMessage, LLMResponse
@@ -24,6 +26,32 @@ _AGENT_MODEL_ROUTING: dict[str, str | None] = {
     "evaluator": None,       # Uses primary model (analysis)
     "reactive": None,        # Will be set to fallback model (quick reactions)
 }
+
+
+# Per-run backend choice. Carried in the execution context (not in the shared
+# Settings singleton) so one run's ``llm_backend`` never changes provider
+# routing for any other caller. asyncio tasks inherit it at creation time.
+_backend_override: ContextVar[str | None] = ContextVar("llm_backend_override", default=None)
+
+
+@contextmanager
+def backend_override(backend: str | None):
+    """Scope an LLM backend choice to the current execution context."""
+    token = _backend_override.set(backend)
+    try:
+        yield
+    finally:
+        _backend_override.reset(token)
+
+
+def effective_backend() -> str:
+    """Backend in effect for this context: per-run override, else settings."""
+    override = _backend_override.get()
+    if override:
+        return override
+    from emotionsim.core.config import get_settings
+
+    return get_settings().llm_backend
 
 
 def get_model_for_role(role: str) -> str | None:
@@ -54,8 +82,7 @@ class LLMRouter:
         compatibility: the same code runs with or without external services).
         """
         if provider is None:
-            from emotionsim.core.config import get_settings
-            provider = get_settings().llm_backend  # type: ignore
+            provider = effective_backend()  # type: ignore
 
         if provider == "auto":
             from emotionsim.core.runtime import detect_llm_backend
@@ -70,7 +97,7 @@ class LLMRouter:
                 # Pick the best available Ollama model (qwen parity on machines
                 # whose local model tag differs from the configured default).
                 settings = get_settings()
-                if settings.llm_backend == "auto":
+                if effective_backend() == "auto":
                     from emotionsim.core.runtime import pick_ollama_model
 
                     model = pick_ollama_model(
@@ -130,7 +157,8 @@ class LLMRouter:
         from emotionsim.core.config import get_settings
 
         settings = get_settings()
-        client = LLMRouter.get_client()  # auto-selects based on settings.llm_backend
+        client = LLMRouter.get_client()  # auto-selects (per-run override, else settings)
+        backend = effective_backend()
 
         # Semantic response cache (opt-in via LLM_CACHE_ENABLED). On a hit the
         # cached content is replayed through the stream callback so UI token
@@ -147,7 +175,7 @@ class LLMRouter:
         role_model = get_model_for_role(agent_role) if agent_role else None
 
         # Choose primary model based on backend
-        if settings.llm_backend == "openai":
+        if backend == "openai":
             from emotionsim.llm.openai_client import get_codex_defaults
             codex = get_codex_defaults()
             # Ignore model_override if it looks like a local model name
@@ -165,7 +193,7 @@ class LLMRouter:
                 or settings.openai_model
                 or codex.get("model", "gpt-4o")
             )
-        elif settings.llm_backend == "vllm":
+        elif backend == "vllm":
             primary_model = model_override or role_model or settings.vllm_default_model
         else:
             primary_model = model_override or role_model or settings.ollama_default_model
@@ -197,9 +225,9 @@ class LLMRouter:
                 raise
 
             # For vLLM or OpenAI, try Ollama as fallback backend
-            if settings.llm_backend in ("vllm", "openai"):
+            if backend in ("vllm", "openai"):
                 logger.warning(
-                    f"{settings.llm_backend} failed after retries, falling back to Ollama: {primary_error}"
+                    f"{backend} failed after retries, falling back to Ollama: {primary_error}"
                 )
                 try:
                     fallback_client = LLMRouter.get_client("ollama")

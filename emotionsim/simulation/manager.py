@@ -10,6 +10,7 @@ from emotionsim.simulation.engine import SimulationEngine
 from emotionsim.models.scenario import Scenario
 from emotionsim.models.run import Run, RunStatus
 from emotionsim.core.config import get_settings
+from emotionsim.llm.router import backend_override
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +36,9 @@ class SimulationManager:
         # Datalake loggers by run_id
         self._datalake_loggers: dict[str, Any] = {}
 
+        # Per-run LLM backend choice (never written to the shared settings)
+        self._run_backends: dict[str, str] = {}
+
     @classmethod
     def get_instance(cls) -> "SimulationManager":
         """Get singleton instance"""
@@ -56,17 +60,6 @@ class SimulationManager:
         if not scenario:
             raise ValueError(f"Scenario {scenario_id} not found")
 
-        # Apply LLM backend override for this run (process-wide setting)
-        if llm_backend:
-            settings = get_settings()
-            logger.info(
-                "LLM backend override: %s -> %s", settings.llm_backend, llm_backend
-            )
-            settings.llm_backend = llm_backend
-            # Reset cached clients so the new backend is picked up
-            from emotionsim.llm.router import LLMRouter
-            LLMRouter.reset()
-
         # Create run record
         run = Run(
             scenario_id=scenario_id,
@@ -77,6 +70,9 @@ class SimulationManager:
         db.add(run)
         await db.commit()
         await db.refresh(run)
+
+        if llm_backend:
+            self._run_backends[run.id] = llm_backend
 
         return run
 
@@ -113,17 +109,20 @@ class SimulationManager:
             "seed": run.seed,
         }
 
-        # Initialize engine
-        await engine.initialize(config)
+        # Agents and the engine task pick the run's LLM backend up from the
+        # execution context (the task inherits it at creation)
+        with backend_override(self._run_backends.get(run_id)):
+            # Initialize engine
+            await engine.initialize(config)
 
-        self._engines[run_id] = engine
+            self._engines[run_id] = engine
 
-        # Attach datalake logger if enabled
-        self._attach_datalake(run_id, scenario.name, run.seed, scenario.config)
+            # Attach datalake logger if enabled
+            self._attach_datalake(run_id, scenario.name, run.seed, scenario.config)
 
-        # Start in background
-        task = asyncio.create_task(engine.start())
-        self._tasks[run_id] = task
+            # Start in background
+            task = asyncio.create_task(engine.start())
+            self._tasks[run_id] = task
 
         return engine
 
@@ -137,7 +136,8 @@ class SimulationManager:
         """Resume a paused simulation"""
         engine = self._engines.get(run_id)
         if engine:
-            task = asyncio.create_task(engine.resume())
+            with backend_override(self._run_backends.get(run_id)):
+                task = asyncio.create_task(engine.resume())
             self._tasks[run_id] = task
 
     async def stop_run(self, run_id: str) -> None:
@@ -228,17 +228,18 @@ class SimulationManager:
             on_event=lambda t, d: self._dispatch_event(run_id, t, d),
         )
 
-        # Load state from DB (using the engine's session)
-        await engine.load_from_db()
+        with backend_override(self._run_backends.get(run_id)):
+            # Load state from DB (using the engine's session)
+            await engine.load_from_db()
 
-        self._engines[run_id] = engine
+            self._engines[run_id] = engine
 
-        # Attach datalake logger if enabled
-        self._attach_datalake(run_id, f"resumed-{run_id[:8]}")
+            # Attach datalake logger if enabled
+            self._attach_datalake(run_id, f"resumed-{run_id[:8]}")
 
-        # Start in background if it was previously running or pending
-        task = asyncio.create_task(engine.start())
-        self._tasks[run_id] = task
+            # Start in background if it was previously running or pending
+            task = asyncio.create_task(engine.start())
+            self._tasks[run_id] = task
 
         return engine
 
@@ -310,6 +311,7 @@ class SimulationManager:
         """Clean up resources for a completed run"""
         self._engines.pop(run_id, None)
         self._event_handlers.pop(run_id, None)
+        self._run_backends.pop(run_id, None)
         task = self._tasks.pop(run_id, None)
         if task and not task.done():
             task.cancel()

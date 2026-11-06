@@ -25,7 +25,9 @@ services:
     image: container-registry.oracle.com/database/free:latest-lite
     container_name: oracle-emotionsim
     ports:
-      - "1522:1521"
+      # Loopback only by default (matches the root compose); set COMPOSE_BIND_ADDR
+      # explicitly, and change ORACLE_PWD, before exposing the listener.
+      - "${COMPOSE_BIND_ADDR:-127.0.0.1}:1522:1521"
     environment:
       - ORACLE_PWD=${ORACLE_PWD:-Oracle_2026}
     volumes:

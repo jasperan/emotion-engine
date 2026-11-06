@@ -300,6 +300,12 @@ async def delete_run(
     await manager.stop_run(run_id)
     manager.cleanup_run(run_id)
 
+    # Datalake ownership comes from the primary row, so purge the datalake copy
+    # first: an orphaned datalake run would read as public once the row is gone.
+    from emotionsim.api.datalake import purge_datalake_runs
+
+    await purge_datalake_runs([run_id])
+
     await db.delete(run)
     await db.commit()
 

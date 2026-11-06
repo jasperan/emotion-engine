@@ -255,6 +255,17 @@ async def delete_scenario(
     """Delete a scenario"""
     scenario = ensure_visible(await db.get(Scenario, scenario_id), scope, "Scenario")
 
+    from emotionsim.api.datalake import purge_datalake_runs
+    from emotionsim.models.run import Run
+
+    # Runs cascade with the scenario; drop their datalake copies first
+    run_ids = list(
+        (await db.execute(select(Run.id).where(Run.scenario_id == scenario_id)))
+        .scalars()
+        .all()
+    )
+    await purge_datalake_runs(run_ids)
+
     await db.delete(scenario)
     await db.commit()
 

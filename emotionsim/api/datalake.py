@@ -1,5 +1,6 @@
 """Datalake API endpoints for querying Oracle 26ai Free logged data."""
 import asyncio
+import logging
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,6 +10,8 @@ from emotionsim.auth.deps import TenantScope, ensure_visible, get_tenant
 from emotionsim.core.config import get_settings
 from emotionsim.core.database import get_db
 from emotionsim.models.run import Run
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/datalake", tags=["datalake"])
 
@@ -46,6 +49,30 @@ async def _authorize_run(db: AsyncSession, scope: TenantScope, run_id: str) -> N
         ensure_visible(row, scope, "Run")
 
 
+async def purge_datalake_runs(run_ids: list[str]) -> None:
+    """Delete the datalake copy of runs whose primary row is about to go.
+
+    Datalake ownership is read from the primary ``runs`` row, so a datalake
+    run that outlives it would be treated as public. An unreachable datalake
+    must not block deleting the run (the default config runs without Oracle),
+    so failures are logged rather than raised.
+    """
+    if not run_ids or not get_settings().datalake_enabled:
+        return
+    try:
+        store = _get_store()
+    except Exception:
+        logger.warning("Datalake unavailable; skipped purge of %d run(s)", len(run_ids))
+        return
+    try:
+        for run_id in run_ids:
+            await _run_sync(store.delete_run, run_id)
+    except Exception:
+        logger.warning("Datalake purge failed for runs %s", run_ids, exc_info=True)
+    finally:
+        store.close()
+
+
 async def _hidden_run_ids(db: AsyncSession, scope: TenantScope) -> list[str]:
     """Ids of runs the caller must not see (owned by someone else)."""
     query = select(Run.id).where(Run.tenant_id.is_not(None))
@@ -60,11 +87,16 @@ async def _run_sync(func, *args, **kwargs):
 
 
 @router.get("/stats")
-async def get_stats():
-    """Get aggregate statistics across all logged runs."""
+async def get_stats(
+    db: AsyncSession = Depends(get_db),
+    scope: TenantScope = Depends(get_tenant),
+):
+    """Get aggregate statistics across logged runs (other tenants' runs excluded)."""
     store = _get_store()
     try:
-        return await _run_sync(store.get_stats)
+        return await _run_sync(
+            store.get_stats, exclude_ids=await _hidden_run_ids(db, scope)
+        )
     finally:
         store.close()
 

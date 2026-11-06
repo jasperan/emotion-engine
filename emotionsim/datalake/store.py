@@ -390,27 +390,45 @@ class SimulationStore:
             for event in events:
                 yield event.to_dict()
 
-    def get_stats(self) -> Dict[str, Any]:
-        """Get aggregate statistics across all runs."""
+    def get_stats(self, exclude_ids: Optional[List[str]] = None) -> Dict[str, Any]:
+        """Get aggregate statistics across runs, omitting ``exclude_ids``."""
         with self.SessionFactory() as db:
-            total_runs = db.query(func.count(SimulationRun.id)).scalar() or 0
-            total_events = db.query(func.count(AgentEvent.id)).scalar() or 0
-            total_steps = db.query(func.count(SimulationStep.id)).scalar() or 0
+            def keep_runs(query):
+                if exclude_ids:
+                    return query.filter(SimulationRun.id.notin_(exclude_ids))
+                return query
+
+            def keep_children(query, model):
+                if exclude_ids:
+                    return query.filter(model.run_id.notin_(exclude_ids))
+                return query
+
+            total_runs = keep_runs(db.query(func.count(SimulationRun.id))).scalar() or 0
+            total_events = keep_children(
+                db.query(func.count(AgentEvent.id)), AgentEvent
+            ).scalar() or 0
+            total_steps = keep_children(
+                db.query(func.count(SimulationStep.id)), SimulationStep
+            ).scalar() or 0
 
             status_rows = (
-                db.query(SimulationRun.status, func.count(SimulationRun.id))
+                keep_runs(db.query(SimulationRun.status, func.count(SimulationRun.id)))
                 .group_by(SimulationRun.status)
                 .all()
             )
 
             scenario_rows = (
-                db.query(SimulationRun.scenario_name, func.count(SimulationRun.id))
+                keep_runs(
+                    db.query(SimulationRun.scenario_name, func.count(SimulationRun.id))
+                )
                 .group_by(SimulationRun.scenario_name)
                 .all()
             )
 
             event_type_rows = (
-                db.query(AgentEvent.event_type, func.count(AgentEvent.id))
+                keep_children(
+                    db.query(AgentEvent.event_type, func.count(AgentEvent.id)), AgentEvent
+                )
                 .group_by(AgentEvent.event_type)
                 .all()
             )
